@@ -114,6 +114,7 @@ type Item struct {
 	Flags        []string      `json:"flags,omitempty"`
 	Alternatives []Alternative `json:"alternatives,omitempty"`
 	AIEstimate   bool          `json:"ai_estimate"`
+	Learned      bool          `json:"learned"` // from the user's remembered readings
 
 	explicit bool // quantity/unit came from the text
 	generic  bool

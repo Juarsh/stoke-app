@@ -18,7 +18,6 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/auth"
 	"github.com/akarsh/calorie-tracker/internal/db"
 	"github.com/akarsh/calorie-tracker/internal/httpx"
-	"github.com/akarsh/calorie-tracker/internal/parser"
 )
 
 // fakeVerifier stands in for Google: token "good-<sub>" is valid.
@@ -31,12 +30,8 @@ func (fakeVerifier) Verify(_ context.Context, tok string) (auth.Identity, error)
 	return auth.Identity{}, auth.ErrInvalid
 }
 
-type fakeAI struct{ calls int }
-
-func (f *fakeAI) Estimate(_ context.Context, text string) ([]parser.Item, error) {
-	f.calls++
-	return []parser.Item{{Name: text, Quantity: 1, Unit: "katori", Kcal: parser.Range{Low: 200, Best: 250, High: 300}, Protein: parser.Range{Low: 8, Best: 10, High: 12}}}, nil
-}
+// fakeAI just selects AI_MODE=stub in setup.
+type fakeAI struct{}
 
 var errSkip = errors.New("skip")
 
@@ -59,7 +54,7 @@ func setup(t *testing.T, ai *fakeAI) (*httptest.Server, *pgxpool.Pool) {
 	}
 	cfg := Config{DB: pool, Verifier: fakeVerifier{}}
 	if ai != nil {
-		cfg.Fallback = ai
+		cfg.AIMode = "stub"
 	}
 	h, err := New(cfg)
 	if err != nil {
@@ -172,48 +167,159 @@ func TestParseShape(t *testing.T) {
 	}
 }
 
-func TestAICapAndFlag(t *testing.T) {
-	ai := &fakeAI{}
-	srv, _ := setup(t, ai)
-	var r struct {
-		Items []struct {
-			AIEstimate bool `json:"ai_estimate"`
-			Source     string
-		}
-		UsedAI      bool `json:"used_ai"`
-		Fallback    string
-		CustomItems []M `json:"custom_items"`
-		Message     string
+type parseOut struct {
+	Items []struct {
+		Name              string
+		AIEstimate        bool `json:"ai_estimate"`
+		Source            string
+		Learned           bool
+		NeedsConfirmation bool `json:"needs_confirmation"`
+		Quantity          float64
+		Kcal              struct{ Best float64 }
 	}
+	UsedAI      bool `json:"used_ai"`
+	Fallback    string
+	CustomItems []M `json:"custom_items"`
+	Message     string
+}
+
+func aiCalls(t *testing.T, srv *httptest.Server) int {
+	var c struct{ Calls int }
+	call(t, srv, "GET", "/test/ai/calls", "", nil, &c)
+	return c.Calls
+}
+
+func TestAICapAndFlag(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
 	for i := 0; i < 20; i++ {
-		call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti quinoa"}, &r)
-		if !r.UsedAI || len(r.Items) != 2 || !r.Items[1].AIEstimate || r.Items[1].Source != "ai_estimate" || r.Items[0].AIEstimate {
+		var r parseOut
+		call(t, srv, "POST", "/v1/parse", "cap", M{"text": fmt.Sprintf("2 roti quinoa%c", 'a'+i)}, &r)
+		if !r.UsedAI || len(r.Items) != 2 || !r.Items[1].AIEstimate || r.Items[1].Source != "ai_estimate" || !r.Items[1].NeedsConfirmation {
 			t.Fatalf("call %d: %+v", i, r)
 		}
 	}
-	r = struct {
-		Items []struct {
-			AIEstimate bool `json:"ai_estimate"`
-			Source     string
-		}
-		UsedAI      bool `json:"used_ai"`
-		Fallback    string
-		CustomItems []M `json:"custom_items"`
-		Message     string
-	}{}
-	call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti quinoa"}, &r)
-	if r.UsedAI || r.Fallback != "cap_reached" || len(r.CustomItems) != 1 || r.Message == "" || ai.calls != 20 || len(r.Items) != 2 || r.Items[1].Source != "generic" {
-		t.Errorf("21st call: %+v (ai calls %d)", r, ai.calls)
+	var r parseOut
+	call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti zzquinoa"}, &r)
+	if r.UsedAI || r.Fallback != "cap_reached" || len(r.CustomItems) != 1 || r.Message == "" || aiCalls(t, srv) != 20 || r.Items[1].Source != "generic" {
+		t.Errorf("21st call: %+v", r)
 	}
-	// other users have their own cap
-	call(t, srv, "POST", "/v1/parse", "other", M{"text": "quinoa"}, &r)
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "other", M{"text": "yyquinoa"}, &r)
 	if !r.UsedAI {
 		t.Errorf("other user capped")
 	}
-	// use_ai=false skips the fallback
-	call(t, srv, "POST", "/v1/parse", "other2", M{"text": "quinoa", "use_ai": false}, &r)
-	if r.UsedAI || ai.calls != 21 {
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "other2", M{"text": "xxquinoa", "use_ai": false}, &r)
+	if r.UsedAI || aiCalls(t, srv) != 21 {
 		t.Errorf("use_ai false: %+v", r)
+	}
+}
+
+func TestAIBatchCacheAndGlobalCap(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	// three unknown spans -> ONE call; counts stay with their span
+	var r parseOut
+	call(t, srv, "POST", "/v1/parse", "u1", M{"text": "2 roti, quinoa bowl, 3 khakhra, kombucha"}, &r)
+	if aiCalls(t, srv) != 1 || len(r.Items) != 4 {
+		t.Fatalf("batch: calls %d items %+v", aiCalls(t, srv), r.Items)
+	}
+	// cache hit (another user too): no call, still ai_estimate + confirm
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "u2", M{"text": "Quinoa  Bowl!"}, &r)
+	if aiCalls(t, srv) != 1 || r.Fallback != "cache" || r.Items[0].Source != "ai_estimate" || !r.Items[0].NeedsConfirmation {
+		t.Errorf("cache hit: calls %d %+v", aiCalls(t, srv), r)
+	}
+	// user corrections never enter the shared cache
+	var cr struct{ Entries []entry }
+	call(t, srv, "POST", "/v1/entries", "u1", M{"items": []M{{"custom_name": "my quinoa", "qty": 1, "unit": "katori", "kcal": 999,
+		"protein_g": 30, "source": "ai_estimate", "confirmed": true, "span": "quinoa bowl"}}}, &cr)
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "u3", M{"text": "quinoa bowl"}, &r)
+	if r.Items[0].Kcal.Best == 999 || r.Items[0].Source != "ai_estimate" {
+		t.Errorf("correction leaked into shared cache: %+v", r.Items[0])
+	}
+	// project-wide cap -> generic confirm cards, no call
+	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 1}, nil)
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "u4", M{"text": "dragonfruit smoothie"}, &r)
+	if aiCalls(t, srv) != 1 || r.Fallback != "global_cap_reached" || r.Items[0].Source != "generic" || !r.Items[0].NeedsConfirmation {
+		t.Errorf("global cap: calls %d %+v", aiCalls(t, srv), r)
+	}
+	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 0}, nil)
+	// implausible AI answers (0 or 3000+ kcal) are rejected and never cached
+	for i, k := range []float64{0, 3200} {
+		call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{{"name": "x", "quantity": 1, "unit": "count", "kcal": M{"low": k, "best": k, "high": k}}}}, nil)
+		span := []string{"zorbo mix", "glarp feast"}[i]
+		r = parseOut{}
+		call(t, srv, "POST", "/v1/parse", "u5", M{"text": span}, &r)
+		if r.Items[0].Source != "generic" || r.Items[0].Kcal.Best == k {
+			t.Errorf("implausible %v shown: %+v", k, r.Items[0])
+		}
+		before := aiCalls(t, srv)
+		r = parseOut{}
+		call(t, srv, "POST", "/v1/parse", "u5", M{"text": span}, &r)
+		if aiCalls(t, srv) != before+1 {
+			t.Errorf("implausible %v was cached", k)
+		}
+	}
+}
+
+func TestRememberedFoods(t *testing.T) {
+	srv, _ := setup(t, nil)
+	var r parseOut
+	call(t, srv, "POST", "/v1/parse", "rm", M{"text": "paneer lababdar"}, &r)
+	if !r.Items[0].NeedsConfirmation {
+		t.Fatalf("first parse should need confirmation: %+v", r)
+	}
+	var cr struct{ Entries []entry }
+	if c := call(t, srv, "POST", "/v1/entries", "rm", M{"items": []M{{"dish_id": "paneer_butter_masala", "qty": 1, "unit": "katori",
+		"source": "did_you_mean", "confirmed": true, "span": "paneer lababdar"}}}, &cr); c != 201 {
+		t.Fatalf("confirm save: %d", c)
+	}
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "rm", M{"text": "paneer lababdar"}, &r)
+	if len(r.Items) != 1 || r.Items[0].Source != "table" || !r.Items[0].Learned || r.Items[0].NeedsConfirmation {
+		t.Errorf("learned reading not applied: %+v", r)
+	}
+	// private to that user
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "someone", M{"text": "paneer lababdar"}, &r)
+	if r.Items[0].Learned {
+		t.Errorf("reading leaked to another user")
+	}
+	var lst struct {
+		Remembered []struct {
+			ID   int64
+			Span string
+		}
+	}
+	call(t, srv, "GET", "/v1/remembered", "rm", nil, &lst)
+	if len(lst.Remembered) != 1 || lst.Remembered[0].Span != "paneer lababdar" {
+		t.Fatalf("list: %+v", lst)
+	}
+	if c := call(t, srv, "DELETE", fmt.Sprintf("/v1/remembered/%d", lst.Remembered[0].ID), "someone", nil, nil); c != 404 {
+		t.Errorf("other user reset: %d", c)
+	}
+	if c := call(t, srv, "DELETE", fmt.Sprintf("/v1/remembered/%d", lst.Remembered[0].ID), "rm", nil, nil); c != 204 {
+		t.Errorf("reset one: %d", c)
+	}
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "rm", M{"text": "paneer lababdar"}, &r)
+	if r.Items[0].Learned {
+		t.Errorf("reset reading still applied")
+	}
+	if c := call(t, srv, "DELETE", "/v1/remembered", "rm", nil, nil); c != 200 {
+		t.Errorf("reset all: %d", c)
+	}
+}
+
+func TestHooks404OutsideStub(t *testing.T) {
+	srv, _ := setup(t, nil)
+	for _, rt := range [][2]string{{"GET", "/test/ai/calls"}, {"POST", "/test/ai/calls/reset"}, {"POST", "/test/ai/next-answer"}, {"POST", "/test/ai/daily-cap"}} {
+		if c := call(t, srv, rt[0], rt[1], "", M{}, nil); c != 404 {
+			t.Errorf("%s %s outside stub: %d", rt[0], rt[1], c)
+		}
 	}
 }
 

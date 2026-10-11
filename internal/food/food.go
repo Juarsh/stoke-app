@@ -4,12 +4,14 @@ package food
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -30,6 +32,8 @@ type Service struct {
 	Parser   *parser.Parser
 	Fallback Fallback
 	Summary  Rebuilder
+	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
+	GlobalCap atomic.Int64
 }
 
 // ---------- parse ----------
@@ -73,42 +77,91 @@ func totals(items []parser.Item) Total {
 	return t
 }
 
-// Parse runs the table parser, then the fallback for unmatched text within the daily cap.
+// Parse runs the table parser, applies the user's remembered readings, then
+// sends every remaining unknown span to the AI in ONE batched call (shared
+// cache first, per-user and project-wide daily caps).
 func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bool) ParseResponse {
 	res := s.Parser.Parse(text)
-	out := ParseResponse{Items: res.Items, Unmatched: res.Unmatched, Fallback: "none", CustomItems: []CustomItem{},
+	out := ParseResponse{Items: []parser.Item{}, Unmatched: res.Unmatched, Fallback: "none", CustomItems: []CustomItem{},
 		Slot: httpx.SlotFor(httpx.Now())}
-	// Unknown text never counts as 0 kcal: it goes to the AI fallback, and if
-	// that is off, capped or failing it becomes a generic placeholder item
-	// (needs confirmation) plus a custom item the user can fill in.
+
+	// 1. remembered readings replace whatever the parser guessed for that span
+	learned := s.readings(ctx, userID)
+	done := map[string]bool{}
+	for _, it := range res.Items {
+		key := Normalize(it.Matched)
+		if rd, ok := learned[key]; ok {
+			if !done[key] {
+				out.Items = append(out.Items, rd.item(it.Matched))
+				done[key] = true
+			}
+			continue
+		}
+		out.Items = append(out.Items, it)
+	}
+	var spans []string
+	counts := map[string]float64{}
 	for _, u := range res.Unmatched {
 		if !foodLike(u) {
 			continue
 		}
-		st := "disabled"
-		var items []parser.Item
-		if useAI {
-			st, items = s.fallbackOne(ctx, userID, u)
-		}
-		if st == "used" {
-			for i := range items {
-				items[i].AIEstimate = true
-				items[i].Source = parser.SourceAI
-				items[i].DataSource = "ai"
-				items[i].NeedsConfirmation = true
-				items[i].SourceNote = "AI estimate (Gemini) - confirm before saving"
-			}
-			out.Items = append(out.Items, items...)
-			out.UsedAI, out.Fallback = true, "used"
+		cnt, key := splitCount(u)
+		if rd, ok := learned[key]; ok {
+			li := rd.item(u)
+			out.Items = append(out.Items, scaleItem(li, cnt))
 			continue
 		}
-		if out.Fallback != "used" && st != "disabled" {
-			out.Fallback = st
+		if _, seen := counts[key]; !seen {
+			spans = append(spans, key)
 		}
-		out.Items = append(out.Items, s.Parser.Unknown(u))
-		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: u, NeedsInput: true})
+		counts[key] += cnt
 	}
-	if out.Fallback == "cap_reached" {
+
+	// 2. AI for the rest: cache hits cost nothing; misses share one call
+	got := map[string][]parser.Item{}
+	if len(spans) > 0 && useAI {
+		var miss []string
+		for _, sp := range spans {
+			if items, ok := s.cacheGet(ctx, sp); ok {
+				got[sp] = items
+			} else {
+				miss = append(miss, sp)
+			}
+		}
+		if len(got) > 0 {
+			out.Fallback = "cache"
+		}
+		if len(miss) > 0 {
+			st, fresh := s.fallbackBatch(ctx, userID, miss)
+			if st == "used" {
+				for sp, items := range fresh {
+					got[sp] = items
+					s.cachePut(ctx, sp, items)
+				}
+				out.Fallback = "used"
+			} else if out.Fallback == "none" {
+				out.Fallback = st
+			}
+		}
+	}
+	for _, sp := range spans {
+		if items, ok := got[sp]; ok && len(items) > 0 {
+			for _, it := range items {
+				it = scaleItem(it, counts[sp])
+				it.AIEstimate, it.Source, it.DataSource = true, parser.SourceAI, "ai"
+				it.NeedsConfirmation = true
+				it.SourceNote = "AI estimate (Gemini) - confirm before saving"
+				out.Items = append(out.Items, it)
+			}
+			out.UsedAI = true
+			continue
+		}
+		// no AI: a generic confirm card for just this span, keeping its count
+		ph := s.Parser.Unknown(sp)
+		out.Items = append(out.Items, scaleItem(ph, counts[sp]))
+		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: sp, NeedsInput: true})
+	}
+	if out.Fallback == "cap_reached" || out.Fallback == "global_cap_reached" {
 		out.Message = "AI estimates are back tomorrow. Add it yourself for now."
 	}
 	out.Total = totals(out.Items)
@@ -128,29 +181,108 @@ func foodLike(s string) bool {
 	return false
 }
 
-func (s *Service) fallbackOne(ctx context.Context, userID int64, text string) (string, []parser.Item) {
+// Normalize is the key for the AI cache and remembered readings:
+// lower case, single spaces, no punctuation.
+func Normalize(s string) string {
+	s = strings.ToLower(s)
+	s = strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '.' || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Mc, r) {
+			return r
+		}
+		return ' '
+	}, s)
+	return strings.Join(strings.Fields(s), " ")
+}
+
+// splitCount separates a leading count: "2 pav" -> 2, "pav".
+func splitCount(span string) (float64, string) {
+	n := Normalize(span)
+	f := strings.Fields(n)
+	if len(f) > 1 {
+		if v, err := strconv.ParseFloat(f[0], 64); err == nil && v > 0 && v <= 50 {
+			return v, strings.Join(f[1:], " ")
+		}
+	}
+	return 1, n
+}
+
+func scaleItem(it parser.Item, k float64) parser.Item {
+	if k == 1 || k <= 0 {
+		return it
+	}
+	r := func(x float64, d float64) float64 { return math.Round(x*d) / d }
+	it.Quantity = r(it.Quantity*k, 100)
+	it.Grams = r(it.Grams*k, 1)
+	it.Kcal = parser.Range{Low: r(it.Kcal.Low*k, 1), Best: r(it.Kcal.Best*k, 1), High: r(it.Kcal.High*k, 1)}
+	it.Protein = parser.Range{Low: r(it.Protein.Low*k, 10), Best: r(it.Protein.Best*k, 10), High: r(it.Protein.High*k, 10)}
+	it.CarbsG, it.FatG = r(it.CarbsG*k, 10), r(it.FatG*k, 10)
+	return it
+}
+
+func (s *Service) cacheGet(ctx context.Context, key string) ([]parser.Item, bool) {
+	var raw []byte
+	err := s.DB.QueryRow(ctx, `UPDATE ai_cache SET hits=hits+1, last_hit_at=now() WHERE norm_text=$1 RETURNING items`, key).Scan(&raw)
+	if err != nil {
+		return nil, false
+	}
+	var items []parser.Item
+	if json.Unmarshal(raw, &items) != nil || len(items) == 0 {
+		return nil, false
+	}
+	return items, true
+}
+
+func (s *Service) cachePut(ctx context.Context, key string, items []parser.Item) {
+	b, err := json.Marshal(items)
+	if err != nil || len(items) == 0 {
+		return
+	}
+	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_cache(norm_text,items) VALUES ($1,$2) ON CONFLICT (norm_text) DO NOTHING`, key, b)
+}
+
+// fallbackBatch makes the single AI call for a meal, inside the per-user cap
+// and the project-wide daily cap.
+func (s *Service) fallbackBatch(ctx context.Context, userID int64, spans []string) (string, map[string][]parser.Item) {
 	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
 		return "not_configured", nil
 	}
-	// reserve one call atomically under the cap
+	today := httpx.Today()
 	var calls int
 	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
 		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
-		RETURNING calls`, userID, httpx.Today(), AICapPerDay).Scan(&calls)
+		RETURNING calls`, userID, today, AICapPerDay).Scan(&calls)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "cap_reached", nil
 	}
 	if err != nil {
 		return "error", nil
 	}
-	items, err := s.Fallback.Estimate(ctx, text)
+	{
+		gc := s.GlobalCap.Load() // 0 = unlimited, but always counted
+		err = s.DB.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
+			ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
+			RETURNING calls`, today, gc).Scan(&calls)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "global_cap_reached", nil
+		}
+		if err != nil {
+			return "error", nil
+		}
+	}
+	got, err := s.Fallback.EstimateBatch(ctx, spans)
 	if errors.Is(err, ErrNotConfigured) {
 		return "not_configured", nil
 	}
-	if err != nil || len(items) == 0 {
+	if err != nil || len(got) == 0 {
 		return "error", nil
 	}
-	return "used", items
+	// reject implausible answers: never cached or shown (generic card instead)
+	for sp, items := range got {
+		if !plausible(items) {
+			delete(got, sp)
+		}
+	}
+	return "used", got
 }
 
 // ---------- entries ----------
@@ -201,6 +333,9 @@ type ItemIn struct {
 	// /v1/parse) or custom (numbers typed by the user).
 	Source    string `json:"source"`
 	Confirmed bool   `json:"confirmed"` // required when the item needs confirmation
+	// Span is the parse item's matched_text. When confirmed, the reading is
+	// remembered for this user and the next parse returns it learned=true.
+	Span string `json:"span,omitempty"`
 	// ClientID makes saves idempotent: a repeat returns the stored entry.
 	ClientID string `json:"client_id"`
 	// DishTableVersion is required when a table item carries the client's own
@@ -373,6 +508,9 @@ func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handle
 	mux.Handle("PATCH /v1/entries/{id}", wrap(http.HandlerFunc(s.handlePatch)))
 	mux.Handle("DELETE /v1/entries/{id}", wrap(http.HandlerFunc(s.handleDelete)))
 	mux.Handle("GET /v1/sync/entries", wrap(http.HandlerFunc(s.handleSync)))
+	mux.Handle("GET /v1/remembered", wrap(http.HandlerFunc(s.handleListReadings)))
+	mux.Handle("DELETE /v1/remembered/{id}", wrap(http.HandlerFunc(s.handleResetReading)))
+	mux.Handle("DELETE /v1/remembered", wrap(http.HandlerFunc(s.handleResetAllReadings)))
 }
 
 func (s *Service) handleParse(w http.ResponseWriter, r *http.Request) {
@@ -481,6 +619,12 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		out = append(out, saved)
 		created++
+		if it.Confirmed && it.Span != "" {
+			if err := remember(r.Context(), tx, uid, it.Span, saved); err != nil {
+				httpx.Error(w, 500, "save failed")
+				return
+			}
+		}
 	}
 	_, _ = tx.Exec(r.Context(), `INSERT INTO events(user_id,name,props) VALUES ($1,'log',jsonb_build_object('items',$2::int))`, uid, len(out))
 	if err := tx.Commit(r.Context()); err != nil {
@@ -752,4 +896,17 @@ func (Contributor) Contribute(ctx context.Context, q summary.Querier, uid int64,
 		WHERE user_id=$1 AND local_date=$2 AND deleted_at IS NULL`, uid, day).Scan(&d.KcalIn, &d.ProteinIn, &n)
 	d.Logged = d.Logged || n > 0
 	return err
+}
+
+// plausible: every AI item must be over 0 and under 3000 kcal.
+func plausible(items []parser.Item) bool {
+	if len(items) == 0 {
+		return false
+	}
+	for _, it := range items {
+		if it.Kcal.Best <= 0 || it.Kcal.Best >= 3000 || it.Kcal.High >= 3000 {
+			return false
+		}
+	}
+	return true
 }

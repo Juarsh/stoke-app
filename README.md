@@ -21,3 +21,17 @@ Test: `go test ./...` (API tests use the calorie_test DB and reset its schema).
 
 Dish table: values are our own estimates or generic public data (USDA FDC, Open Food Facts labels). No IFCT data.
 `internal/parser/testdata/dev-meals.json` holds Coder's DEV samples only; the accuracy set is Tester's (/workspace/calorie-tests).
+
+## AI modes
+
+`AI_MODE` can be `off` (default, no AI, generic confirm cards), `gemini`
+(needs `GEMINI_API_KEY`; the client is still a stub that makes no network
+call), or `stub`. In stub mode a deterministic fake Gemini answers each span
+with numbers derived from a hash of the text. Stub mode also enables the
+`/test/ai/*` hooks described in API.md, so never use it in production.
+`AI_GLOBAL_DAILY_CAP` sets the project-wide daily limit on AI calls
+(default 200).
+
+Example: `AI_MODE=stub DATABASE_URL=... go run ./cmd/api`
+
+Weekly cache review: `go run ./cmd/aicache-export > top.csv`

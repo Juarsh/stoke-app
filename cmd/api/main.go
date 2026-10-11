@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,11 +49,24 @@ func main() {
 		}
 		v = auth.NewGoogleVerifier(ids)
 	}
-	h, err := app.New(app.Config{DB: pool, Verifier: v})
+	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap()})
 	if err != nil {
 		log.Fatal(err)
 	}
 	srv := &http.Server{Addr: ":" + env("PORT", "8080"), Handler: h, ReadHeaderTimeout: 5 * time.Second}
 	log.Printf("listening on %s", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
+}
+
+// AI_GLOBAL_DAILY_CAP: project-wide AI calls per day (default 200, under the lowest reported free-tier Flash RPD; 0 = unlimited).
+func globalCap() int64 {
+	v := os.Getenv("AI_GLOBAL_DAILY_CAP")
+	if v == "" {
+		return 200
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || n < 0 {
+		log.Fatalf("AI_GLOBAL_DAILY_CAP must be a non-negative integer")
+	}
+	return n
 }

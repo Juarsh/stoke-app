@@ -121,3 +121,58 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
   - otherwise the client's numbers are stored as sent (carbs/fat default to table estimates).
   Table items sent without numbers are computed from the current table (older clients).
 - Stored per entry: client_id, dish_table_version, confirmed, carbs_g, fat_g (migration 003). Entry responses include them.
+
+## Confidence and confirmation
+
+Each parse item has `confidence` (0-1) and `flags` explaining deductions
+(`fuzzy`, `trailing_qty`, `leftover_nearby`, `leftover_in_meal`,
+`combo_or_split`, `variant`, `generic`, `sanity`, `capped`, `count_between`,
+`style_ignored`). Below `rules.json > confidence.threshold` the item gets
+`source=did_you_mean` and `needs_confirmation=true`. A meal with leftover
+unknown words, or that used a split/combo rule, flags every affected item.
+
+"X with Y, 1 bowl" = one serving in total: the combo row if the table has one
+(e.g. rajma chawal), otherwise one serving split by the parts' calorie share.
+Always flagged. A combo given in its own unit ("1 plate rajma chawal") stays a
+single row and is not flagged.
+
+`POST /v1/entries` with `text` only saves confident items. If nothing is
+confident it returns 200 with `entries: []` and the `needs_confirmation` list.
+
+## AI fallback
+
+- At most **one AI call per meal**. All unknown spans are sent in one batch, with
+  their leading counts removed (counts are applied afterwards).
+- **Shared cache** keyed on normalized text (lower case, no punctuation,
+  single spaces). A cache hit makes no call and returns `fallback: "cache"`.
+  Cached answers are still `source=ai_estimate`, `needs_confirmation=true`.
+  The cache only stores raw AI answers, never user corrections.
+- AI answers under or equal to 0 kcal, or at least 3000 kcal per item, are
+  rejected. They are not cached or shown, and the span gets the generic
+  confirm card.
+- Caps: 20 AI calls per user per day (`fallback: "cap_reached"`), and a
+  project-wide daily cap `AI_GLOBAL_DAILY_CAP` (default 200, 0 = unlimited;
+  `fallback: "global_cap_reached"`). When either cap is reached, the span gets
+  a generic confirm card (`source=generic`).
+- `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | error.
+- Weekly review: `go run ./cmd/aicache-export -days 7 -limit 50 > top.csv`
+  lists the most-hit cached answers. A cached dish becomes a table row only by
+  adding it to dishes.json by hand, checked against a real source.
+
+## Remembered foods (per-user learned readings)
+
+When the user saves a confirmed item with `span` (the parse item's
+`matched_text`), the reading is stored for that user only. On the next parse,
+that span comes back as `source=table`, `learned=true` and
+`needs_confirmation=false`. A later confirmation overwrites it.
+
+- `GET /v1/remembered` returns `{"remembered":[{id, span, dish_id, custom_name, qty, unit, oil_level, kcal_best, kcal_low, kcal_high, protein_best, protein_low, protein_high, carbs_g, fat_g, uses, updated_at}]}`.
+- `DELETE /v1/remembered/{id}` resets one remembered food. It returns 204, or 404 if the id is not yours.
+- `DELETE /v1/remembered` resets all of them and returns `{"deleted": n}`.
+
+## Test hooks (AI_MODE=stub only; 404 in every other mode, no auth)
+
+- `GET /test/ai/calls` returns `{"calls": n, "global_daily_cap": n}`.
+- `POST /test/ai/calls/reset` sets the call count to 0 and clears the AI cache plus the per-user and global AI counters.
+- `POST /test/ai/next-answer` with `{"items":[{name, quantity, unit, kcal:{low,best,high}, protein:{...}}]}` makes the next call return these items for every span.
+- `POST /test/ai/daily-cap` with `{"cap": n}` sets the project-wide daily cap. 0 means unlimited.

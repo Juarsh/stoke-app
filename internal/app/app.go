@@ -23,6 +23,12 @@ type Config struct {
 	Verifier auth.Verifier
 	Fallback food.Fallback
 	Advisor  coach.Advisor
+	// AIMode: "off" (default), "gemini", or "stub" (deterministic fake;
+	// also enables the /test/ai/* hooks, which 404 in every other mode).
+	AIMode    string
+	GeminiKey string
+	// GlobalAICap is the project-wide daily AI call limit (0 = unlimited).
+	GlobalAICap int64
 }
 
 func New(c Config) (http.Handler, error) {
@@ -30,18 +36,29 @@ func New(c Config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	var stub *food.Stub
 	if c.Fallback == nil {
-		c.Fallback = food.NoFallback{}
+		switch c.AIMode {
+		case "stub":
+			stub = &food.Stub{}
+			c.Fallback = stub
+		case "gemini":
+			c.Fallback = food.Gemini{APIKey: c.GeminiKey}
+		default:
+			c.Fallback = food.NoFallback{}
+		}
 	}
 	if c.Advisor == nil {
 		c.Advisor = coach.NoAdvisor{}
 	}
 	sum := &summary.Service{DB: c.DB, Contributors: []summary.Contributor{food.Contributor{}, activity.Contributor{}}}
 	gl := &goals.Service{DB: c.DB}
+	fs := &food.Service{DB: c.DB, Parser: p, Fallback: c.Fallback, Summary: sum}
+	fs.GlobalCap.Store(c.GlobalAICap)
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{
-		&food.Service{DB: c.DB, Parser: p, Fallback: c.Fallback, Summary: sum},
+		fs,
 		&activity.Service{DB: c.DB, Summary: sum, Goals: gl},
 		gl, sum,
 		&coach.Service{Parser: p, Goals: gl, Summary: sum, Advisor: c.Advisor},
@@ -50,6 +67,9 @@ func New(c Config) (http.Handler, error) {
 	wrap := auth.Middleware(c.Verifier, auth.PGUsers{DB: c.DB})
 	for _, m := range mods {
 		m.Routes(mux, wrap)
+	}
+	if stub != nil {
+		fs.TestRoutes(mux, stub)
 	}
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, 200, map[string]any{"ok": true, "time": time.Now().UTC()})
