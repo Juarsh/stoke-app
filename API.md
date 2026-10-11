@@ -211,3 +211,25 @@ before this server), it returns **409**:
 
 The client should keep the entry and retry later. This replaces the earlier
 rule that returned 409 for any version that wasn't the current one.
+
+## Entry state and streaks
+
+Each entry has a `state` (migration 007):
+- `confirmed` (default): counts in calorie and macro totals.
+- `needs_review`: logged but not yet checked, for example saved offline, or
+  waiting on an AI estimate or a did_you_mean confirmation. Send
+  `"state": "needs_review"` on a `POST /v1/entries` item. These items skip the
+  confirmation and number checks. `dish_id` or `custom_name` is required. Any
+  numbers are optional display estimates; a known `dish_id` gets table numbers.
+
+`needs_review` entries are **left out of** every total: the `/v1/entries` day
+`total` (which also reports `needs_review: n`), `/v1/summary` kcal_in and
+protein_in, and the coach's remaining budget.
+
+**Streak rule:** a local date counts toward the streak if the user logged
+anything for it, including `needs_review` entries.
+
+To confirm, send `PATCH /v1/entries/{id or client_id}` with
+`{"state": "confirmed", ...}`. The normal save rules apply, so a custom item
+must include `kcal`. Once confirmed, the entry counts in totals. Learned
+readings are only remembered from confirmed entries.

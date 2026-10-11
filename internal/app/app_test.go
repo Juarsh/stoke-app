@@ -726,3 +726,61 @@ func TestOfflineSyncAcrossTableUpdate(t *testing.T) {
 		t.Errorf("v1 after restart: %d", c)
 	}
 }
+
+// A needs_review entry keeps the streak alive but adds nothing to totals
+// until it's confirmed.
+func TestNeedsReviewStreakNotCalories(t *testing.T) {
+	srv, _ := setup(t, nil)
+	fixed := time.Date(2026, 10, 14, 13, 0, 0, 0, httpx.IST)
+	httpx.Now = func() time.Time { return fixed }
+	t.Cleanup(func() { httpx.Now = time.Now })
+	u := "rev"
+	// 13th: confirmed; 14th: only a pending entry (e.g. offline AI not done)
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"local_date": "2026-10-13", "items": []M{{"dish_id": "roti", "qty": 2, "source": "table"}}}, nil); c != 201 {
+		t.Fatalf("day 1: %d", c)
+	}
+	var cr struct{ Entries []entry }
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"local_date": "2026-10-14", "items": []M{
+		{"custom_name": "office canteen thali", "source": "ai_estimate", "state": "needs_review", "client_id": "p1"},
+		{"dish_id": "dal", "source": "did_you_mean", "state": "needs_review"}}}, &cr); c != 201 {
+		t.Fatalf("pending save: %d", c)
+	}
+	var sum struct {
+		KcalIn float64 `json:"kcal_in"`
+		Logged bool
+	}
+	call(t, srv, "GET", "/v1/summary?date=2026-10-14", u, nil, &sum)
+	if sum.KcalIn != 0 || !sum.Logged {
+		t.Errorf("pending day summary: %+v", sum)
+	}
+	var list struct {
+		Entries []struct{ State string }
+		Total   struct {
+			Kcal        float64
+			NeedsReview int `json:"needs_review"`
+		}
+	}
+	call(t, srv, "GET", "/v1/entries?date=2026-10-14", u, nil, &list)
+	if list.Total.Kcal != 0 || list.Total.NeedsReview != 2 || list.Entries[0].State != "needs_review" {
+		t.Errorf("pending totals: %+v", list)
+	}
+	var st struct{ Current int }
+	call(t, srv, "GET", "/v1/streak", u, nil, &st)
+	if st.Current != 2 {
+		t.Errorf("streak with a pending-only day: %+v", st)
+	}
+	// confirming without numbers fails for a custom item; with numbers it counts
+	if c := call(t, srv, "PATCH", "/v1/entries/p1", u, M{"state": "confirmed"}, nil); c != 400 {
+		t.Errorf("confirm without kcal: %d", c)
+	}
+	if c := call(t, srv, "PATCH", "/v1/entries/p1", u, M{"state": "confirmed", "kcal": 650, "protein_g": 20}, nil); c != 200 {
+		t.Fatalf("confirm: %d", c)
+	}
+	call(t, srv, "GET", "/v1/summary?date=2026-10-14", u, nil, &sum)
+	if sum.KcalIn != 650 {
+		t.Errorf("after confirm: %+v", sum)
+	}
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{{"custom_name": "x", "state": "maybe"}}}, nil); c != 400 {
+		t.Errorf("bad state: %d", c)
+	}
+}

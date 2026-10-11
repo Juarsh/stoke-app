@@ -51,6 +51,8 @@ type Total struct {
 	ProteinHigh float64 `json:"protein_high"`
 	CarbsG      float64 `json:"carbs_g"` // estimate
 	FatG        float64 `json:"fat_g"`   // estimate
+	// NeedsReview counts entries left out of these totals until confirmed.
+	NeedsReview int `json:"needs_review,omitempty"`
 }
 
 type CustomItem struct {
@@ -295,32 +297,35 @@ func (s *Service) fallbackBatch(ctx context.Context, userID int64, spans []strin
 // ---------- entries ----------
 
 type Entry struct {
-	ID          int64     `json:"id"`
-	LocalDate   string    `json:"local_date"`
-	Slot        string    `json:"slot"`
-	RawText     string    `json:"raw_text"`
-	DishID      *string   `json:"dish_id"`
-	Name        string    `json:"name"`
-	CustomName  string    `json:"custom_name"`
-	Qty         float64   `json:"qty"`
-	Unit        string    `json:"unit"`
-	OilLevel    string    `json:"oil_level"`
-	KcalBest    float64   `json:"kcal_best"`
-	KcalLow     float64   `json:"kcal_low"`
-	KcalHigh    float64   `json:"kcal_high"`
-	ProteinBest float64   `json:"protein_best"`
-	ProteinLow  float64   `json:"protein_low"`
-	ProteinHigh float64   `json:"protein_high"`
-	Source      string    `json:"source"`
-	Confirmed   bool      `json:"confirmed"`
-	ClientID    *string   `json:"client_id"`
-	TableVer    *int      `json:"dish_table_version"`
-	CarbsG      float64   `json:"carbs_g"`
-	FatG        float64   `json:"fat_g"`
-	Span        string    `json:"span"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	DeletedAt   *string   `json:"deleted_at"`
+	ID          int64   `json:"id"`
+	LocalDate   string  `json:"local_date"`
+	Slot        string  `json:"slot"`
+	RawText     string  `json:"raw_text"`
+	DishID      *string `json:"dish_id"`
+	Name        string  `json:"name"`
+	CustomName  string  `json:"custom_name"`
+	Qty         float64 `json:"qty"`
+	Unit        string  `json:"unit"`
+	OilLevel    string  `json:"oil_level"`
+	KcalBest    float64 `json:"kcal_best"`
+	KcalLow     float64 `json:"kcal_low"`
+	KcalHigh    float64 `json:"kcal_high"`
+	ProteinBest float64 `json:"protein_best"`
+	ProteinLow  float64 `json:"protein_low"`
+	ProteinHigh float64 `json:"protein_high"`
+	Source      string  `json:"source"`
+	Confirmed   bool    `json:"confirmed"`
+	ClientID    *string `json:"client_id"`
+	TableVer    *int    `json:"dish_table_version"`
+	CarbsG      float64 `json:"carbs_g"`
+	FatG        float64 `json:"fat_g"`
+	Span        string  `json:"span"`
+	// State: confirmed (counts in totals) or needs_review (counts for the
+	// streak only, until confirmed with PATCH {"state":"confirmed"}).
+	State     string    `json:"state"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt *string   `json:"deleted_at"`
 }
 
 // ItemIn is one chip the client confirms. Either dish_id (values recomputed
@@ -344,6 +349,9 @@ type ItemIn struct {
 	// Span is the parse item's matched_text. When confirmed, the reading is
 	// remembered for this user and the next parse returns it learned=true.
 	Span string `json:"span,omitempty"`
+	// State "needs_review" saves the item unconfirmed: no confirmation or
+	// number checks, excluded from totals, counts toward the streak.
+	State string `json:"state,omitempty"`
 	// ClientID makes saves idempotent: a repeat returns the stored entry.
 	ClientID string `json:"client_id"`
 	// DishTableVersion is required when a table item carries the client's own
@@ -399,6 +407,12 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 		c := in.ClientID
 		return &c
 	}()
+	if in.State != "" && in.State != "confirmed" && in.State != "needs_review" {
+		return bad(400, "state must be confirmed or needs_review")
+	}
+	if in.State == "needs_review" {
+		return s.draft(in, cid)
+	}
 	userTyped := in.Source == "custom" || in.Source == "manual"
 	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {
 		// validate against the table version the client used (any published one)
@@ -495,14 +509,56 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 		Source: src, Confirmed: true, ClientID: cid, TableVer: in.DishTableVersion}, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span`
+// draft stores a needs_review item as sent: numbers are optional display
+// estimates (table numbers when a known dish_id is given) and never counted.
+func (s *Service) draft(in ItemIn, cid *string) (Entry, int, error) {
+	e := Entry{Qty: in.Qty, Unit: in.Unit, OilLevel: in.OilLevel, CustomName: strings.TrimSpace(in.CustomName),
+		Source: in.Source, ClientID: cid, TableVer: in.DishTableVersion, State: "needs_review"}
+	if e.Unit == "" {
+		e.Unit = "count"
+	}
+	if in.DishID != "" {
+		it, err := s.Parser.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
+		if err != nil {
+			return e, 400, err
+		}
+		id := it.DishID
+		e.DishID, e.Name, e.Qty, e.Unit = &id, it.Name, it.Quantity, it.Unit
+		e.KcalBest, e.KcalLow, e.KcalHigh = it.Kcal.Best, it.Kcal.Low, it.Kcal.High
+		e.ProteinBest, e.ProteinLow, e.ProteinHigh = it.Protein.Best, it.Protein.Low, it.Protein.High
+		e.CarbsG, e.FatG = it.CarbsG, it.FatG
+	} else if e.CustomName == "" || len(e.CustomName) > 120 {
+		return e, 400, errors.New("each item needs dish_id or custom_name")
+	}
+	if in.Kcal != nil {
+		e.KcalBest = *in.Kcal
+		e.KcalLow, e.KcalHigh = f(in.KcalLow, e.KcalBest), f(in.KcalHigh, e.KcalBest)
+	}
+	if in.ProteinG != nil {
+		e.ProteinBest = *in.ProteinG
+		e.ProteinLow, e.ProteinHigh = f(in.ProteinLow, e.ProteinBest), f(in.ProteinHigh, e.ProteinBest)
+	}
+	e.CarbsG, e.FatG = f(in.CarbsG, e.CarbsG), f(in.FatG, e.FatG)
+	if e.KcalBest < 0 || e.KcalBest > 5000 || e.ProteinBest < 0 || e.CarbsG < 0 || e.FatG < 0 || e.KcalLow > e.KcalBest || e.KcalHigh < e.KcalBest {
+		return e, 400, errors.New("numbers out of range")
+	}
+	if !saveSources[e.Source] {
+		e.Source = "custom"
+	}
+	if e.Name == "" {
+		e.Name = e.CustomName
+	}
+	return e, 0, nil
+}
+
+const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state`
 
 func (s *Service) scan(row pgx.Row) (Entry, error) {
 	var e Entry
 	var d time.Time
 	var del *time.Time
 	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span)
+		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State)
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
@@ -630,18 +686,18 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
-			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING `+cols,
+			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span,state)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE(NULLIF($23,''),'confirmed')) RETURNING `+cols,
 			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
 			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
-			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span)))
+			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span), e.State))
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
 		}
 		out = append(out, saved)
 		created++
-		if it.Confirmed && it.Span != "" {
+		if it.Confirmed && it.Span != "" && saved.State == "confirmed" {
 			if err := remember(r.Context(), tx, uid, it.Span, saved); err != nil {
 				httpx.Error(w, 500, "save failed")
 				return
@@ -694,6 +750,10 @@ func (s *Service) handleList(w http.ResponseWriter, r *http.Request) {
 func entryTotals(es []Entry) Total {
 	var t Total
 	for _, e := range es {
+		if e.State == "needs_review" {
+			t.NeedsReview++
+			continue
+		}
 		t.Kcal += e.KcalBest
 		t.KcalLow += e.KcalLow
 		t.KcalHigh += e.KcalHigh
@@ -753,6 +813,8 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		// remembered for it (set "remember": false to skip).
 		Span     *string `json:"span"`
 		Remember *bool   `json:"remember"`
+		// State "confirmed" confirms a needs_review entry (full checks apply).
+		State *string `json:"state"`
 	}
 	if !httpx.Decode(w, r, &in) {
 		return
@@ -783,7 +845,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		}
 		slot = *in.Slot
 	}
-	it := ItemIn{Qty: e.Qty, Unit: e.Unit, OilLevel: e.OilLevel, CustomName: e.CustomName, Source: e.Source, Confirmed: true}
+	it := ItemIn{Qty: e.Qty, Unit: e.Unit, OilLevel: e.OilLevel, CustomName: e.CustomName, Source: e.Source, Confirmed: true, State: e.State}
+	if in.State != nil {
+		it.State = *in.State
+	}
 	if !saveSources[it.Source] {
 		it.Source = "custom"
 	}
@@ -844,10 +909,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	saved, err := s.scan(s.DB.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
-		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=true,
-		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,updated_at=now()
+		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
+		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
 		WHERE id=$1 AND user_id=$2 RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
-		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG))
+		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State))
 	if err != nil {
 		httpx.Error(w, 500, "save failed")
 		return
@@ -857,7 +922,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		span = *in.Span
 	}
 	corrected := in.DishID != nil || in.Qty != nil || in.Unit != nil || in.OilLevel != nil || in.CustomName != nil || in.Kcal != nil || in.ProteinG != nil
-	if corrected && span != "" && (in.Remember == nil || *in.Remember) {
+	if corrected && span != "" && saved.State == "confirmed" && (in.Remember == nil || *in.Remember) {
 		if err := remember(r.Context(), s.DB, uid, span, saved); err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
@@ -933,9 +998,9 @@ func (Contributor) Name() string { return "food" }
 
 func (Contributor) Contribute(ctx context.Context, q summary.Querier, uid int64, day time.Time, d *summary.Day) error {
 	var n int
-	err := q.QueryRow(ctx, `SELECT COALESCE(SUM(kcal_best),0), COALESCE(SUM(protein_best),0), COUNT(*) FROM food_entries
+	err := q.QueryRow(ctx, `SELECT COALESCE(SUM(kcal_best) FILTER (WHERE state='confirmed'),0), COALESCE(SUM(protein_best) FILTER (WHERE state='confirmed'),0), COUNT(*) FROM food_entries
 		WHERE user_id=$1 AND local_date=$2 AND deleted_at IS NULL`, uid, day).Scan(&d.KcalIn, &d.ProteinIn, &n)
-	d.Logged = d.Logged || n > 0
+	d.Logged = d.Logged || n > 0 // any entry, including needs_review, counts for the streak
 	return err
 }
 
