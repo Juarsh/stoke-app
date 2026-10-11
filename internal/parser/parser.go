@@ -54,22 +54,24 @@ type Rules struct {
 	GenericProtein  map[string]string   `json:"generic_protein_dish"`
 	// StrictStatedQty: the table answers alone only if every span had a
 	// count or unit in the text ("2 roti", "1 katori dal"); "dal" alone goes to AI.
-	StrictStatedQty bool                `json:"strict_require_stated_quantity"`
-	FormWords       []string            `json:"form_words"`
-	ModifierWords   []string            `json:"modifier_words"`
-	StuffingWords   []string            `json:"stuffing_words"`
-	Connectors      []string            `json:"connectors"`
-	EggWords        []string            `json:"egg_words"`
-	EggsPerPortion  map[string]float64  `json:"eggs_per_portion"`
-	FuzzyMinSim     float64             `json:"fuzzy_min_similarity"`
-	WrapForms       []string            `json:"wrap_forms"`
-	StyleWords      []string            `json:"style_words"`
-	Stopwords       []string            `json:"stopwords"`
-	MinPlaceholder  int                 `json:"min_placeholder_len"`
-	Confidence      map[string]float64  `json:"confidence"`
-	FuzzyNeverCats  []string            `json:"fuzzy_never_to_categories"`
-	TypicalSides    map[string][]string `json:"typical_sides"`
-	GenericWrapDish string              `json:"generic_wrap_dish"`
+	StrictStatedQty bool `json:"strict_require_stated_quantity"`
+	// EverydayCombos: combo dish id -> its components at default portions ("_doc" ignored).
+	EverydayCombos  map[string]json.RawMessage `json:"everyday_combos"`
+	FormWords       []string                   `json:"form_words"`
+	ModifierWords   []string                   `json:"modifier_words"`
+	StuffingWords   []string                   `json:"stuffing_words"`
+	Connectors      []string                   `json:"connectors"`
+	EggWords        []string                   `json:"egg_words"`
+	EggsPerPortion  map[string]float64         `json:"eggs_per_portion"`
+	FuzzyMinSim     float64                    `json:"fuzzy_min_similarity"`
+	WrapForms       []string                   `json:"wrap_forms"`
+	StyleWords      []string                   `json:"style_words"`
+	Stopwords       []string                   `json:"stopwords"`
+	MinPlaceholder  int                        `json:"min_placeholder_len"`
+	Confidence      map[string]float64         `json:"confidence"`
+	FuzzyNeverCats  []string                   `json:"fuzzy_never_to_categories"`
+	TypicalSides    map[string][]string        `json:"typical_sides"`
+	GenericWrapDish string                     `json:"generic_wrap_dish"`
 	UnknownItem     struct {
 		Kcal     [3]float64 `json:"kcal"`
 		ProteinG [3]float64 `json:"protein_g"`
@@ -124,6 +126,7 @@ type Item struct {
 
 	explicit bool // quantity/unit came from the text
 	stated   bool // kept after finish for TableOnly
+	everyday bool // expanded from an everyday combo (allowed in TableOnly)
 	generic  bool
 	clause   int  // comma-separated part of the text
 	joined   bool // linked to the previous item by "with"/"aur"
@@ -765,6 +768,7 @@ func (p *Parser) Parse(text string) Result {
 	if pd.hasQty {
 		res.Leftover++ // a number nothing used
 	}
+	p.everydayCombos(&res)
 	present := map[string]bool{}
 	for _, it := range res.Items {
 		present[it.DishID] = true
@@ -980,7 +984,7 @@ func (p *Parser) finish(it *Item) {
 	if it.Source == SourceGeneric {
 		it.pen("generic")
 	}
-	if it.FromCombo != "" {
+	if it.FromCombo != "" && !it.everyday {
 		it.pen("combo_or_split")
 	}
 	for _, f := range it.pens {
@@ -1521,10 +1525,60 @@ func (p *Parser) TableOnly(r Result) bool {
 		if d := p.dishByID(it.DishID); d == nil || len(d.Parts) > 0 || d.NeedsConfirm {
 			return false // combo rows and generic rows never answer alone
 		}
-		if it.Source != SourceTable || it.NeedsConfirmation || it.Fuzzy || it.FromCombo != "" || it.generic ||
+		if it.Source != SourceTable || it.NeedsConfirmation || it.Fuzzy || (it.FromCombo != "" && !it.everyday) || it.generic ||
 			len(it.Flags) > 0 || it.Unit == "" || (p.r.StrictStatedQty && !it.stated) {
 			return false
 		}
 	}
 	return true
+}
+
+type comboPart struct {
+	DishID string  `json:"dish_id"`
+	Qty    float64 `json:"qty"`
+}
+
+// everydayCombos replaces an everyday combo row read without a portion (or
+// in its own unit, "2 plate dal chawal") with its component dishes at their
+// default portions. Combos given in another unit keep the split rule.
+func (p *Parser) everydayCombos(res *Result) {
+	var out []Item
+	for _, it := range res.Items {
+		raw, ok := p.r.EverydayCombos[it.DishID]
+		d := p.dishByID(it.DishID)
+		if !ok || d == nil || it.Fuzzy || (it.explicit && it.Unit != d.Unit) {
+			out = append(out, it)
+			continue
+		}
+		var parts []comboPart
+		if json.Unmarshal(raw, &parts) != nil || len(parts) == 0 {
+			out = append(out, it)
+			continue
+		}
+		n := it.Quantity
+		if n <= 0 {
+			n = 1
+		}
+		for _, pt := range parts {
+			cd := p.dishByID(pt.DishID)
+			if cd == nil {
+				continue
+			}
+			q := pt.Qty
+			if q == 0 {
+				q = 1
+			}
+			c := Item{DishID: cd.ID, Name: cd.Name, Matched: it.Matched, DataSource: cd.Source, SourceNote: cd.SourceNote,
+				FromCombo: d.ID, everyday: true, clause: it.clause, joined: it.joined}
+			if p.fat[cd.ID] {
+				q *= p.r.DefaultFatSpoon
+			}
+			c = p.compute(cd, c, round(q*n, 2), "")
+			if cd.OilSensitive {
+				c = p.withOil(&c, "normal")
+			}
+			out = append(out, c)
+		}
+	}
+	res.Items = out
 }

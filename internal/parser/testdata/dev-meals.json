@@ -157,10 +157,15 @@
    "in": "chole bhature",
    "want": [
     [
-     "chole_bhature",
+     "chole",
      1
+    ],
+    [
+     "bhatura",
+     2
     ]
-   ]
+   ],
+   "note": "everyday combo -> components at default portions"
   },
   {
    "in": "3 phulka, dal kam oil, salad",
@@ -306,10 +311,15 @@
    "in": "chhole chawal",
    "want": [
     [
-     "chole_chawal",
+     "chole",
+     1
+    ],
+    [
+     "rice",
      1
     ]
-   ]
+   ],
+   "note": "everyday combo -> components at default portions"
   },
   {
    "in": "2 chapatii",
@@ -338,7 +348,11 @@
    "in": "dal chawal ghee ke saath 2 plate",
    "want": [
     [
-     "dal_chawal",
+     "dal",
+     2
+    ],
+    [
+     "rice",
      2
     ],
     [
@@ -346,7 +360,7 @@
      1
     ]
    ],
-   "note": "trailing qty binds to the main dish, not ghee"
+   "note": "everyday combo -> components at default portions"
   },
   {
    "in": "upma thoda butter 1 katori",
@@ -562,21 +576,29 @@
    "in": "1 plate kadhi chawal",
    "want": [
     [
-     "kadhi_chawal",
+     "kadhi",
+     1
+    ],
+    [
+     "rice",
      1
     ]
    ],
-   "note": "own unit: stays one combo row"
+   "note": "everyday combo -> components at default portions"
   },
   {
    "in": "kadhi chawal",
    "want": [
     [
-     "kadhi_chawal",
+     "kadhi",
+     1
+    ],
+    [
+     "rice",
      1
     ]
    ],
-   "note": "no portion: kept whole"
+   "note": "everyday combo -> components at default portions"
   },
   {
    "in": "6 chicken momos",

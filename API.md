@@ -334,3 +334,31 @@ with a stated count are saved as before.
 
 Combo rows (dal chawal, rajma chawal, chole bhature, kadhi chawal), generic
 rows, typo matches and leftovers still go to the AI.
+
+## Everyday combos
+
+`rules.json > everyday_combos` lists combo rows that are read as their
+component dishes at the components' default portions. No new nutrition data
+is added. They are exact table matches and make no AI call. Each part comes
+back as a separate item with `from_combo: <combo id>`, `default_portion: true`
+and `needs_confirmation: false`.
+
+| Combo | Parts |
+|---|---|
+| dal chawal / dal rice | dal + rice |
+| rajma chawal | rajma + rice |
+| chole chawal | chole + rice |
+| kadhi chawal | kadhi + rice |
+| chole bhature | chole + 2 bhatura |
+| bread butter | bread + butter (default spoon) |
+
+This also applies when the combo comes with its own unit: "2 plate dal
+chawal" gives 2 × each part. Other everyday pairs, such as idli sambar, dosa
+chutney, pav bhaji, vada pav, roti sabzi and curd rice, already parse as
+clean table items.
+
+A combo given in a different unit ("1 katori chole bhature") still uses the
+split rule and goes to the AI.
+
+"bread butter" used to go to the AI because it matched the `bread_butter`
+combo row, and the strict rule never lets combo rows answer alone.

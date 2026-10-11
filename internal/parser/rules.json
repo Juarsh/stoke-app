@@ -741,5 +741,57 @@
    "khichdi"
   ]
  },
- "strict_require_stated_quantity": false
+ "strict_require_stated_quantity": false,
+ "everyday_combos": {
+  "_doc": "Everyday combo rows read as their component dishes at default portions (no new nutrition data). qty multiplies the component's default portion.",
+  "dal_chawal": [
+   {
+    "dish_id": "dal"
+   },
+   {
+    "dish_id": "rice"
+   }
+  ],
+  "rajma_chawal": [
+   {
+    "dish_id": "rajma"
+   },
+   {
+    "dish_id": "rice"
+   }
+  ],
+  "chole_chawal": [
+   {
+    "dish_id": "chole"
+   },
+   {
+    "dish_id": "rice"
+   }
+  ],
+  "kadhi_chawal": [
+   {
+    "dish_id": "kadhi"
+   },
+   {
+    "dish_id": "rice"
+   }
+  ],
+  "chole_bhature": [
+   {
+    "dish_id": "chole"
+   },
+   {
+    "dish_id": "bhatura",
+    "qty": 2
+   }
+  ],
+  "bread_butter": [
+   {
+    "dish_id": "bread"
+   },
+   {
+    "dish_id": "butter"
+   }
+  ]
+ }
 }

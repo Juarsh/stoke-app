@@ -734,7 +734,7 @@ func TestStrictTableOrWholeMealAI(t *testing.T) {
 		t.Errorf("clean meal: %d %+v", c, r)
 	}
 	// anything else -> the WHOLE meal in one queued AI call
-	for i, text := range []string{"dal chawal", "2 chapatii", "2 roti quinoa", "rajma with rice, 1 bowl", "1 plate chole bhature"} {
+	for i, text := range []string{"paneer lababdar", "2 chapatii", "2 roti quinoa", "rajma with rice, 1 bowl", "1 katori chole bhature"} {
 		c, r = parseAI(t, srv, "s1", text)
 		if c != 202 || r.Answer != "ai" || len(r.Items) == 0 || aiCalls(t, srv) != i+1 {
 			t.Fatalf("%q: %d calls %d %+v", text, c, aiCalls(t, srv), r)
@@ -747,7 +747,7 @@ func TestStrictTableOrWholeMealAI(t *testing.T) {
 	}
 	// same meal again (another user, different spacing/case): cache, no call, still ai_estimate
 	calls := aiCalls(t, srv)
-	c, r = parseAI(t, srv, "s2", "Dal  Chawal!")
+	c, r = parseAI(t, srv, "s2", "Paneer  Lababdar!")
 	if c != 200 || r.Fallback != "cache" || r.Items[0].Source != "ai_estimate" || !r.Items[0].NeedsConfirmation || aiCalls(t, srv) != calls {
 		t.Errorf("cache: %d %+v", c, r)
 	}
@@ -1016,6 +1016,23 @@ func TestDefaultPortion(t *testing.T) {
 	call(t, srv, "POST", "/v1/entries", "dp", M{"text": "2 roti"}, &cr)
 	if len(cr.Entries) != 1 {
 		t.Errorf("stated count text save: %+v", cr)
+	}
+	// everyday combos: components at default portions, table, no AI
+	for text, want := range map[string][]string{"dal chawal": {"dal", "rice"}, "bread butter": {"bread", "butter"},
+		"chole bhature": {"chole", "bhatura"}, "1 plate rajma chawal": {"rajma", "rice"}, "kadhi chawal": {"kadhi", "rice"}} {
+		r.Items = nil
+		if c := call(t, srv, "POST", "/v1/parse", "dp", M{"text": text}, &r); c != 200 || r.Answer != "table" || len(r.Items) != len(want) {
+			t.Errorf("%q: %d %+v", text, c, r)
+			continue
+		}
+		for i, it := range r.Items {
+			if it.DishID != want[i] || !it.DefaultPortion || it.NeedsConfirmation || it.Source != "table" {
+				t.Errorf("%q item %d: %+v", text, i, it)
+			}
+		}
+	}
+	if aiCalls(t, srv) != 0 {
+		t.Errorf("combos called the AI %d times", aiCalls(t, srv))
 	}
 	// the normal Add of the parsed item (app confirms) saves it
 	if c := call(t, srv, "POST", "/v1/entries", "dp", M{"items": []M{{"dish_id": "palak_paneer", "qty": 1, "source": "table"}}}, nil); c != 201 {
