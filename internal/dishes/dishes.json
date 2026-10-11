@@ -1118,9 +1118,7 @@
  {
   "id": "chicken_tikka",
   "name": "chicken tikka",
-  "aliases": [
-   "tikka"
-  ],
+  "aliases": [],
   "unit": "plate",
   "portion_grams": 150.0,
   "kcal": 240.0,
@@ -2080,7 +2078,8 @@
   "id": "rajma_chawal",
   "name": "rajma chawal",
   "aliases": [
-   "rajma rice"
+   "rajma rice",
+   "rajma chaawal"
   ],
   "unit": "plate",
   "portion_grams": 350.0,
@@ -2135,7 +2134,9 @@
   "id": "chole_chawal",
   "name": "chole chawal",
   "aliases": [
-   "chole rice"
+   "chole rice",
+   "chhole chawal",
+   "chana chawal"
   ],
   "unit": "plate",
   "portion_grams": 300.0,
