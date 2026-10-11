@@ -202,7 +202,7 @@ type entry struct {
 	Name        string
 	Qty         float64
 	Unit        string
-	OilLevel    string `json:"oil_level"`
+	OilLevel    string  `json:"oil_level"`
 	KcalBest    float64 `json:"kcal_best"`
 	ProteinBest float64 `json:"protein_best"`
 	Source      string
