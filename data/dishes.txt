@@ -1,0 +1,164 @@
+roti|chapati,chapatti,phulka,fulka,rotis,chapatis|count|40|110|3.5|0|E
+tandoori roti|tandoori|count|60|160|5|0|E
+naan|nan,naan bread|count|90|260|8|0|E
+butter naan|butter nan|count|100|320|8|1|E
+garlic naan|garlic nan|count|100|300|8|1|E
+paratha|parantha,parotha,plain paratha|count|60|200|4|1|E
+aloo paratha|aloo parantha,aloo ka paratha|count|120|300|6|1|E
+gobi paratha|gobhi paratha,gobi parantha|count|120|270|6|1|E
+paneer paratha|paneer parantha|count|120|330|11|1|E
+methi paratha|methi thepla,thepla|count|60|180|5|1|E
+puri|poori,puris,pooris|count|25|100|2|1|E
+bhatura|bhature,bhaturas|count|80|290|6|1|E
+rice|chawal,plain rice,steamed rice,white rice,bhaat,bhat|katori|150|195|4|0|U
+brown rice|brown chawal|katori|150|185|4|0|U
+jeera rice|jeera chawal,zeera rice|katori|150|250|4|1|E
+veg pulao|pulao,pulav,veg pulav|katori|150|260|5|1|E
+veg biryani|biryani veg,veg biriyani|plate|250|400|9|1|E
+chicken biryani|biryani,biriyani,chicken biriyani|plate|300|550|25|1|E
+mutton biryani|mutton biriyani|plate|300|620|26|1|E
+egg biryani|anda biryani|plate|280|480|16|1|E
+khichdi|khichri,khichadi|katori|200|240|8|1|E
+curd rice|dahi chawal,thayir sadam|katori|200|220|6|0|E
+lemon rice|nimbu chawal|katori|150|240|4|1|E
+fried rice|veg fried rice|plate|250|400|8|1|E
+dal|daal,dal tadka,daal tadka,yellow dal,dal fry,daal fry,toor dal,arhar dal|katori|150|150|8|1|E
+moong dal|moong daal|katori|150|130|8|1|E
+masoor dal|masoor daal,lal dal|katori|150|140|9|1|E
+chana dal|chana daal|katori|150|170|9|1|E
+dal makhani|daal makhani,dal makhni|katori|150|260|9|1|E
+rajma|rajma masala,rajmah|katori|150|210|9|1|E
+chole|chhole,chana masala,chholey,chole masala,chickpea curry|katori|150|230|9|1|E
+kadhi|kadi,kadhi pakora|katori|150|170|5|1|E
+sambar|sambhar,saambar|katori|150|110|5|1|E
+rasam|rassam|katori|150|50|1|1|E
+sabzi|sabji,subzi,sabjee,sabzee,mix veg,mixed veg,mix sabzi,veg curry|katori|150|130|3|1|E
+aloo sabzi|aloo sabji,aloo ki sabzi,aloo ki sabji,potato sabzi,aloo curry|katori|150|170|3|1|E
+aloo gobi|aloo gobhi,gobi aloo|katori|150|150|4|1|E
+bhindi|bhindi sabzi,bhindi fry,bhindi masala,okra|katori|150|140|3|1|E
+baingan bharta|bharta,baingan,brinjal bharta|katori|150|130|3|1|E
+palak paneer|saag paneer|katori|150|260|12|1|E
+paneer butter masala|paneer makhani,butter paneer|katori|150|330|12|1|E
+shahi paneer|shahi panir|katori|150|340|12|1|E
+kadai paneer|kadhai paneer|katori|150|290|13|1|E
+matar paneer|mutter paneer,matar panir|katori|150|250|11|1|E
+paneer bhurji|panir bhurji|katori|150|300|16|1|E
+paneer|panir,cottage cheese|katori|100|265|18|0|U
+tofu|soya paneer|katori|100|80|8|0|U
+lauki sabzi|lauki,ghiya,dudhi|katori|150|90|2|1|E
+tinda|tinde|katori|150|90|2|1|E
+cabbage sabzi|patta gobhi,band gobhi|katori|150|100|2|1|E
+gajar matar|gajar mattar|katori|150|120|3|1|E
+aloo matar|aloo mutter|katori|150|170|5|1|E
+saag|sarson ka saag,sarson saag|katori|150|160|5|1|E
+dum aloo|dum alu|katori|150|220|3|1|E
+soya chunks|soya chunk,nutrela,soyabean chunks|katori|150|200|18|1|E
+mushroom masala|mushroom|katori|150|140|4|1|E
+chicken curry|chicken,murgh curry,chicken gravy|katori|150|250|22|1|E
+butter chicken|murgh makhani,chicken makhani|katori|150|330|22|1|E
+chicken tikka|tikka|plate|150|240|30|1|E
+tandoori chicken|tandoori murgh|plate|200|300|38|1|E
+chicken breast|grilled chicken,boiled chicken|plate|100|165|31|0|U
+mutton curry|mutton,gosht,lamb curry|katori|150|300|22|1|E
+keema|kheema,mutton keema,chicken keema|katori|150|300|20|1|E
+fish curry|machli,machhli,fish|katori|150|220|20|1|E
+fish fry|fried fish|count|100|230|20|1|E
+egg curry|anda curry,egg masala,ande ki sabzi|katori|150|220|13|1|E
+boiled egg|egg,eggs,anda,ande,ubla anda,boiled eggs|count|50|72|6.3|0|U
+omelette|omelet,amlet,aamlet,omlette,anda omelette|count|60|120|7|1|E
+egg bhurji|anda bhurji,scrambled egg|katori|100|180|12|1|E
+poha|pohe,kanda poha|plate|150|250|5|1|E
+upma|uppuma,rava upma|plate|150|230|5|1|E
+idli|idly,idlis,idlies|count|40|60|2|0|E
+dosa|dosai,plain dosa,dosas|count|80|170|4|1|E
+masala dosa|masala dosai|count|160|350|7|1|E
+uttapam|uthappam,uttapa|count|120|220|6|1|E
+vada|medu vada,wada,vadai|count|50|140|4|1|E
+pongal|ven pongal|katori|150|240|6|1|E
+dhokla|khaman,khaman dhokla|count|30|50|2|0|E
+besan chilla|chilla,cheela,besan cheela|count|70|150|7|1|E
+moong chilla|moong cheela|count|70|130|8|1|E
+oats|oatmeal,daliya oats,masala oats|katori|200|180|6|0|E
+daliya|dalia,broken wheat|katori|200|180|6|0|E
+cornflakes|corn flakes|katori|30|110|2|0|E
+muesli|musli|katori|50|190|5|0|E
+bread|slice,bread slice,white bread|count|25|67|2.3|0|U
+brown bread|whole wheat bread,atta bread|count|28|70|3.5|0|U
+bread butter|butter toast,toast|count|35|130|2.5|0|E
+sandwich|veg sandwich|count|150|280|8|1|E
+paneer sandwich|paneer sendwich|count|170|360|15|1|E
+maggi|maggie,magi,maggi noodles,maggie noodles,instant noodles,noodles packet|plate|70|310|7|0|O
+chowmein|chow mein,hakka noodles,noodles|plate|200|380|8|1|E
+pasta|white sauce pasta,red sauce pasta|plate|200|380|10|1|E
+pizza|pizza slice|count|100|270|11|1|E
+burger|veg burger,aloo tikki burger|count|150|350|9|1|E
+momos|momo,veg momos,dumplings|plate|180|300|9|0|E
+chicken momos|chicken momo|plate|180|320|16|0|E
+samosa|samose,samosas|count|80|260|4|1|E
+kachori|kachauri|count|60|200|4|1|E
+pakora|pakoda,pakode,pakore,bhajiya,bhaji|count|25|75|2|1|E
+aloo tikki|tikki|count|70|150|2|1|E
+pav bhaji|pao bhaji|plate|300|500|11|1|E
+vada pav|vada pao,wada pav|count|150|300|7|1|E
+pani puri|golgappa,gol gappe,golgappe,puchka,panipuri|plate|150|250|5|1|E
+bhel puri|bhel,bhelpuri|plate|120|250|6|1|E
+sev puri|sevpuri|plate|120|280|5|1|E
+dahi puri|dahipuri|plate|150|280|6|1|E
+chaat|papdi chaat,aloo chaat|plate|150|280|6|1|E
+chole bhature|chole bhature plate|plate|350|750|20|1|E
+rajma chawal|rajma rice|plate|350|420|14|1|E
+dal chawal|dal rice,daal chawal|plate|300|350|12|1|E
+kadhi chawal|kadhi rice|plate|300|370|9|1|E
+chole chawal|chole rice|plate|300|430|13|1|E
+thali|veg thali,full thali|plate|600|850|25|1|E
+dahi|curd,yogurt,yoghurt,dahee|katori|150|90|5|0|U
+raita|boondi raita,cucumber raita|katori|150|100|5|0|E
+lassi|sweet lassi,meethi lassi|glass|250|220|7|0|E
+chaas|chhaas,buttermilk,mattha,chhachh|glass|250|50|3|0|E
+milk|doodh,dudh,full cream milk|glass|250|155|8|0|U
+toned milk|double toned milk|glass|250|120|8|0|U
+chai|tea,cutting chai,masala chai,adrak chai|count|120|80|2.5|0|E
+coffee|filter coffee,milk coffee|count|150|100|3.5|0|E
+black coffee|americano|count|200|5|0.3|0|U
+cold coffee|coffee shake|glass|250|250|7|0|E
+banana shake|banana milkshake|glass|300|300|9|0|E
+protein shake|whey,whey protein,protein,scoop whey|count|30|120|24|0|O
+nimbu pani|shikanji,lemonade,lemon water|glass|250|60|0|0|E
+coconut water|nariyal pani|glass|250|45|1.7|0|U
+juice|orange juice,mosambi juice,fruit juice|glass|250|110|1.5|0|U
+cola|coke,pepsi,soft drink,cold drink|glass|300|130|0|0|O
+banana|kela,kele,bananas|count|120|105|1.3|0|U
+apple|seb,apples|count|180|95|0.5|0|U
+mango|aam|count|200|120|1.6|0|U
+papaya|papita|katori|150|65|0.7|0|U
+orange|santra,narangi|count|130|60|1.2|0|U
+grapes|angoor|katori|100|70|0.7|0|U
+watermelon|tarbooz|katori|150|45|0.9|0|U
+guava|amrood|count|100|68|2.6|0|U
+chikki|gur chikki,peanut chikki|count|25|120|3|0|E
+peanuts|moongphali,mungfali,groundnuts|katori|30|170|7.5|0|U
+almonds|badam|count|1.2|7|0.25|0|U
+roasted chana|bhuna chana,chana|katori|30|110|6|0|E
+makhana|fox nuts,phool makhana|katori|20|70|2|0|E
+sprouts|moong sprouts,ankurit moong,sprouts salad|katori|100|100|7|0|E
+salad|green salad,kachumber|katori|100|30|1|0|E
+namkeen|bhujia,mixture,aloo bhujia|katori|30|160|4|0|O
+biscuit|biscuits,marie,parle g,parleg|count|8|35|0.6|0|O
+gulab jamun|gulabjamun,jamun|count|50|150|2|1|E
+rasgulla|rasagulla,roshogolla|count|50|110|2|0|E
+jalebi|jalebis,jalebee|count|30|130|1|1|E
+kheer|chawal ki kheer,payasam|katori|150|250|6|0|E
+halwa|sooji halwa,suji halwa,gajar halwa,sheera|katori|100|300|4|1|E
+ladoo|laddu,laddoo,besan ladoo,motichoor ladoo|count|40|180|3|1|E
+barfi|burfi,kaju katli|count|30|130|2|0|E
+ice cream|icecream,ice-cream|katori|70|140|2.5|0|E
+ghee|desi ghee|spoon|5|45|0|0|U
+butter|makkhan,makhan|spoon|5|36|0|0|U
+oil|tel,cooking oil|spoon|5|44|0|0|U
+sugar|cheeni,chini,shakkar|spoon|5|20|0|0|U
+jaggery|gur,gud|spoon|10|38|0|0|U
+honey|shahad|spoon|7|21|0|0|U
+pickle|achaar,achar,aachar|spoon|15|30|0.2|0|E
+papad|papadum,papar|count|10|40|2|0|E
+chutney|green chutney,hari chutney,coconut chutney|spoon|15|20|0.5|0|E
+peanut butter|pb|spoon|16|95|4|0|U

@@ -1,0 +1,3152 @@
+[
+ {
+  "id": "roti",
+  "name": "roti",
+  "aliases": [
+   "chapati",
+   "chapatti",
+   "phulka",
+   "fulka",
+   "rotis",
+   "chapatis"
+  ],
+  "unit": "count",
+  "portion_grams": 40.0,
+  "kcal": 110.0,
+  "kcal_low": 82,
+  "kcal_high": 138,
+  "protein_g": 3.5,
+  "protein_low": 2.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "tandoori_roti",
+  "name": "tandoori roti",
+  "aliases": [
+   "tandoori"
+  ],
+  "unit": "count",
+  "portion_grams": 60.0,
+  "kcal": 160.0,
+  "kcal_low": 120,
+  "kcal_high": 200,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "naan",
+  "name": "naan",
+  "aliases": [
+   "nan",
+   "naan bread"
+  ],
+  "unit": "count",
+  "portion_grams": 90.0,
+  "kcal": 260.0,
+  "kcal_low": 195,
+  "kcal_high": 325,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "butter_naan",
+  "name": "butter naan",
+  "aliases": [
+   "butter nan"
+  ],
+  "unit": "count",
+  "portion_grams": 100.0,
+  "kcal": 320.0,
+  "kcal_low": 240,
+  "kcal_high": 400,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "garlic_naan",
+  "name": "garlic naan",
+  "aliases": [
+   "garlic nan"
+  ],
+  "unit": "count",
+  "portion_grams": 100.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paratha",
+  "name": "paratha",
+  "aliases": [
+   "parantha",
+   "parotha",
+   "plain paratha"
+  ],
+  "unit": "count",
+  "portion_grams": 60.0,
+  "kcal": 200.0,
+  "kcal_low": 150,
+  "kcal_high": 250,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "aloo_paratha",
+  "name": "aloo paratha",
+  "aliases": [
+   "aloo parantha",
+   "aloo ka paratha"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "gobi_paratha",
+  "name": "gobi paratha",
+  "aliases": [
+   "gobhi paratha",
+   "gobi parantha"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 270.0,
+  "kcal_low": 202,
+  "kcal_high": 338,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paneer_paratha",
+  "name": "paneer paratha",
+  "aliases": [
+   "paneer parantha"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 330.0,
+  "kcal_low": 248,
+  "kcal_high": 412,
+  "protein_g": 11.0,
+  "protein_low": 8.2,
+  "protein_high": 13.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "methi_paratha",
+  "name": "methi paratha",
+  "aliases": [
+   "methi thepla",
+   "thepla"
+  ],
+  "unit": "count",
+  "portion_grams": 60.0,
+  "kcal": 180.0,
+  "kcal_low": 135,
+  "kcal_high": 225,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "puri",
+  "name": "puri",
+  "aliases": [
+   "poori",
+   "puris",
+   "pooris"
+  ],
+  "unit": "count",
+  "portion_grams": 25.0,
+  "kcal": 100.0,
+  "kcal_low": 75,
+  "kcal_high": 125,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "bhatura",
+  "name": "bhatura",
+  "aliases": [
+   "bhature",
+   "bhaturas"
+  ],
+  "unit": "count",
+  "portion_grams": 80.0,
+  "kcal": 290.0,
+  "kcal_low": 218,
+  "kcal_high": 362,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "rice",
+  "name": "rice",
+  "aliases": [
+   "chawal",
+   "plain rice",
+   "steamed rice",
+   "white rice",
+   "bhaat",
+   "bhat"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 195.0,
+  "kcal_low": 176,
+  "kcal_high": 215,
+  "protein_g": 4.0,
+  "protein_low": 3.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "brown_rice",
+  "name": "brown rice",
+  "aliases": [
+   "brown chawal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 185.0,
+  "kcal_low": 166,
+  "kcal_high": 204,
+  "protein_g": 4.0,
+  "protein_low": 3.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "jeera_rice",
+  "name": "jeera rice",
+  "aliases": [
+   "jeera chawal",
+   "zeera rice"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "veg_pulao",
+  "name": "veg pulao",
+  "aliases": [
+   "pulao",
+   "pulav",
+   "veg pulav"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 260.0,
+  "kcal_low": 195,
+  "kcal_high": 325,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "veg_biryani",
+  "name": "veg biryani",
+  "aliases": [
+   "biryani veg",
+   "veg biriyani"
+  ],
+  "unit": "plate",
+  "portion_grams": 250.0,
+  "kcal": 400.0,
+  "kcal_low": 300,
+  "kcal_high": 500,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chicken_biryani",
+  "name": "chicken biryani",
+  "aliases": [
+   "biryani",
+   "biriyani",
+   "chicken biriyani"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 550.0,
+  "kcal_low": 412,
+  "kcal_high": 688,
+  "protein_g": 25.0,
+  "protein_low": 18.8,
+  "protein_high": 31.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "mutton_biryani",
+  "name": "mutton biryani",
+  "aliases": [
+   "mutton biriyani"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 620.0,
+  "kcal_low": 465,
+  "kcal_high": 775,
+  "protein_g": 26.0,
+  "protein_low": 19.5,
+  "protein_high": 32.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "egg_biryani",
+  "name": "egg biryani",
+  "aliases": [
+   "anda biryani"
+  ],
+  "unit": "plate",
+  "portion_grams": 280.0,
+  "kcal": 480.0,
+  "kcal_low": 360,
+  "kcal_high": 600,
+  "protein_g": 16.0,
+  "protein_low": 12.0,
+  "protein_high": 20.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "khichdi",
+  "name": "khichdi",
+  "aliases": [
+   "khichri",
+   "khichadi"
+  ],
+  "unit": "katori",
+  "portion_grams": 200.0,
+  "kcal": 240.0,
+  "kcal_low": 180,
+  "kcal_high": 300,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "curd_rice",
+  "name": "curd rice",
+  "aliases": [
+   "dahi chawal",
+   "thayir sadam"
+  ],
+  "unit": "katori",
+  "portion_grams": 200.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "lemon_rice",
+  "name": "lemon rice",
+  "aliases": [
+   "nimbu chawal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 240.0,
+  "kcal_low": 180,
+  "kcal_high": 300,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "fried_rice",
+  "name": "fried rice",
+  "aliases": [
+   "veg fried rice"
+  ],
+  "unit": "plate",
+  "portion_grams": 250.0,
+  "kcal": 400.0,
+  "kcal_low": 300,
+  "kcal_high": 500,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dal",
+  "name": "dal",
+  "aliases": [
+   "daal",
+   "dal tadka",
+   "daal tadka",
+   "yellow dal",
+   "dal fry",
+   "daal fry",
+   "toor dal",
+   "arhar dal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 150.0,
+  "kcal_low": 112,
+  "kcal_high": 188,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "moong_dal",
+  "name": "moong dal",
+  "aliases": [
+   "moong daal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "masoor_dal",
+  "name": "masoor dal",
+  "aliases": [
+   "masoor daal",
+   "lal dal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 140.0,
+  "kcal_low": 105,
+  "kcal_high": 175,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chana_dal",
+  "name": "chana dal",
+  "aliases": [
+   "chana daal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 170.0,
+  "kcal_low": 128,
+  "kcal_high": 212,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dal_makhani",
+  "name": "dal makhani",
+  "aliases": [
+   "daal makhani",
+   "dal makhni"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 260.0,
+  "kcal_low": 195,
+  "kcal_high": 325,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "rajma",
+  "name": "rajma",
+  "aliases": [
+   "rajma masala",
+   "rajmah"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 210.0,
+  "kcal_low": 158,
+  "kcal_high": 262,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chole",
+  "name": "chole",
+  "aliases": [
+   "chhole",
+   "chana masala",
+   "chholey",
+   "chole masala",
+   "chickpea curry"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 230.0,
+  "kcal_low": 172,
+  "kcal_high": 288,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "kadhi",
+  "name": "kadhi",
+  "aliases": [
+   "kadi",
+   "kadhi pakora"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 170.0,
+  "kcal_low": 128,
+  "kcal_high": 212,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "sambar",
+  "name": "sambar",
+  "aliases": [
+   "sambhar",
+   "saambar"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 110.0,
+  "kcal_low": 82,
+  "kcal_high": 138,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "rasam",
+  "name": "rasam",
+  "aliases": [
+   "rassam"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 50.0,
+  "kcal_low": 38,
+  "kcal_high": 62,
+  "protein_g": 1.0,
+  "protein_low": 0.8,
+  "protein_high": 1.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "sabzi",
+  "name": "sabzi",
+  "aliases": [
+   "sabji",
+   "subzi",
+   "sabjee",
+   "sabzee",
+   "mix veg",
+   "mixed veg",
+   "mix sabzi",
+   "veg curry"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "aloo_sabzi",
+  "name": "aloo sabzi",
+  "aliases": [
+   "aloo sabji",
+   "aloo ki sabzi",
+   "aloo ki sabji",
+   "potato sabzi",
+   "aloo curry"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 170.0,
+  "kcal_low": 128,
+  "kcal_high": 212,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "aloo_gobi",
+  "name": "aloo gobi",
+  "aliases": [
+   "aloo gobhi",
+   "gobi aloo"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 150.0,
+  "kcal_low": 112,
+  "kcal_high": 188,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "bhindi",
+  "name": "bhindi",
+  "aliases": [
+   "bhindi sabzi",
+   "bhindi fry",
+   "bhindi masala",
+   "okra"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 140.0,
+  "kcal_low": 105,
+  "kcal_high": 175,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "baingan_bharta",
+  "name": "baingan bharta",
+  "aliases": [
+   "bharta",
+   "baingan",
+   "brinjal bharta"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "palak_paneer",
+  "name": "palak paneer",
+  "aliases": [
+   "saag paneer"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 260.0,
+  "kcal_low": 195,
+  "kcal_high": 325,
+  "protein_g": 12.0,
+  "protein_low": 9.0,
+  "protein_high": 15.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paneer_butter_masala",
+  "name": "paneer butter masala",
+  "aliases": [
+   "paneer makhani",
+   "butter paneer"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 330.0,
+  "kcal_low": 248,
+  "kcal_high": 412,
+  "protein_g": 12.0,
+  "protein_low": 9.0,
+  "protein_high": 15.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "shahi_paneer",
+  "name": "shahi paneer",
+  "aliases": [
+   "shahi panir"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 340.0,
+  "kcal_low": 255,
+  "kcal_high": 425,
+  "protein_g": 12.0,
+  "protein_low": 9.0,
+  "protein_high": 15.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "kadai_paneer",
+  "name": "kadai paneer",
+  "aliases": [
+   "kadhai paneer"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 290.0,
+  "kcal_low": 218,
+  "kcal_high": 362,
+  "protein_g": 13.0,
+  "protein_low": 9.8,
+  "protein_high": 16.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "matar_paneer",
+  "name": "matar paneer",
+  "aliases": [
+   "mutter paneer",
+   "matar panir"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 11.0,
+  "protein_low": 8.2,
+  "protein_high": 13.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paneer_bhurji",
+  "name": "paneer bhurji",
+  "aliases": [
+   "panir bhurji"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 16.0,
+  "protein_low": 12.0,
+  "protein_high": 20.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paneer",
+  "name": "paneer",
+  "aliases": [
+   "panir",
+   "cottage cheese"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 265.0,
+  "kcal_low": 238,
+  "kcal_high": 292,
+  "protein_g": 18.0,
+  "protein_low": 16.2,
+  "protein_high": 19.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "tofu",
+  "name": "tofu",
+  "aliases": [
+   "soya paneer"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 80.0,
+  "kcal_low": 72,
+  "kcal_high": 88,
+  "protein_g": 8.0,
+  "protein_low": 7.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "lauki_sabzi",
+  "name": "lauki sabzi",
+  "aliases": [
+   "lauki",
+   "ghiya",
+   "dudhi"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 90.0,
+  "kcal_low": 68,
+  "kcal_high": 112,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "tinda",
+  "name": "tinda",
+  "aliases": [
+   "tinde"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 90.0,
+  "kcal_low": 68,
+  "kcal_high": 112,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "cabbage_sabzi",
+  "name": "cabbage sabzi",
+  "aliases": [
+   "patta gobhi",
+   "band gobhi"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 100.0,
+  "kcal_low": 75,
+  "kcal_high": 125,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "gajar_matar",
+  "name": "gajar matar",
+  "aliases": [
+   "gajar mattar"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 120.0,
+  "kcal_low": 90,
+  "kcal_high": 150,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "aloo_matar",
+  "name": "aloo matar",
+  "aliases": [
+   "aloo mutter"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 170.0,
+  "kcal_low": 128,
+  "kcal_high": 212,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "saag",
+  "name": "saag",
+  "aliases": [
+   "sarson ka saag",
+   "sarson saag"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 160.0,
+  "kcal_low": 120,
+  "kcal_high": 200,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dum_aloo",
+  "name": "dum aloo",
+  "aliases": [
+   "dum alu"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "soya_chunks",
+  "name": "soya chunks",
+  "aliases": [
+   "soya chunk",
+   "nutrela",
+   "soyabean chunks"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 200.0,
+  "kcal_low": 150,
+  "kcal_high": 250,
+  "protein_g": 18.0,
+  "protein_low": 13.5,
+  "protein_high": 22.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "mushroom_masala",
+  "name": "mushroom masala",
+  "aliases": [
+   "mushroom"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 140.0,
+  "kcal_low": 105,
+  "kcal_high": 175,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chicken_curry",
+  "name": "chicken curry",
+  "aliases": [
+   "chicken",
+   "murgh curry",
+   "chicken gravy"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 22.0,
+  "protein_low": 16.5,
+  "protein_high": 27.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "butter_chicken",
+  "name": "butter chicken",
+  "aliases": [
+   "murgh makhani",
+   "chicken makhani"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 330.0,
+  "kcal_low": 248,
+  "kcal_high": 412,
+  "protein_g": 22.0,
+  "protein_low": 16.5,
+  "protein_high": 27.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chicken_tikka",
+  "name": "chicken tikka",
+  "aliases": [
+   "tikka"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 240.0,
+  "kcal_low": 180,
+  "kcal_high": 300,
+  "protein_g": 30.0,
+  "protein_low": 22.5,
+  "protein_high": 37.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "tandoori_chicken",
+  "name": "tandoori chicken",
+  "aliases": [
+   "tandoori murgh"
+  ],
+  "unit": "plate",
+  "portion_grams": 200.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 38.0,
+  "protein_low": 28.5,
+  "protein_high": 47.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chicken_breast",
+  "name": "chicken breast",
+  "aliases": [
+   "grilled chicken",
+   "boiled chicken"
+  ],
+  "unit": "plate",
+  "portion_grams": 100.0,
+  "kcal": 165.0,
+  "kcal_low": 148,
+  "kcal_high": 182,
+  "protein_g": 31.0,
+  "protein_low": 27.9,
+  "protein_high": 34.1,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "mutton_curry",
+  "name": "mutton curry",
+  "aliases": [
+   "mutton",
+   "gosht",
+   "lamb curry"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 22.0,
+  "protein_low": 16.5,
+  "protein_high": 27.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "keema",
+  "name": "keema",
+  "aliases": [
+   "kheema",
+   "mutton keema",
+   "chicken keema"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 20.0,
+  "protein_low": 15.0,
+  "protein_high": 25.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "fish_curry",
+  "name": "fish curry",
+  "aliases": [
+   "machli",
+   "machhli",
+   "fish"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 20.0,
+  "protein_low": 15.0,
+  "protein_high": 25.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "fish_fry",
+  "name": "fish fry",
+  "aliases": [
+   "fried fish"
+  ],
+  "unit": "count",
+  "portion_grams": 100.0,
+  "kcal": 230.0,
+  "kcal_low": 172,
+  "kcal_high": 288,
+  "protein_g": 20.0,
+  "protein_low": 15.0,
+  "protein_high": 25.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "egg_curry",
+  "name": "egg curry",
+  "aliases": [
+   "anda curry",
+   "egg masala",
+   "ande ki sabzi"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 13.0,
+  "protein_low": 9.8,
+  "protein_high": 16.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "boiled_egg",
+  "name": "boiled egg",
+  "aliases": [
+   "egg",
+   "eggs",
+   "anda",
+   "ande",
+   "ubla anda",
+   "boiled eggs"
+  ],
+  "unit": "count",
+  "portion_grams": 50.0,
+  "kcal": 72.0,
+  "kcal_low": 65,
+  "kcal_high": 79,
+  "protein_g": 6.3,
+  "protein_low": 5.7,
+  "protein_high": 6.9,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "omelette",
+  "name": "omelette",
+  "aliases": [
+   "omelet",
+   "amlet",
+   "aamlet",
+   "omlette",
+   "anda omelette"
+  ],
+  "unit": "count",
+  "portion_grams": 60.0,
+  "kcal": 120.0,
+  "kcal_low": 90,
+  "kcal_high": 150,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "egg_bhurji",
+  "name": "egg bhurji",
+  "aliases": [
+   "anda bhurji",
+   "scrambled egg"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 180.0,
+  "kcal_low": 135,
+  "kcal_high": 225,
+  "protein_g": 12.0,
+  "protein_low": 9.0,
+  "protein_high": 15.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "poha",
+  "name": "poha",
+  "aliases": [
+   "pohe",
+   "kanda poha"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "upma",
+  "name": "upma",
+  "aliases": [
+   "uppuma",
+   "rava upma"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 230.0,
+  "kcal_low": 172,
+  "kcal_high": 288,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "idli",
+  "name": "idli",
+  "aliases": [
+   "idly",
+   "idlis",
+   "idlies"
+  ],
+  "unit": "count",
+  "portion_grams": 40.0,
+  "kcal": 60.0,
+  "kcal_low": 45,
+  "kcal_high": 75,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dosa",
+  "name": "dosa",
+  "aliases": [
+   "dosai",
+   "plain dosa",
+   "dosas"
+  ],
+  "unit": "count",
+  "portion_grams": 80.0,
+  "kcal": 170.0,
+  "kcal_low": 128,
+  "kcal_high": 212,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "masala_dosa",
+  "name": "masala dosa",
+  "aliases": [
+   "masala dosai"
+  ],
+  "unit": "count",
+  "portion_grams": 160.0,
+  "kcal": 350.0,
+  "kcal_low": 262,
+  "kcal_high": 438,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "uttapam",
+  "name": "uttapam",
+  "aliases": [
+   "uthappam",
+   "uttapa"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "vada",
+  "name": "vada",
+  "aliases": [
+   "medu vada",
+   "wada",
+   "vadai"
+  ],
+  "unit": "count",
+  "portion_grams": 50.0,
+  "kcal": 140.0,
+  "kcal_low": 105,
+  "kcal_high": 175,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pongal",
+  "name": "pongal",
+  "aliases": [
+   "ven pongal"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 240.0,
+  "kcal_low": 180,
+  "kcal_high": 300,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dhokla",
+  "name": "dhokla",
+  "aliases": [
+   "khaman",
+   "khaman dhokla"
+  ],
+  "unit": "count",
+  "portion_grams": 30.0,
+  "kcal": 50.0,
+  "kcal_low": 38,
+  "kcal_high": 62,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "besan_chilla",
+  "name": "besan chilla",
+  "aliases": [
+   "chilla",
+   "cheela",
+   "besan cheela"
+  ],
+  "unit": "count",
+  "portion_grams": 70.0,
+  "kcal": 150.0,
+  "kcal_low": 112,
+  "kcal_high": 188,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "moong_chilla",
+  "name": "moong chilla",
+  "aliases": [
+   "moong cheela"
+  ],
+  "unit": "count",
+  "portion_grams": 70.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "oats",
+  "name": "oats",
+  "aliases": [
+   "oatmeal",
+   "daliya oats",
+   "masala oats"
+  ],
+  "unit": "katori",
+  "portion_grams": 200.0,
+  "kcal": 180.0,
+  "kcal_low": 135,
+  "kcal_high": 225,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "daliya",
+  "name": "daliya",
+  "aliases": [
+   "dalia",
+   "broken wheat"
+  ],
+  "unit": "katori",
+  "portion_grams": 200.0,
+  "kcal": 180.0,
+  "kcal_low": 135,
+  "kcal_high": 225,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "cornflakes",
+  "name": "cornflakes",
+  "aliases": [
+   "corn flakes"
+  ],
+  "unit": "katori",
+  "portion_grams": 30.0,
+  "kcal": 110.0,
+  "kcal_low": 82,
+  "kcal_high": 138,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "muesli",
+  "name": "muesli",
+  "aliases": [
+   "musli"
+  ],
+  "unit": "katori",
+  "portion_grams": 50.0,
+  "kcal": 190.0,
+  "kcal_low": 142,
+  "kcal_high": 238,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "bread",
+  "name": "bread",
+  "aliases": [
+   "slice",
+   "bread slice",
+   "white bread"
+  ],
+  "unit": "count",
+  "portion_grams": 25.0,
+  "kcal": 67.0,
+  "kcal_low": 60,
+  "kcal_high": 74,
+  "protein_g": 2.3,
+  "protein_low": 2.1,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "brown_bread",
+  "name": "brown bread",
+  "aliases": [
+   "whole wheat bread",
+   "atta bread"
+  ],
+  "unit": "count",
+  "portion_grams": 28.0,
+  "kcal": 70.0,
+  "kcal_low": 63,
+  "kcal_high": 77,
+  "protein_g": 3.5,
+  "protein_low": 3.1,
+  "protein_high": 3.9,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "bread_butter",
+  "name": "bread butter",
+  "aliases": [
+   "butter toast",
+   "toast"
+  ],
+  "unit": "count",
+  "portion_grams": 35.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 2.5,
+  "protein_low": 1.9,
+  "protein_high": 3.1,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "sandwich",
+  "name": "sandwich",
+  "aliases": [
+   "veg sandwich"
+  ],
+  "unit": "count",
+  "portion_grams": 150.0,
+  "kcal": 280.0,
+  "kcal_low": 210,
+  "kcal_high": 350,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "paneer_sandwich",
+  "name": "paneer sandwich",
+  "aliases": [
+   "paneer sendwich"
+  ],
+  "unit": "count",
+  "portion_grams": 170.0,
+  "kcal": 360.0,
+  "kcal_low": 270,
+  "kcal_high": 450,
+  "protein_g": 15.0,
+  "protein_low": 11.2,
+  "protein_high": 18.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "maggi",
+  "name": "maggi",
+  "aliases": [
+   "maggie",
+   "magi",
+   "maggi noodles",
+   "maggie noodles",
+   "instant noodles",
+   "noodles packet"
+  ],
+  "unit": "plate",
+  "portion_grams": 70.0,
+  "kcal": 310.0,
+  "kcal_low": 279,
+  "kcal_high": 341,
+  "protein_g": 7.0,
+  "protein_low": 6.3,
+  "protein_high": 7.7,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand"
+ },
+ {
+  "id": "chowmein",
+  "name": "chowmein",
+  "aliases": [
+   "chow mein",
+   "hakka noodles",
+   "noodles"
+  ],
+  "unit": "plate",
+  "portion_grams": 200.0,
+  "kcal": 380.0,
+  "kcal_low": 285,
+  "kcal_high": 475,
+  "protein_g": 8.0,
+  "protein_low": 6.0,
+  "protein_high": 10.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pasta",
+  "name": "pasta",
+  "aliases": [
+   "white sauce pasta",
+   "red sauce pasta"
+  ],
+  "unit": "plate",
+  "portion_grams": 200.0,
+  "kcal": 380.0,
+  "kcal_low": 285,
+  "kcal_high": 475,
+  "protein_g": 10.0,
+  "protein_low": 7.5,
+  "protein_high": 12.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pizza",
+  "name": "pizza",
+  "aliases": [
+   "pizza slice"
+  ],
+  "unit": "count",
+  "portion_grams": 100.0,
+  "kcal": 270.0,
+  "kcal_low": 202,
+  "kcal_high": 338,
+  "protein_g": 11.0,
+  "protein_low": 8.2,
+  "protein_high": 13.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "burger",
+  "name": "burger",
+  "aliases": [
+   "veg burger",
+   "aloo tikki burger"
+  ],
+  "unit": "count",
+  "portion_grams": 150.0,
+  "kcal": 350.0,
+  "kcal_low": 262,
+  "kcal_high": 438,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "momos",
+  "name": "momos",
+  "aliases": [
+   "momo",
+   "veg momos",
+   "dumplings"
+  ],
+  "unit": "plate",
+  "portion_grams": 180.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chicken_momos",
+  "name": "chicken momos",
+  "aliases": [
+   "chicken momo"
+  ],
+  "unit": "plate",
+  "portion_grams": 180.0,
+  "kcal": 320.0,
+  "kcal_low": 240,
+  "kcal_high": 400,
+  "protein_g": 16.0,
+  "protein_low": 12.0,
+  "protein_high": 20.0,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "samosa",
+  "name": "samosa",
+  "aliases": [
+   "samose",
+   "samosas"
+  ],
+  "unit": "count",
+  "portion_grams": 80.0,
+  "kcal": 260.0,
+  "kcal_low": 195,
+  "kcal_high": 325,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "kachori",
+  "name": "kachori",
+  "aliases": [
+   "kachauri"
+  ],
+  "unit": "count",
+  "portion_grams": 60.0,
+  "kcal": 200.0,
+  "kcal_low": 150,
+  "kcal_high": 250,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pakora",
+  "name": "pakora",
+  "aliases": [
+   "pakoda",
+   "pakode",
+   "pakore",
+   "bhajiya",
+   "bhaji"
+  ],
+  "unit": "count",
+  "portion_grams": 25.0,
+  "kcal": 75.0,
+  "kcal_low": 56,
+  "kcal_high": 94,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "aloo_tikki",
+  "name": "aloo tikki",
+  "aliases": [
+   "tikki"
+  ],
+  "unit": "count",
+  "portion_grams": 70.0,
+  "kcal": 150.0,
+  "kcal_low": 112,
+  "kcal_high": 188,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pav_bhaji",
+  "name": "pav bhaji",
+  "aliases": [
+   "pao bhaji"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 500.0,
+  "kcal_low": 375,
+  "kcal_high": 625,
+  "protein_g": 11.0,
+  "protein_low": 8.2,
+  "protein_high": 13.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "vada_pav",
+  "name": "vada pav",
+  "aliases": [
+   "vada pao",
+   "wada pav"
+  ],
+  "unit": "count",
+  "portion_grams": 150.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "pani_puri",
+  "name": "pani puri",
+  "aliases": [
+   "golgappa",
+   "gol gappe",
+   "golgappe",
+   "puchka",
+   "panipuri"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "bhel_puri",
+  "name": "bhel puri",
+  "aliases": [
+   "bhel",
+   "bhelpuri"
+  ],
+  "unit": "plate",
+  "portion_grams": 120.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "sev_puri",
+  "name": "sev puri",
+  "aliases": [
+   "sevpuri"
+  ],
+  "unit": "plate",
+  "portion_grams": 120.0,
+  "kcal": 280.0,
+  "kcal_low": 210,
+  "kcal_high": 350,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dahi_puri",
+  "name": "dahi puri",
+  "aliases": [
+   "dahipuri"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 280.0,
+  "kcal_low": 210,
+  "kcal_high": 350,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chaat",
+  "name": "chaat",
+  "aliases": [
+   "papdi chaat",
+   "aloo chaat"
+  ],
+  "unit": "plate",
+  "portion_grams": 150.0,
+  "kcal": 280.0,
+  "kcal_low": 210,
+  "kcal_high": 350,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chole_bhature",
+  "name": "chole bhature",
+  "aliases": [
+   "chole bhature plate"
+  ],
+  "unit": "plate",
+  "portion_grams": 350.0,
+  "kcal": 750.0,
+  "kcal_low": 562,
+  "kcal_high": 938,
+  "protein_g": 20.0,
+  "protein_low": 15.0,
+  "protein_high": 25.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "rajma_chawal",
+  "name": "rajma chawal",
+  "aliases": [
+   "rajma rice"
+  ],
+  "unit": "plate",
+  "portion_grams": 350.0,
+  "kcal": 420.0,
+  "kcal_low": 315,
+  "kcal_high": 525,
+  "protein_g": 14.0,
+  "protein_low": 10.5,
+  "protein_high": 17.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dal_chawal",
+  "name": "dal chawal",
+  "aliases": [
+   "dal rice",
+   "daal chawal"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 350.0,
+  "kcal_low": 262,
+  "kcal_high": 438,
+  "protein_g": 12.0,
+  "protein_low": 9.0,
+  "protein_high": 15.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "kadhi_chawal",
+  "name": "kadhi chawal",
+  "aliases": [
+   "kadhi rice"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 370.0,
+  "kcal_low": 278,
+  "kcal_high": 462,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chole_chawal",
+  "name": "chole chawal",
+  "aliases": [
+   "chole rice"
+  ],
+  "unit": "plate",
+  "portion_grams": 300.0,
+  "kcal": 430.0,
+  "kcal_low": 322,
+  "kcal_high": 538,
+  "protein_g": 13.0,
+  "protein_low": 9.8,
+  "protein_high": 16.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "thali",
+  "name": "thali",
+  "aliases": [
+   "veg thali",
+   "full thali"
+  ],
+  "unit": "plate",
+  "portion_grams": 600.0,
+  "kcal": 850.0,
+  "kcal_low": 638,
+  "kcal_high": 1062,
+  "protein_g": 25.0,
+  "protein_low": 18.8,
+  "protein_high": 31.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "dahi",
+  "name": "dahi",
+  "aliases": [
+   "curd",
+   "yogurt",
+   "yoghurt",
+   "dahee"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 90.0,
+  "kcal_low": 81,
+  "kcal_high": 99,
+  "protein_g": 5.0,
+  "protein_low": 4.5,
+  "protein_high": 5.5,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "raita",
+  "name": "raita",
+  "aliases": [
+   "boondi raita",
+   "cucumber raita"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 100.0,
+  "kcal_low": 75,
+  "kcal_high": 125,
+  "protein_g": 5.0,
+  "protein_low": 3.8,
+  "protein_high": 6.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "lassi",
+  "name": "lassi",
+  "aliases": [
+   "sweet lassi",
+   "meethi lassi"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 220.0,
+  "kcal_low": 165,
+  "kcal_high": 275,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chaas",
+  "name": "chaas",
+  "aliases": [
+   "chhaas",
+   "buttermilk",
+   "mattha",
+   "chhachh"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 50.0,
+  "kcal_low": 38,
+  "kcal_high": 62,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "milk",
+  "name": "milk",
+  "aliases": [
+   "doodh",
+   "dudh",
+   "full cream milk"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 155.0,
+  "kcal_low": 140,
+  "kcal_high": 170,
+  "protein_g": 8.0,
+  "protein_low": 7.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "toned_milk",
+  "name": "toned milk",
+  "aliases": [
+   "double toned milk"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 120.0,
+  "kcal_low": 108,
+  "kcal_high": 132,
+  "protein_g": 8.0,
+  "protein_low": 7.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "chai",
+  "name": "chai",
+  "aliases": [
+   "tea",
+   "cutting chai",
+   "masala chai",
+   "adrak chai"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 80.0,
+  "kcal_low": 60,
+  "kcal_high": 100,
+  "protein_g": 2.5,
+  "protein_low": 1.9,
+  "protein_high": 3.1,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "coffee",
+  "name": "coffee",
+  "aliases": [
+   "filter coffee",
+   "milk coffee"
+  ],
+  "unit": "count",
+  "portion_grams": 150.0,
+  "kcal": 100.0,
+  "kcal_low": 75,
+  "kcal_high": 125,
+  "protein_g": 3.5,
+  "protein_low": 2.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "black_coffee",
+  "name": "black coffee",
+  "aliases": [
+   "americano"
+  ],
+  "unit": "count",
+  "portion_grams": 200.0,
+  "kcal": 5.0,
+  "kcal_low": 4,
+  "kcal_high": 6,
+  "protein_g": 0.3,
+  "protein_low": 0.3,
+  "protein_high": 0.3,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "cold_coffee",
+  "name": "cold coffee",
+  "aliases": [
+   "coffee shake"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "banana_shake",
+  "name": "banana shake",
+  "aliases": [
+   "banana milkshake"
+  ],
+  "unit": "glass",
+  "portion_grams": 300.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 9.0,
+  "protein_low": 6.8,
+  "protein_high": 11.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "protein_shake",
+  "name": "protein shake",
+  "aliases": [
+   "whey",
+   "whey protein",
+   "protein",
+   "scoop whey"
+  ],
+  "unit": "count",
+  "portion_grams": 30.0,
+  "kcal": 120.0,
+  "kcal_low": 108,
+  "kcal_high": 132,
+  "protein_g": 24.0,
+  "protein_low": 21.6,
+  "protein_high": 26.4,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand"
+ },
+ {
+  "id": "nimbu_pani",
+  "name": "nimbu pani",
+  "aliases": [
+   "shikanji",
+   "lemonade",
+   "lemon water"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 60.0,
+  "kcal_low": 45,
+  "kcal_high": 75,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "coconut_water",
+  "name": "coconut water",
+  "aliases": [
+   "nariyal pani"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 45.0,
+  "kcal_low": 40,
+  "kcal_high": 50,
+  "protein_g": 1.7,
+  "protein_low": 1.5,
+  "protein_high": 1.9,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "juice",
+  "name": "juice",
+  "aliases": [
+   "orange juice",
+   "mosambi juice",
+   "fruit juice"
+  ],
+  "unit": "glass",
+  "portion_grams": 250.0,
+  "kcal": 110.0,
+  "kcal_low": 99,
+  "kcal_high": 121,
+  "protein_g": 1.5,
+  "protein_low": 1.4,
+  "protein_high": 1.7,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "cola",
+  "name": "cola",
+  "aliases": [
+   "coke",
+   "pepsi",
+   "soft drink",
+   "cold drink"
+  ],
+  "unit": "glass",
+  "portion_grams": 300.0,
+  "kcal": 130.0,
+  "kcal_low": 117,
+  "kcal_high": 143,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand"
+ },
+ {
+  "id": "banana",
+  "name": "banana",
+  "aliases": [
+   "kela",
+   "kele",
+   "bananas"
+  ],
+  "unit": "count",
+  "portion_grams": 120.0,
+  "kcal": 105.0,
+  "kcal_low": 94,
+  "kcal_high": 116,
+  "protein_g": 1.3,
+  "protein_low": 1.2,
+  "protein_high": 1.4,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "apple",
+  "name": "apple",
+  "aliases": [
+   "seb",
+   "apples"
+  ],
+  "unit": "count",
+  "portion_grams": 180.0,
+  "kcal": 95.0,
+  "kcal_low": 86,
+  "kcal_high": 105,
+  "protein_g": 0.5,
+  "protein_low": 0.5,
+  "protein_high": 0.6,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "mango",
+  "name": "mango",
+  "aliases": [
+   "aam"
+  ],
+  "unit": "count",
+  "portion_grams": 200.0,
+  "kcal": 120.0,
+  "kcal_low": 108,
+  "kcal_high": 132,
+  "protein_g": 1.6,
+  "protein_low": 1.4,
+  "protein_high": 1.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "papaya",
+  "name": "papaya",
+  "aliases": [
+   "papita"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 65.0,
+  "kcal_low": 58,
+  "kcal_high": 72,
+  "protein_g": 0.7,
+  "protein_low": 0.6,
+  "protein_high": 0.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "orange",
+  "name": "orange",
+  "aliases": [
+   "santra",
+   "narangi"
+  ],
+  "unit": "count",
+  "portion_grams": 130.0,
+  "kcal": 60.0,
+  "kcal_low": 54,
+  "kcal_high": 66,
+  "protein_g": 1.2,
+  "protein_low": 1.1,
+  "protein_high": 1.3,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "grapes",
+  "name": "grapes",
+  "aliases": [
+   "angoor"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 70.0,
+  "kcal_low": 63,
+  "kcal_high": 77,
+  "protein_g": 0.7,
+  "protein_low": 0.6,
+  "protein_high": 0.8,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "watermelon",
+  "name": "watermelon",
+  "aliases": [
+   "tarbooz"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 45.0,
+  "kcal_low": 40,
+  "kcal_high": 50,
+  "protein_g": 0.9,
+  "protein_low": 0.8,
+  "protein_high": 1.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "guava",
+  "name": "guava",
+  "aliases": [
+   "amrood"
+  ],
+  "unit": "count",
+  "portion_grams": 100.0,
+  "kcal": 68.0,
+  "kcal_low": 61,
+  "kcal_high": 75,
+  "protein_g": 2.6,
+  "protein_low": 2.3,
+  "protein_high": 2.9,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "chikki",
+  "name": "chikki",
+  "aliases": [
+   "gur chikki",
+   "peanut chikki"
+  ],
+  "unit": "count",
+  "portion_grams": 25.0,
+  "kcal": 120.0,
+  "kcal_low": 90,
+  "kcal_high": 150,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "peanuts",
+  "name": "peanuts",
+  "aliases": [
+   "moongphali",
+   "mungfali",
+   "groundnuts"
+  ],
+  "unit": "katori",
+  "portion_grams": 30.0,
+  "kcal": 170.0,
+  "kcal_low": 153,
+  "kcal_high": 187,
+  "protein_g": 7.5,
+  "protein_low": 6.8,
+  "protein_high": 8.2,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "almonds",
+  "name": "almonds",
+  "aliases": [
+   "badam"
+  ],
+  "unit": "count",
+  "portion_grams": 1.2,
+  "kcal": 7.0,
+  "kcal_low": 6,
+  "kcal_high": 8,
+  "protein_g": 0.25,
+  "protein_low": 0.2,
+  "protein_high": 0.3,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "roasted_chana",
+  "name": "roasted chana",
+  "aliases": [
+   "bhuna chana",
+   "chana"
+  ],
+  "unit": "katori",
+  "portion_grams": 30.0,
+  "kcal": 110.0,
+  "kcal_low": 82,
+  "kcal_high": 138,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "makhana",
+  "name": "makhana",
+  "aliases": [
+   "fox nuts",
+   "phool makhana"
+  ],
+  "unit": "katori",
+  "portion_grams": 20.0,
+  "kcal": 70.0,
+  "kcal_low": 52,
+  "kcal_high": 88,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "sprouts",
+  "name": "sprouts",
+  "aliases": [
+   "moong sprouts",
+   "ankurit moong",
+   "sprouts salad"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 100.0,
+  "kcal_low": 75,
+  "kcal_high": 125,
+  "protein_g": 7.0,
+  "protein_low": 5.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "salad",
+  "name": "salad",
+  "aliases": [
+   "green salad",
+   "kachumber"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 30.0,
+  "kcal_low": 22,
+  "kcal_high": 38,
+  "protein_g": 1.0,
+  "protein_low": 0.8,
+  "protein_high": 1.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "namkeen",
+  "name": "namkeen",
+  "aliases": [
+   "bhujia",
+   "mixture",
+   "aloo bhujia"
+  ],
+  "unit": "katori",
+  "portion_grams": 30.0,
+  "kcal": 160.0,
+  "kcal_low": 144,
+  "kcal_high": 176,
+  "protein_g": 4.0,
+  "protein_low": 3.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand"
+ },
+ {
+  "id": "biscuit",
+  "name": "biscuit",
+  "aliases": [
+   "biscuits",
+   "marie",
+   "parle g",
+   "parleg"
+  ],
+  "unit": "count",
+  "portion_grams": 8.0,
+  "kcal": 35.0,
+  "kcal_low": 32,
+  "kcal_high": 38,
+  "protein_g": 0.6,
+  "protein_low": 0.5,
+  "protein_high": 0.7,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand"
+ },
+ {
+  "id": "gulab_jamun",
+  "name": "gulab jamun",
+  "aliases": [
+   "gulabjamun",
+   "jamun"
+  ],
+  "unit": "count",
+  "portion_grams": 50.0,
+  "kcal": 150.0,
+  "kcal_low": 112,
+  "kcal_high": 188,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "rasgulla",
+  "name": "rasgulla",
+  "aliases": [
+   "rasagulla",
+   "roshogolla"
+  ],
+  "unit": "count",
+  "portion_grams": 50.0,
+  "kcal": 110.0,
+  "kcal_low": 82,
+  "kcal_high": 138,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "jalebi",
+  "name": "jalebi",
+  "aliases": [
+   "jalebis",
+   "jalebee"
+  ],
+  "unit": "count",
+  "portion_grams": 30.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 1.0,
+  "protein_low": 0.8,
+  "protein_high": 1.2,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "kheer",
+  "name": "kheer",
+  "aliases": [
+   "chawal ki kheer",
+   "payasam"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 250.0,
+  "kcal_low": 188,
+  "kcal_high": 312,
+  "protein_g": 6.0,
+  "protein_low": 4.5,
+  "protein_high": 7.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "halwa",
+  "name": "halwa",
+  "aliases": [
+   "sooji halwa",
+   "suji halwa",
+   "gajar halwa",
+   "sheera"
+  ],
+  "unit": "katori",
+  "portion_grams": 100.0,
+  "kcal": 300.0,
+  "kcal_low": 225,
+  "kcal_high": 375,
+  "protein_g": 4.0,
+  "protein_low": 3.0,
+  "protein_high": 5.0,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "ladoo",
+  "name": "ladoo",
+  "aliases": [
+   "laddu",
+   "laddoo",
+   "besan ladoo",
+   "motichoor ladoo"
+  ],
+  "unit": "count",
+  "portion_grams": 40.0,
+  "kcal": 180.0,
+  "kcal_low": 135,
+  "kcal_high": 225,
+  "protein_g": 3.0,
+  "protein_low": 2.2,
+  "protein_high": 3.8,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "barfi",
+  "name": "barfi",
+  "aliases": [
+   "burfi",
+   "kaju katli"
+  ],
+  "unit": "count",
+  "portion_grams": 30.0,
+  "kcal": 130.0,
+  "kcal_low": 98,
+  "kcal_high": 162,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "ice_cream",
+  "name": "ice cream",
+  "aliases": [
+   "icecream",
+   "ice-cream"
+  ],
+  "unit": "katori",
+  "portion_grams": 70.0,
+  "kcal": 140.0,
+  "kcal_low": 105,
+  "kcal_high": 175,
+  "protein_g": 2.5,
+  "protein_low": 1.9,
+  "protein_high": 3.1,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "ghee",
+  "name": "ghee",
+  "aliases": [
+   "desi ghee"
+  ],
+  "unit": "spoon",
+  "portion_grams": 5.0,
+  "kcal": 45.0,
+  "kcal_low": 40,
+  "kcal_high": 50,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "butter",
+  "name": "butter",
+  "aliases": [
+   "makkhan",
+   "makhan"
+  ],
+  "unit": "spoon",
+  "portion_grams": 5.0,
+  "kcal": 36.0,
+  "kcal_low": 32,
+  "kcal_high": 40,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "oil",
+  "name": "oil",
+  "aliases": [
+   "tel",
+   "cooking oil"
+  ],
+  "unit": "spoon",
+  "portion_grams": 5.0,
+  "kcal": 44.0,
+  "kcal_low": 40,
+  "kcal_high": 48,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "sugar",
+  "name": "sugar",
+  "aliases": [
+   "cheeni",
+   "chini",
+   "shakkar"
+  ],
+  "unit": "spoon",
+  "portion_grams": 5.0,
+  "kcal": 20.0,
+  "kcal_low": 18,
+  "kcal_high": 22,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "jaggery",
+  "name": "jaggery",
+  "aliases": [
+   "gur",
+   "gud"
+  ],
+  "unit": "spoon",
+  "portion_grams": 10.0,
+  "kcal": 38.0,
+  "kcal_low": 34,
+  "kcal_high": 42,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "honey",
+  "name": "honey",
+  "aliases": [
+   "shahad"
+  ],
+  "unit": "spoon",
+  "portion_grams": 7.0,
+  "kcal": 21.0,
+  "kcal_low": 19,
+  "kcal_high": 23,
+  "protein_g": 0.0,
+  "protein_low": 0.0,
+  "protein_high": 0.0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ },
+ {
+  "id": "pickle",
+  "name": "pickle",
+  "aliases": [
+   "achaar",
+   "achar",
+   "aachar"
+  ],
+  "unit": "spoon",
+  "portion_grams": 15.0,
+  "kcal": 30.0,
+  "kcal_low": 22,
+  "kcal_high": 38,
+  "protein_g": 0.2,
+  "protein_low": 0.2,
+  "protein_high": 0.2,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "papad",
+  "name": "papad",
+  "aliases": [
+   "papadum",
+   "papar"
+  ],
+  "unit": "count",
+  "portion_grams": 10.0,
+  "kcal": 40.0,
+  "kcal_low": 30,
+  "kcal_high": 50,
+  "protein_g": 2.0,
+  "protein_low": 1.5,
+  "protein_high": 2.5,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "chutney",
+  "name": "chutney",
+  "aliases": [
+   "green chutney",
+   "hari chutney",
+   "coconut chutney"
+  ],
+  "unit": "spoon",
+  "portion_grams": 15.0,
+  "kcal": 20.0,
+  "kcal_low": 15,
+  "kcal_high": 25,
+  "protein_g": 0.5,
+  "protein_low": 0.4,
+  "protein_high": 0.6,
+  "oil_sensitive": false,
+  "source": "estimate",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+ },
+ {
+  "id": "peanut_butter",
+  "name": "peanut butter",
+  "aliases": [
+   "pb"
+  ],
+  "unit": "spoon",
+  "portion_grams": 16.0,
+  "kcal": 95.0,
+  "kcal_low": 86,
+  "kcal_high": 105,
+  "protein_g": 4.0,
+  "protein_low": 3.6,
+  "protein_high": 4.4,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch"
+ }
+]
