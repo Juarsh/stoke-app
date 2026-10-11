@@ -1,11 +1,12 @@
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ThemePref } from '../theme';
-import type { Learned, Reading } from './learned';
+import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
 import { FoodEntry, localDate, Profile } from './domain';
 import { kv } from './kv';
-import { enqueue, flush, Op } from './syncQueue';
+import { resolvePending } from './pending';
+import { enqueue, flush, Op, PendingFood } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
@@ -28,12 +29,35 @@ function useStoreValue() {
   }, []);
   useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
+  const sender = useMemo(() => ({
+    upsertEntry: api.upsertEntry, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
+    resolvePending: (f: PendingFood) => resolvePending(api, f),
+  }), [api]);
+  const syncing = useRef(false);
   const sync = useCallback(async () => {
-    if (api.mock) return; // mock mode: nothing leaves the device; queue is kept for later
-    const rest = await flush(s.queue, api);
-    setS((p) => ({ ...p, queue: rest }));
-  }, [api, s.queue]);
+    if (api.mock || syncing.current) return; // mock mode: nothing leaves the device; queue is kept for later
+    syncing.current = true;
+    try {
+      const sent = s.queue;
+      const { rest, resolved } = await flush(sent, sender);
+      // ops added while we were sending stay queued after the remaining ones
+      setS((p) => ({ ...p, queue: [...rest, ...p.queue.slice(sent.length)], entries: [...p.entries, ...resolved] }));
+      if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
+        const rows = await api.getRemembered().catch(() => null);
+        if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
+      }
+    } finally { syncing.current = false; }
+  }, [api, sender, s.queue]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
+  // retry with backoff: wake up when the head op's wait is over
+  const headAt = s.queue[0]?.nextAt;
+  useEffect(() => {
+    if (!ready || !s.user || headAt === undefined) return;
+    const t = setTimeout(() => { sync(); }, Math.max(0, headAt - Date.now()) + 50);
+    return () => clearTimeout(t);
+  }, [ready, s.user, headAt, sync]);
+  // refresh Remembered foods from the server when signed in
+  useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
   return {
@@ -56,14 +80,16 @@ function useStoreValue() {
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),
     setChallenge: (challenge: Challenge | null) => upd((p) => ({ ...p, challenge })),
     useAi: () => upd((p) => ({ ...p, aiUsed: { [localDate()]: (p.aiUsed[localDate()] ?? 0) + 1 } })),
-    remember: (pairs: [string, Reading][]) => {
-      upd((p) => ({ ...p, learned: { ...p.learned, ...Object.fromEntries(pairs) } }));
-      for (const [k, r] of pairs) api.putLearned(k, r).catch(() => {});
-    },
-    forget: (key?: string) => {
-      upd((p) => { if (!key) return { ...p, learned: {} }; const l = { ...p.learned }; delete l[key]; return { ...p, learned: l }; });
-      api.deleteLearned(key).catch(() => {});
-    },
+    /** Offline cache only; the server learns from the entry's span when it syncs. */
+    remember: (pairs: [string, Reading][]) => upd((p) => ({ ...p, learned: { ...p.learned, ...Object.fromEntries(pairs) } })),
+    /** Reset one (by key) or all. Server deletes go through the queue so they survive being offline. */
+    forget: (key?: string) => upd((p) => {
+      if (!key) return { ...p, learned: {}, queue: enqueue(p.queue, { kind: 'forgetAll', id: 'all', tries: 0 }) };
+      const l = { ...p.learned }; const id = l[key]?.id; delete l[key];
+      return { ...p, learned: l, queue: id === undefined ? p.queue : enqueue(p.queue, { kind: 'forget', id, tries: 0 }) };
+    }),
+    /** Foods added before their numbers were known: queued, never saved with a number. */
+    addPending: (fs: PendingFood[]) => upd((p) => ({ ...p, queue: fs.reduce((q, food) => enqueue(q, { kind: 'pending', food, tries: 0 }), p.queue) })),
     deleteAll: async () => { await api.deleteMe().catch(() => {}); setS(EMPTY); },
   };
 }

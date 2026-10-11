@@ -15,7 +15,7 @@ export default function Remembered() {
       {rows.map(([text, r]) => (
         <Card key={text}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T style={{ flex: 1 }}><T v="bodyStrong">“{text}”</T><T tone="text2"> → {r.name} · {portionLabel(r.qty, r.unit)}{r.oil_level ? ` · oil ${r.oil_level}` : ''}</T></T>
+            <T style={{ flex: 1 }}><T v="bodyStrong">“{text}”</T><T tone="text2"> → {r.name} · {portionLabel(r.qty, r.unit)}{r.oil_level ? ` · oil ${r.oil_level}` : ''}{r.uses ? ` · used ${r.uses}×` : ''}</T></T>
             <Button kind="ghost" title="Reset" accessibilityLabel={`Reset ${text}`} onPress={() => st.forget(text)} />
           </Row>
         </Card>

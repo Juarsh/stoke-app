@@ -28,7 +28,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dal",
@@ -55,7 +57,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "sabzi",
@@ -82,7 +86,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "ghee",
@@ -109,10 +115,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -144,10 +153,16 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -174,13 +189,18 @@
      },
      "carbs_g": 12,
      "fat_g": 3,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "combo_or_split"
+     ],
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "rice",
@@ -202,16 +222,22 @@
      },
      "carbs_g": 17.6,
      "fat_g": 0.7,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "combo_or_split"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -243,7 +269,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "aloo_sabzi",
@@ -270,10 +298,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -305,7 +336,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "bread",
@@ -332,10 +365,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -367,7 +403,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "chai",
@@ -394,10 +432,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -429,7 +470,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dal",
@@ -456,10 +499,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -491,10 +537,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -526,7 +575,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "sambar",
@@ -553,7 +604,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "chutney",
@@ -580,10 +633,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -615,10 +671,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -650,10 +709,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -685,7 +747,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "butter_naan",
@@ -712,10 +776,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -747,10 +814,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -782,7 +852,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dal",
@@ -809,7 +881,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "salad",
@@ -836,10 +910,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -871,7 +948,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dahi",
@@ -898,7 +977,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "pickle",
@@ -925,10 +1006,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -960,10 +1044,13 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -995,10 +1082,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1030,7 +1120,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "bhindi",
@@ -1057,10 +1149,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1092,10 +1187,16 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1127,7 +1228,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "roti",
@@ -1154,10 +1257,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1189,7 +1295,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "chai",
@@ -1216,10 +1324,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1246,17 +1357,23 @@
      },
      "carbs_g": 8.2,
      "fat_g": 11,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "leftover_in_meal"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
    "unmatched": [
     "2 pav"
-   ]
+   ],
+   "leftover": 1
   }
  },
  {
@@ -1288,10 +1405,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1323,10 +1443,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1358,10 +1481,17 @@
      "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.3,
+     "flags": [
+      "style_ignored",
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1393,10 +1523,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1428,10 +1561,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.65,
+     "flags": [
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1463,7 +1602,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "puri",
@@ -1490,10 +1631,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1501,60 +1648,36 @@
   "out": {
    "items": [
     {
-     "dish_id": "dal",
-     "name": "dal",
+     "dish_id": "dal_chawal",
+     "name": "dal chawal",
      "matched_text": "dal chawal",
      "quantity": 2,
-     "unit": "katori",
-     "grams": 300,
+     "unit": "plate",
+     "grams": 600,
      "oil_level": "normal",
      "kcal": {
-      "low": 224,
-      "best": 300,
-      "high": 376
+      "low": 524,
+      "best": 700,
+      "high": 876
      },
      "protein_g": {
-      "low": 12,
-      "best": 16,
-      "high": 20
+      "low": 18,
+      "best": 24,
+      "high": 30
      },
-     "carbs_g": 36.4,
-     "fat_g": 10,
+     "carbs_g": 98.4,
+     "fat_g": 23.4,
      "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "from_combo": "dal_chawal",
      "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "rice",
-     "name": "rice",
-     "matched_text": "dal chawal",
-     "quantity": 2,
-     "unit": "katori",
-     "grams": 300,
-     "oil_level": "",
-     "kcal": {
-      "low": 352,
-      "best": 390,
-      "high": 430
-     },
-     "protein_g": {
-      "low": 7.2,
-      "best": 8,
-      "high": 8.8
-     },
-     "carbs_g": 81.8,
-     "fat_g": 3.4,
-     "source": "table",
-     "data_source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "from_combo": "dal_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "ghee",
@@ -1581,10 +1704,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1616,7 +1742,12 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "butter",
@@ -1643,10 +1774,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1678,10 +1812,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1708,11 +1845,16 @@
      },
      "carbs_g": 0,
      "fat_g": 29.4,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
+     "confidence": 0.4,
+     "flags": [
+      "capped",
+      "sanity"
+     ],
      "alternatives": [
       {
        "quantity": 1,
@@ -1721,10 +1863,12 @@
        "label": "one standard portion"
       }
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1756,10 +1900,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1791,7 +1938,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "momos",
@@ -1818,10 +1967,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1853,10 +2005,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1888,7 +2046,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "sambar",
@@ -1915,10 +2075,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -1950,7 +2113,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dahi",
@@ -1977,10 +2142,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2012,7 +2180,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "roti",
@@ -2039,10 +2209,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2074,10 +2247,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2109,10 +2285,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2144,10 +2323,16 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2179,10 +2364,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2214,10 +2402,17 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.55,
+     "flags": [
+      "trailing_qty",
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2249,10 +2444,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.65,
+     "flags": [
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2284,7 +2485,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "bhindi",
@@ -2311,10 +2514,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.65,
+     "flags": [
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2346,7 +2555,9 @@
      "source_note": "NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain's current nutrition page before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "cola",
@@ -2373,10 +2584,13 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2408,7 +2622,9 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "milk",
@@ -2435,10 +2651,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2470,10 +2689,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2481,63 +2703,37 @@
   "out": {
    "items": [
     {
-     "dish_id": "kadhi",
-     "name": "kadhi",
+     "dish_id": "kadhi_chawal",
+     "name": "kadhi chawal",
      "matched_text": "kadhi chawal",
      "quantity": 1,
-     "unit": "katori",
-     "grams": 150,
+     "unit": "plate",
+     "grams": 300,
      "oil_level": "normal",
      "kcal": {
-      "low": 128,
-      "best": 170,
-      "high": 212
+      "low": 278,
+      "best": 370,
+      "high": 462
      },
      "protein_g": {
-      "low": 3.8,
-      "best": 5,
-      "high": 6.2
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
      },
-     "carbs_g": 24.7,
-     "fat_g": 5.7,
+     "carbs_g": 55.8,
+     "fat_g": 12.3,
      "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "from_combo": "kadhi_chawal",
      "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "rice",
-     "name": "rice",
-     "matched_text": "kadhi chawal",
-     "quantity": 1,
-     "unit": "katori",
-     "grams": 150,
-     "oil_level": "",
-     "kcal": {
-      "low": 176,
-      "best": 195,
-      "high": 215
-     },
-     "protein_g": {
-      "low": 3.6,
-      "best": 4,
-      "high": 4.4
-     },
-     "carbs_g": 40.9,
-     "fat_g": 1.7,
-     "source": "table",
-     "data_source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "from_combo": "kadhi_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2569,10 +2765,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2604,10 +2803,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2639,10 +2841,17 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.75,
+     "flags": [
+      "variant",
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2669,17 +2878,25 @@
      },
      "carbs_g": 2.8,
      "fat_g": 5.6,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.1,
+     "flags": [
+      "leftover_nearby",
+      "trailing_qty",
+      "leftover_in_meal"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
    "unmatched": [
     "breast"
-   ]
+   ],
+   "leftover": 1
   }
  },
  {
@@ -2711,10 +2928,13 @@
      "source_note": "NEEDS VERIFICATION: plain water has no calories (USDA FoodData Central)",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2746,7 +2966,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "ghee",
@@ -2773,10 +2995,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2808,10 +3033,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2843,10 +3071,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2878,10 +3109,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2913,10 +3147,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -2948,7 +3185,9 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "chaas",
@@ -2975,10 +3214,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3010,10 +3252,16 @@
      "source_note": "Generic placeholder for an unknown chicken dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.4,
+     "flags": [
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3024,31 +3272,38 @@
      "dish_id": "generic_fish_dish",
      "name": "generic fish dish",
      "matched_text": "fish amritsari",
-     "quantity": 1,
+     "quantity": 2,
      "unit": "count",
-     "grams": 250,
+     "grams": 500,
      "oil_level": "",
      "kcal": {
-      "low": 150,
-      "best": 300,
-      "high": 450
+      "low": 300,
+      "best": 600,
+      "high": 900
      },
      "protein_g": {
-      "low": 12,
-      "best": 24,
-      "high": 36
+      "low": 24,
+      "best": 48,
+      "high": 72
      },
-     "carbs_g": 17.2,
-     "fat_g": 15,
+     "carbs_g": 34.4,
+     "fat_g": 30,
      "source": "generic",
      "data_source": "estimate",
      "source_note": "Generic placeholder for an unknown fish dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.3,
+     "flags": [
+      "trailing_qty",
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3080,10 +3335,16 @@
      "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.4,
+     "flags": [
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3091,61 +3352,41 @@
   "out": {
    "items": [
     {
-     "dish_id": "rajma",
-     "name": "rajma",
-     "matched_text": "rajma",
-     "quantity": 0.5,
+     "dish_id": "rajma_chawal",
+     "name": "rajma chawal",
+     "matched_text": "rajma rice",
+     "quantity": 1,
      "unit": "katori",
-     "grams": 75,
+     "grams": 150,
      "oil_level": "normal",
      "kcal": {
-      "low": 79,
-      "best": 105,
-      "high": 131
+      "low": 135,
+      "best": 180,
+      "high": 225
      },
      "protein_g": {
-      "low": 3.4,
-      "best": 4.5,
-      "high": 5.6
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
      },
-     "carbs_g": 13.9,
-     "fat_g": 3.5,
-     "source": "table",
+     "carbs_g": 25.5,
+     "fat_g": 6,
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "rice",
-     "name": "rice",
-     "matched_text": "rice",
-     "quantity": 0.5,
-     "unit": "katori",
-     "grams": 75,
-     "oil_level": "",
-     "kcal": {
-      "low": 88,
-      "best": 98,
-      "high": 108
-     },
-     "protein_g": {
-      "low": 1.8,
-      "best": 2,
-      "high": 2.2
-     },
-     "carbs_g": 20.5,
-     "fat_g": 0.9,
-     "source": "table",
-     "data_source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.5,
+     "flags": [
+      "combo_or_split",
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3153,61 +3394,41 @@
   "out": {
    "items": [
     {
-     "dish_id": "dal",
-     "name": "dal",
-     "matched_text": "dal",
-     "quantity": 1,
+     "dish_id": "dal_chawal",
+     "name": "dal chawal",
+     "matched_text": "dal chawal",
+     "quantity": 2,
      "unit": "katori",
-     "grams": 150,
+     "grams": 300,
      "oil_level": "normal",
      "kcal": {
-      "low": 112,
-      "best": 150,
-      "high": 188
+      "low": 262,
+      "best": 350,
+      "high": 438
      },
      "protein_g": {
-      "low": 6,
-      "best": 8,
-      "high": 10
+      "low": 9,
+      "best": 12,
+      "high": 15
      },
-     "carbs_g": 18.2,
-     "fat_g": 5,
-     "source": "table",
+     "carbs_g": 49.2,
+     "fat_g": 11.7,
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "rice",
-     "name": "rice",
-     "matched_text": "chawal",
-     "quantity": 1,
-     "unit": "katori",
-     "grams": 150,
-     "oil_level": "",
-     "kcal": {
-      "low": 176,
-      "best": 195,
-      "high": 215
-     },
-     "protein_g": {
-      "low": 3.6,
-      "best": 4,
-      "high": 4.4
-     },
-     "carbs_g": 40.9,
-     "fat_g": 1.7,
-     "source": "table",
-     "data_source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.5,
+     "flags": [
+      "combo_or_split",
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3239,10 +3460,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.85,
+     "flags": [
+      "variant"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3274,10 +3501,16 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.85,
+     "flags": [
+      "variant"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3309,10 +3542,17 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.5,
+     "flags": [
+      "variant",
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3344,7 +3584,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "aloo_sabzi",
@@ -3371,10 +3613,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3406,10 +3651,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3441,10 +3689,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3476,10 +3727,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3511,10 +3765,13 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3546,10 +3803,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3581,10 +3844,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3611,17 +3877,24 @@
      },
      "carbs_g": 47,
      "fat_g": 4,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.2,
+     "flags": [
+      "leftover_nearby",
+      "leftover_in_meal"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
    "unmatched": [
     "stew"
-   ]
+   ],
+   "leftover": 1
   }
  },
  {
@@ -3652,16 +3925,14 @@
      "data_source": "estimate",
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "alternatives": [
-      {
-       "quantity": 1,
-       "unit": "count",
-       "kcal": 90,
-       "label": "one standard portion"
-      }
+     "needs_confirmation": false,
+     "confidence": 0.75,
+     "flags": [
+      "trailing_qty",
+      "count_between"
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "aloo_posto",
@@ -3688,10 +3959,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3723,10 +3997,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3758,7 +4035,9 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "mango_drink",
@@ -3785,10 +4064,87 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "dal with jeera rice, 1 bowl",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 0.38,
+     "unit": "katori",
+     "grams": 57,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 43,
+      "best": 57,
+      "high": 71
+     },
+     "protein_g": {
+      "low": 2.3,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 6.9,
+     "fat_g": 1.9,
+     "source": "did_you_mean",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "combo_or_split"
+     ],
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "jeera_rice",
+     "name": "jeera rice",
+     "matched_text": "jeera rice",
+     "quantity": 0.63,
+     "unit": "katori",
+     "grams": 95,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 118,
+      "best": 158,
+      "high": 197
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.2
+     },
+     "carbs_g": 28.9,
+     "fat_g": 3.5,
+     "source": "did_you_mean",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "confidence": 0.5,
+     "flags": [
+      "combo_or_split",
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3820,10 +4176,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3855,10 +4214,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3890,10 +4252,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -3920,17 +4285,24 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.2,
+     "flags": [
+      "leftover_nearby",
+      "leftover_in_meal"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
    "unmatched": [
     "quinoa xyz"
-   ]
+   ],
+   "leftover": 1
   }
  },
  {
@@ -3962,7 +4334,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "oil",
@@ -3989,10 +4363,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4000,60 +4377,33 @@
   "out": {
    "items": [
     {
-     "dish_id": "chole",
-     "name": "chole",
+     "dish_id": "chole_bhature",
+     "name": "chole bhature",
      "matched_text": "chole bhature",
      "quantity": 1,
-     "unit": "katori",
-     "grams": 150,
+     "unit": "plate",
+     "grams": 350,
      "oil_level": "normal",
      "kcal": {
-      "low": 172,
-      "best": 230,
-      "high": 288
+      "low": 562,
+      "best": 750,
+      "high": 938
      },
      "protein_g": {
-      "low": 6.8,
-      "best": 9,
-      "high": 11.2
+      "low": 15,
+      "best": 20,
+      "high": 25
      },
-     "carbs_g": 31.2,
-     "fat_g": 7.7,
+     "carbs_g": 111.2,
+     "fat_g": 25,
      "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "from_combo": "chole_bhature",
      "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "bhatura",
-     "name": "bhatura",
-     "matched_text": "chole bhature",
-     "quantity": 2,
-     "unit": "count",
-     "grams": 160,
-     "oil_level": "normal",
-     "kcal": {
-      "low": 436,
-      "best": 580,
-      "high": 724
-     },
-     "protein_g": {
-      "low": 9,
-      "best": 12,
-      "high": 15
-     },
-     "carbs_g": 75,
-     "fat_g": 25.8,
-     "source": "table",
-     "data_source": "estimate",
-     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
-     "fuzzy": false,
-     "from_combo": "chole_bhature",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "oil",
@@ -4080,10 +4430,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4115,7 +4468,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "bhindi",
@@ -4142,10 +4497,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4177,7 +4535,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dal",
@@ -4204,7 +4564,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "sabzi",
@@ -4231,7 +4593,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "ghee",
@@ -4258,7 +4622,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "rajma",
@@ -4280,13 +4646,18 @@
      },
      "carbs_g": 12,
      "fat_g": 3,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "combo_or_split"
+     ],
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "rice",
@@ -4308,16 +4679,22 @@
      },
      "carbs_g": 17.6,
      "fat_g": 0.7,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "combo_or_split"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4349,10 +4726,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4384,10 +4764,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4419,10 +4802,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4454,10 +4840,16 @@
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4489,10 +4881,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4524,10 +4919,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4554,11 +4952,15 @@
      },
      "carbs_g": 0,
      "fat_g": 30,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
+     "confidence": 0.7,
+     "flags": [
+      "sanity"
+     ],
      "alternatives": [
       {
        "quantity": 1,
@@ -4567,10 +4969,12 @@
        "label": "one standard portion"
       }
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4602,7 +5006,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "samosa",
@@ -4629,10 +5035,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4664,10 +5073,17 @@
      "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.3,
+     "flags": [
+      "trailing_qty",
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4699,10 +5115,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4734,10 +5156,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4769,24 +5194,32 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
   "in": "a",
   "out": {
    "items": [],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
   "in": "do",
   "out": {
    "items": [],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4818,7 +5251,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "butter",
@@ -4845,10 +5280,16 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "style_ignored"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4880,7 +5321,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "sabzi",
@@ -4907,10 +5350,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4942,10 +5388,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -4977,7 +5426,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "apple",
@@ -5004,7 +5455,9 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "chai",
@@ -5031,10 +5484,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5066,10 +5522,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5101,10 +5560,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5136,10 +5598,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.85,
+     "flags": [
+      "variant"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5147,63 +5615,37 @@
   "out": {
    "items": [
     {
-     "dish_id": "chole",
-     "name": "chole",
+     "dish_id": "chole_bhature",
+     "name": "chole bhature",
      "matched_text": "chole bhature",
      "quantity": 1,
-     "unit": "katori",
-     "grams": 150,
+     "unit": "plate",
+     "grams": 350,
      "oil_level": "normal",
      "kcal": {
-      "low": 172,
-      "best": 230,
-      "high": 288
+      "low": 562,
+      "best": 750,
+      "high": 938
      },
      "protein_g": {
-      "low": 6.8,
-      "best": 9,
-      "high": 11.2
+      "low": 15,
+      "best": 20,
+      "high": 25
      },
-     "carbs_g": 31.2,
-     "fat_g": 7.7,
+     "carbs_g": 111.2,
+     "fat_g": 25,
      "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "from_combo": "chole_bhature",
      "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "bhatura",
-     "name": "bhatura",
-     "matched_text": "chole bhature",
-     "quantity": 2,
-     "unit": "count",
-     "grams": 160,
-     "oil_level": "normal",
-     "kcal": {
-      "low": 436,
-      "best": 580,
-      "high": 724
-     },
-     "protein_g": {
-      "low": 9,
-      "best": 12,
-      "high": 15
-     },
-     "carbs_g": 75,
-     "fat_g": 25.8,
-     "source": "table",
-     "data_source": "estimate",
-     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
-     "fuzzy": false,
-     "from_combo": "chole_bhature",
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5235,10 +5677,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5270,10 +5715,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5300,11 +5748,15 @@
      },
      "carbs_g": 372,
      "fat_g": 48,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
+     "confidence": 0.7,
+     "flags": [
+      "sanity"
+     ],
      "alternatives": [
       {
        "quantity": 1,
@@ -5313,10 +5765,12 @@
        "label": "one standard portion"
       }
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5343,11 +5797,15 @@
      },
      "carbs_g": 38,
      "fat_g": 74,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
+     "confidence": 0.7,
+     "flags": [
+      "sanity"
+     ],
      "alternatives": [
       {
        "quantity": 1,
@@ -5356,10 +5814,12 @@
        "label": "one standard portion"
       }
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5391,7 +5851,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "dal",
@@ -5418,10 +5880,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5453,10 +5918,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5488,10 +5956,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.65,
+     "flags": [
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5523,10 +5997,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5558,7 +6035,12 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "ghee",
@@ -5585,10 +6067,13 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5615,11 +6100,15 @@
      },
      "carbs_g": 0,
      "fat_g": 25,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
+     "confidence": 0.7,
+     "flags": [
+      "sanity"
+     ],
      "alternatives": [
       {
        "quantity": 1,
@@ -5628,10 +6117,12 @@
        "label": "one standard portion"
       }
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5663,10 +6154,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5698,10 +6192,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5733,10 +6230,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "style_ignored"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5768,10 +6271,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5803,10 +6309,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5838,10 +6347,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5873,10 +6388,16 @@
      "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
      "fuzzy": false,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.4,
+     "flags": [
+      "generic"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5908,10 +6429,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5943,10 +6467,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.9,
+     "flags": [
+      "style_ignored"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -5954,61 +6484,41 @@
   "out": {
    "items": [
     {
-     "dish_id": "dal",
-     "name": "dal",
-     "matched_text": "dal",
-     "quantity": 0.5,
+     "dish_id": "dal_chawal",
+     "name": "dal chawal",
+     "matched_text": "dal rice",
+     "quantity": 1,
      "unit": "katori",
-     "grams": 75,
+     "grams": 150,
      "oil_level": "normal",
      "kcal": {
-      "low": 56,
-      "best": 75,
-      "high": 94
+      "low": 131,
+      "best": 175,
+      "high": 219
      },
      "protein_g": {
-      "low": 3,
-      "best": 4,
-      "high": 5
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
      },
-     "carbs_g": 9.1,
-     "fat_g": 2.5,
-     "source": "table",
+     "carbs_g": 24.6,
+     "fat_g": 5.9,
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "rice",
-     "name": "rice",
-     "matched_text": "rice",
-     "quantity": 0.5,
-     "unit": "katori",
-     "grams": 75,
-     "oil_level": "",
-     "kcal": {
-      "low": 88,
-      "best": 98,
-      "high": 108
-     },
-     "protein_g": {
-      "low": 1.8,
-      "best": 2,
-      "high": 2.2
-     },
-     "carbs_g": 20.5,
-     "fat_g": 0.9,
-     "source": "table",
-     "data_source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "needs_confirmation": false,
-     "ai_estimate": false
+     "needs_confirmation": true,
+     "confidence": 0.5,
+     "flags": [
+      "combo_or_split",
+      "trailing_qty"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6040,10 +6550,17 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.5,
+     "flags": [
+      "variant",
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6075,10 +6592,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.85,
+     "flags": [
+      "variant"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6110,10 +6633,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 0.85,
+     "flags": [
+      "variant"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6145,10 +6674,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6180,10 +6712,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6215,10 +6750,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6249,16 +6787,14 @@
      "data_source": "estimate",
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "alternatives": [
-      {
-       "quantity": 1,
-       "unit": "count",
-       "kcal": 90,
-       "label": "one standard portion"
-      }
+     "needs_confirmation": false,
+     "confidence": 0.75,
+     "flags": [
+      "trailing_qty",
+      "count_between"
      ],
-     "ai_estimate": false
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "aloo_posto",
@@ -6285,10 +6821,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6320,10 +6859,16 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "ai_estimate": false
+     "confidence": 0.65,
+     "flags": [
+      "fuzzy"
+     ],
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6355,7 +6900,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     },
     {
      "dish_id": "aloo_sabzi",
@@ -6382,10 +6929,13 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6417,10 +6967,13 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
   }
  },
  {
@@ -6452,10 +7005,2580 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": false,
-     "ai_estimate": false
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
     }
    ],
-   "unmatched": []
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 roti dal sabzi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 37.2,
+     "fat_g": 4.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 18.2,
+     "fat_g": 5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 13.3,
+     "fat_g": 7.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "poha aur chai",
+  "out": {
+   "items": [
+    {
+     "dish_id": "poha",
+     "name": "poha",
+     "matched_text": "poha",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "carbs_g": 38.8,
+     "fat_g": 8.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "chai",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 60,
+      "best": 80,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "carbs_g": 10.5,
+     "fat_g": 3.1,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 idli sambar",
+  "out": {
+   "items": [
+    {
+     "dish_id": "idli",
+     "name": "idli",
+     "matched_text": "idli",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 90,
+      "best": 120,
+      "high": 150
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 25.2,
+     "fat_g": 0.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "sambar",
+     "name": "sambar",
+     "matched_text": "sambar",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 82,
+      "best": 110,
+      "high": 138
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "carbs_g": 14.2,
+     "fat_g": 3.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "masala dosa",
+  "out": {
+   "items": [
+    {
+     "dish_id": "masala_dosa",
+     "name": "masala dosa",
+     "matched_text": "masala dosa",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 262,
+      "best": 350,
+      "high": 438
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 54.2,
+     "fat_g": 11.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "1 plate rajma chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "rajma_chawal",
+     "name": "rajma chawal",
+     "matched_text": "rajma chawal",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 350,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 315,
+      "best": 420,
+      "high": 525
+     },
+     "protein_g": {
+      "low": 10.5,
+      "best": 14,
+      "high": 17.5
+     },
+     "carbs_g": 59.5,
+     "fat_g": 14,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "3 roti aloo gobi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 246,
+      "best": 330,
+      "high": 414
+     },
+     "protein_g": {
+      "low": 7.8,
+      "best": 10.5,
+      "high": 13.2
+     },
+     "carbs_g": 55.8,
+     "fat_g": 7.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "aloo_gobi",
+     "name": "aloo gobi",
+     "matched_text": "aloo gobi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 14.8,
+     "fat_g": 8.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "dal chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal_chawal",
+     "name": "dal chawal",
+     "matched_text": "dal chawal",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 262,
+      "best": 350,
+      "high": 438
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "carbs_g": 49.2,
+     "fat_g": 11.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 aloo paratha dahi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "aloo paratha",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 240,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 450,
+      "best": 600,
+      "high": 750
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "carbs_g": 85.4,
+     "fat_g": 23.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "dahi",
+     "name": "dahi",
+     "matched_text": "dahi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 81,
+      "best": 90,
+      "high": 99
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 5,
+      "high": 5.5
+     },
+     "carbs_g": 7.4,
+     "fat_g": 4.5,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "maggi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "maggi",
+     "name": "maggi",
+     "matched_text": "maggi",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 70,
+     "oil_level": "",
+     "kcal": {
+      "low": 279,
+      "best": 310,
+      "high": 341
+     },
+     "protein_g": {
+      "low": 6.3,
+      "best": 7,
+      "high": 7.7
+     },
+     "carbs_g": 35.6,
+     "fat_g": 15.5,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "chai biscuit",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "chai",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 60,
+      "best": 80,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "carbs_g": 10.5,
+     "fat_g": 3.1,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "biscuit",
+     "name": "biscuit",
+     "matched_text": "biscuit",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 8,
+     "oil_level": "",
+     "kcal": {
+      "low": 32,
+      "best": 35,
+      "high": 38
+     },
+     "protein_g": {
+      "low": 0.5,
+      "best": 0.6,
+      "high": 0.7
+     },
+     "carbs_g": 5.5,
+     "fat_g": 1.2,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 boiled egg 2 bread",
+  "out": {
+   "items": [
+    {
+     "dish_id": "boiled_egg",
+     "name": "boiled egg",
+     "matched_text": "boiled egg",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 130,
+      "best": 144,
+      "high": 158
+     },
+     "protein_g": {
+      "low": 11.4,
+      "best": 12.6,
+      "high": 13.8
+     },
+     "carbs_g": 0.8,
+     "fat_g": 10,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "bread",
+     "name": "bread",
+     "matched_text": "bread",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 50,
+     "oil_level": "",
+     "kcal": {
+      "low": 120,
+      "best": 134,
+      "high": 148
+     },
+     "protein_g": {
+      "low": 4.2,
+      "best": 4.6,
+      "high": 5
+     },
+     "carbs_g": 22.2,
+     "fat_g": 3,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "omelette 2 bread",
+  "out": {
+   "items": [
+    {
+     "dish_id": "omelette",
+     "name": "omelette",
+     "matched_text": "omelette",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 60,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 90,
+      "best": 120,
+      "high": 150
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 3.4,
+     "fat_g": 8.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "bread",
+     "name": "bread",
+     "matched_text": "bread",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 50,
+     "oil_level": "",
+     "kcal": {
+      "low": 120,
+      "best": 134,
+      "high": 148
+     },
+     "protein_g": {
+      "low": 4.2,
+      "best": 4.6,
+      "high": 5
+     },
+     "carbs_g": 22.2,
+     "fat_g": 3,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "1 glass milk",
+  "out": {
+   "items": [
+    {
+     "dish_id": "milk",
+     "name": "milk",
+     "matched_text": "milk",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 140,
+      "best": 155,
+      "high": 170
+     },
+     "protein_g": {
+      "low": 7.2,
+      "best": 8,
+      "high": 8.8
+     },
+     "carbs_g": 11.4,
+     "fat_g": 8.6,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "banana",
+  "out": {
+   "items": [
+    {
+     "dish_id": "banana",
+     "name": "banana",
+     "matched_text": "banana",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 94,
+      "best": 105,
+      "high": 116
+     },
+     "protein_g": {
+      "low": 1.2,
+      "best": 1.3,
+      "high": 1.4
+     },
+     "carbs_g": 24.3,
+     "fat_g": 0.3,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "apple",
+  "out": {
+   "items": [
+    {
+     "dish_id": "apple",
+     "name": "apple",
+     "matched_text": "apple",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 86,
+      "best": 95,
+      "high": 105
+     },
+     "protein_g": {
+      "low": 0.5,
+      "best": 0.5,
+      "high": 0.6
+     },
+     "carbs_g": 22.6,
+     "fat_g": 0.3,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "upma",
+  "out": {
+   "items": [
+    {
+     "dish_id": "upma",
+     "name": "upma",
+     "matched_text": "upma",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 172,
+      "best": 230,
+      "high": 288
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "carbs_g": 35.2,
+     "fat_g": 7.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "chole bhature",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chole_bhature",
+     "name": "chole bhature",
+     "matched_text": "chole bhature",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 350,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 562,
+      "best": 750,
+      "high": 938
+     },
+     "protein_g": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "carbs_g": 111.2,
+     "fat_g": 25,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "paneer butter masala 2 naan",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paneer_butter_masala",
+     "name": "paneer butter masala",
+     "matched_text": "paneer butter masala",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 248,
+      "best": 330,
+      "high": 412
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "carbs_g": 29.3,
+     "fat_g": 18.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "naan",
+     "name": "naan",
+     "matched_text": "naan",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 390,
+      "best": 520,
+      "high": 650
+     },
+     "protein_g": {
+      "low": 12,
+      "best": 16,
+      "high": 20
+     },
+     "carbs_g": 88,
+     "fat_g": 11.6,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "chicken biryani",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_biryani",
+     "name": "chicken biryani",
+     "matched_text": "chicken biryani",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 412,
+      "best": 550,
+      "high": 688
+     },
+     "protein_g": {
+      "low": 18.8,
+      "best": 25,
+      "high": 31.2
+     },
+     "carbs_g": 64.3,
+     "fat_g": 21.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "veg pulao raita",
+  "out": {
+   "items": [
+    {
+     "dish_id": "veg_pulao",
+     "name": "veg pulao",
+     "matched_text": "veg pulao",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 195,
+      "best": 260,
+      "high": 325
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "carbs_g": 43.8,
+     "fat_g": 7.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "raita",
+     "name": "raita",
+     "matched_text": "raita",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 75,
+      "best": 100,
+      "high": 125
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "carbs_g": 10.1,
+     "fat_g": 4.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "khichdi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "khichdi",
+     "name": "khichdi",
+     "matched_text": "khichdi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 180,
+      "best": 240,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 40.1,
+     "fat_g": 5.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "curd rice",
+  "out": {
+   "items": [
+    {
+     "dish_id": "curd_rice",
+     "name": "curd rice",
+     "matched_text": "curd rice",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 200,
+     "oil_level": "",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 35.3,
+     "fat_g": 6.1,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 samosa",
+  "out": {
+   "items": [
+    {
+     "dish_id": "samosa",
+     "name": "samosa",
+     "matched_text": "samosa",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 390,
+      "best": 520,
+      "high": 650
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 63.6,
+     "fat_g": 26,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "vada pav",
+  "out": {
+   "items": [
+    {
+     "dish_id": "vada_pav",
+     "name": "vada pav",
+     "matched_text": "vada pav",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 34.2,
+     "fat_g": 15,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "pav bhaji",
+  "out": {
+   "items": [
+    {
+     "dish_id": "pav_bhaji",
+     "name": "pav bhaji",
+     "matched_text": "pav bhaji",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 375,
+      "best": 500,
+      "high": 625
+     },
+     "protein_g": {
+      "low": 8.2,
+      "best": 11,
+      "high": 13.8
+     },
+     "carbs_g": 76.4,
+     "fat_g": 16.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "bhel puri",
+  "out": {
+   "items": [
+    {
+     "dish_id": "bhel_puri",
+     "name": "bhel puri",
+     "matched_text": "bhel puri",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 28.4,
+     "fat_g": 12.5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "4 roti bhindi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 4,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "",
+     "kcal": {
+      "low": 328,
+      "best": 440,
+      "high": 552
+     },
+     "protein_g": {
+      "low": 10.4,
+      "best": 14,
+      "high": 17.6
+     },
+     "carbs_g": 74.4,
+     "fat_g": 9.6,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "bhindi",
+     "name": "bhindi",
+     "matched_text": "bhindi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 105,
+      "best": 140,
+      "high": 175
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 14.4,
+     "fat_g": 7.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 paratha",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paratha",
+     "name": "paratha",
+     "matched_text": "paratha",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 300,
+      "best": 400,
+      "high": 500
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 56.8,
+     "fat_g": 15.6,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "1 katori dahi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dahi",
+     "name": "dahi",
+     "matched_text": "dahi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 81,
+      "best": 90,
+      "high": 99
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 5,
+      "high": 5.5
+     },
+     "carbs_g": 7.4,
+     "fat_g": 4.5,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "sprouts",
+  "out": {
+   "items": [
+    {
+     "dish_id": "sprouts",
+     "name": "sprouts",
+     "matched_text": "sprouts",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 75,
+      "best": 100,
+      "high": 125
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 16,
+     "fat_g": 0.9,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "protein shake",
+  "out": {
+   "items": [
+    {
+     "dish_id": "protein_shake",
+     "name": "protein shake",
+     "matched_text": "protein shake",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 30,
+     "oil_level": "",
+     "kcal": {
+      "low": 108,
+      "best": 120,
+      "high": 132
+     },
+     "protein_g": {
+      "low": 21.6,
+      "best": 24,
+      "high": 26.4
+     },
+     "carbs_g": 2.4,
+     "fat_g": 1.6,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "oats with milk",
+  "out": {
+   "items": [
+    {
+     "dish_id": "oats",
+     "name": "oats",
+     "matched_text": "oats",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 200,
+     "oil_level": "",
+     "kcal": {
+      "low": 135,
+      "best": 180,
+      "high": 225
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 32.2,
+     "fat_g": 3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "milk",
+     "name": "milk",
+     "matched_text": "milk",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 140,
+      "best": 155,
+      "high": 170
+     },
+     "protein_g": {
+      "low": 7.2,
+      "best": 8,
+      "high": 8.8
+     },
+     "carbs_g": 11.4,
+     "fat_g": 8.6,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "cornflakes milk",
+  "out": {
+   "items": [
+    {
+     "dish_id": "cornflakes",
+     "name": "cornflakes",
+     "matched_text": "cornflakes",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 30,
+     "oil_level": "",
+     "kcal": {
+      "low": 82,
+      "best": 110,
+      "high": 138
+     },
+     "protein_g": {
+      "low": 1.5,
+      "best": 2,
+      "high": 2.5
+     },
+     "carbs_g": 25.1,
+     "fat_g": 0.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "milk",
+     "name": "milk",
+     "matched_text": "milk",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 140,
+      "best": 155,
+      "high": 170
+     },
+     "protein_g": {
+      "low": 7.2,
+      "best": 8,
+      "high": 8.8
+     },
+     "carbs_g": 11.4,
+     "fat_g": 8.6,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "chicken curry rice",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_curry",
+     "name": "chicken curry",
+     "matched_text": "chicken curry",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 16.5,
+      "best": 22,
+      "high": 27.5
+     },
+     "carbs_g": 9.2,
+     "fat_g": 13.9,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "rice",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 176,
+      "best": 195,
+      "high": 215
+     },
+     "protein_g": {
+      "low": 3.6,
+      "best": 4,
+      "high": 4.4
+     },
+     "carbs_g": 40.9,
+     "fat_g": 1.7,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "egg curry 2 roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "egg_curry",
+     "name": "egg curry",
+     "matched_text": "egg curry",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 9.8,
+      "best": 13,
+      "high": 16.2
+     },
+     "carbs_g": 14.6,
+     "fat_g": 12.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 37.2,
+     "fat_g": 4.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "fish curry rice",
+  "out": {
+   "items": [
+    {
+     "dish_id": "fish_curry",
+     "name": "fish curry",
+     "matched_text": "fish curry",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "carbs_g": 7.6,
+     "fat_g": 12.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "rice",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 176,
+      "best": 195,
+      "high": 215
+     },
+     "protein_g": {
+      "low": 3.6,
+      "best": 4,
+      "high": 4.4
+     },
+     "carbs_g": 40.9,
+     "fat_g": 1.7,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 dosa chutney",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dosa",
+     "name": "dosa",
+     "matched_text": "dosa",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 256,
+      "best": 340,
+      "high": 424
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 51.4,
+     "fat_g": 11.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "chutney",
+     "name": "chutney",
+     "matched_text": "chutney",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 15,
+     "oil_level": "",
+     "kcal": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "protein_g": {
+      "low": 0.4,
+      "best": 0.5,
+      "high": 0.6
+     },
+     "carbs_g": 2.9,
+     "fat_g": 0.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "dal makhani 2 roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal_makhani",
+     "name": "dal makhani",
+     "matched_text": "dal makhani",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 195,
+      "best": 260,
+      "high": 325
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
+     },
+     "carbs_g": 36.4,
+     "fat_g": 8.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 37.2,
+     "fat_g": 4.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "kadhi chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "kadhi_chawal",
+     "name": "kadhi chawal",
+     "matched_text": "kadhi chawal",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 278,
+      "best": 370,
+      "high": 462
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
+     },
+     "carbs_g": 55.8,
+     "fat_g": 12.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "jeera rice dal fry",
+  "out": {
+   "items": [
+    {
+     "dish_id": "jeera_rice",
+     "name": "jeera rice",
+     "matched_text": "jeera rice",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 45.9,
+     "fat_g": 5.6,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal fry",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 18.2,
+     "fat_g": 5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "lassi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "lassi",
+     "name": "lassi",
+     "matched_text": "lassi",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 31.6,
+     "fat_g": 7.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "chaas",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chaas",
+     "name": "chaas",
+     "matched_text": "chaas",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 38,
+      "best": 50,
+      "high": 62
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 4.5,
+     "fat_g": 2.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 chapati palak paneer",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "chapati",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "carbs_g": 37.2,
+     "fat_g": 4.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "palak_paneer",
+     "name": "palak paneer",
+     "matched_text": "palak paneer",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 195,
+      "best": 260,
+      "high": 325
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "carbs_g": 20.6,
+     "fat_g": 14.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "mix veg 3 roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "mix veg",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 13.3,
+     "fat_g": 7.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 246,
+      "best": 330,
+      "high": 414
+     },
+     "protein_g": {
+      "low": 7.8,
+      "best": 10.5,
+      "high": 13.2
+     },
+     "carbs_g": 55.8,
+     "fat_g": 7.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "peanuts",
+  "out": {
+   "items": [
+    {
+     "dish_id": "peanuts",
+     "name": "peanuts",
+     "matched_text": "peanuts",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 30,
+     "oil_level": "",
+     "kcal": {
+      "low": 153,
+      "best": 170,
+      "high": 187
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 7.5,
+      "high": 8.2
+     },
+     "carbs_g": 3.1,
+     "fat_g": 14.2,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 ladoo",
+  "out": {
+   "items": [
+    {
+     "dish_id": "ladoo",
+     "name": "ladoo",
+     "matched_text": "ladoo",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 270,
+      "best": 360,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 4.4,
+      "best": 6,
+      "high": 7.6
+     },
+     "carbs_g": 48,
+     "fat_g": 16,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "momos",
+  "out": {
+   "items": [
+    {
+     "dish_id": "momos",
+     "name": "momos",
+     "matched_text": "momos",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
+     },
+     "carbs_g": 32.2,
+     "fat_g": 15,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "coffee",
+  "out": {
+   "items": [
+    {
+     "dish_id": "coffee",
+     "name": "coffee",
+     "matched_text": "coffee",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 75,
+      "best": 100,
+      "high": 125
+     },
+     "protein_g": {
+      "low": 2.6,
+      "best": 3.5,
+      "high": 4.4
+     },
+     "carbs_g": 12.7,
+     "fat_g": 3.9,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "bread butter",
+  "out": {
+   "items": [
+    {
+     "dish_id": "bread_butter",
+     "name": "bread butter",
+     "matched_text": "bread butter",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 35,
+     "oil_level": "",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "carbs_g": 23.5,
+     "fat_g": 2.9,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
+  }
+ },
+ {
+  "in": "2 puri aloo sabzi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "puri",
+     "name": "puri",
+     "matched_text": "puri",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 50,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 150,
+      "best": 200,
+      "high": 250
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 23.6,
+     "fat_g": 10,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    },
+    {
+     "dish_id": "aloo_sabzi",
+     "name": "aloo sabzi",
+     "matched_text": "aloo sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 128,
+      "best": 170,
+      "high": 212
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 18.3,
+     "fat_g": 9.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "confidence": 1,
+     "ai_estimate": false,
+     "learned": false
+    }
+   ],
+   "unmatched": [],
+   "leftover": 0
   }
  }
 ]

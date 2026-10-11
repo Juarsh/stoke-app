@@ -14,8 +14,8 @@ export interface ParseResponse {
  * confirmed numbers + dish_table_version; the server checks them and never recalculates. */
 type Nums = { kcal: number; kcal_low: number; kcal_high: number; protein_g: number; protein_low: number; protein_high: number; carbs_g?: number; fat_g?: number };
 export type ItemIn =
-  | ({ dish_id: string; qty: number; unit: string; oil_level: string; source: string; confirmed: boolean; client_id: string; dish_table_version: number } & Nums)
-  | ({ custom_name: string; source: string; confirmed: boolean; client_id: string } & Nums);
+  | ({ dish_id: string; qty: number; unit: string; oil_level: string; source: string; confirmed: boolean; client_id: string; dish_table_version: number; span?: string } & Nums)
+  | ({ custom_name: string; source: string; confirmed: boolean; client_id: string; span?: string } & Nums);
 
 export function totalOf(items: Item[]): ParseTotal {
   const [k, p] = totals(items);

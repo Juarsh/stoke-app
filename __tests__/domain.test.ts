@@ -1,6 +1,7 @@
 import { suggest } from '../src/lib/coach';
 import { computeStreak, computeTargets, entryFromItem, slotFor, weekStart } from '../src/lib/domain';
-import { enqueue, flush, Op } from '../src/lib/syncQueue';
+import { backoffMs, enqueue, flush, Op } from '../src/lib/syncQueue';
+import { ApiError } from '../src/lib/api';
 import { DISH_TABLE_VERSION, DISHES, parser } from '../src/parser';
 
 test('targets', () => {
@@ -43,9 +44,25 @@ test('sync queue coalesces and stops on failure without changing payload', async
   q = enqueue(q, { kind: 'upsert', entry: { ...e, qty: 2 }, tries: 0 });
   expect(q).toHaveLength(1);
   const sent: unknown[] = [];
-  const rest = await flush(q, { upsertEntry: async (x) => { sent.push(x); throw new Error('offline'); }, deleteEntry: async () => {} });
+  const base = { upsertEntry: async () => {}, deleteEntry: async () => {}, resolvePending: async () => null, deleteRemembered: async () => {} };
+  const { rest } = await flush(q, { ...base, upsertEntry: async (x) => { sent.push(x); throw new ApiError(409, 'conflict'); } }, 1000);
+  expect(rest).toHaveLength(1); // never dropped, even on 409
   expect(rest[0].tries).toBe(1);
-  expect(await flush(rest, { upsertEntry: async () => {}, deleteEntry: async () => {} })).toEqual([]);
+  expect(rest[0].nextAt).toBe(1000 + backoffMs(1));
+  expect((await flush(rest, base, 1001)).rest).toHaveLength(1); // still backing off
+  expect((await flush(rest, base, 1000 + backoffMs(1))).rest).toEqual([]);
+  expect(backoffMs(20)).toBe(30 * 60_000);
+});
+test('pending food stays queued with no number until resolved, then becomes an upsert', async () => {
+  const food = { id: 'p1', span: 'quinoa bowl', slot: 'lunch' as const, local_date: '2026-10-12', raw_text: 'quinoa bowl' };
+  const q: Op[] = [{ kind: 'pending', food, tries: 0 }];
+  const base = { upsertEntry: async () => {}, deleteEntry: async () => {}, deleteRemembered: async () => {} };
+  const a = await flush(q, { ...base, resolvePending: async () => null }, 0);
+  expect(a.rest[0].kind).toBe('pending'); expect(a.resolved).toEqual([]);
+  const e = entryFromItem(parser.parse('dal').items[0], { slot: 'lunch', raw_text: 'quinoa bowl', local_date: '2026-10-12', tableVersion: 1, id: 'p1-0' });
+  const sent: string[] = [];
+  const b = await flush(a.rest, { ...base, upsertEntry: async (x) => { sent.push(x.id); }, resolvePending: async () => [e] }, 1e12);
+  expect(b.resolved.map((x) => x.id)).toEqual(['p1-0']); expect(sent).toEqual(['p1-0']); expect(b.rest).toEqual([]);
 });
 import { parseLocal } from '../src/lib/parseLocal';
 test('did-you-mean comes from the parser (backend rule: >1000 kcal or >3x portion)', () => {
@@ -63,7 +80,7 @@ test('Devanagari text switches to the matching Noto Sans Devanagari weight', () 
   expect(devaFamily('Inter_400Regular')).toBe('NotoSansDevanagari_400Regular');
 });
 test('item kinds come from the parser source field', () => {
-  expect(itemKind(parseLocal('20 roti').items[0])).toBe('table'); // sanity flag: table + needs_confirmation
+  expect(itemKind(parseLocal('20 roti').items[0])).toBe('did_you_mean'); // sanity lowers confidence below threshold
   expect(needsConfirmation(parseLocal('20 roti').items[0])).toBe(true);
   expect(itemKind(parseLocal('2 chapatii').items[0])).toBe('did_you_mean');
   const g = parseLocal('paneer lababdar').items[0];

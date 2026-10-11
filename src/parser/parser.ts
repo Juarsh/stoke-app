@@ -28,7 +28,9 @@ export interface Rules {
   generic_protein_dish: Record<string, string>; form_words: string[]; modifier_words: string[]; stuffing_words: string[];
   connectors: string[]; egg_words: string[]; wrap_forms: string[]; generic_wrap_dish: string; eggs_per_portion: Record<string, number>; fuzzy_min_similarity: number;
   unknown_item: { kcal: [number, number, number]; protein_g: [number, number, number]; name: string };
-  sanity: { max_item_kcal: number; max_portion_multiple: number };
+  sanity: { max_item_kcal: number; max_portion_multiple: number; max_count_multiple: number };
+  style_words: string[]; stopwords: string[]; min_placeholder_len: number; confidence: Record<string, number>;
+  fuzzy_never_to_categories: string[]; typical_sides: Record<string, string[]>;
 }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
@@ -37,16 +39,24 @@ export interface Item {
   oil_level: OilLevel; kcal: Range; protein_g: Range; carbs_g: number; fat_g: number;
   /** table | did_you_mean | generic | ai_estimate */
   source: ItemSource; data_source: string; source_note: string; fuzzy: boolean; from_combo?: string;
-  needs_confirmation: boolean; alternatives?: Alternative[]; ai_estimate: boolean;
+  needs_confirmation: boolean;
+  /** 0-1 from match quality and context; below rules.confidence.threshold it needs confirmation. flags say why. */
+  confidence?: number; flags?: string[];
+  alternatives?: Alternative[]; ai_estimate: boolean;
+  /** from the user's remembered readings (server parse) */
+  learned?: boolean;
 }
 export type ItemSource = 'table' | 'did_you_mean' | 'generic' | 'ai_estimate';
-export interface ParseResult { items: Item[]; unmatched: string[] }
+/** leftover: words/numbers the parser could not use (incl. short/stopword leftovers that never become placeholders). */
+export interface ParseResult { items: Item[]; unmatched: string[]; leftover: number }
 
-type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean };
+type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[] };
+/** Go Item.pen: add a confidence deduction once (copy-on-write). */
+const pen = (it: It, f: string) => { if (!it.pens?.includes(f)) it.pens = [...(it.pens ?? []), f]; };
 interface Token { w: string; num: number; isN: boolean; sep: boolean; mult: number }
 const tok = (p: Partial<Token>): Token => ({ w: '', num: 0, isN: false, sep: false, mult: 0, ...p });
-interface Pending { qty: number; hasQty: boolean; unit: string; factor: number; oil: string; small: boolean }
-const emptyPending = (): Pending => ({ qty: 0, hasQty: false, unit: '', factor: 0, oil: '', small: false });
+interface Pending { style: string[]; qty: number; hasQty: boolean; unit: string; factor: number; oil: string; small: boolean }
+const emptyPending = (): Pending => ({ style: [], qty: 0, hasQty: false, unit: '', factor: 0, oil: '', small: false });
 
 /** Go's math.Round (half away from zero) to d decimals. */
 export function round(f: number, d: number): number {
@@ -83,6 +93,7 @@ export class Parser {
   private small: Set<string>; private oilNoun: Set<string>; private oilSuf: Set<string>;
   private filler: Set<string>; private fat: Set<string>; private genitive: Set<string>;
   private formWord: Set<string>; private modifier: Set<string>; private stuffing: Set<string>; private connector: Set<string>; private eggWord: Set<string>;
+  private style: Set<string>; private stop: Set<string>; private noFuzzyCat: Set<string>;
   private reMult: RegExp;
 
   constructor(private table: Dish[], private r: Rules) {
@@ -104,6 +115,7 @@ export class Parser {
     this.fat = new Set(r.fat_dishes); this.genitive = new Set(r.genitive_words);
     this.formWord = new Set(r.form_words); this.modifier = new Set(r.modifier_words); this.stuffing = new Set(r.stuffing_words);
     this.connector = new Set(r.connectors); this.eggWord = new Set(r.egg_words);
+    this.style = new Set(r.style_words); this.stop = new Set(r.stopwords); this.noFuzzyCat = new Set(r.fuzzy_never_to_categories);
     this.filler = new Set([...r.fillers, ...r.brand_words]);
     const pre = r.multiplier_prefixes.map(escapeRe).join('|');
     this.reMult = new RegExp(`(?:^|\\s)(?:${pre})\\s*(\\d+(?:\\.\\d+)?)(?:\\s|$)|(?:^|\\s)(\\d+(?:\\.\\d+)?)\\s*(?:x|×)(?:\\s|$)`, 'g');
@@ -202,6 +214,7 @@ export class Parser {
       if (this.filler.has(term) || (this.unitOf.get(term) ?? '') !== '' || (this.oilOf.get(term) ?? '') !== '' || this.small.has(term)) continue;
       let best = '', bestD = 1 << 30;
       for (const c of this.byWords.get(n) ?? []) {
+        if (this.noFuzzyCat.has(this.dish.get(c)!.category ?? "")) continue; // e.g. a typo never turns into a fruit
         const cw = fields(c);
         let ok = true, dist = 0;
         for (let k = 0; k < cw.length; k++) {
@@ -223,13 +236,22 @@ export class Parser {
     let unk: string[] = [];
     let clause = 0;
     let joined = false;
+    let leftover = 0;
     const flushUnk = () => {
       if (unk.length === 0) return;
       const span = unk.join(' ');
       unk = [];
+      leftover++;
       const g = this.genericProtein(span, clause);
       if (g) { items.push(g); return; }
-      unmatched.push(span);
+      // only real words (3+ letters, not stopwords) become a placeholder span; a leading count is kept with it
+      const keep: string[] = [];
+      fields(span).forEach((w, k) => {
+        if (k === 0 && goParseFloat(w) !== null) { keep.push(w); return; }
+        if (runes(w).length >= this.r.min_placeholder_len && !this.stop.has(w)) keep.push(w);
+      });
+      if (keep.length === 0 || (keep.length === 1 && goParseFloat(keep[0]) !== null)) return;
+      unmatched.push(keep.join(' '));
     };
     const last = (): It | undefined => items[items.length - 1];
     const setLast = (x: It) => { items[items.length - 1] = x; };
@@ -298,13 +320,21 @@ export class Parser {
               continue;
             }
           }
+          const orig = d;
+          let styleIgnored = false;
+          for (const st of pd.style) {
+            const sv = this.variantFromUnk(d, [st]);
+            if (sv) d = sv; else styleIgnored = true;
+          }
           const v = this.variantFromUnk(d, unk);
           if (v) { d = v; unk = unk.slice(0, -1); }
           flushUnk();
           d = this.proteinVariant(d, toks, i, n, items);
           let skip: number;
           [d, skip] = this.variantAhead(d, toks, i + n);
-          push(this.build(d, pd, matched.join(' '), fz));
+          const built = this.build(d, pd, matched.join(' '), fz);
+          for (const b of built) { if (d !== orig) pen(b, 'variant'); if (styleIgnored) pen(b, 'style_ignored'); }
+          push(built);
           pd = emptyPending();
           i += n - 1 + skip;
           continue;
@@ -325,10 +355,14 @@ export class Parser {
             const [uu, ff] = this.unitFor(toks[i + 1].w);
             if (uu !== '') { u = uu; f = ff; i++; }
           }
+          const between = !this.trailing(toks, i);
           this.applyTrailing(items, tgt, t.num * f, u);
+          const k = Math.min(tgt, items.length - 1);
+          if (k >= 0) { pen(items[k], 'trailing_qty'); if (between) pen(items[k], 'count_between'); }
           continue;
         }
         if (t.w !== '' && (i + 1 >= toks.length || toks[i + 1].sep)) continue;
+        if (pd.hasQty) leftover++; // two numbers in a row: one is unused
         if (pd.hasQty) pd.qty *= t.num; else { pd.qty = t.num; pd.hasQty = true; }
         continue;
       }
@@ -358,26 +392,50 @@ export class Parser {
         i++;
         continue;
       }
+      if (this.style.has(w)) {
+        // cooking-style words are modifiers, never items
+        let j = i + 1;
+        while (j < toks.length && this.style.has(toks[j].w)) j++;
+        const [nextDish] = this.matchDish(toks, j);
+        if (nextDish) { pd.style.push(w); continue; } // "steamed momos": applies to the next dish
+        const li = last();
+        if (li && li.clause === clause && !li.explicit && this.isProteinWord(li.matched_text) && !li.from_combo) {
+          const g = this.genericProtein(li.matched_text + ' ' + w, li.clause ?? 0);
+          if (g) { setLast(g); continue; }
+        }
+        if (li && li.clause === clause && unk.length === 0) {
+          const g = this.applyForm(li, w);
+          if (g) { pen(g, 'variant'); setLast(g); } else { li.matched_text += ' ' + w; pen(li, 'style_ignored'); }
+          continue;
+        }
+        pd.style.push(w);
+        continue;
+      }
       if (this.connector.has(w)) { flushUnk(); joined = true; continue; }
       if (this.filler.has(w) || this.oilSuf.has(w) || this.genitive.has(w) || this.stuffing.has(w)) continue;
       if (pd.hasQty && unk.length === 0) unk.push(fmt(pd.qty));
       pd = emptyPending();
+      // unknown word right after a bare protein word ("paneer lababdar"): the protein goes into the span (-> generic item).
       if (unk.length === 0) {
-        const glued: string[] = [];
-        for (let k = i - 1; k >= 0; k--) {
-          const li = last();
-          if (!li || li.explicit || toks[k].sep || li.matched_text !== this.word(toks[k]) || li.from_combo) break;
-          glued.unshift(li.matched_text);
+        const li = last();
+        if (li && !li.explicit && i > 0 && !toks[i - 1].sep && li.matched_text === this.word(toks[i - 1]) && this.isProteinWord(li.matched_text)) {
+          unk.push(li.matched_text);
           items.pop();
-          if (!li.fuzzy) break;
-        }
-        unk.push(...glued);
+        } else if (li && li.clause === clause) pen(li, 'leftover_nearby');
       }
       unk.push(w);
     }
     flushUnk();
+    if (pd.hasQty) leftover++; // a number nothing used
+    const present = new Set(items.map((x) => x.dish_id));
+    for (const it of items) {
+      it.explicit = false;
+      if (leftover > 0 || unmatched.length > 0) pen(it, 'leftover_in_meal');
+      const sides = this.r.typical_sides[it.dish_id];
+      if (sides && !sides.some((sd) => present.has(sd))) pen(it, 'missing_side');
+    }
     const out: Item[] = items.map((x) => this.finish(x));
-    return { items: out, unmatched };
+    return { items: out, unmatched, leftover };
   }
 
   private applyForm(li: It, form: string): It | null {
@@ -479,16 +537,32 @@ export class Parser {
 
   /** Sets the response source and needs_confirmation; strips internal fields. */
   private finish(x: It): Item {
-    const { explicit: _e, generic, clause: _c, joined: _j, ...base } = x;
-    const d = this.dishById(base.dish_id);
-    const source: ItemSource = generic || d?.needs_confirm ? 'generic' : base.fuzzy ? 'did_you_mean' : 'table';
-    const it = this.sanity({ ...base, source });
-    return { ...it, needs_confirmation: it.source !== 'table' || it.needs_confirmation };
+    const d = this.dishById(x.dish_id);
+    const source: ItemSource = x.generic || d?.needs_confirm ? 'generic' : x.fuzzy ? 'did_you_mean' : 'table';
+    const it: It = this.sanity({ ...x, source });
+    if (it.fuzzy) pen(it, 'fuzzy');
+    if (it.source === 'generic') pen(it, 'generic');
+    if (it.from_combo) pen(it, 'combo_or_split');
+    const conf = this.r.confidence;
+    let c = 1;
+    for (const f of it.pens ?? []) c += has(conf, f) ? conf[f] : conf.leftover_in_meal;
+    it.confidence = Math.max(0, round(c, 2));
+    const pens = it.pens ?? [];
+    if (pens.length) it.flags = [...pens];
+    // leftovers, splits and combos always need a look, whatever the score
+    const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby');
+    if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
+    it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
+    const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, ...base } = it;
+    return base;
   }
 
-  private sanity(it: Item): Item {
+  private sanity<T extends It>(it: T): T {
     const d = this.dishById(it.dish_id);
-    if (!d || (it.kcal.best <= this.r.sanity.max_item_kcal && it.grams <= this.r.sanity.max_portion_multiple * d.portion_grams)) return it;
+    let mult = this.r.sanity.max_portion_multiple;
+    if (d && (d.unit === 'count' || it.unit === 'piece')) mult = this.r.sanity.max_count_multiple; // 4-6 rotis is normal
+    if (!d || (it.kcal.best <= this.r.sanity.max_item_kcal && it.grams <= mult * d.portion_grams)) return it;
+    pen(it, 'sanity');
     const alts: Alternative[] = [];
     const alt = (q: number, u: string, label: string) => {
       const c = this.compute(d, blank(), q, u);
@@ -496,7 +570,7 @@ export class Parser {
     };
     if ((d.piece_grams ?? 0) > 0 && it.unit !== 'piece') alt(it.quantity, 'piece', 'pieces instead of ' + it.unit);
     alt(1, d.unit, 'one standard portion');
-    return { ...it, needs_confirmation: true, alternatives: alts };
+    return { ...it, needs_confirmation: true, alternatives: [...(it.alternatives ?? []), ...alts] };
   }
 
   private proteinVariant(d: Dish, toks: Token[], i: number, n: number, items: It[]): Dish {
@@ -511,7 +585,7 @@ export class Parser {
     };
     for (let k = i - 1; k >= 0 && !toks[k].sep; k--) {
       const w = toks[k].w;
-      if (this.filler.has(w)) continue;
+      if (this.filler.has(w) || this.style.has(w)) continue;
       const v = tryW(w);
       if (v) {
         const li = items[items.length - 1];
@@ -558,18 +632,35 @@ export class Parser {
         group.push(j);
       }
       if (group.length > 1) {
-        let sum = 0;
-        for (const g of group) sum += this.dishById(items[g].dish_id)!.portion_grams;
+        // one serving made of both parts: a combo row if the table has one...
+        const combo = this.comboFor(items, group);
+        if (combo) {
+          const first = group[group.length - 1];
+          let it: It = { ...blank(), dish_id: combo.id, name: combo.name, data_source: combo.source, source_note: combo.source_note, clause: items[k].clause, explicit: true };
+          for (let g = group.length - 1; g >= 0; g--) it.matched_text = (it.matched_text + ' ' + items[group[g]].matched_text).trim();
+          it = this.compute(combo, it, qty, unit);
+          if (combo.oil_sensitive) it = this.withOil(it, 'normal');
+          pen(it, 'combo_or_split');
+          const keep: It[] = [];
+          items.forEach((x, idx) => { if (idx === first) keep.push(it); else if (!group.includes(idx)) keep.push(x); });
+          items.splice(0, items.length, ...keep);
+          return;
+        }
+        // ...otherwise split one serving by each part's calorie share
+        let sumK = 0;
+        for (const g of group) sumK += this.dishById(items[g].dish_id)!.kcal;
         for (const g of group) {
-          const share = (qty * this.dishById(items[g].dish_id)!.portion_grams) / sum;
-          items[g] = { ...this.rescale(items[g], round(share, 2), unit), explicit: true };
+          const d = this.dishById(items[g].dish_id)!;
+          const share = sumK > 0 ? d.kcal / sumK : 1 / group.length;
+          items[g] = { ...this.rescale(items[g], round(qty * share, 2), unit), explicit: true };
+          pen(items[g], 'combo_or_split');
         }
         return;
       }
     }
     const it = items[k];
     const d = this.dishById(it.dish_id)!;
-    if (!it.from_combo && (d.parts?.length ?? 0) > 0) {
+    if (!it.from_combo && (d.parts?.length ?? 0) > 0 && unit !== '' && unit !== d.unit) {
       const parts = this.expand(d, qty, unit, it.oil_level, it.matched_text, it.fuzzy);
       for (const pt of parts) pt.clause = it.clause;
       items.splice(k, 1, ...parts);
@@ -577,6 +668,16 @@ export class Parser {
     }
     if (unit === '' && (d.piece_grams ?? 0) > 0) unit = 'piece';
     items[k] = { ...this.rescale(it, qty, unit), explicit: true };
+  }
+
+  /** a table row that is exactly these parts ("rajma" + "rice" -> rajma chawal) */
+  private comboFor(items: It[], group: number[]): Dish | null {
+    const want = new Set(group.map((g) => items[g].dish_id));
+    for (const d of this.table) {
+      if ((d.parts?.length ?? 0) !== want.size) continue;
+      if (d.parts!.every((pt) => want.has(pt.dish_id))) return d;
+    }
+    return null;
   }
 
   private unitFor(w: string): [string, number] {
@@ -618,11 +719,13 @@ export class Parser {
       if (pd.oil === 'extra') qty = this.r.extra_fat_spoons;
     }
     let oil = pd.oil;
-    if (this.fat.has(d.id)) oil = '';
-    if ((d.parts?.length ?? 0) > 0 && (pd.hasQty || pd.unit !== '')) return this.expand(d, qty, unit, oil, matched, fuzzy);
+    let capped = false;
+    if (this.fat.has(d.id)) { oil = ''; capped = (unit === '' || unit === 'spoon') && qty > this.r.max_fat_spoons; }
+    if ((d.parts?.length ?? 0) > 0 && pd.unit !== '' && pd.unit !== d.unit) return this.expand(d, qty, unit, oil, matched, fuzzy);
     if ((d.piece_grams ?? 0) > 0 && pd.hasQty && (unit === '' || unit === 'count')) unit = 'piece';
     let it: It = { ...blank(), dish_id: d.id, name: d.name, matched_text: matched, data_source: d.source, source_note: d.source_note, fuzzy, explicit: pd.hasQty };
     it = this.compute(d, it, qty, unit);
+    if (capped) { pen(it, 'capped'); it.needs_confirmation = true; }
     if (d.oil_sensitive) it = this.withOil(it, (oil || 'normal') as OilLevel);
     return [it];
   }
@@ -698,6 +801,7 @@ export class Parser {
       it = this.withOil(it, oil as OilLevel);
     }
     it = this.sanity(it);
+    delete (it as It).pens;
     if (d.needs_confirm) it = { ...it, source: 'generic', needs_confirmation: true };
     return it;
   }
@@ -723,7 +827,7 @@ export const UNITS = ['count', 'piece', 'katori', 'spoon', 'plate', 'glass', 'gr
 const blank = (): Item => ({
   dish_id: '', name: '', matched_text: '', quantity: 0, unit: '', grams: 0, oil_level: '',
   kcal: { low: 0, best: 0, high: 0 }, protein_g: { low: 0, best: 0, high: 0 }, carbs_g: 0, fat_g: 0,
-  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false,
+  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false, learned: false,
 });
 
 function wordsOf(ts: Token[], word: (t: Token) => string): string[] {

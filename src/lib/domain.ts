@@ -22,6 +22,8 @@ export interface FoodEntry {
   dish_id: string | null; custom_name: string; qty: number; unit: string; oil_level: OilLevel;
   kcal: Range; protein_g: Range; carbs_g?: number; fat_g?: number; source: EntrySource; item_source?: string; source_note: string; confirmed: boolean;
   dish_table_version: number; created_at: string; updated_at: string; deleted_at: string | null;
+  /** parse span (matched_text). Sent as ItemIn.span when remember=true, so the backend stores it as a Remembered food. */
+  span?: string; remember?: boolean;
 }
 
 export const ACTIVITY: Record<Profile['activity'], number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
@@ -86,7 +88,7 @@ export function computeStreak(loggedDates: Iterable<string>, today: string): Str
 }
 
 /** Build an immutable entry snapshot from a parsed (or edited) item. */
-export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local_date: string; tableVersion: number; now?: Date; id: string }): FoodEntry {
+export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local_date: string; tableVersion: number; now?: Date; id: string; remember?: boolean }): FoodEntry {
   const now = (o.now ?? new Date()).toISOString();
   return {
     id: o.id, local_date: o.local_date, slot: o.slot, raw_text: o.raw_text,
@@ -95,6 +97,7 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
     kcal: { ...it.kcal }, protein_g: { ...it.protein_g }, carbs_g: it.carbs_g, fat_g: it.fat_g,
     source: it.ai_estimate ? 'ai' : 'table', item_source: it.source, source_note: it.source_note, confirmed: true,
     dish_table_version: o.tableVersion, created_at: now, updated_at: now, deleted_at: null,
+    span: it.matched_text, remember: !!o.remember,
   };
 }
 

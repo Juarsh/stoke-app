@@ -60,7 +60,7 @@ export default function Log() {
         if (got.length) setAi((a) => [...a, ...got.map((it, i) => ({ key: `ai:${u}:${i}`, it, ok: false }))]);
         else toCustom([u], r.message ?? 'Add it yourself for now.');
       }
-    } catch { toCustom(pendingUnmatched, 'Couldn’t reach AI estimates. Add it yourself for now.'); } finally { setBusy(false); }
+    } catch { setMsg('No connection. These stay pending and fill in when you’re back online.'); } finally { setBusy(false); }
   }
 
   // Confirmation is the primary action, not a blocker: Add confirms every CHECK/AI item.
@@ -68,14 +68,20 @@ export default function Log() {
   const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // the only disabled state (missing data)
   const total = drafts.reduce((a, d) => a + d.it.kcal.best, 0) + customs.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const protein = drafts.reduce((a, d) => a + d.it.protein_g.best, 0) + customs.reduce((a, c) => a + (Number(c.protein) || 0), 0);
-  const any = drafts.length + customs.length > 0;
+  // Pending = still waiting on the network/AI: shown as '— kcal', left out of the total, queued without a number on Add.
+  const nPending = pendingUnmatched.length;
+  const any = drafts.length + customs.length + nPending > 0;
   const canAdd = any && !customMissing;
   const kcalTxt = Math.round(total).toLocaleString('en-IN');
-  const addLabel = customMissing ? 'Add kcal for the custom item' : unsure ? `✓ All look right · Add ${kcalTxt} kcal` : `✓ Add ${kcalTxt} kcal`;
+  const pendTxt = nPending ? ` · ${nPending} pending` : '';
+  const addLabel = customMissing ? 'Add kcal for the custom item' : unsure ? `✓ All look right · Add ${kcalTxt} kcal${pendTxt}` : `✓ Add ${kcalTxt} kcal${pendTxt}`;
 
   function add() {
     const date = localDate();
-    const es: FoodEntry[] = drafts.map((d) => entryFromItem(d.it, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION }));
+    // uncertain or corrected readings carry their span, so the server remembers them (Remembered foods)
+    const learn = (d: Draft) => (!d.ok || d.corrected || d.it.source !== 'table') && !d.it.remembered && !d.it.learned;
+    const es: FoodEntry[] = drafts.map((d) => entryFromItem(d.it, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION, remember: learn(d) }));
+    if (nPending) st.addPending(pendingUnmatched.map((span) => ({ id: st.newId(), span, slot, local_date: date, raw_text: text })));
     for (const c of customs) {
       const k = Number(c.kcal) || 0, p = Number(c.protein) || 0, now = new Date().toISOString();
       es.push({ id: st.newId(), local_date: date, slot, raw_text: text, dish_id: null, custom_name: c.name, qty: 1, unit: 'count', oil_level: '',
@@ -84,7 +90,7 @@ export default function Log() {
     }
     st.addEntries(es);
     // remember every reading the user confirmed or corrected (table items with a known dish only)
-    st.remember(drafts.filter((d) => (!d.ok || d.corrected || d.it.source !== 'table') && d.it.dish_id && !d.it.remembered)
+    st.remember(drafts.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
       .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
     setText('');
     router.navigate('/');
@@ -122,7 +128,12 @@ export default function Log() {
           })}
           {pendingUnmatched.length ? (
             <Card>
-              <T v="bodyStrong">Not in our table yet: {pendingUnmatched.join(', ')}</T>
+              {pendingUnmatched.map((u) => (
+                <Row key={u} style={{ justifyContent: 'space-between' }} accessibilityLabel={`${u}, calories pending`}>
+                  <T v="bodyStrong">{u}</T><T v="number" tone="muted">— kcal</T>
+                </Row>
+              ))}
+              <T v="caption" tone="muted">{busy ? 'Waiting for an estimate…' : msg || 'Not in our table yet. Pending items aren’t in the total; if you add now they fill in when resolved.'}</T>
               <Button kind="soft" title={busy ? 'Estimating…' : 'Get AI estimate'} disabled={busy} onPress={estimateUnknown} />
               <T v="caption" tone="muted">AI estimates used today: {aiUsedToday}/{AI_CAP}</T>
             </Card>

@@ -11,6 +11,7 @@ trap 'rm -rf "$BACKEND"' EXIT
 cp "$BACKEND/internal/dishes/dishes.json" "$APP/src/data/dishes.json"
 cp "$BACKEND/internal/parser/rules.json" "$APP/src/data/rules.json"
 cp "$BACKEND/internal/parser/testdata/dev-meals.json" "$APP/src/data/dev-meals.json"
+[ -f "$BACKEND/internal/parser/testdata/everyday-meals.json" ] && cp "$BACKEND/internal/parser/testdata/everyday-meals.json" "$APP/src/data/everyday-meals.json"
 git -C "$REPO" rev-parse --short "$REF" > "$APP/src/data/SOURCE_COMMIT"
 if command -v go >/dev/null; then
   T="$(mktemp -d)"; mkdir -p "$T/parser" "$T/dishes"
@@ -19,7 +20,8 @@ if command -v go >/dev/null; then
   sed -i 's#github.com/akarsh/calorie-tracker/internal/dishes#golden/dishes#' "$T/parser/parser.go"
   cp "$APP/scripts/golden/main.go" "$T/main.go"
   printf 'module golden\n\ngo 1.22\n' > "$T/go.mod"
-  ( cd "$T" && go run . "$APP/src/data/dev-meals.json" "$APP/scripts/golden/extra-inputs.json" ) > "$APP/src/data/golden.json"
+  node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync(process.argv[1]));let b=[];try{b=JSON.parse(fs.readFileSync(process.argv[2])).meals}catch{};fs.writeFileSync(process.argv[3],JSON.stringify([...a,...b]))' "$APP/scripts/golden/extra-inputs.json" "$APP/src/data/everyday-meals.json" "$T/extra.json"
+  ( cd "$T" && go run . "$APP/src/data/dev-meals.json" "$T/extra.json" ) > "$APP/src/data/golden.json"
   rm -rf "$T"
   echo "golden.json regenerated from the Go parser"
 fi

@@ -7,8 +7,9 @@ import type { FoodEntry } from './domain';
 
 export * from './parseLocal';
 import { ItemIn, ParseResponse, parseLocal } from './parseLocal';
-/** Backend learned-readings route. Empty until it appears in API.md; Remembered foods are kept on the device meanwhile. */
-export const LEARNED_PATH = '';
+/** GET /v1/remembered row (API.md @ 6986771). */
+export interface RememberedRow { id: number; span: string; dish_id: string | null; custom_name: string; qty: number; unit: string; oil_level: string;
+  kcal_best: number; kcal_low: number; kcal_high: number; protein_best: number; protein_low: number; protein_high: number; carbs_g: number; fat_g: number; uses: number; updated_at: string }
 
 export class ApiError extends Error { constructor(public status: number, msg: string) { super(msg); } }
 
@@ -43,9 +44,11 @@ export function createApi(getToken: () => string | null) {
       const source = e.source === 'custom' || e.source === 'manual' ? 'custom' : e.source === 'ai' ? 'ai_estimate' : (e.item_source ?? 'table');
       const nums = { kcal: e.kcal.best, kcal_low: e.kcal.low, kcal_high: e.kcal.high, protein_g: e.protein_g.best, protein_low: e.protein_g.low,
         protein_high: e.protein_g.high, carbs_g: e.carbs_g, fat_g: e.fat_g };
+      // span => the server remembers this confirmed reading for the user (Remembered foods)
+      const span = e.remember && e.span ? { span: e.span } : {};
       const item: ItemIn = e.dish_id
-        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums }
-        : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums };
+        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span }
+        : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span };
       const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
       if (r?.duplicates?.length) {
         // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only.
@@ -55,9 +58,13 @@ export function createApi(getToken: () => string | null) {
         });
       }
     },
-    /** Remembered foods. The backend's learned-readings endpoint isn't in API.md yet, so these stay local until LEARNED_PATH is confirmed. */
-    async putLearned(text: string, reading: unknown): Promise<void> { if (!config.mock && LEARNED_PATH) await req('PUT', `${LEARNED_PATH}/${encodeURIComponent(text)}`, reading); },
-    async deleteLearned(text?: string): Promise<void> { if (!config.mock && LEARNED_PATH) await req('DELETE', text ? `${LEARNED_PATH}/${encodeURIComponent(text)}` : LEARNED_PATH); },
+    /** Remembered foods (per user). */
+    async getRemembered(): Promise<RememberedRow[]> { if (config.mock) return []; return (await req<{ remembered: RememberedRow[] }>('GET', '/v1/remembered')).remembered ?? []; },
+    /** 404 (already gone) counts as done. */
+    async deleteRemembered(id?: number): Promise<void> {
+      if (config.mock) return;
+      try { await req('DELETE', id === undefined ? '/v1/remembered' : `/v1/remembered/${id}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
+    },
     async deleteEntry(id: string): Promise<void> { if (!config.mock) await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); },
     async putSteps(local_date: string, steps: number): Promise<void> {
       if (!config.mock) await req('POST', '/v1/activity/steps', { local_date, steps, source: 'health_connect' });
