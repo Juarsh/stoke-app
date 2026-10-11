@@ -23,10 +23,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -49,10 +50,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -75,10 +77,11 @@
      },
      "carbs_g": 13.3,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -101,10 +104,11 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -135,10 +139,11 @@
      },
      "carbs_g": 53.4,
      "fat_g": 23.3,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -169,11 +174,12 @@
      },
      "carbs_g": 12,
      "fat_g": 3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -196,11 +202,12 @@
      },
      "carbs_g": 17.6,
      "fat_g": 0.7,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -231,10 +238,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -257,10 +265,11 @@
      },
      "carbs_g": 18.3,
      "fat_g": 9.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -291,10 +300,11 @@
      },
      "carbs_g": 0.8,
      "fat_g": 10,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -317,10 +327,11 @@
      },
      "carbs_g": 22.2,
      "fat_g": 3,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -351,10 +362,11 @@
      },
      "carbs_g": 38.8,
      "fat_g": 8.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -377,10 +389,11 @@
      },
      "carbs_g": 10.5,
      "fat_g": 3.1,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -411,10 +424,11 @@
      },
      "carbs_g": 61.4,
      "fat_g": 2.6,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -437,10 +451,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -471,10 +486,11 @@
      },
      "carbs_g": 32.2,
      "fat_g": 10.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -505,10 +521,11 @@
      },
      "carbs_g": 25.2,
      "fat_g": 0.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -531,10 +548,11 @@
      },
      "carbs_g": 14.2,
      "fat_g": 3.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -557,10 +575,11 @@
      },
      "carbs_g": 2.9,
      "fat_g": 0.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -591,10 +610,11 @@
      },
      "carbs_g": 54.2,
      "fat_g": 11.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -625,10 +645,11 @@
      },
      "carbs_g": 11.4,
      "fat_g": 8.6,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -659,10 +680,11 @@
      },
      "carbs_g": 29.3,
      "fat_g": 18.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -685,10 +707,11 @@
      },
      "carbs_g": 95.8,
      "fat_g": 21.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -719,10 +742,11 @@
      },
      "carbs_g": 111.2,
      "fat_g": 25,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -753,10 +777,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -779,10 +804,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 0,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -805,10 +831,11 @@
      },
      "carbs_g": 5.8,
      "fat_g": 0.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -839,10 +866,11 @@
      },
      "carbs_g": 85.4,
      "fat_g": 23.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -865,10 +893,11 @@
      },
      "carbs_g": 7.4,
      "fat_g": 4.5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -891,10 +920,11 @@
      },
      "carbs_g": 2.1,
      "fat_g": 2.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -925,10 +955,11 @@
      },
      "carbs_g": 2.4,
      "fat_g": 1.6,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -959,10 +990,11 @@
      },
      "carbs_g": 3.8,
      "fat_g": 7.4,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -993,10 +1025,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1019,10 +1052,11 @@
      },
      "carbs_g": 14.4,
      "fat_g": 7.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1053,10 +1087,11 @@
      },
      "carbs_g": 48.6,
      "fat_g": 0.6,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1087,10 +1122,11 @@
      },
      "carbs_g": 13.3,
      "fat_g": 12.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1113,10 +1149,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1147,10 +1184,11 @@
      },
      "carbs_g": 31.8,
      "fat_g": 13,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1173,10 +1211,11 @@
      },
      "carbs_g": 10.5,
      "fat_g": 3.1,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1207,10 +1246,11 @@
      },
      "carbs_g": 8.2,
      "fat_g": 11,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1243,10 +1283,11 @@
      },
      "carbs_g": 37.8,
      "fat_g": 0.6,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1277,10 +1318,11 @@
      },
      "carbs_g": 6,
      "fat_g": 23.7,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1290,10 +1332,36 @@
  {
   "in": "paneer tikka masala",
   "out": {
-   "items": [],
-   "unmatched": [
-    "paneer tikka masala"
-   ]
+   "items": [
+    {
+     "dish_id": "generic_paneer_dish",
+     "name": "generic paneer dish",
+     "matched_text": "paneer tikka masala",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 190,
+      "best": 380,
+      "high": 570
+     },
+     "protein_g": {
+      "low": 8,
+      "best": 16,
+      "high": 24
+     },
+     "carbs_g": 36.2,
+     "fat_g": 19,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
   }
  },
  {
@@ -1320,10 +1388,11 @@
      },
      "carbs_g": 62.3,
      "fat_g": 14.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1354,10 +1423,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "did_you_mean",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
-     "needs_confirm": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -1388,10 +1458,11 @@
      },
      "carbs_g": 41.1,
      "fat_g": 13.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1414,10 +1485,11 @@
      },
      "carbs_g": 35.4,
      "fat_g": 15,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1448,11 +1520,12 @@
      },
      "carbs_g": 36.4,
      "fat_g": 10,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "dal_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1475,11 +1548,12 @@
      },
      "carbs_g": 81.8,
      "fat_g": 3.4,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "dal_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1502,10 +1576,11 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1536,10 +1611,11 @@
      },
      "carbs_g": 35.2,
      "fat_g": 7.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1562,10 +1638,11 @@
      },
      "carbs_g": 0,
      "fat_g": 4,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1596,10 +1673,11 @@
      },
      "carbs_g": 0,
      "fat_g": 10,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1630,10 +1708,11 @@
      },
      "carbs_g": 0,
      "fat_g": 29.4,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": true,
+     "needs_confirmation": true,
      "alternatives": [
       {
        "quantity": 1,
@@ -1672,10 +1751,11 @@
      },
      "carbs_g": 49,
      "fat_g": 20.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1706,10 +1786,11 @@
      },
      "carbs_g": 26.8,
      "fat_g": 12.5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1732,10 +1813,11 @@
      },
      "carbs_g": 64.4,
      "fat_g": 30,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1766,10 +1848,11 @@
      },
      "carbs_g": 21.7,
      "fat_g": 9.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1800,10 +1883,11 @@
      },
      "carbs_g": 37.8,
      "fat_g": 0.6,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1826,10 +1910,11 @@
      },
      "carbs_g": 14.2,
      "fat_g": 3.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1860,10 +1945,11 @@
      },
      "carbs_g": 56.8,
      "fat_g": 15.6,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1886,10 +1972,11 @@
      },
      "carbs_g": 7.4,
      "fat_g": 4.5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1920,10 +2007,11 @@
      },
      "carbs_g": 18.3,
      "fat_g": 9.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -1946,10 +2034,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -1980,10 +2069,11 @@
      },
      "carbs_g": 95.4,
      "fat_g": 39,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2014,10 +2104,11 @@
      },
      "carbs_g": 68.4,
      "fat_g": 30,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2048,10 +2139,11 @@
      },
      "carbs_g": 72.2,
      "fat_g": 31,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2082,10 +2174,11 @@
      },
      "carbs_g": 20.5,
      "fat_g": 0.9,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2116,10 +2209,11 @@
      },
      "carbs_g": 9.2,
      "fat_g": 13.9,
-     "source": "estimate",
+     "source": "did_you_mean",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
-     "needs_confirm": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -2150,10 +2244,11 @@
      },
      "carbs_g": 66.9,
      "fat_g": 27.6,
-     "source": "estimate",
+     "source": "did_you_mean",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
-     "needs_confirm": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -2184,10 +2279,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2210,10 +2306,11 @@
      },
      "carbs_g": 14.4,
      "fat_g": 7.8,
-     "source": "estimate",
+     "source": "did_you_mean",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
-     "needs_confirm": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -2244,10 +2341,11 @@
      },
      "carbs_g": 45,
      "fat_g": 20,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain's current nutrition page before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2270,10 +2368,11 @@
      },
      "carbs_g": 32.5,
      "fat_g": 0,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2304,10 +2403,11 @@
      },
      "carbs_g": 38.1,
      "fat_g": 3.3,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2330,10 +2430,11 @@
      },
      "carbs_g": 11.4,
      "fat_g": 8.6,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2364,10 +2465,11 @@
      },
      "carbs_g": 52.2,
      "fat_g": 27,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2398,11 +2500,12 @@
      },
      "carbs_g": 24.7,
      "fat_g": 5.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "kadhi_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2425,11 +2528,12 @@
      },
      "carbs_g": 40.9,
      "fat_g": 1.7,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "kadhi_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2460,10 +2564,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 12.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2494,10 +2599,11 @@
      },
      "carbs_g": 28,
      "fat_g": 16,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2528,10 +2634,11 @@
      },
      "carbs_g": 18.7,
      "fat_g": 10.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2562,10 +2669,11 @@
      },
      "carbs_g": 2.8,
      "fat_g": 5.6,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2598,10 +2706,11 @@
      },
      "carbs_g": 0,
      "fat_g": 0,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: plain water has no calories (USDA FoodData Central)",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2632,10 +2741,11 @@
      },
      "carbs_g": 42.7,
      "fat_g": 11.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2658,10 +2768,11 @@
      },
      "carbs_g": 0,
      "fat_g": 10,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2692,10 +2803,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 0,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2726,10 +2838,953 @@
      },
      "carbs_g": 13.3,
      "fat_g": 12.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 soya chaap",
+  "out": {
+   "items": [
+    {
+     "dish_id": "soya_chaap",
+     "name": "soya chaap",
+     "matched_text": "soya chaap",
+     "quantity": 2,
+     "unit": "plate",
+     "grams": 400,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 570,
+      "best": 760,
+      "high": 950
+     },
+     "protein_g": {
+      "low": 36,
+      "best": 48,
+      "high": 60
+     },
+     "carbs_g": 56.4,
+     "fat_g": 38,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "soy chaap tikka",
+  "out": {
+   "items": [
+    {
+     "dish_id": "soya_chaap",
+     "name": "soya chaap",
+     "matched_text": "soy chaap",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 285,
+      "best": 380,
+      "high": 475
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "carbs_g": 28.2,
+     "fat_g": 19,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chaap aur chaas",
+  "out": {
+   "items": [
+    {
+     "dish_id": "soya_chaap",
+     "name": "soya chaap",
+     "matched_text": "chaap",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 285,
+      "best": 380,
+      "high": 475
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "carbs_g": 28.2,
+     "fat_g": 19,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "chaas",
+     "name": "chaas",
+     "matched_text": "chaas",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 38,
+      "best": 50,
+      "high": 62
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 4.5,
+     "fat_g": 2.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chicken lababdar",
+  "out": {
+   "items": [
+    {
+     "dish_id": "generic_chicken_dish",
+     "name": "generic chicken dish",
+     "matched_text": "chicken lababdar",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 175,
+      "best": 350,
+      "high": 525
+     },
+     "protein_g": {
+      "low": 12.5,
+      "best": 25,
+      "high": 37.5
+     },
+     "carbs_g": 23.1,
+     "fat_g": 17.5,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown chicken dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "fish amritsari 2",
+  "out": {
+   "items": [
+    {
+     "dish_id": "generic_fish_dish",
+     "name": "generic fish dish",
+     "matched_text": "fish amritsari",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 150,
+      "best": 300,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 12,
+      "best": 24,
+      "high": 36
+     },
+     "carbs_g": 17.2,
+     "fat_g": 15,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown fish dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "panner kolhapuri",
+  "out": {
+   "items": [
+    {
+     "dish_id": "generic_paneer_dish",
+     "name": "generic paneer dish",
+     "matched_text": "panner kolhapuri",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 190,
+      "best": 380,
+      "high": 570
+     },
+     "protein_g": {
+      "low": 8,
+      "best": 16,
+      "high": 24
+     },
+     "carbs_g": 36.2,
+     "fat_g": 19,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "rajma with rice, 1 bowl",
+  "out": {
+   "items": [
+    {
+     "dish_id": "rajma",
+     "name": "rajma",
+     "matched_text": "rajma",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 79,
+      "best": 105,
+      "high": 131
+     },
+     "protein_g": {
+      "low": 3.4,
+      "best": 4.5,
+      "high": 5.6
+     },
+     "carbs_g": 13.9,
+     "fat_g": 3.5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "rice",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "",
+     "kcal": {
+      "low": 88,
+      "best": 98,
+      "high": 108
+     },
+     "protein_g": {
+      "low": 1.8,
+      "best": 2,
+      "high": 2.2
+     },
+     "carbs_g": 20.5,
+     "fat_g": 0.9,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "dal aur chawal 2 katori",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "carbs_g": 18.2,
+     "fat_g": 5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "chawal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 176,
+      "best": 195,
+      "high": 215
+     },
+     "protein_g": {
+      "low": 3.6,
+      "best": 4,
+      "high": 4.4
+     },
+     "carbs_g": 40.9,
+     "fat_g": 1.7,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paratha with gobi filling",
+  "out": {
+   "items": [
+    {
+     "dish_id": "gobi_paratha",
+     "name": "gobi paratha",
+     "matched_text": "paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 202,
+      "best": 270,
+      "high": 338
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 37.9,
+     "fat_g": 10.5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 paratha mooli wale",
+  "out": {
+   "items": [
+    {
+     "dish_id": "mooli_paratha",
+     "name": "mooli paratha",
+     "matched_text": "paratha",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 240,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 390,
+      "best": 520,
+      "high": 650
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "carbs_g": 72.6,
+     "fat_g": 20.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "aloo bhara paratha",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "bhara paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 42.7,
+     "fat_g": 11.7,
+     "source": "did_you_mean",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": true,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paratha aur aloo sabzi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paratha",
+     "name": "paratha",
+     "matched_text": "paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 60,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 150,
+      "best": 200,
+      "high": 250
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 28.4,
+     "fat_g": 7.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_sabzi",
+     "name": "aloo sabzi",
+     "matched_text": "aloo sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 128,
+      "best": 170,
+      "high": 212
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 18.3,
+     "fat_g": 9.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "teen ande ka omelette",
+  "out": {
+   "items": [
+    {
+     "dish_id": "omelette",
+     "name": "omelette",
+     "matched_text": "ande ka omelette",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 180,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 270,
+      "best": 360,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 15.6,
+      "best": 21,
+      "high": 26.4
+     },
+     "carbs_g": 10.2,
+     "fat_g": 26.1,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "omelette 2 ande wala",
+  "out": {
+   "items": [
+    {
+     "dish_id": "omelette",
+     "name": "omelette",
+     "matched_text": "omelette",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 180,
+      "best": 240,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 10.4,
+      "best": 14,
+      "high": 17.6
+     },
+     "carbs_g": 6.8,
+     "fat_g": 17.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "egg bhurji 4 egg",
+  "out": {
+   "items": [
+    {
+     "dish_id": "egg_bhurji",
+     "name": "egg bhurji",
+     "matched_text": "egg bhurji",
+     "quantity": 2,
+     "unit": "katori",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 270,
+      "best": 360,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "carbs_g": 16.4,
+     "fat_g": 22,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "veg maggi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "maggi",
+     "name": "maggi",
+     "matched_text": "maggi",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 70,
+     "oil_level": "",
+     "kcal": {
+      "low": 279,
+      "best": 310,
+      "high": 341
+     },
+     "protein_g": {
+      "low": 6.3,
+      "best": 7,
+      "high": 7.7
+     },
+     "carbs_g": 35.6,
+     "fat_g": 15.5,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "veg momos 6",
+  "out": {
+   "items": [
+    {
+     "dish_id": "momos",
+     "name": "momos",
+     "matched_text": "veg momos",
+     "quantity": 6,
+     "unit": "piece",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
+     },
+     "carbs_g": 32.2,
+     "fat_g": 15,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "misal pav",
+  "out": {
+   "items": [
+    {
+     "dish_id": "misal_pav",
+     "name": "misal pav",
+     "matched_text": "misal pav",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 360,
+      "best": 480,
+      "high": 600
+     },
+     "protein_g": {
+      "low": 12,
+      "best": 16,
+      "high": 20
+     },
+     "carbs_g": 56.1,
+     "fat_g": 21.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 appam with stew",
+  "out": {
+   "items": [
+    {
+     "dish_id": "appam",
+     "name": "appam",
+     "matched_text": "appam",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 180,
+      "best": 240,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 47,
+     "fat_g": 4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": [
+    "stew"
+   ]
+  }
+ },
+ {
+  "in": "luchi 4 aloo posto",
+  "out": {
+   "items": [
+    {
+     "dish_id": "luchi",
+     "name": "luchi",
+     "matched_text": "luchi",
+     "quantity": 4,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 272,
+      "best": 360,
+      "high": 448
+     },
+     "protein_g": {
+      "low": 4.4,
+      "best": 6,
+      "high": 7.6
+     },
+     "carbs_g": 39.2,
+     "fat_g": 20,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "alternatives": [
+      {
+       "quantity": 1,
+       "unit": "count",
+       "kcal": 90,
+       "label": "one standard portion"
+      }
+     ],
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_posto",
+     "name": "aloo posto",
+     "matched_text": "aloo posto",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 23.6,
+     "fat_g": 12.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 chicken kathi roll",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_roll",
+     "name": "chicken roll",
+     "matched_text": "chicken kathi roll",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 360,
+      "best": 480,
+      "high": 600
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "carbs_g": 48.1,
+     "fat_g": 21.3,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "lays ka packet aur frooti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "potato_chips",
+     "name": "potato chips",
+     "matched_text": "lays",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 50,
+     "oil_level": "",
+     "kcal": {
+      "low": 243,
+      "best": 270,
+      "high": 297
+     },
+     "protein_g": {
+      "low": 2.7,
+      "best": 3,
+      "high": 3.3
+     },
+     "carbs_g": 27.4,
+     "fat_g": 16.5,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "mango_drink",
+     "name": "mango drink",
+     "matched_text": "frooti",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 135,
+      "best": 150,
+      "high": 165
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "carbs_g": 37.5,
+     "fat_g": 0,
+     "source": "table",
+     "data_source": "open_food_facts",
+     "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
+     "fuzzy": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2760,10 +3815,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2794,10 +3850,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 0,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2828,10 +3885,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 10,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2862,10 +3920,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2898,10 +3957,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2924,10 +3984,11 @@
      },
      "carbs_g": 0,
      "fat_g": 9.8,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -2958,11 +4019,12 @@
      },
      "carbs_g": 31.2,
      "fat_g": 7.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "chole_bhature",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -2985,11 +4047,12 @@
      },
      "carbs_g": 75,
      "fat_g": 25.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "chole_bhature",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3012,10 +4075,11 @@
      },
      "carbs_g": 0,
      "fat_g": 9.8,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3046,10 +4110,11 @@
      },
      "carbs_g": 0,
      "fat_g": 4.9,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3072,10 +4137,11 @@
      },
      "carbs_g": 14.4,
      "fat_g": 7.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3106,10 +4172,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3132,10 +4199,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3158,10 +4226,11 @@
      },
      "carbs_g": 13.3,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3184,10 +4253,11 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3210,11 +4280,12 @@
      },
      "carbs_g": 12,
      "fat_g": 3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3237,11 +4308,12 @@
      },
      "carbs_g": 17.6,
      "fat_g": 0.7,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "rajma_chawal",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3272,10 +4344,11 @@
      },
      "carbs_g": 20.5,
      "fat_g": 0.9,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3306,10 +4379,11 @@
      },
      "carbs_g": 3.7,
      "fat_g": 2.3,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3340,10 +4414,11 @@
      },
      "carbs_g": 43.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3374,10 +4449,11 @@
      },
      "carbs_g": 53.4,
      "fat_g": 23.3,
-     "source": "open_food_facts",
+     "source": "table",
+     "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3408,10 +4484,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3442,10 +4519,11 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3476,10 +4554,11 @@
      },
      "carbs_g": 0,
      "fat_g": 30,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": true,
+     "needs_confirmation": true,
      "alternatives": [
       {
        "quantity": 1,
@@ -3518,10 +4597,11 @@
      },
      "carbs_g": 31.6,
      "fat_g": 7.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3544,10 +4624,11 @@
      },
      "carbs_g": 63.6,
      "fat_g": 26,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3559,55 +4640,30 @@
   "out": {
    "items": [
     {
-     "dish_id": "paneer",
-     "name": "paneer",
-     "matched_text": "paneer",
-     "quantity": 1,
-     "unit": "katori",
-     "grams": 100,
-     "oil_level": "",
-     "kcal": {
-      "low": 238,
-      "best": 265,
-      "high": 292
-     },
-     "protein_g": {
-      "low": 16.2,
-      "best": 18,
-      "high": 19.8
-     },
-     "carbs_g": 1.9,
-     "fat_g": 20.6,
-     "source": "usda_fdc",
-     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
-     "fuzzy": false,
-     "needs_confirm": false,
-     "ai_estimate": false
-    },
-    {
-     "dish_id": "aloo_tikki",
-     "name": "aloo tikki",
-     "matched_text": "tikka",
+     "dish_id": "generic_paneer_dish",
+     "name": "generic paneer dish",
+     "matched_text": "paneer tikka",
      "quantity": 150,
      "unit": "gram",
      "grams": 150,
-     "oil_level": "normal",
+     "oil_level": "",
      "kcal": {
-      "low": 240,
-      "best": 321,
-      "high": 403
+      "low": 114,
+      "best": 228,
+      "high": 342
      },
      "protein_g": {
-      "low": 3.2,
-      "best": 4.3,
-      "high": 5.4
+      "low": 4.8,
+      "best": 9.6,
+      "high": 14.4
      },
-     "carbs_g": 39.9,
-     "fat_g": 16.1,
-     "source": "estimate",
-     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
-     "fuzzy": true,
-     "needs_confirm": false,
+     "carbs_g": 21.7,
+     "fat_g": 11.4,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -3638,10 +4694,11 @@
      },
      "carbs_g": 16.4,
      "fat_g": 22,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3672,10 +4729,11 @@
      },
      "carbs_g": 42.7,
      "fat_g": 11.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3706,10 +4764,11 @@
      },
      "carbs_g": 21,
      "fat_g": 6.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3754,16 +4813,42 @@
      },
      "carbs_g": 29.3,
      "fat_g": 23.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "butter",
+     "name": "butter",
+     "matched_text": "butter",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 5,
+     "oil_level": "",
+     "kcal": {
+      "low": 32,
+      "best": 36,
+      "high": 40
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "carbs_g": 0,
+     "fat_g": 4,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
-   "unmatched": [
-    "butter masala"
-   ]
+   "unmatched": []
   }
  },
  {
@@ -3790,10 +4875,11 @@
      },
      "carbs_g": 0,
      "fat_g": 4.9,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3816,10 +4902,11 @@
      },
      "carbs_g": 13.3,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3850,10 +4937,11 @@
      },
      "carbs_g": 46.5,
      "fat_g": 6,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3884,10 +4972,11 @@
      },
      "carbs_g": 24.3,
      "fat_g": 0.3,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3910,10 +4999,11 @@
      },
      "carbs_g": 22.6,
      "fat_g": 0.3,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -3936,10 +5026,11 @@
      },
      "carbs_g": 10.5,
      "fat_g": 3.1,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -3970,10 +5061,11 @@
      },
      "carbs_g": 42.9,
      "fat_g": 20,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4004,10 +5096,11 @@
      },
      "carbs_g": 28,
      "fat_g": 16,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4038,10 +5131,11 @@
      },
      "carbs_g": 28,
      "fat_g": 16,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4072,11 +5166,12 @@
      },
      "carbs_g": 31.2,
      "fat_g": 7.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "chole_bhature",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -4099,11 +5194,12 @@
      },
      "carbs_g": 75,
      "fat_g": 25.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "chole_bhature",
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4134,10 +5230,11 @@
      },
      "carbs_g": 68.4,
      "fat_g": 30,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4168,10 +5265,11 @@
      },
      "carbs_g": 63.6,
      "fat_g": 26,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4202,10 +5300,11 @@
      },
      "carbs_g": 372,
      "fat_g": 48,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": true,
+     "needs_confirmation": true,
      "alternatives": [
       {
        "quantity": 1,
@@ -4244,10 +5343,11 @@
      },
      "carbs_g": 38,
      "fat_g": 74,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": true,
+     "needs_confirmation": true,
      "alternatives": [
       {
        "quantity": 1,
@@ -4286,10 +5386,11 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -4312,10 +5413,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4346,10 +5448,11 @@
      },
      "carbs_g": 18.3,
      "fat_g": 9.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4380,10 +5483,11 @@
      },
      "carbs_g": 64.3,
      "fat_g": 21.4,
-     "source": "estimate",
+     "source": "did_you_mean",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
-     "needs_confirm": false,
+     "needs_confirmation": true,
      "ai_estimate": false
     }
    ],
@@ -4414,10 +5518,11 @@
      },
      "carbs_g": 28.4,
      "fat_g": 9.8,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4448,10 +5553,11 @@
      },
      "carbs_g": 40.1,
      "fat_g": 5.3,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     },
     {
@@ -4474,10 +5580,11 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4508,10 +5615,11 @@
      },
      "carbs_g": 0,
      "fat_g": 25,
-     "source": "usda_fdc",
+     "source": "table",
+     "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirm": true,
+     "needs_confirmation": true,
      "alternatives": [
       {
        "quantity": 1,
@@ -4550,10 +5658,11 @@
      },
      "carbs_g": 18.2,
      "fat_g": 10,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4584,10 +5693,11 @@
      },
      "carbs_g": 32.2,
      "fat_g": 15,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4618,10 +5728,11 @@
      },
      "carbs_g": 28,
      "fat_g": 16,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4652,10 +5763,11 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4686,10 +5798,11 @@
      },
      "carbs_g": 61.9,
      "fat_g": 18.7,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],
@@ -4720,10 +5833,625 @@
      },
      "carbs_g": 76.8,
      "fat_g": 29.4,
-     "source": "estimate",
+     "source": "table",
+     "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirm": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paneer lababdar",
+  "out": {
+   "items": [
+    {
+     "dish_id": "generic_paneer_dish",
+     "name": "generic paneer dish",
+     "matched_text": "paneer lababdar",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 190,
+      "best": 380,
+      "high": 570
+     },
+     "protein_g": {
+      "low": 8,
+      "best": 16,
+      "high": 24
+     },
+     "carbs_g": 36.2,
+     "fat_g": 19,
+     "source": "generic",
+     "data_source": "estimate",
+     "source_note": "Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, user should confirm",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "soya chaap roll",
+  "out": {
+   "items": [
+    {
+     "dish_id": "soya_chaap",
+     "name": "soya chaap",
+     "matched_text": "soya chaap",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 285,
+      "best": 380,
+      "high": 475
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "carbs_g": 28.2,
+     "fat_g": 19,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chicken tikka masala",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_tikka",
+     "name": "chicken tikka",
+     "matched_text": "chicken tikka",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 180,
+      "best": 240,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 22.5,
+      "best": 30,
+      "high": 37.5
+     },
+     "carbs_g": 5.9,
+     "fat_g": 10.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "dal with rice, 1 bowl",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 56,
+      "best": 75,
+      "high": 94
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 9.1,
+     "fat_g": 2.5,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "rice",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "",
+     "kcal": {
+      "low": 88,
+      "best": 98,
+      "high": 108
+     },
+     "protein_g": {
+      "low": 1.8,
+      "best": 2,
+      "high": 2.2
+     },
+     "carbs_g": 20.5,
+     "fat_g": 0.9,
+     "source": "table",
+     "data_source": "usda_fdc",
+     "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "aloo bhara paratha",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "bhara paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 42.7,
+     "fat_g": 11.7,
+     "source": "did_you_mean",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": true,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paratha with aloo filling",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 42.7,
+     "fat_g": 11.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paratha aloo wala",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "carbs_g": 42.7,
+     "fat_g": 11.7,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "momos veg wale",
+  "out": {
+   "items": [
+    {
+     "dish_id": "momos",
+     "name": "momos",
+     "matched_text": "momos",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 6.8,
+      "best": 9,
+      "high": 11.2
+     },
+     "carbs_g": 32.2,
+     "fat_g": 15,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "teen ande ka omelette",
+  "out": {
+   "items": [
+    {
+     "dish_id": "omelette",
+     "name": "omelette",
+     "matched_text": "ande ka omelette",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 180,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 270,
+      "best": 360,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 15.6,
+      "best": 21,
+      "high": 26.4
+     },
+     "carbs_g": 10.2,
+     "fat_g": 26.1,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "omelette 2 egg ka",
+  "out": {
+   "items": [
+    {
+     "dish_id": "omelette",
+     "name": "omelette",
+     "matched_text": "omelette",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 180,
+      "best": 240,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 10.4,
+      "best": 14,
+      "high": 17.6
+     },
+     "carbs_g": 6.8,
+     "fat_g": 17.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "luchi 4 aloo posto",
+  "out": {
+   "items": [
+    {
+     "dish_id": "luchi",
+     "name": "luchi",
+     "matched_text": "luchi",
+     "quantity": 4,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 272,
+      "best": 360,
+      "high": 448
+     },
+     "protein_g": {
+      "low": 4.4,
+      "best": 6,
+      "high": 7.6
+     },
+     "carbs_g": 39.2,
+     "fat_g": 20,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": true,
+     "alternatives": [
+      {
+       "quantity": 1,
+       "unit": "count",
+       "kcal": 90,
+       "label": "one standard portion"
+      }
+     ],
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_posto",
+     "name": "aloo posto",
+     "matched_text": "aloo posto",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 23.6,
+     "fat_g": 12.2,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chapatii",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "chapatii",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 40,
+     "oil_level": "",
+     "kcal": {
+      "low": 82,
+      "best": 110,
+      "high": 138
+     },
+     "protein_g": {
+      "low": 2.6,
+      "best": 3.5,
+      "high": 4.4
+     },
+     "carbs_g": 18.6,
+     "fat_g": 2.4,
+     "source": "did_you_mean",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": true,
+     "needs_confirmation": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paratha aur aloo sabzi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paratha",
+     "name": "paratha",
+     "matched_text": "paratha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 60,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 150,
+      "best": 200,
+      "high": 250
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "carbs_g": 28.4,
+     "fat_g": 7.8,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_sabzi",
+     "name": "aloo sabzi",
+     "matched_text": "aloo sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 128,
+      "best": 170,
+      "high": 212
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "carbs_g": 18.3,
+     "fat_g": 9.4,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 paneer roll",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paneer_roll",
+     "name": "paneer roll",
+     "matched_text": "paneer roll",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 400,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 720,
+      "best": 960,
+      "high": 1200
+     },
+     "protein_g": {
+      "low": 25.6,
+      "best": 34,
+      "high": 42.4
+     },
+     "carbs_g": 98,
+     "fat_g": 48,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chicken",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_curry",
+     "name": "chicken curry",
+     "matched_text": "chicken",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 16.5,
+      "best": 22,
+      "high": 27.5
+     },
+     "carbs_g": 9.2,
+     "fat_g": 13.9,
+     "source": "table",
+     "data_source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "needs_confirmation": false,
      "ai_estimate": false
     }
    ],

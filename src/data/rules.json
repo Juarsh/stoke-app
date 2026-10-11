@@ -267,7 +267,11 @@
   "big",
   "bada",
   "chhota",
-  "full"
+  "full",
+  "veg",
+  "nonveg",
+  "non-veg",
+  "jain"
  ],
  "fuzzy_min_len": 4,
  "fuzzy_max_dist": 1,
@@ -440,17 +444,26 @@
   "chicken": "chicken",
   "murgh": "chicken",
   "chiken": "chicken",
-  "mutton": "mutton",
-  "gosht": "mutton",
-  "fish": "fish",
-  "machli": "fish",
+  "chikan": "chicken",
+  "paneer": "paneer",
+  "panner": "paneer",
+  "panir": "paneer",
+  "paner": "paneer",
   "egg": "egg",
+  "eggs": "egg",
   "anda": "egg",
   "ande": "egg",
-  "paneer": "paneer",
-  "panir": "paneer",
-  "soya": "soya",
-  "veg": "veg"
+  "soya": "soya_chaap",
+  "soy": "soya_chaap",
+  "chaap": "soya_chaap",
+  "soyabean": "soya_chaap",
+  "fish": "fish",
+  "machli": "fish",
+  "machhli": "fish",
+  "macher": "fish",
+  "mutton": "mutton",
+  "gosht": "mutton",
+  "lamb": "mutton"
  },
  "genitive_words": [
   "ki",
@@ -461,5 +474,100 @@
  "sanity": {
   "max_item_kcal": 1000,
   "max_portion_multiple": 3
+ },
+ "generic_protein_dish": {
+  "chicken": "generic_chicken_dish",
+  "paneer": "generic_paneer_dish",
+  "egg": "generic_egg_dish",
+  "soya_chaap": "generic_soya_chaap_dish",
+  "fish": "generic_fish_dish",
+  "mutton": "generic_mutton_dish"
+ },
+ "form_words": [
+  "masala",
+  "curry",
+  "gravy",
+  "fry",
+  "tikka",
+  "kebab",
+  "kabab",
+  "roll",
+  "wrap",
+  "frankie",
+  "sandwich",
+  "bhuna",
+  "handi",
+  "korma",
+  "kadai",
+  "kadhai",
+  "do pyaza",
+  "lababdar",
+  "pasanda",
+  "tawa",
+  "tandoori",
+  "malai",
+  "chilli",
+  "65",
+  "lollipop",
+  "burji"
+ ],
+ "modifier_words": [
+  "veg",
+  "nonveg",
+  "non-veg",
+  "jain",
+  "desi"
+ ],
+ "stuffing_words": [
+  "filling",
+  "stuffed",
+  "stuffing",
+  "bhara",
+  "bhari",
+  "bharwa",
+  "bhare",
+  "wala",
+  "wali",
+  "wale",
+  "with"
+ ],
+ "connectors": [
+  "with",
+  "saath",
+  "sath",
+  "aur",
+  "and",
+  "&",
+  "+",
+  "n",
+  "plus"
+ ],
+ "egg_words": [
+  "egg",
+  "eggs",
+  "anda",
+  "ande",
+  "ando"
+ ],
+ "eggs_per_portion": {
+  "omelette": 1,
+  "egg_bhurji": 2,
+  "egg_curry": 2,
+  "egg_paratha": 1,
+  "egg_roll": 1
+ },
+ "fuzzy_min_similarity": 0.8,
+ "unknown_item": {
+  "kcal": [
+   100,
+   250,
+   500
+  ],
+  "protein_g": [
+   2,
+   8,
+   20
+  ],
+  "name": "unknown item"
  }
 }

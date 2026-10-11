@@ -1,21 +1,10 @@
-// Maps a parsed item to Designer's "item source → visual" table (design-notes v4).
-// Accepts the announced backend fields (source: table|ai_estimate|did_you_mean|generic,
-// needs_confirmation) and today's fields (ai_estimate, needs_confirm, dish source
-// like "estimate"/"usda_fdc"), so it works before and after the backend change.
-import type { Item } from '../parser';
+// Item source → visual mapping (design-notes v4), driven by the parser/backend
+// `source` (table | did_you_mean | generic | ai_estimate) and `needs_confirmation`.
+import type { Item, ItemSource } from '../parser';
 
-export type ItemKind = 'table' | 'ai_estimate' | 'did_you_mean' | 'generic';
-export type AnyItem = Item & { needs_confirmation?: boolean; generic_note?: string };
-const KINDS = new Set<ItemKind>(['table', 'ai_estimate', 'did_you_mean', 'generic']);
-
-export function itemKind(it: AnyItem): ItemKind {
-  if (KINDS.has(it.source as ItemKind)) return it.source as ItemKind;
-  if (it.ai_estimate) return 'ai_estimate';
-  if (it.needs_confirm) return 'did_you_mean';
-  return 'table';
-}
-export function needsConfirmation(it: AnyItem): boolean {
-  if (typeof it.needs_confirmation === 'boolean') return it.needs_confirmation;
-  const k = itemKind(it);
-  return k !== 'table';
-}
+export type ItemKind = ItemSource;
+export type AnyItem = Item & { generic_note?: string };
+export const itemKind = (it: Item): ItemKind => (it.ai_estimate ? 'ai_estimate' : it.source);
+export const needsConfirmation = (it: Item): boolean => it.needs_confirmation;
+/** Placeholder for text nothing could estimate (backend Parser.Unknown): handled as a custom item in the UI. */
+export const isPlaceholder = (it: Item) => it.source === 'generic' && it.dish_id === '';

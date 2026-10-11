@@ -16,7 +16,8 @@ export function ConfirmCard({ it, onResolve, onRemove }: { it: AnyItem; onResolv
   const [switching, setSwitching] = useState(false);
   const [q, setQ] = useState('');
   const dish = parser.dishById(it.dish_id);
-  const resolved = (x: Item) => ({ ...x, needs_confirm: false, alternatives: undefined, needs_confirmation: false } as Item);
+  // confirmed by the user; source is kept so the server can re-check it
+  const resolved = (x: Item) => ({ ...x, source: it.source, alternatives: undefined, needs_confirmation: false } as Item);
   const pickAlt = (a: Alternative) => onResolve(resolved(parser.edit(it, { quantity: a.quantity, unit: a.unit })));
   const matches = q.length > 1 ? DISHES.filter((d) => d.name.includes(q.toLowerCase())).slice(0, 5) : [];
   return (
@@ -27,14 +28,14 @@ export function ConfirmCard({ it, onResolve, onRemove }: { it: AnyItem; onResolv
           <View style={{ flex: 1 }}>
             <Row><T v="bodyStrong">{it.name}</T><Badge kind="check" label={kind === 'generic' ? 'Generic' : 'Check'} /></Row>
             <T v="caption" tone="muted">
-              {kind === 'generic' ? `${it.matched_text} · generic: ${it.generic_note || it.name}` : `${portionLabel(it.quantity, it.unit)} — that’s a lot. Did you mean…?`}
+              {kind === 'generic' ? `${it.matched_text} · matched: ${it.generic_note || it.name}` : it.alternatives?.length ? `${portionLabel(it.quantity, it.unit)} — that’s a lot. Did you mean…?` : `Did you mean ${it.name}? You typed “${it.matched_text}”.`}
             </T>
           </View>
         </Row>
         <T v="number" tone="over">{it.kcal.best.toLocaleString('en-IN')}</T>
       </Row>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {kind === 'did_you_mean' ? (
+        {it.alternatives?.length ? (
           <>
             {(it.alternatives ?? []).map((a, i) => (
               <Chip key={i} kind="neutral" selected={i === 0} label={`${portionLabel(a.quantity, a.unit)} (~${a.kcal} kcal)`} a11y={`${a.label}: ${portionLabel(a.quantity, a.unit)}, about ${a.kcal} calories`} onPress={() => pickAlt(a)} />

@@ -7,7 +7,7 @@ import { Glows } from '@/components/Gradient';
 import { ItemCard, SlotCycle } from '@/components/ItemEditor';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
-import { AnyItem, itemKind, needsConfirmation } from '@/lib/itemKind';
+import { AnyItem, isPlaceholder, itemKind, needsConfirmation } from '@/lib/itemKind';
 import { portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { parseLocal } from '@/lib/parseLocal';
 import { useStore } from '@/lib/store';
@@ -35,7 +35,8 @@ export default function Log() {
   // Offline table parse on every keystroke (<100 ms).
   const parsed = useMemo(() => parseLocal(text), [text]);
   useEffect(() => { setEdits({}); setOkd({}); setAi([]); setCustoms([]); setMsg(''); }, [text]);
-  const table: Draft[] = parsed.items
+  // placeholders for unknown text are handled by the AI / custom-item flow below
+  const table: Draft[] = parsed.items.filter((it) => !isPlaceholder(it))
     .map((it, i) => ({ key: `t${i}`, it: (edits[`t${i}`] ?? it) as AnyItem, ok: !!okd[`t${i}`] || !needsConfirmation(edits[`t${i}`] ?? it) }))
     .filter((d) => edits[d.key] !== null);
   const drafts = [...table, ...ai];
@@ -59,7 +60,7 @@ export default function Log() {
   }
 
   const blocked = drafts.filter((d) => !d.ok);
-  const nConfirm = blocked.filter((d) => itemKind(d.it) !== 'did_you_mean').length;
+  const nConfirm = blocked.filter((d) => !d.it.alternatives?.length).length;
   const nResolve = blocked.length - nConfirm + (customs.some((c) => !(Number(c.kcal) > 0)) ? customs.filter((c) => !(Number(c.kcal) > 0)).length : 0) + pendingUnmatched.length;
   const total = drafts.reduce((a, d) => a + d.it.kcal.best, 0) + customs.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const protein = drafts.reduce((a, d) => a + d.it.protein_g.best, 0) + customs.reduce((a, c) => a + (Number(c.protein) || 0), 0);
@@ -102,7 +103,7 @@ export default function Log() {
           ) : null}
           {drafts.map((d) => {
             const k = itemKind(d.it);
-            if (!d.ok && (k === 'did_you_mean' || k === 'generic')) {
+            if (!d.ok && k !== 'ai_estimate') {
               return <ConfirmCard key={d.key} it={d.it} onResolve={(x) => { setItem(d, x); confirm(d); }} onRemove={() => remove(d)} />;
             }
             return (

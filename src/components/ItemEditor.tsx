@@ -9,9 +9,9 @@ import { FoodTile } from './FoodTile';
 import { Icon } from './Icon';
 import { Badge, Button, Card, Chip, Field, Popover, Row, Segmented, Sheet, T } from './ui';
 
-export function rangeLines(it: Pick<Item, 'kcal' | 'protein_g' | 'source' | 'source_note'>) {
+export function rangeLines(it: Pick<Item, 'kcal' | 'protein_g' | 'data_source' | 'source_note'>) {
   return [
-    `${it.kcal.best} kcal · range ${it.kcal.low}–${it.kcal.high} · ${SOURCE_LABEL(it.source)}`,
+    `${it.kcal.best} kcal · range ${it.kcal.low}–${it.kcal.high} · ${SOURCE_LABEL(it.data_source)}`,
     `${it.protein_g.best} g protein · range ${it.protein_g.low}–${it.protein_g.high}`,
     it.source_note,
   ].filter(Boolean);
@@ -35,7 +35,7 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
           {ai ? <Badge kind="ai" label="AI estimate" /> : null}
         </Row>
         <Pressable onPress={() => setPop(true)} hitSlop={12} accessibilityRole="button"
-          accessibilityLabel={`${it.kcal.best} calories, estimated range ${it.kcal.low} to ${it.kcal.high}, ${SOURCE_LABEL(it.source)}`}>
+          accessibilityLabel={`${it.kcal.best} calories, estimated range ${it.kcal.low} to ${it.kcal.high}, ${SOURCE_LABEL(it.data_source)}`}>
           <Row><T v="number">{it.kcal.best}</T><Icon name="info" color={t.c.muted} size={16} /></Row>
         </Pressable>
       </Row>

@@ -50,9 +50,9 @@ test('sync queue coalesces and stops on failure without changing payload', async
 import { parseLocal } from '../src/lib/parseLocal';
 test('did-you-mean comes from the parser (backend rule: >1000 kcal or >3x portion)', () => {
   const r = parseLocal('20 roti');
-  expect(r.items[0].needs_confirm).toBe(true);
+  expect(r.items[0].needs_confirmation).toBe(true);
   expect(r.items[0].alternatives!.some((a) => a.quantity === 1)).toBe(true);
-  expect(parseLocal('2 roti').items[0].needs_confirm).toBe(false);
+  expect(parseLocal('2 roti').items[0].needs_confirmation).toBe(false);
 });
 import { devaFamily, hasDevanagari, palette } from '../src/theme/tokens';
 import { itemKind, needsConfirmation } from '../src/lib/itemKind';
@@ -62,12 +62,15 @@ test('Devanagari text switches to the matching Noto Sans Devanagari weight', () 
   expect(devaFamily('SpaceGrotesk_700Bold')).toBe('NotoSansDevanagari_700Bold');
   expect(devaFamily('Inter_400Regular')).toBe('NotoSansDevanagari_400Regular');
 });
-test('item kinds: today’s fields and the announced backend fields', () => {
-  const [big] = parseLocal('20 roti').items;
-  expect(itemKind(big)).toBe('did_you_mean'); expect(needsConfirmation(big)).toBe(true);
-  const [ok] = parseLocal('2 roti').items;
-  expect(itemKind(ok)).toBe('table'); expect(needsConfirmation(ok)).toBe(false);
-  expect(itemKind({ ...ok, source: 'generic', needs_confirmation: true })).toBe('generic');
-  expect(needsConfirmation({ ...ok, source: 'generic', needs_confirmation: true })).toBe(true);
+test('item kinds come from the parser source field', () => {
+  expect(itemKind(parseLocal('20 roti').items[0])).toBe('table'); // sanity flag: table + needs_confirmation
+  expect(needsConfirmation(parseLocal('20 roti').items[0])).toBe(true);
+  expect(itemKind(parseLocal('2 chapatii').items[0])).toBe('did_you_mean');
+  const g = parseLocal('paneer lababdar').items[0];
+  expect(itemKind(g)).toBe('generic'); expect(needsConfirmation(g)).toBe(true);
+  expect(needsConfirmation(parseLocal('2 roti').items[0])).toBe(false);
+  const u = parseLocal('quinoa xyzzy');
+  expect(u.items.some((i) => i.kcal.best === 0)).toBe(false);
+  expect(u.custom_items.length).toBe(1);
 });
 test('light over-grey keeps its contrast floor value', () => { expect(palette.light.over).toBe('#6B6F6D'); });

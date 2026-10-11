@@ -15,8 +15,8 @@ import { makeStyles, useTheme } from '@/theme';
 function asItem(e: FoodEntry): Item {
   return { dish_id: e.dish_id ?? '', name: e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item', matched_text: e.raw_text,
     quantity: e.qty, unit: e.unit, grams: 0, oil_level: e.oil_level, kcal: e.kcal, protein_g: e.protein_g,
-    source: e.source === 'table' ? (parser.dishById(e.dish_id ?? '')?.source ?? 'estimate') : e.source, source_note: e.source_note,
-    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirm: false };
+    source: 'table', data_source: e.source === 'table' ? (parser.dishById(e.dish_id ?? '')?.source ?? 'estimate') : e.source, source_note: e.source_note,
+    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirmation: false };
 }
 
 type Day = { date: string; kcal: number; protein: number; entries: FoodEntry[] };

@@ -7,6 +7,9 @@ import type { FoodEntry } from './domain';
 
 export * from './parseLocal';
 import { ItemIn, ParseResponse, parseLocal } from './parseLocal';
+/** Flip on when API.md's create-entry contract gains client_id, dish_table_version, carbs_g, fat_g (another worker is adding them). */
+export const ENTRY_EXTRA_FIELDS = false;
+
 export class ApiError extends Error { constructor(public status: number, msg: string) { super(msg); } }
 
 export function createApi(getToken: () => string | null) {
@@ -31,12 +34,11 @@ export function createApi(getToken: () => string | null) {
     },
     async upsertEntry(e: FoodEntry): Promise<void> {
       if (config.mock) return;
-      const item: ItemIn = {
-        dish_id: e.dish_id ?? undefined, qty: e.qty, unit: e.unit, oil_level: e.oil_level, custom_name: e.custom_name || undefined,
-        kcal: e.kcal.best, kcal_low: e.kcal.low, kcal_high: e.kcal.high,
-        protein_g: e.protein_g.best, protein_low: e.protein_g.low, protein_high: e.protein_g.high,
-        source: e.source, client_id: e.id, dish_table_version: e.dish_table_version,
-      };
+      const source = e.source === 'table' || e.source === 'ai' ? (e.source === 'ai' ? 'ai_estimate' : e.item_source ?? 'table') : 'custom';
+      const item: ItemIn & Record<string, unknown> = e.dish_id
+        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true }
+        : { custom_name: e.custom_name, kcal: e.kcal.best, protein_g: e.protein_g.best, source, confirmed: true };
+      if (ENTRY_EXTRA_FIELDS) Object.assign(item, { client_id: e.id, dish_table_version: e.dish_table_version, carbs_g: e.carbs_g, fat_g: e.fat_g });
       await req('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
     },
     async deleteEntry(id: string): Promise<void> { if (!config.mock) await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); },

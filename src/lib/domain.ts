@@ -20,7 +20,7 @@ export interface Profile {
 export interface FoodEntry {
   id: string; local_date: string; slot: Slot; raw_text: string;
   dish_id: string | null; custom_name: string; qty: number; unit: string; oil_level: OilLevel;
-  kcal: Range; protein_g: Range; carbs_g?: number; fat_g?: number; source: EntrySource; source_note: string; confirmed: boolean;
+  kcal: Range; protein_g: Range; carbs_g?: number; fat_g?: number; source: EntrySource; item_source?: string; source_note: string; confirmed: boolean;
   dish_table_version: number; created_at: string; updated_at: string; deleted_at: string | null;
 }
 
@@ -93,7 +93,7 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
     dish_id: it.ai_estimate ? null : it.dish_id, custom_name: it.ai_estimate ? it.name : '',
     qty: it.quantity, unit: it.unit, oil_level: it.oil_level,
     kcal: { ...it.kcal }, protein_g: { ...it.protein_g }, carbs_g: it.carbs_g, fat_g: it.fat_g,
-    source: it.ai_estimate ? 'ai' : 'table', source_note: it.source_note, confirmed: true,
+    source: it.ai_estimate ? 'ai' : 'table', item_source: it.source, source_note: it.source_note, confirmed: true,
     dish_table_version: o.tableVersion, created_at: now, updated_at: now, deleted_at: null,
   };
 }
