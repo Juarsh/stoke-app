@@ -19,6 +19,8 @@ type Job struct {
 	Text    string
 	Key     string
 	Hint    []parser.Item
+	Claimed []parser.Item // confident table items kept as they are
+	Spans   []Span        // unclaimed parts the AI must answer for
 	Generic ParseResponse // answer if the AI fails
 	Slot    string
 	Status  string // pending, done
@@ -49,11 +51,11 @@ func NewQueue(perMinute, max int) *Queue {
 }
 
 // Add queues a job; false when the queue is full.
-func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic ParseResponse, slot string) (*Job, bool) {
+func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic ParseResponse, slot string, claimed []parser.Item, spans []Span) (*Job, bool) {
 	b := make([]byte, 12)
 	_, _ = rand.Read(b)
 	j := &Job{ID: hex.EncodeToString(b), UserID: uid, Text: text, Key: key, Hint: hint, Generic: generic, Slot: slot,
-		Status: "pending", Created: time.Now()}
+		Status: "pending", Created: time.Now(), Claimed: claimed, Spans: spans}
 	q.mu.Lock()
 	q.gc()
 	q.jobs[j.ID] = j
@@ -131,11 +133,39 @@ func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, 404, "no such job (jobs expire after an hour)")
 		return
 	}
+	links := s.jobEntries(r.Context(), j.UserID, j.ID)
 	if j.Status != "done" {
-		httpx.JSON(w, 202, map[string]any{"status": "pending", "job_id": j.ID, "queue_length": s.Queue.Pending()})
+		httpx.JSON(w, 202, map[string]any{"status": "pending", "job_id": j.ID, "queue_length": s.Queue.Pending(), "entries": links})
 		return
 	}
 	out := j.Result
 	out.JobID = j.ID
+	out.Entries = links
 	httpx.JSON(w, 200, out)
+}
+
+// JobEntry is an entry saved with this parse job's id (typically a
+// needs_review entry waiting for the AI answer).
+type JobEntry struct {
+	ID           int64   `json:"id"`
+	ClientID     *string `json:"client_id"`
+	ClientItemID *string `json:"client_item_id"`
+	State        string  `json:"state"`
+}
+
+func (s *Service) jobEntries(ctx context.Context, uid int64, job string) []JobEntry {
+	out := []JobEntry{}
+	rows, err := s.DB.Query(ctx, `SELECT id, client_id, client_item_id, state FROM food_entries
+		WHERE user_id=$1 AND parse_job_id=$2 AND deleted_at IS NULL ORDER BY id`, uid, job)
+	if err != nil {
+		return out
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var e JobEntry
+		if rows.Scan(&e.ID, &e.ClientID, &e.ClientItemID, &e.State) == nil {
+			out = append(out, e)
+		}
+	}
+	return out
 }

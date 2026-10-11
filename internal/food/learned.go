@@ -35,32 +35,33 @@ type Reading struct {
 	CarbsG      float64 `json:"carbs_g"`
 	FatG        float64 `json:"fat_g"`
 	Uses        int     `json:"uses"`
+	Part        int     `json:"part"` // item index within the remembered text
 	UpdatedAt   string  `json:"updated_at"`
 }
 
 const readingCols = `id,norm_span,dish_id,custom_name,qty::float8,unit,oil_level,kcal_best::float8,kcal_low::float8,kcal_high::float8,
-	protein_best::float8,protein_low::float8,protein_high::float8,carbs_g::float8,fat_g::float8,uses,to_char(updated_at,'YYYY-MM-DD"T"HH24:MI:SSOF')`
+	protein_best::float8,protein_low::float8,protein_high::float8,carbs_g::float8,fat_g::float8,uses,to_char(updated_at,'YYYY-MM-DD"T"HH24:MI:SSOF'),part`
 
 func scanReading(row pgx.Row) (Reading, error) {
 	var r Reading
 	err := row.Scan(&r.ID, &r.Span, &r.DishID, &r.CustomName, &r.Qty, &r.Unit, &r.OilLevel, &r.KcalBest, &r.KcalLow, &r.KcalHigh,
-		&r.ProteinBest, &r.ProteinLow, &r.ProteinHigh, &r.CarbsG, &r.FatG, &r.Uses, &r.UpdatedAt)
+		&r.ProteinBest, &r.ProteinLow, &r.ProteinHigh, &r.CarbsG, &r.FatG, &r.Uses, &r.UpdatedAt, &r.Part)
 	return r, err
 }
 
-func (s *Service) readings(ctx context.Context, uid int64) map[string]Reading {
-	out := map[string]Reading{}
+func (s *Service) readings(ctx context.Context, uid int64) map[string][]Reading {
+	out := map[string][]Reading{}
 	if uid == 0 {
 		return out
 	}
-	rows, err := s.DB.Query(ctx, `SELECT `+readingCols+` FROM user_readings WHERE user_id=$1`, uid)
+	rows, err := s.DB.Query(ctx, `SELECT `+readingCols+` FROM user_readings WHERE user_id=$1 ORDER BY norm_span, part`, uid)
 	if err != nil {
 		return out
 	}
 	defer rows.Close()
 	for rows.Next() {
 		if r, err := scanReading(rows); err == nil {
-			out[r.Span] = r
+			out[r.Span] = append(out[r.Span], r)
 		}
 	}
 	return out
@@ -83,20 +84,36 @@ func (r Reading) item(matched string) parser.Item {
 	return it
 }
 
-// remember stores what the user confirmed for a span (insert or overwrite).
-func remember(ctx context.Context, tx execer, uid int64, span string, e Entry) error {
+// learnedItems turns all parts of a remembered text into parse items.
+func learnedItems(rs []Reading, matched string) []parser.Item {
+	var out []parser.Item
+	for _, r := range rs {
+		out = append(out, r.item(matched))
+	}
+	return out
+}
+
+// remember stores what the user confirmed for their own text (span = the
+// parse item's matched_text: the typed span or the whole meal). part is the
+// item's index within that text; replace clears older parts first.
+func remember(ctx context.Context, tx execer, uid int64, span string, part int, replace bool, e Entry) error {
 	key := Normalize(span)
 	if key == "" {
 		return nil
 	}
-	_, err := tx.Exec(ctx, `INSERT INTO user_readings(user_id,norm_span,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,
-		protein_best,protein_low,protein_high,carbs_g,fat_g) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-		ON CONFLICT (user_id,norm_span) DO UPDATE SET dish_id=EXCLUDED.dish_id,custom_name=EXCLUDED.custom_name,qty=EXCLUDED.qty,
+	if replace {
+		if _, err := tx.Exec(ctx, `DELETE FROM user_readings WHERE user_id=$1 AND norm_span=$2`, uid, key); err != nil {
+			return err
+		}
+	}
+	_, err := tx.Exec(ctx, `INSERT INTO user_readings(user_id,norm_span,part,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,
+		protein_best,protein_low,protein_high,carbs_g,fat_g) VALUES ($1,$2,$16,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+		ON CONFLICT (user_id,norm_span,part) DO UPDATE SET dish_id=EXCLUDED.dish_id,custom_name=EXCLUDED.custom_name,qty=EXCLUDED.qty,
 		unit=EXCLUDED.unit,oil_level=EXCLUDED.oil_level,kcal_best=EXCLUDED.kcal_best,kcal_low=EXCLUDED.kcal_low,kcal_high=EXCLUDED.kcal_high,
 		protein_best=EXCLUDED.protein_best,protein_low=EXCLUDED.protein_low,protein_high=EXCLUDED.protein_high,carbs_g=EXCLUDED.carbs_g,
 		fat_g=EXCLUDED.fat_g,uses=user_readings.uses+1,updated_at=now()`,
 		uid, key, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel, e.KcalBest, e.KcalLow, e.KcalHigh,
-		e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.CarbsG, e.FatG)
+		e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.CarbsG, e.FatG, part)
 	return err
 }
 
@@ -125,7 +142,7 @@ func (s *Service) handleResetReading(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, 400, "bad id")
 		return
 	}
-	tag, err := s.DB.Exec(r.Context(), `DELETE FROM user_readings WHERE id=$1 AND user_id=$2`, id, httpx.UserID(r))
+	tag, err := s.DB.Exec(r.Context(), `DELETE FROM user_readings WHERE user_id=$2 AND norm_span=(SELECT norm_span FROM user_readings WHERE id=$1 AND user_id=$2)`, id, httpx.UserID(r))
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return

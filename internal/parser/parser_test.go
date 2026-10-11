@@ -305,3 +305,56 @@ func TestNoSilentGuesses(t *testing.T) {
 		}
 	}
 }
+
+// Invariant: no confident table item uses an input token another item
+// already used, and the three overconfidence rules hold.
+func TestTokenInvariantAndOverconfidence(t *testing.T) {
+	p := newP(t)
+	var f struct{ Meals []devMeal }
+	b, _ := os.ReadFile("testdata/dev-meals.json")
+	_ = json.Unmarshal(b, &f)
+	var ev struct{ Meals []string }
+	b, _ = os.ReadFile("testdata/everyday-meals.json")
+	_ = json.Unmarshal(b, &ev)
+	texts := append([]string{}, ev.Meals...)
+	for _, m := range f.Meals {
+		texts = append(texts, m.In)
+	}
+	texts = append(texts, "masala masala dosa", "paneer paneer tikka", "2 roti roti", "3 roti और पनीर की सब्जी", "दाल चावल", "2 Roti, dal chawal")
+	for _, text := range texts {
+		r := p.Parse(text)
+		n16 := utf16Len(text)
+		for i, it := range r.Items {
+			if it.SpanStart < 0 || it.SpanEnd > n16 || it.SpanStart >= it.SpanEnd {
+				t.Errorf("%q: %s bad span [%d,%d) of %d", text, it.DishID, it.SpanStart, it.SpanEnd, n16)
+				continue
+			}
+			if it.Source != SourceTable || it.NeedsConfirmation {
+				continue
+			}
+			for j, o := range r.Items {
+				if i != j && it.SpanStart < o.SpanEnd && o.SpanStart < it.SpanEnd {
+					t.Errorf("%q: confident %s [%d,%d) shares input with %s [%d,%d)", text, it.DishID, it.SpanStart, it.SpanEnd, o.DishID, o.SpanStart, o.SpanEnd)
+				}
+			}
+		}
+	}
+	// adjacent words that could be one unknown dish go to a decision
+	for _, s := range []string{"moong dal cheela", "2 egg curry", "1 glass roti"} {
+		r := p.Parse(s)
+		if p.TableOnly(r) {
+			t.Errorf("%q answered by the table alone: %+v", s, r.Items)
+		}
+		for _, it := range r.Items {
+			if it.Source == SourceTable && !it.NeedsConfirmation {
+				t.Errorf("%q: %s guessed silently", s, it.DishID)
+			}
+		}
+	}
+	// everyday pairs stay table answers
+	for _, s := range []string{"roti sabzi", "idli sambar", "chai biscuit", "2 roti dal"} {
+		if !p.TableOnly(p.Parse(s)) {
+			t.Errorf("%q should be a table answer", s)
+		}
+	}
+}

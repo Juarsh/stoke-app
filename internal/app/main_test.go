@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -46,7 +47,14 @@ func TestMain(m *testing.M) {
 	if !strings.HasPrefix(name, "ct_run_") {
 		panic("refusing to drop " + name)
 	}
-	if _, err := conn.Exec(ctx, `DROP DATABASE `+pgx.Identifier{name}.Sanitize()+` WITH (FORCE)`); err != nil {
+	var err2 error
+	for try := 0; try < 40; try++ { // an autovacuum worker can hold the db for a moment
+		if _, err2 = conn.Exec(ctx, `DROP DATABASE `+pgx.Identifier{name}.Sanitize()+` WITH (FORCE)`); err2 == nil {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	if err := err2; err != nil {
 		fmt.Fprintln(os.Stderr, "drop throwaway db:", err)
 		if code == 0 {
 			code = 1

@@ -1039,3 +1039,178 @@ func TestDefaultPortion(t *testing.T) {
 		t.Errorf("add default portion item: %d", c)
 	}
 }
+
+// AI items keep the user's text; confirming them remembers that text, so the
+// same meal next time is a table answer with no AI call. PATCH corrections
+// are remembered too, and a reset brings the AI back.
+func TestRememberAIMealThenReparse(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	text := "2 roti, zorbo pakora"
+	var first struct {
+		JobID string `json:"job_id"`
+	}
+	if c := call(t, srv, "POST", "/v1/parse", "rm2", M{"text": text}, &first); c != 202 {
+		t.Fatalf("expected a queued AI job: %d", c)
+	}
+	type pitem struct {
+		Name      string
+		DishID    string `json:"dish_id"`
+		AIName    string `json:"ai_name"`
+		Matched   string `json:"matched_text"`
+		Quantity  float64
+		Unit      string
+		Kcal      struct{ Best float64 }
+		Source    string
+		SpanStart int `json:"span_start"`
+		SpanEnd   int `json:"span_end"`
+	}
+	var full struct{ Items []pitem }
+	for call(t, srv, "GET", "/v1/parse/jobs/"+first.JobID, "rm2", nil, &full) != 200 {
+		time.Sleep(5 * time.Millisecond)
+	}
+	// the table keeps "2 roti" (and pakora); the AI only answers the unknown span
+	var aiItem *pitem
+	for i, it := range full.Items {
+		if it.Source == "ai_estimate" {
+			aiItem = &full.Items[i]
+		} else if it.Source != "table" {
+			t.Errorf("unexpected item: %+v", it)
+		}
+		if it.SpanStart == 0 && it.SpanEnd == len(text) {
+			t.Errorf("whole-text span with table items present: %+v", it)
+		}
+	}
+	if aiItem == nil || full.Items[0].DishID != "roti" || full.Items[0].Matched != "roti" {
+		t.Fatalf("items: %+v", full.Items)
+	}
+	if aiItem.Matched != text[aiItem.SpanStart:aiItem.SpanEnd] || aiItem.AIName == "" || !strings.Contains(aiItem.Matched, "zorbo") {
+		t.Errorf("AI item must keep the user's own span: %+v", aiItem)
+	}
+	var items []M
+	for _, it := range full.Items {
+		if it.Source == "table" {
+			items = append(items, M{"dish_id": it.DishID, "qty": it.Quantity, "unit": it.Unit, "source": "table", "span": it.Matched})
+		} else {
+			items = append(items, M{"custom_name": it.Name, "qty": it.Quantity, "unit": it.Unit, "kcal": it.Kcal.Best, "protein_g": 1,
+				"source": "ai_estimate", "confirmed": true, "span": it.Matched, "parse_job_id": first.JobID, "client_item_id": "ci-1"})
+		}
+	}
+	var cr struct {
+		Entries []struct {
+			ID         int64
+			CustomName string `json:"custom_name"`
+		}
+	}
+	if c := call(t, srv, "POST", "/v1/entries", "rm2", M{"items": items}, &cr); c != 201 {
+		t.Fatalf("confirm: %d", c)
+	}
+	var job struct{ Entries []struct{ ID int64 } }
+	call(t, srv, "GET", "/v1/parse/jobs/"+first.JobID, "rm2", nil, &job)
+	if len(job.Entries) != 1 {
+		t.Errorf("job not tied to its entry: %+v", job)
+	}
+	before := aiCalls(t, srv)
+	c, r := parseAI(t, srv, "rm2", text)
+	if c != 200 || r.Answer != "table" || aiCalls(t, srv) != before {
+		t.Fatalf("second time should be remembered, no AI: %d %+v", c, r)
+	}
+	found := false
+	for _, it := range r.Items {
+		if it.NeedsConfirmation || it.Source != "table" {
+			t.Errorf("second-time item needs a decision: %+v", it)
+		}
+		found = found || it.Learned
+	}
+	if !found {
+		t.Errorf("remembered span not used: %+v", r.Items)
+	}
+	// PATCH correction of the AI entry is remembered
+	var aiEntry int64
+	for _, e := range cr.Entries {
+		if e.CustomName != "" {
+			aiEntry = e.ID
+		}
+	}
+	if c := call(t, srv, "PATCH", fmt.Sprintf("/v1/entries/%d", aiEntry), "rm2", M{"kcal": 432, "job_id": first.JobID}, nil); c != 200 {
+		t.Fatalf("patch: %d", c)
+	}
+	_, r = parseAI(t, srv, "rm2", text)
+	got := false
+	for _, it := range r.Items {
+		got = got || (it.Learned && it.Kcal.Best == 432)
+	}
+	if !got || aiCalls(t, srv) != before {
+		t.Errorf("PATCH correction not remembered: %+v", r.Items)
+	}
+	// reset all -> asks again (cache answer, still needs a decision)
+	if c := call(t, srv, "DELETE", "/v1/remembered", "rm2", nil, nil); c != 200 {
+		t.Fatalf("reset: %d", c)
+	}
+	_, r = parseAI(t, srv, "rm2", text)
+	if r.Answer != "ai" {
+		t.Errorf("after reset should be an AI answer again: %+v", r)
+	}
+}
+
+// AI answers only the unclaimed spans; table items keep theirs; the cache
+// key includes the claimed spans.
+func TestAISpanContract(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	type it struct {
+		DishID    string `json:"dish_id"`
+		Source    string
+		Matched   string `json:"matched_text"`
+		SpanStart int    `json:"span_start"`
+		SpanEnd   int    `json:"span_end"`
+		NC        bool   `json:"needs_confirmation"`
+	}
+	get := func(user, text string) (int, []it, string) {
+		var r struct {
+			JobID    string `json:"job_id"`
+			Items    []it
+			Fallback string
+		}
+		c := call(t, srv, "POST", "/v1/parse", user, M{"text": text}, &r)
+		if c == 202 {
+			for call(t, srv, "GET", "/v1/parse/jobs/"+r.JobID, user, nil, &r) != 200 {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+		return c, r.Items, r.Fallback
+	}
+	text := "2 roti, 1 katori dal, kombucha"
+	c, items, _ := get("sp1", text)
+	if c != 202 || len(items) != 3 {
+		t.Fatalf("%d %+v", c, items)
+	}
+	if items[0].DishID != "roti" || items[0].Source != "table" || items[0].NC || items[1].DishID != "dal" || items[1].Source != "table" {
+		t.Errorf("table items must stay confident: %+v", items)
+	}
+	if a := items[2]; a.Source != "ai_estimate" || !a.NC || a.Matched != "kombucha" || text[a.SpanStart:a.SpanEnd] != "kombucha" {
+		t.Errorf("AI item: %+v", a)
+	}
+	// same text, other user: cache, no call
+	n := aiCalls(t, srv)
+	if c, items, fb := get("sp2", text); c != 200 || fb != "cache" || len(items) != 3 || aiCalls(t, srv) != n {
+		t.Errorf("cache: %d %s %+v", c, fb, items)
+	}
+	// an AI answer for a claimed span is dropped; one with no position is a did-you-mean
+	call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{
+		{"name": "roti", "quantity": 2, "unit": "count", "span_start": 2, "span_end": 6, "kcal": M{"low": 150, "best": 200, "high": 250}},
+		{"name": "fermented tea", "quantity": 1, "unit": "glass", "span_start": 23, "span_end": 31, "kcal": M{"low": 30, "best": 40, "high": 60}},
+	}}, nil)
+	c, items, _ = get("sp3", "2 roti, 1 katori dal, kombuchaa")
+	if len(items) != 3 || items[0].Source != "table" || items[2].Source != "ai_estimate" {
+		t.Errorf("drop overlapping AI item: %+v", items)
+	}
+	call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{
+		{"name": "something", "quantity": 1, "unit": "count", "span_start": 0, "span_end": 1, "kcal": M{"low": 30, "best": 40, "high": 60}},
+	}}, nil)
+	_, items, _ = get("sp4", "2 roti, glorbix")
+	last := items[len(items)-1]
+	if last.Source != "did_you_mean" || !last.NC || (last.SpanStart == 0 && last.SpanEnd == len("2 roti, glorbix")) {
+		t.Errorf("unplaced AI item: %+v", items)
+	}
+}

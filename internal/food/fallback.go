@@ -25,7 +25,9 @@ import (
 //
 // The WHOLE meal text goes in one call; the rule-based parse is only a hint.
 type Fallback interface {
-	EstimateMeal(ctx context.Context, text string, hint []parser.Item) ([]parser.Item, error)
+	// spans are the unclaimed parts of text: return items only for them,
+	// each with span_start/span_end (UTF-16, end exclusive) inside one span.
+	EstimateMeal(ctx context.Context, text string, spans []Span, hint []parser.Item) ([]parser.Item, error)
 }
 
 var ErrNotConfigured = errors.New("ai fallback not configured")
@@ -33,7 +35,7 @@ var ErrNotConfigured = errors.New("ai fallback not configured")
 // NoFallback is the default until the Gemini key is set up (AI_MODE=off).
 type NoFallback struct{}
 
-func (NoFallback) EstimateMeal(context.Context, string, []parser.Item) ([]parser.Item, error) {
+func (NoFallback) EstimateMeal(context.Context, string, []Span, []parser.Item) ([]parser.Item, error) {
 	return nil, ErrNotConfigured
 }
 
@@ -63,8 +65,11 @@ var geminiItem = map[string]any{
 		"protein_high": map[string]any{"type": "NUMBER"},
 		"carbs_g":      map[string]any{"type": "NUMBER"},
 		"fat_g":        map[string]any{"type": "NUMBER"},
+		"span_start":   map[string]any{"type": "INTEGER"},
+		"span_end":     map[string]any{"type": "INTEGER"},
+		"span_text":    map[string]any{"type": "STRING"},
 	},
-	"required": []string{"name", "quantity", "unit", "kcal_low", "kcal_best", "kcal_high", "protein_low", "protein_best", "protein_high", "carbs_g", "fat_g"},
+	"required": []string{"name", "span_start", "span_end", "span_text", "quantity", "unit", "kcal_low", "kcal_best", "kcal_high", "protein_low", "protein_best", "protein_high", "carbs_g", "fat_g"},
 }
 
 var geminiSchema = map[string]any{
@@ -77,12 +82,14 @@ const geminiPrompt = `You estimate nutrition for one meal an Indian user typed i
 Return one item per food eaten, with the quantity and unit as the user said them (or one typical
 Indian home serving if they gave none). Typical portions: katori = 150 g, plate = 300 g, glass = 250 ml,
 spoon = 5 g, roti = 40 g. kcal_low <= kcal_best <= kcal_high, and make the range honest about doubt.
-"X with Y, 1 bowl" means one bowl in total. Cooking-style words (tandoori, masala, fry) describe a dish,
+"X with Y, 1 bowl" means one bowl in total. Only the listed SPANS still need an answer (the rest of the
+text is already logged); return items only for those spans, each with span_start/span_end inside one span
+and span_text copied exactly from the text. Cooking-style words (tandoori, masala, fry) describe a dish,
 they are not separate foods. A dictionary parser's guess is included as a HINT ONLY: it may be wrong,
 miss foods, or split them badly. Answer only with JSON matching the schema.
 `
 
-func (g Gemini) EstimateMeal(ctx context.Context, text string, hint []parser.Item) ([]parser.Item, error) {
+func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hint []parser.Item) ([]parser.Item, error) {
 	if g.APIKey == "" {
 		return nil, ErrNotConfigured
 	}
@@ -113,8 +120,9 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, hint []parser.Ite
 	}
 	hj, _ := json.Marshal(hs)
 	mt, _ := json.Marshal(text)
+	sj, _ := json.Marshal(spans)
 	body, _ := json.Marshal(map[string]any{
-		"contents": []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": geminiPrompt + "Meal: " + string(mt) + "\nHint: " + string(hj)}}}},
+		"contents": []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": geminiPrompt + "Meal: " + string(mt) + "\nSPANS (UTF-16 offsets, end exclusive): " + string(sj) + "\nHint: " + string(hj)}}}},
 		"generationConfig": map[string]any{
 			"responseMimeType": "application/json",
 			"responseSchema":   geminiSchema,
@@ -162,6 +170,9 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, hint []parser.Ite
 			ProteinHigh float64 `json:"protein_high"`
 			CarbsG      float64 `json:"carbs_g"`
 			FatG        float64 `json:"fat_g"`
+			SpanStart   int     `json:"span_start"`
+			SpanEnd     int     `json:"span_end"`
+			SpanText    string  `json:"span_text"`
 		}
 	}
 	if err := json.Unmarshal([]byte(gr.Candidates[0].Content.Parts[0].Text), &out); err != nil {
@@ -172,7 +183,8 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, hint []parser.Ite
 		if it.Quantity <= 0 || it.KcalLow > it.KcalBest || it.KcalBest > it.KcalHigh || it.ProteinLow > it.ProteinBest || it.ProteinBest > it.ProteinHigh {
 			return nil, errors.New("gemini: invalid ranges")
 		}
-		res = append(res, parser.Item{Name: it.Name, Matched: it.Name, Quantity: it.Quantity, Unit: it.Unit, Grams: it.Grams,
+		res = append(res, parser.Item{Name: it.Name, AIName: it.Name, Matched: it.SpanText, SpanStart: it.SpanStart, SpanEnd: it.SpanEnd,
+			Quantity: it.Quantity, Unit: it.Unit, Grams: it.Grams,
 			Kcal:    parser.Range{Low: it.KcalLow, Best: it.KcalBest, High: it.KcalHigh},
 			Protein: parser.Range{Low: it.ProteinLow, Best: it.ProteinBest, High: it.ProteinHigh},
 			CarbsG:  it.CarbsG, FatG: it.FatG})
@@ -200,34 +212,34 @@ func (s *Stub) SetNext(items []parser.Item) {
 	s.next = &items
 }
 
-// EstimateMeal: the next-answer override if set; otherwise the hint's items
-// (or one hashed item for the whole text) with deterministic numbers.
-func (s *Stub) EstimateMeal(_ context.Context, text string, hint []parser.Item) ([]parser.Item, error) {
+// EstimateMeal follows the same contract as Gemini: one item per given
+// span, positioned on it (name = the span's own words, so unknown dish words
+// are never dropped). A next-answer override is returned as set; items in it
+// without a position are placed on the spans in order.
+func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls++
 	if s.next != nil {
 		out := append([]parser.Item(nil), (*s.next)...)
 		s.next = nil
+		for i := range out {
+			if out[i].SpanEnd == 0 && len(spans) > 0 {
+				sp := spans[min(i, len(spans)-1)]
+				out[i].SpanStart, out[i].SpanEnd, out[i].Matched = sp.Start, sp.End, sp.Text
+			}
+		}
 		return out, nil
 	}
-	names := []string{}
-	qty := []float64{}
-	units := []string{}
-	for _, it := range hint {
-		names, qty, units = append(names, it.Name), append(qty, it.Quantity), append(units, it.Unit)
-	}
-	if len(names) == 0 {
-		names, qty, units = []string{text}, []float64{1}, []string{"count"}
-	}
 	var out []parser.Item
-	for i, n := range names {
+	for _, sp := range spans {
 		h := fnv.New32a()
-		h.Write([]byte(text + "|" + n))
+		h.Write([]byte(text + "|" + sp.Text))
 		v := float64(h.Sum32())
 		k := math.Round(80 + math.Mod(v, 400))
 		p := math.Round((2+math.Mod(v/7, 20))*10) / 10
-		out = append(out, parser.Item{Name: n, Matched: n, Quantity: qty[i], Unit: units[i],
+		out = append(out, parser.Item{Name: sp.Text, AIName: sp.Text, Matched: sp.Text, SpanStart: sp.Start, SpanEnd: sp.End,
+			Quantity: 1, Unit: "count",
 			Kcal:    parser.Range{Low: math.Round(k * 0.7), Best: k, High: math.Round(k * 1.4)},
 			Protein: parser.Range{Low: math.Round(p*7) / 10, Best: p, High: math.Round(p*14) / 10}})
 	}

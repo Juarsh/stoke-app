@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf16"
 
 	"github.com/akarsh/calorie-tracker/internal/dishes"
 )
@@ -56,7 +58,13 @@ type Rules struct {
 	// count or unit in the text ("2 roti", "1 katori dal"); "dal" alone goes to AI.
 	StrictStatedQty bool `json:"strict_require_stated_quantity"`
 	// EverydayCombos: combo dish id -> its components at default portions ("_doc" ignored).
-	EverydayCombos  map[string]json.RawMessage `json:"everyday_combos"`
+	EverydayCombos map[string]json.RawMessage `json:"everyday_combos"`
+	EverydayPairs  struct {
+		CategoryPairs [][2]string `json:"category_pairs"`
+		DishPairs     [][2]string `json:"dish_pairs"`
+	} `json:"everyday_pairs"`
+	BareCountUnits  []string                   `json:"bare_count_units"`
+	UnitFits        map[string]json.RawMessage `json:"unit_fits"`
 	FormWords       []string                   `json:"form_words"`
 	ModifierWords   []string                   `json:"modifier_words"`
 	StuffingWords   []string                   `json:"stuffing_words"`
@@ -119,7 +127,12 @@ type Item struct {
 	Flags        []string      `json:"flags,omitempty"`
 	Alternatives []Alternative `json:"alternatives,omitempty"`
 	AIEstimate   bool          `json:"ai_estimate"`
-	Learned      bool          `json:"learned"` // from the user's remembered readings
+	AIName       string        `json:"ai_name,omitempty"`
+	// SpanStart/SpanEnd: where this item came from in the user's original
+	// text, as UTF-16 offsets (JS string indices), end exclusive.
+	SpanStart int  `json:"span_start"`
+	SpanEnd   int  `json:"span_end"` // the AI's own dish name; matched_text stays the user's text
+	Learned   bool `json:"learned"`  // from the user's remembered readings
 	// DefaultPortion: no count or unit was typed, so the dish's standard
 	// portion was used ("Read as: 1 katori · Change").
 	DefaultPortion bool `json:"default_portion"`
@@ -769,6 +782,7 @@ func (p *Parser) Parse(text string) Result {
 		res.Leftover++ // a number nothing used
 	}
 	p.everydayCombos(&res)
+	p.tokenRules(&res, toks)
 	present := map[string]bool{}
 	for _, it := range res.Items {
 		present[it.DishID] = true
@@ -792,6 +806,7 @@ func (p *Parser) Parse(text string) Result {
 		}
 		p.finish(it)
 	}
+	p.assignSpans(&res, text)
 	return res
 }
 
@@ -999,7 +1014,8 @@ func (p *Parser) finish(it *Item) {
 	// leftovers, splits and combos always need a look, whatever the score
 	forced := false
 	for _, f := range it.pens {
-		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby"
+		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
+			f == "token_reuse" || f == "adjacent_split" || f == "unit_mismatch"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -1301,6 +1317,9 @@ func (p *Parser) build(d *dishes.Dish, pd pending, matched string, fuzzy bool) [
 	}
 	it := Item{DishID: d.ID, Name: d.Name, Matched: matched, DataSource: d.Source, SourceNote: d.SourceNote, Fuzzy: fuzzy, explicit: pd.hasQty || pd.unit != ""}
 	it = p.compute(d, it, qty, unit)
+	if !p.fat[d.ID] && !p.unitFits(d, pd.unit, pd.hasQty) {
+		it.pen("unit_mismatch") // "2 egg curry", "1 glass roti": ask, never guess
+	}
 	if capped {
 		it.pen("capped")
 		it.NeedsConfirmation = true
@@ -1581,4 +1600,301 @@ func (p *Parser) everydayCombos(res *Result) {
 		}
 	}
 	res.Items = out
+}
+
+// unitFits: a typed unit must describe the dish's unit, and a bare count
+// ("2 egg curry") only fits countable dishes or ones with a per-piece size.
+func (p *Parser) unitFits(d *dishes.Dish, unit string, hasQty bool) bool {
+	if unit == "" {
+		if !hasQty || d.PieceGrams > 0 {
+			return true
+		}
+		for _, u := range p.r.BareCountUnits {
+			if u == d.Unit {
+				return true
+			}
+		}
+		return false
+	}
+	if unit == d.Unit || unit == "g" || unit == "gram" || unit == "ml" {
+		return true
+	}
+	raw, ok := p.r.UnitFits[unit]
+	if !ok {
+		return true // unit words without a rule are left alone
+	}
+	var fits []string
+	_ = json.Unmarshal(raw, &fits)
+	for _, u := range fits {
+		if u == d.Unit {
+			return true
+		}
+	}
+	return false
+}
+
+// tokenRules enforces two invariants over the finished items:
+//  1. each input token feeds at most one item (a token claimed twice makes
+//     every item using it a did-you-mean);
+//  2. dishes typed next to each other with nothing in between stay separate
+//     table items only if they form an everyday pair; otherwise the phrase
+//     could be one unknown dish, so they need a decision (and go to the AI).
+func (p *Parser) tokenRules(res *Result, toks []token) {
+	words := make([]string, len(toks))
+	for i, t := range toks {
+		if !t.sep && !t.isN {
+			words[i] = t.w
+		}
+	}
+	used := make([]int, len(toks)) // item index+1 that claimed each token
+	type span struct{ a, b int }
+	spans := make([]span, len(res.Items))
+	group := func(i int) string { // everyday combo parts share their words
+		it := res.Items[i]
+		if it.everyday {
+			return it.FromCombo + "|" + it.Matched
+		}
+		return strconv.Itoa(i)
+	}
+	claimed := map[string]span{}
+	cursor := 0
+	for i := range res.Items {
+		spans[i] = span{-1, -1}
+		g := group(i)
+		if sp, ok := claimed[g]; ok {
+			spans[i] = sp
+			continue
+		}
+		ws := strings.Fields(res.Items[i].Matched)
+		if len(ws) == 0 {
+			continue
+		}
+		find := func(from int, free bool) int {
+			for s := from; s+len(ws) <= len(words); s++ {
+				ok := true
+				for k, w := range ws {
+					if words[s+k] != w || (free && used[s+k] != 0) {
+						ok = false
+						break
+					}
+				}
+				if ok {
+					return s
+				}
+			}
+			return -1
+		}
+		at := find(cursor, true)
+		if at < 0 {
+			at = find(0, true)
+		}
+		if at < 0 {
+			if prev := find(0, false); prev >= 0 {
+				// every occurrence is already used by another item
+				other := used[prev] - 1
+				res.Items[i].pen("token_reuse")
+				res.Items[other].pen("token_reuse")
+			}
+			continue
+		}
+		for k := range ws {
+			used[at+k] = i + 1
+		}
+		spans[i] = span{at, at + len(ws) - 1}
+		claimed[g] = spans[i]
+		cursor = at + len(ws)
+	}
+	// adjacency
+	for i := range res.Items {
+		for j := range res.Items {
+			if i == j || spans[i].a < 0 || spans[j].a < 0 || group(i) == group(j) {
+				continue
+			}
+			if spans[j].a == spans[i].b+1 && !p.everydayPair(res.Items[i].DishID, res.Items[j].DishID) {
+				res.Items[i].pen("adjacent_split")
+				res.Items[j].pen("adjacent_split")
+			}
+		}
+	}
+}
+
+func (p *Parser) everydayPair(a, b string) bool {
+	for _, pr := range p.r.EverydayPairs.DishPairs {
+		if (pr[0] == a && pr[1] == b) || (pr[0] == b && pr[1] == a) {
+			return true
+		}
+	}
+	da, db := p.dishByID(a), p.dishByID(b)
+	if da == nil || db == nil {
+		return false
+	}
+	for _, pr := range p.r.EverydayPairs.CategoryPairs {
+		if (pr[0] == da.Category && pr[1] == db.Category) || (pr[0] == db.Category && pr[1] == da.Category) {
+			return true
+		}
+	}
+	return false
+}
+
+// origWord is one word of the user's original text with its normalized
+// form(s) and UTF-16 offsets.
+type origWord struct {
+	norm []string
+	s, e int
+}
+
+func utf16Len(s string) int { return len(utf16.Encode([]rune(s))) }
+
+// origWords splits the original text into words (letters, digits, marks)
+// and normalizes each one the same way the parser does.
+func (p *Parser) origWords(text string) []origWord {
+	var out []origWord
+	pos16, start16, startB := 0, -1, 0
+	flush := func(endB, end16 int) {
+		if start16 < 0 {
+			return
+		}
+		w := text[startB:endB]
+		out = append(out, origWord{norm: strings.Fields(p.normalize(w)), s: start16, e: end16})
+		start16 = -1
+	}
+	for i, r := range text {
+		inWord := unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Mc, r) || r == '.' && start16 >= 0
+		if inWord && start16 < 0 {
+			start16, startB = pos16, i
+		} else if !inWord {
+			flush(i, pos16)
+		}
+		pos16 += len(utf16.Encode([]rune{r}))
+	}
+	flush(len(text), pos16)
+	return out
+}
+
+// locate finds the words of matched (normalized) in order from word index
+// `from`, skipping words in `used`; returns word index range [a,b].
+func locate(ws []origWord, matched []string, from int, used []bool) (int, int, bool) {
+	if len(matched) == 0 {
+		return 0, 0, false
+	}
+	for start := from; start < len(ws); start++ {
+		k, a, b := 0, -1, -1
+		for i := start; i < len(ws) && k < len(matched); i++ {
+			if used != nil && used[i] {
+				if a >= 0 {
+					break
+				}
+				continue
+			}
+			hit := false
+			for _, n := range ws[i].norm {
+				if k < len(matched) && n == matched[k] {
+					k++
+					hit = true
+				}
+			}
+			if hit {
+				if a < 0 {
+					a = i
+				}
+				b = i
+			} else if a >= 0 && i-b > 2 {
+				break // allow up to two filler words in between ("aloo ki sabzi")
+			}
+		}
+		if k == len(matched) {
+			return a, b, true
+		}
+	}
+	return 0, 0, false
+}
+
+// assignSpans sets span_start/span_end on every item. Everyday combo parts
+// get one word each when the phrase has one word per part.
+func (p *Parser) assignSpans(res *Result, text string) {
+	ws := p.origWords(text)
+	whole := utf16Len(text)
+	used := make([]bool, len(ws))
+	cursor := 0
+	for i := 0; i < len(res.Items); i++ {
+		it := &res.Items[i]
+		// everyday combo group
+		n := 1
+		if it.everyday {
+			for i+n < len(res.Items) && res.Items[i+n].everyday && res.Items[i+n].FromCombo == it.FromCombo && res.Items[i+n].Matched == it.Matched {
+				n++
+			}
+		}
+		a, b, ok := locate(ws, strings.Fields(it.Matched), cursor, used)
+		if !ok {
+			a, b, ok = locate(ws, strings.Fields(it.Matched), 0, used)
+		}
+		if !ok {
+			for k := 0; k < n; k++ {
+				res.Items[i+k].SpanStart, res.Items[i+k].SpanEnd = 0, whole
+			}
+			i += n - 1
+			continue
+		}
+		for x := a; x <= b; x++ {
+			used[x] = true
+		}
+		cursor = b + 1
+		if n > 1 && b-a+1 == n {
+			for k := 0; k < n; k++ {
+				res.Items[i+k].SpanStart, res.Items[i+k].SpanEnd = ws[a+k].s, ws[a+k].e
+			}
+		} else {
+			for k := 0; k < n; k++ {
+				res.Items[i+k].SpanStart, res.Items[i+k].SpanEnd = ws[a].s, ws[b].e
+			}
+		}
+		i += n - 1
+	}
+}
+
+// Locate returns the UTF-16 span of words (any form the parser would
+// normalize to) in text, or the whole text when they can't be found.
+func (p *Parser) Locate(text, words string) (int, int, bool) {
+	ws := p.origWords(text)
+	if a, b, ok := locate(ws, strings.Fields(p.normalize(words)), 0, nil); ok {
+		return ws[a].s, ws[b].e, true
+	}
+	return 0, utf16Len(text), false
+}
+
+// Noise reports whether a piece of text has no food words: only numbers,
+// units, fillers, connectors, stopwords, oil words or genitives.
+func (p *Parser) Noise(text string) bool {
+	for _, w := range strings.Fields(p.normalize(text)) {
+		if w == "," || w == "." || isNum(w) || p.filler[w] || p.connector[w] || p.stop[w] || p.unitOf[w] != "" ||
+			p.oilOf[w] != "" || p.small[w] || p.genitive[w] || p.oilSuf[w] || p.style[w] || len([]rune(w)) < 2 {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+// Claim reports whether a parsed item can stand as a confident table item
+// while the AI handles the rest of the text: it would pass TableOnly on its
+// own, apart from being flagged only because the meal had other unknown
+// words. The returned copy is marked confident.
+func (p *Parser) Claim(it Item) (Item, bool) {
+	for _, f := range it.Flags {
+		if f != "leftover_in_meal" {
+			return it, false
+		}
+	}
+	if it.Fuzzy || it.generic || it.Source == SourceGeneric || it.Source == SourceAI {
+		return it, false
+	}
+	one := it
+	one.Flags, one.Source, one.NeedsConfirmation = nil, SourceTable, false
+	if !p.TableOnly(Result{Items: []Item{one}}) {
+		return it, false
+	}
+	one.Confidence = 1
+	one.pens = nil
+	return one, true
 }

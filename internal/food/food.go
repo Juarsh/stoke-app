@@ -80,6 +80,8 @@ type ParseResponse struct {
 	JobID  string `json:"job_id,omitempty"`
 	// Answer says who answered: table, ai, or generic (rule-based guess, all to confirm).
 	Answer string `json:"answer,omitempty"`
+	// Entries saved with this job's id (job results only).
+	Entries []JobEntry `json:"entries,omitempty"`
 }
 
 func totals(items []parser.Item) Total {
@@ -103,10 +105,18 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 
 	// remembered readings stand in for their spans
 	learned := s.readings(ctx, userID)
-	if cnt, key := splitCount(text); learned[key].Span != "" {
-		// the whole meal is a remembered food
-		out := ParseResponse{Items: []parser.Item{scaleItem(learned[key].item(text), cnt)}, Fallback: "none", Answer: "table",
-			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
+	// a remembered whole-meal text wins before anything else (no AI call)
+	whole := learnedItems(learned[Normalize(text)], text)
+	if whole == nil {
+		if cnt, key := splitCount(text); cnt != 1 && len(learned[key]) > 0 {
+			for _, it := range learnedItems(learned[key], text) {
+				whole = append(whole, scaleItem(it, cnt))
+			}
+		}
+	}
+	if whole != nil {
+		s.setSpans(whole, text)
+		out := ParseResponse{Items: whole, Fallback: "none", Answer: "table", CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
 		return finishResp(out), nil
 	}
 	var items []parser.Item
@@ -114,9 +124,9 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	done := map[string]bool{}
 	for _, it := range res.Items {
 		key := Normalize(it.Matched)
-		if rd, ok := learned[key]; ok {
+		if rs, ok := learned[key]; ok {
 			if !done[key] {
-				items = append(items, rd.item(it.Matched))
+				items = append(items, learnedItems(rs, it.Matched)...)
 				done[key] = true
 			}
 			continue
@@ -128,27 +138,90 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 			continue
 		}
 		cnt, key := splitCount(u)
-		if rd, ok := learned[key]; ok {
-			items = append(items, scaleItem(rd.item(u), cnt))
+		if rs, ok := learned[key]; ok {
+			for _, li := range learnedItems(rs, u) {
+				items = append(items, scaleItem(li, cnt))
+			}
 			continue
 		}
 		rest.Unmatched = append(rest.Unmatched, u)
 	}
 	if len(rest.Items) == 0 && len(rest.Unmatched) == 0 && len(items) > 0 || len(rest.Items) > 0 && s.parser().TableOnly(rest) {
+		s.setSpans(items, text)
 		out := ParseResponse{Items: append(items, rest.Items...), Unmatched: []string{}, Fallback: "none", Answer: "table",
 			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
 		return finishResp(out), nil
 	}
 
-	hint := append(append([]parser.Item(nil), items...), res.Items...)
-	key := Normalize(text)
+	// claimed = confident table items (and remembered foods); the AI only
+	// answers for the rest of the text
+	s.setSpans(items, text)
+	claimed := append([]parser.Item(nil), items...)
+	for _, it := range res.Items {
+		if _, isLearned := done[Normalize(it.Matched)]; isLearned {
+			continue
+		}
+		if c, ok := s.parser().Claim(it); ok {
+			claimed = append(claimed, c)
+		}
+	}
+	// a table word glued to unknown words ("kuttu cheela") may be one
+	// unknown dish: give the whole phrase to the AI
+	t16 := u16(text)
+	for changed := true; changed; {
+		changed = false
+		for _, sp := range unclaimed(text, claimed, s.parser().Noise) {
+			for i := len(items); i < len(claimed); i++ {
+				c := claimed[i]
+				gap := ""
+				if c.SpanEnd <= sp.Start {
+					gap = sub16(t16, c.SpanEnd, sp.Start)
+				} else if sp.End <= c.SpanStart {
+					gap = sub16(t16, sp.End, c.SpanStart)
+				} else {
+					continue
+				}
+				if strings.TrimSpace(gap) == "" {
+					claimed = append(claimed[:i], claimed[i+1:]...)
+					changed = true
+					break
+				}
+			}
+			if changed {
+				break
+			}
+		}
+	}
+	spans := unclaimed(text, claimed, s.parser().Noise)
+	// a remembered food can also cover an unclaimed span
+	var open []Span
+	for _, sp := range spans {
+		if rs, ok := learned[Normalize(sp.Text)]; ok {
+			li := learnedItems(rs, sp.Text)
+			for i := range li {
+				li[i].SpanStart, li[i].SpanEnd = sp.Start, sp.End
+			}
+			claimed = append(claimed, li...)
+			continue
+		}
+		open = append(open, sp)
+	}
+	sortBySpan(claimed)
+	if len(open) == 0 && len(claimed) > 0 {
+		out := ParseResponse{Items: claimed, Unmatched: []string{}, Fallback: "none", Answer: "table",
+			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
+		return finishResp(out), nil
+	}
+	hint := append([]parser.Item(nil), res.Items...)
+	key := spanKey(text, claimed)
 	if useAI {
 		if cached, ok := s.cacheGet(ctx, key); ok {
-			return s.aiResponse(cached, "cache", slot), nil
+			return s.aiResponse(claimed, cached, "cache", slot), nil
 		}
 	}
 	generic := func(fb, msg string) (ParseResponse, *Job) {
 		out := s.genericResponse(res, slot)
+		s.setSpans(out.Items, text)
 		out.Fallback, out.Message = fb, msg
 		return finishResp(out), nil
 	}
@@ -161,12 +234,38 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	if st := s.reserveAI(ctx, userID); st != "" {
 		return generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
 	}
-	job, ok := s.Queue.Add(userID, text, key, hint, s.genericResponse(res, slot), slot)
+	gen := s.genericResponse(res, slot)
+	s.setSpans(gen.Items, text)
+	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open)
 	if !ok {
 		return generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
 	}
 	return ParseResponse{Items: []parser.Item{}, Unmatched: []string{}, CustomItems: []CustomItem{}, Fallback: "queued",
 		Slot: slot, Status: "pending", JobID: job.ID, NeedsConfirmation: true}, job
+}
+
+// setSpans gives items built outside the parser (AI answers, remembered
+// foods) a span in the user's text: their own words if found there,
+// otherwise the whole text.
+func (s *Service) setSpans(items []parser.Item, text string) {
+	for i := range items {
+		it := &items[i]
+		if it.SpanEnd > 0 {
+			continue
+		}
+		var ok bool
+		for _, w := range []string{it.AIName, it.Name, it.DishID, it.Matched} {
+			if w == "" || w == text {
+				continue
+			}
+			if it.SpanStart, it.SpanEnd, ok = s.parser().Locate(text, w); ok {
+				break
+			}
+		}
+		if !ok {
+			it.SpanStart, it.SpanEnd, _ = s.parser().Locate(text, text)
+		}
+	}
 }
 
 func finishResp(out ParseResponse) ParseResponse {
@@ -203,28 +302,42 @@ func (s *Service) genericResponse(res parser.Result, slot string) ParseResponse 
 	return out
 }
 
-func (s *Service) aiResponse(items []parser.Item, fb, slot string) ParseResponse {
+// aiResponse combines the claimed table items with the placed AI items.
+// AI items keep the user's own words as matched_text (their span); the
+// AI's dish name is in ai_name.
+func (s *Service) aiResponse(claimed, ai []parser.Item, fb, slot string) ParseResponse {
 	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "ai", Fallback: fb, UsedAI: true}
-	for _, it := range items {
-		it.AIEstimate, it.Source, it.DataSource = true, parser.SourceAI, "ai"
+	out.Items = append(out.Items, claimed...)
+	for _, it := range ai {
+		if it.Source != parser.SourceDidYouMean {
+			it.Source = parser.SourceAI
+		}
+		it.AIEstimate, it.DataSource = true, "ai"
 		it.NeedsConfirmation = true
 		it.SourceNote = "AI estimate (Gemini) - confirm before saving"
 		out.Items = append(out.Items, it)
 	}
+	sortBySpan(out.Items)
 	return finishResp(out)
 }
 
 // runJob is the queue worker's single AI call for one meal.
 func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
-	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Hint)
-	if err != nil || !plausible(items) {
+	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Spans, j.Hint)
+	for i := range items {
+		if items[i].AIName == "" {
+			items[i].AIName = items[i].Name
+		}
+	}
+	placed := placeAI(j.Text, items, j.Spans, j.Claimed, s.parser().Locate)
+	if err != nil || !plausible(items) || len(placed) == 0 {
 		out := j.Generic
 		out.Fallback = "error"
 		out.Message = "Couldn't get an AI estimate. Confirm or add it yourself."
 		return finishResp(out)
 	}
-	s.cachePut(ctx, j.Key, items) // raw AI answer only
-	return s.aiResponse(items, "used", j.Slot)
+	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
+	return s.aiResponse(j.Claimed, placed, "used", j.Slot)
 }
 
 // reserveAI counts one call against the per-user and project-wide daily
@@ -351,10 +464,13 @@ type Entry struct {
 	Span        string  `json:"span"`
 	// State: confirmed (counts in totals) or needs_review (counts for the
 	// streak only, until confirmed with PATCH {"state":"confirmed"}).
-	State     string    `json:"state"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt *string   `json:"deleted_at"`
+	State        string    `json:"state"`
+	SpanPart     int       `json:"span_part"`
+	ParseJobID   *string   `json:"parse_job_id"`
+	ClientItemID *string   `json:"client_item_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	DeletedAt    *string   `json:"deleted_at"`
 }
 
 // ItemIn is one chip the client confirms. Either dish_id (values recomputed
@@ -382,6 +498,11 @@ type ItemIn struct {
 	// State "needs_review" saves the item unconfirmed: no confirmation or
 	// number checks, excluded from totals, counts toward the streak.
 	State string `json:"state,omitempty"`
+	// ParseJobID (alias job_id) / ClientItemID tie the entry to a parse job
+	// and the app's item, so a late AI answer can be matched to it.
+	ParseJobID   string `json:"parse_job_id,omitempty"`
+	JobID        string `json:"job_id,omitempty"`
+	ClientItemID string `json:"client_item_id,omitempty"`
 	// ClientID makes saves idempotent: a repeat returns the stored entry.
 	ClientID string `json:"client_id"`
 	// DishTableVersion is required when a table item carries the client's own
@@ -585,14 +706,14 @@ func (s *Service) draft(in ItemIn, cid *string) (Entry, int, error) {
 	return e, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state`
+const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id`
 
 func (s *Service) scan(row pgx.Row) (Entry, error) {
 	var e Entry
 	var d time.Time
 	var del *time.Time
 	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State)
+		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State, &e.SpanPart, &e.ParseJobID, &e.ClientItemID)
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
@@ -708,6 +829,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	out := []Entry{}
 	dups := []string{}
 	created := 0
+	spanParts := map[string]int{} // item index within each span (multi-item remembered foods)
 	for i, it := range items {
 		if it.ClientID != "" {
 			// idempotent: a repeat client_id returns the stored entry unchanged
@@ -721,6 +843,11 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		part := 0
+		if k := Normalize(it.Span); k != "" {
+			part = spanParts[k]
+			spanParts[k]++
+		}
 		e, code, err := s.resolve(r.Context(), it)
 		if err != nil {
 			if uv, ok := err.(*unknownVersion); ok {
@@ -731,11 +858,11 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
-			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span,state)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE(NULLIF($23,''),'confirmed')) RETURNING `+cols,
+			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE(NULLIF($23,''),'confirmed'),$24,NULLIF($25,''),NULLIF($26,'')) RETURNING `+cols,
 			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
 			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
-			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span), e.State))
+			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span), e.State, part, it.jobID(), it.ClientItemID))
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
@@ -743,7 +870,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		out = append(out, saved)
 		created++
 		if it.Confirmed && it.Span != "" && saved.State == "confirmed" {
-			if err := remember(r.Context(), tx, uid, it.Span, saved); err != nil {
+			if err := remember(r.Context(), tx, uid, it.Span, part, part == 0, saved); err != nil {
 				httpx.Error(w, 500, "save failed")
 				return
 			}
@@ -861,6 +988,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		Remember *bool   `json:"remember"`
 		// State "confirmed" confirms a needs_review entry (full checks apply).
 		State *string `json:"state"`
+		// parse_job_id (alias job_id) / client_item_id link the entry to a parse job / app item.
+		ParseJobID   *string `json:"parse_job_id"`
+		JobID        *string `json:"job_id"`
+		ClientItemID *string `json:"client_item_id"`
 	}
 	if !httpx.Decode(w, r, &in) {
 		return
@@ -966,13 +1097,21 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, 500, "save failed")
 		return
 	}
+	if in.ParseJobID == nil {
+		in.ParseJobID = in.JobID
+	}
+	if in.ParseJobID != nil || in.ClientItemID != nil {
+		_, _ = s.DB.Exec(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
+			WHERE id=$1 AND user_id=$2`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID))
+		saved.ParseJobID, saved.ClientItemID = orPtr(in.ParseJobID, saved.ParseJobID), orPtr(in.ClientItemID, saved.ClientItemID)
+	}
 	span := e.Span
 	if in.Span != nil {
 		span = *in.Span
 	}
 	corrected := in.DishID != nil || in.Qty != nil || in.Unit != nil || in.OilLevel != nil || in.CustomName != nil || in.Kcal != nil || in.ProteinG != nil
 	if corrected && span != "" && saved.State == "confirmed" && (in.Remember == nil || *in.Remember) {
-		if err := remember(r.Context(), s.DB, uid, span, saved); err != nil {
+		if err := remember(r.Context(), s.DB, uid, span, e.SpanPart, false, saved); err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
 		}
@@ -1084,4 +1223,25 @@ func (u *unknownVersion) body(item int) map[string]any {
 		"keep_entry":         true,
 		"retry":              true,
 	}
+}
+
+func (in ItemIn) jobID() string {
+	if in.ParseJobID != "" {
+		return in.ParseJobID
+	}
+	return in.JobID
+}
+
+func deref(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
+func orPtr(a, b *string) *string {
+	if a != nil && *a != "" {
+		return a
+	}
+	return b
 }
