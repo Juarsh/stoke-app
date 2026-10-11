@@ -1,56 +1,27 @@
-# Welcome to your Expo app 👋
+# Calorie tracker app (working name KatoriCount) — Expo / React Native, v1
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Android-first Expo (SDK 57, TypeScript, Expo Router) app for the Hinglish calorie tracker.
+Spec: `/workspace/calorie/spec.md` · Design: `/workspace/calorie/design/` (v4 bold redesign) · Backend: `/workspace/calorie-tracker`.
 
-## Get started
+## Identity (name on hold)
+All identity comes from `brand.config.js` (env-overridable), read by `app.config.ts` and exposed to the UI via `expo-constants`:
+`APP_NAME` (default KatoriCount), `APP_SLUG`, `APP_SCHEME`, `APP_ANDROID_PACKAGE` / `APP_IOS_BUNDLE_ID` (default `in.katoricount.app`), `APP_INVITE_BASE_URL`. No UI string hardcodes the name.
 
-1. Install dependencies
+## Config / flags (env, all optional)
+| Var | Effect |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | Go backend URL. Unset = **mock mode** (everything local, sync queue kept). |
+| `EXPO_PUBLIC_FLAG_GOOGLE_SIGNIN=1` + `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` / `_WEB_CLIENT_ID` | real Google sign-in (expo-auth-session ID token → `Authorization: Bearer`). Otherwise a mock sign-in. |
+| `EXPO_PUBLIC_FLAG_HEALTH_CONNECT=1` | read today's steps from Health Connect (dev build only). |
+| `EXPO_PUBLIC_FLAG_STEPS=0` | cut steps (protein card goes full width). |
+| `EXPO_PUBLIC_FLAG_COMMUNITY=0` | cut the Community tab (nav re-spaces). |
 
-   ```bash
-   npm install
-   ```
+## Scripts
+- `npm run sync-dishes` — copies `dishes.json`, `rules.json`, `dev-meals.json` from the backend and regenerates `src/data/golden.json` by running the real Go parser.
+- `npm test` — jest: TS parser == Go parser on every dev meal + extra inputs, plus domain/coach/streak/sync tests.
+- `npm run typecheck`, `npm run export:android`.
+- `npm run parse -- "2 roti dal"` — offline TS parser, prints the backend `/v1/parse` response shape (use_ai=false semantics).
+- `npm run parse -- --batch < meals.jsonl` — one JSON line in (`{"text": "..."}` or a bare string) → one response line out.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Data rules
+Saved entries are snapshots: dish id, qty, unit, oil, kcal/protein ranges, carbs/fat and `dish_table_version`. They are never recalculated on sync or table updates; only an explicit user edit changes them.
