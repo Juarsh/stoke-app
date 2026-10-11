@@ -9,6 +9,7 @@
     "@expo/ui": "~57.0.22",
     "expo": "~57.0.27",
     "expo-auth-session": "~57.0.14",
+    "expo-blur": "~57.0.3",
     "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.21",
     "expo-crypto": "~57.0.3",

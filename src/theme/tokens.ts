@@ -1,5 +1,6 @@
 // Designer's final tokens (design-notes.md v3, light + dark). The ONLY place
 // colours, type, spacing, radius and elevation are defined.
+// glass* are placeholders until the bold redesign tokens land (tinted, NO live blur on cards).
 export const palette = {
   light: {
     bg: '#F6F4EF', surface: '#FFFFFF', surface2: '#F3F1EB', surface3: '#ECE9E1', line: '#E4E0D6',
@@ -11,7 +12,7 @@ export const palette = {
     ai: '#6A4C9C', aiSoft: '#F1EDF8', aiText: '#4A3475',
     danger: '#A8322A', over: '#6B6F6D', track: '#ECE9E1',
     popBg: '#1E2622', popText: '#F2F4F3', scrim: 'rgba(14,17,16,0.45)',
-    shareBgStart: '#FBF8F1', shareBgEnd: '#F1EADB', shadow: '#0E1110',
+    glass: 'rgba(255,255,255,0.72)', glassBorder: 'rgba(228,224,214,0.9)', navGlass: 'rgba(255,255,255,0.86)', shareBgStart: '#FBF8F1', shareBgEnd: '#F1EADB', shadow: '#0E1110',
   },
   dark: {
     bg: '#0E1110', surface: '#161A18', surface2: '#1C211F', surface3: '#242A27', line: '#2A312D',
@@ -23,7 +24,7 @@ export const palette = {
     ai: '#B49BE0', aiSoft: '#251F33', aiText: '#D3C4F0',
     danger: '#E8877F', over: '#9EA3A0', track: '#242A27',
     popBg: '#2C3430', popText: '#F2F4F3', scrim: 'rgba(0,0,0,0.6)',
-    shareBgStart: '#121715', shareBgEnd: '#0B0E0D', shadow: '#000000',
+    glass: 'rgba(22,26,24,0.72)', glassBorder: 'rgba(42,49,45,0.9)', navGlass: 'rgba(22,26,24,0.9)', shareBgStart: '#121715', shareBgEnd: '#0B0E0D', shadow: '#000000',
   },
 } as const;
 export type ColorTokens = { [K in keyof typeof palette.light]: string };

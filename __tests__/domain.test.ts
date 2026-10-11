@@ -47,3 +47,11 @@ test('sync queue coalesces and stops on failure without changing payload', async
   expect(rest[0].tries).toBe(1);
   expect(await flush(rest, { upsertEntry: async () => {}, deleteEntry: async () => {} })).toEqual([]);
 });
+import { parseLocal } from '../src/lib/parseLocal';
+test('did-you-mean: >1000 kcal or >3x portion needs confirm with alternatives', () => {
+  const r = parseLocal('20 roti');
+  expect(r.items[0].needs_confirm).toBe(true);
+  expect(r.items[0].alternatives!.map((a) => a.quantity)).toContain(2);
+  expect(parseLocal('2 roti').items[0].needs_confirm).toBeUndefined();
+  expect(parseLocal('2000g chicken breast').items[0].alternatives!.some((a) => a.quantity === 200)).toBe(true);
+});
