@@ -20,7 +20,9 @@ var IST = time.FixedZone("IST", 5*3600+1800)
 // Now is swappable in tests.
 var Now = time.Now
 
-func WithUser(ctx context.Context, id int64) context.Context { return context.WithValue(ctx, userKey, id) }
+func WithUser(ctx context.Context, id int64) context.Context {
+	return context.WithValue(ctx, userKey, id)
+}
 
 // UserID returns the authenticated user's id (set by auth middleware).
 func UserID(r *http.Request) int64 { id, _ := r.Context().Value(userKey).(int64); return id }

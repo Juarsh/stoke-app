@@ -7,6 +7,7 @@ package parser
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"math"
 	"regexp"
 	"strconv"
@@ -83,6 +84,8 @@ const (
 type Parser struct {
 	r       Rules
 	dish    map[string]*dishes.Dish // term -> dish
+	byID    map[string]*dishes.Dish
+	table   []dishes.Dish
 	maxLen  int
 	single  []string // single-word terms for fuzzy
 	unitOf  map[string]string
@@ -95,13 +98,14 @@ type Parser struct {
 
 // New builds a parser from the embedded rules and the given dish table.
 func New(ds []dishes.Dish) (*Parser, error) {
-	p := &Parser{dish: map[string]*dishes.Dish{}, unitOf: map[string]string{}, oilOf: map[string]string{},
+	p := &Parser{dish: map[string]*dishes.Dish{}, byID: map[string]*dishes.Dish{}, table: ds, unitOf: map[string]string{}, oilOf: map[string]string{},
 		small: set(nil), oilNoun: set(nil), filler: set(nil), fat: set(nil)}
 	if err := json.Unmarshal(rulesJSON, &p.r); err != nil {
 		return nil, err
 	}
 	for i := range ds {
 		d := &ds[i]
+		p.byID[d.ID] = d
 		for _, t := range append([]string{d.Name, d.ID}, d.Aliases...) {
 			t = strings.Join(strings.Fields(strings.ToLower(strings.ReplaceAll(t, "_", " "))), " ")
 			if _, ok := p.dish[t]; ok {
@@ -468,14 +472,7 @@ func nz(f float64) float64 {
 	return f
 }
 
-func (p *Parser) dishByID(id string) *dishes.Dish {
-	for _, d := range p.dish {
-		if d.ID == id {
-			return d
-		}
-	}
-	return nil
-}
+func (p *Parser) dishByID(id string) *dishes.Dish { return p.byID[id] }
 
 func (p *Parser) compute(d *dishes.Dish, it Item, qty float64, unit string) Item {
 	if unit == "" {
@@ -566,3 +563,46 @@ func Totals(items []Item) (Range, Range) {
 	pr = Range{round(pr.Low, 1), round(pr.Best, 1), round(pr.High, 1)}
 	return k, pr
 }
+
+// ErrUnknownDish is returned by Recompute for ids not in the table.
+var ErrUnknownDish = errors.New("unknown dish_id")
+
+// Units lists the units an item can be expressed in.
+var Units = map[string]bool{"count": true, "katori": true, "spoon": true, "plate": true, "glass": true, "gram": true}
+
+// Recompute builds an item from an edited chip (dish, quantity, unit, oil level).
+func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, error) {
+	d := p.dishByID(dishID)
+	if d == nil {
+		return Item{}, ErrUnknownDish
+	}
+	if unit != "" && !Units[unit] {
+		return Item{}, errors.New("unit must be one of count, katori, spoon, plate, glass, gram")
+	}
+	if qty <= 0 || qty > 5000 {
+		return Item{}, errors.New("quantity out of range")
+	}
+	it := Item{DishID: d.ID, Name: d.Name, Matched: d.Name, Source: d.Source, SourceNote: d.SourceNote}
+	it = p.compute(d, it, qty, unit)
+	if d.OilSensitive {
+		if oil == "" {
+			oil = "normal"
+		}
+		if oil != "less" && oil != "normal" && oil != "extra" {
+			return Item{}, errors.New("oil_level must be less, normal or extra")
+		}
+		it = p.withOil(&it, oil)
+	}
+	return it, nil
+}
+
+// Dish returns a table row by id.
+func (p *Parser) Dish(id string) (dishes.Dish, bool) {
+	if d := p.dishByID(id); d != nil {
+		return *d, true
+	}
+	return dishes.Dish{}, false
+}
+
+// Table returns the dish table (for GET /v1/dishes and the coach).
+func (p *Parser) Table() []dishes.Dish { return p.table }
