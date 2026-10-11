@@ -2,6 +2,7 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -32,10 +33,20 @@ type Config struct {
 	// AIPerMinute is the project-wide AI calls per minute (default 8; <0 = unlimited).
 	AIPerMinute int
 	GeminiModel string
+	// Dishes overrides the embedded table (tests simulate table updates).
+	Dishes []dishes.Dish
 }
 
 func New(c Config) (http.Handler, error) {
-	p, err := parser.New(dishes.MustLoad())
+	if c.Dishes == nil {
+		c.Dishes = dishes.MustLoad()
+	}
+	p, err := parser.New(c.Dishes)
+	if err != nil {
+		return nil, err
+	}
+	// keep every published table version so older offline entries validate
+	vers, err := food.Publish(context.Background(), c.DB, c.Dishes, p)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +68,7 @@ func New(c Config) (http.Handler, error) {
 	sum := &summary.Service{DB: c.DB, Contributors: []summary.Contributor{food.Contributor{}, activity.Contributor{}}}
 	gl := &goals.Service{DB: c.DB}
 	fs := &food.Service{DB: c.DB, Parser: p, Fallback: c.Fallback, Summary: sum}
+	fs.Versions = vers
 	fs.GlobalCap.Store(c.GlobalAICap)
 	if c.AIPerMinute == 0 {
 		c.AIPerMinute = 8

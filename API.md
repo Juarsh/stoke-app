@@ -187,3 +187,27 @@ that span comes back as `source=table`, `learned=true` and
 - `POST /test/ai/calls/reset` sets the call count to 0 and clears the AI cache plus the per-user and global AI counters.
 - `POST /test/ai/next-answer` with `{"items":[{name, quantity, unit, kcal:{low,best,high}, protein:{...}}]}` makes the next call return these items for every span.
 - `POST /test/ai/daily-cap` with `{"cap": n}` sets the project-wide daily cap. 0 means unlimited.
+
+## Dish table versions
+
+The server keeps a snapshot of every dish table version it has published, in
+the `dish_table_versions` table. On startup it stores the current table. If a
+table with different contents is published under an existing version number,
+startup fails: every change to `dishes.json` must bump the version.
+
+An entry that sends `dish_table_version` is checked against the snapshot for
+that version, including older ones such as entries made offline before an
+update. The entry is stored with the version it sent. Numbers that don't match
+that version's values return 422.
+
+If the server has never seen the version (for example, the app was updated
+before this server), it returns **409**:
+
+```json
+{"error": "unknown_dish_table_version", "keep_entry": true, "retry": true,
+ "dish_table_version": 8, "server_version": 7, "item": 0,
+ "message": "Keep this entry on the device and retry later. The server doesn't know this dish table version yet."}
+```
+
+The client should keep the entry and retry later. This replaces the earlier
+rule that returned 409 for any version that wasn't the current one.

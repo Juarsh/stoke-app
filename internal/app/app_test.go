@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/akarsh/calorie-tracker/internal/dishes"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -641,5 +642,87 @@ func TestClientIDVersionAndNumbers(t *testing.T) {
 	// delete by client_id (the app's id)
 	if c := call(t, srv, "DELETE", "/v1/entries/c-1", u, nil, nil); c != 204 {
 		t.Errorf("delete by client_id: %d", c)
+	}
+}
+
+// An app offline on table v1 syncs after the server moved to v2 (roti's
+// numbers changed). v1 entries validate against v1 and keep version 1.
+func TestOfflineSyncAcrossTableUpdate(t *testing.T) {
+	srv1, pool := setup(t, nil)
+	v1 := dishes.MustLoad()
+	ver1 := dishes.TableVersion(v1)
+	roti1, _ := (func() (dishes.Dish, bool) {
+		for _, d := range v1 {
+			if d.ID == "roti" {
+				return d, true
+			}
+		}
+		return dishes.Dish{}, false
+	})()
+	// publish v2: roti gets heavier, version bumped
+	v2 := make([]dishes.Dish, len(v1))
+	copy(v2, v1)
+	for i := range v2 {
+		if v2[i].ID == "roti" {
+			v2[i].Kcal, v2[i].KcalLow, v2[i].KcalHigh = roti1.Kcal+40, roti1.KcalLow+40, roti1.KcalHigh+40
+			v2[i].Version = ver1 + 1
+		}
+	}
+	h2, err := New(Config{DB: pool, Verifier: fakeVerifier{}, Dishes: v2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv2 := httptest.NewServer(h2)
+	defer srv2.Close()
+	_ = srv1
+	// republishing changed contents under an old number is refused
+	bad := make([]dishes.Dish, len(v1))
+	copy(bad, v1)
+	bad[0].Kcal += 1
+	if _, err := New(Config{DB: pool, Verifier: fakeVerifier{}, Dishes: bad}); err == nil {
+		t.Error("changed table under the same version was accepted")
+	}
+	item := func(cid string, ver int, kcal float64) M {
+		return M{"items": []M{{"dish_id": "roti", "qty": 1, "source": "table", "client_id": cid,
+			"dish_table_version": ver, "kcal": kcal, "protein_g": roti1.ProteinG}}}
+	}
+	type out struct {
+		Entries []struct {
+			KcalBest float64 `json:"kcal_best"`
+			TableVer *int    `json:"dish_table_version"`
+		}
+		Error      string
+		KeepEntry  bool `json:"keep_entry"`
+		Retry      bool
+		ServerVers int `json:"server_version"`
+	}
+	// offline v1 entry, synced after the update: accepted with v1 numbers
+	var o out
+	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e1", ver1, roti1.Kcal), &o); c != 201 {
+		t.Fatalf("v1 entry after update: %d %+v", c, o)
+	}
+	if o.Entries[0].KcalBest != roti1.Kcal || o.Entries[0].TableVer == nil || *o.Entries[0].TableVer != ver1 {
+		t.Errorf("v1 entry stored as %+v", o.Entries[0])
+	}
+	// v2 numbers under v2: fine
+	o = out{}
+	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e2", ver1+1, roti1.Kcal+40), &o); c != 201 || *o.Entries[0].TableVer != ver1+1 {
+		t.Errorf("v2 entry: %d %+v", c, o)
+	}
+	// v1 numbers claimed as v2: mismatch
+	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e3", ver1+1, roti1.Kcal), nil); c != 422 {
+		t.Errorf("v1 numbers labelled v2: %d", c)
+	}
+	// a version the server has never seen: 409, keep and retry
+	o = out{}
+	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e4", ver1+7, 100), &o); c != 409 || !o.KeepEntry || !o.Retry || o.ServerVers != ver1+1 {
+		t.Errorf("unknown version: %d %+v", c, o)
+	}
+	// a fresh server process (v2) still knows v1 from the stored snapshot
+	h3, _ := New(Config{DB: pool, Verifier: fakeVerifier{}, Dishes: v2})
+	srv3 := httptest.NewServer(h3)
+	defer srv3.Close()
+	if c := call(t, srv3, "POST", "/v1/entries", "off", item("e5", ver1, roti1.Kcal), nil); c != 201 {
+		t.Errorf("v1 after restart: %d", c)
 	}
 }

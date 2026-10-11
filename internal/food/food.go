@@ -36,6 +36,8 @@ type Service struct {
 	GlobalCap atomic.Int64
 	// Limiter caps AI calls per minute project-wide (nil = no limit).
 	Limiter *Limiter
+	// Versions holds every published dish table (nil = current only).
+	Versions *Versions
 }
 
 // ---------- parse ----------
@@ -378,7 +380,7 @@ var saveSources = map[string]bool{"table": true, "did_you_mean": true, "generic"
 //     table match flagged by the sanity check) must come with confirmed=true
 //   - 0 kcal is only saved when the user typed it (custom/manual), or for a
 //     table row whose own value is 0 (water)
-func (s *Service) resolve(in ItemIn) (Entry, int, error) {
+func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	var e Entry
 	bad := func(code int, msg string) (Entry, int, error) { return e, code, errors.New(msg) }
 	if !saveSources[in.Source] {
@@ -399,7 +401,21 @@ func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 	}()
 	userTyped := in.Source == "custom" || in.Source == "manual"
 	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {
-		it, err := s.Parser.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
+		// validate against the table version the client used (any published one)
+		tp, ver := s.Parser, s.Parser.TableVersion()
+		if in.DishTableVersion != nil && s.Versions != nil {
+			p, err := s.Versions.Parser(ctx, *in.DishTableVersion)
+			if errors.Is(err, ErrUnknownVersion) {
+				return e, 409, &unknownVersion{got: *in.DishTableVersion, server: s.Versions.Current}
+			}
+			if err != nil {
+				return bad(500, "db")
+			}
+			tp, ver = p, *in.DishTableVersion
+		} else if in.DishTableVersion != nil && *in.DishTableVersion != ver {
+			return e, 409, &unknownVersion{got: *in.DishTableVersion, server: ver}
+		}
+		it, err := tp.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
 		if err != nil {
 			return bad(400, err.Error())
 		}
@@ -407,7 +423,6 @@ func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 		if needs && !in.Confirmed {
 			return bad(400, "item needs confirmation: send confirmed=true after the user checks it")
 		}
-		ver := s.Parser.TableVersion()
 		id := it.DishID
 		src := in.Source
 		if it.Source == parser.SourceGeneric {
@@ -421,9 +436,6 @@ func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 			// the client's confirmed numbers: check them, store them, never recalculate silently
 			if in.DishTableVersion == nil {
 				return bad(400, "dish_table_version is required when sending numbers for a table item")
-			}
-			if *in.DishTableVersion != ver {
-				return bad(409, fmt.Sprintf("dish_table_version %d can't be checked; server table is version %d", *in.DishTableVersion, ver))
 			}
 			if in.Kcal != nil && !within(*in.Kcal, it.Kcal.Best, kcalTolAbs, kcalTolRel) {
 				return bad(422, fmt.Sprintf("kcal %.1f doesn't match table value %.1f for %s", *in.Kcal, it.Kcal.Best, it.DishID))
@@ -441,7 +453,7 @@ func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 		}
 		e.CarbsG, e.FatG = f(in.CarbsG, e.CarbsG), f(in.FatG, e.FatG)
 		if e.KcalBest <= 0 {
-			if d, _ := s.Parser.Dish(in.DishID); d.Kcal != 0 {
+			if d, _ := tp.Dish(in.DishID); d.Kcal != 0 {
 				return bad(400, "refusing to save 0 kcal")
 			}
 		}
@@ -608,8 +620,12 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		e, code, err := s.resolve(it)
+		e, code, err := s.resolve(r.Context(), it)
 		if err != nil {
+			if uv, ok := err.(*unknownVersion); ok {
+				httpx.JSON(w, 409, uv.body(i))
+				return
+			}
 			httpx.Error(w, code, "item "+strconv.Itoa(i)+": "+err.Error())
 			return
 		}
@@ -818,7 +834,11 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if it.DishID != "" && it.Source != "custom" {
 		it.Kcal, it.ProteinG = nil, nil // edited dish chips are recomputed from the current table
 	}
-	ne, code, err := s.resolve(it)
+	ne, code, err := s.resolve(r.Context(), it)
+	if uv, ok := err.(*unknownVersion); ok {
+		httpx.JSON(w, 409, uv.body(0))
+		return
+	}
 	if err != nil {
 		httpx.Error(w, code, err.Error())
 		return
@@ -930,4 +950,24 @@ func plausible(items []parser.Item) bool {
 		}
 	}
 	return true
+}
+
+// unknownVersion: the client used a table this server has never seen (e.g.
+// the app updated before this server). The entry is fine; retry later.
+type unknownVersion struct{ got, server int }
+
+func (u *unknownVersion) Error() string {
+	return fmt.Sprintf("dish_table_version %d is not known to this server", u.got)
+}
+
+func (u *unknownVersion) body(item int) map[string]any {
+	return map[string]any{
+		"error":              "unknown_dish_table_version",
+		"message":            "Keep this entry on the device and retry later. The server doesn't know this dish table version yet.",
+		"item":               item,
+		"dish_table_version": u.got,
+		"server_version":     u.server,
+		"keep_entry":         true,
+		"retry":              true,
+	}
 }
