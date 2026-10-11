@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -49,15 +50,15 @@ type CustomItem struct {
 }
 
 type ParseResponse struct {
-	Items        []parser.Item `json:"items"`
-	Unmatched    []string      `json:"unmatched"`
-	Total        Total         `json:"total"`
-	UsedAI       bool          `json:"used_ai"`
-	NeedsConfirm bool          `json:"needs_confirm"` // any item implausibly large; see items[].alternatives
-	Fallback     string        `json:"fallback"`      // none, used, not_configured, cap_reached, error
-	CustomItems  []CustomItem  `json:"custom_items"`
-	Message      string        `json:"message,omitempty"`
-	Slot         string        `json:"slot"`
+	Items             []parser.Item `json:"items"`
+	Unmatched         []string      `json:"unmatched"`
+	Total             Total         `json:"total"`
+	UsedAI            bool          `json:"used_ai"`
+	NeedsConfirmation bool          `json:"needs_confirmation"` // some item must be confirmed before saving
+	Fallback          string        `json:"fallback"`           // none, used, not_configured, cap_reached, error
+	CustomItems       []CustomItem  `json:"custom_items"`
+	Message           string        `json:"message,omitempty"`
+	Slot              string        `json:"slot"`
 }
 
 func totals(items []parser.Item) Total {
@@ -76,33 +77,54 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	res := s.Parser.Parse(text)
 	out := ParseResponse{Items: res.Items, Unmatched: res.Unmatched, Fallback: "none", CustomItems: []CustomItem{},
 		Slot: httpx.SlotFor(httpx.Now())}
-	if len(res.Unmatched) > 0 && useAI {
-		for _, u := range res.Unmatched {
-			st, items := s.fallbackOne(ctx, userID, u)
-			if st != "used" {
-				out.CustomItems = append(out.CustomItems, CustomItem{CustomName: u, NeedsInput: true})
-				if out.Fallback != "used" {
-					out.Fallback = st
-				}
-				continue
-			}
+	// Unknown text never counts as 0 kcal: it goes to the AI fallback, and if
+	// that is off, capped or failing it becomes a generic placeholder item
+	// (needs confirmation) plus a custom item the user can fill in.
+	for _, u := range res.Unmatched {
+		if !foodLike(u) {
+			continue
+		}
+		st := "disabled"
+		var items []parser.Item
+		if useAI {
+			st, items = s.fallbackOne(ctx, userID, u)
+		}
+		if st == "used" {
 			for i := range items {
 				items[i].AIEstimate = true
-				items[i].Source = "ai"
+				items[i].Source = parser.SourceAI
+				items[i].DataSource = "ai"
+				items[i].NeedsConfirmation = true
 				items[i].SourceNote = "AI estimate (Gemini) - confirm before saving"
 			}
 			out.Items = append(out.Items, items...)
 			out.UsedAI, out.Fallback = true, "used"
+			continue
 		}
-		if out.Fallback == "cap_reached" {
-			out.Message = "AI estimates are back tomorrow. Add it yourself for now."
+		if out.Fallback != "used" && st != "disabled" {
+			out.Fallback = st
 		}
+		out.Items = append(out.Items, s.Parser.Unknown(u))
+		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: u, NeedsInput: true})
+	}
+	if out.Fallback == "cap_reached" {
+		out.Message = "AI estimates are back tomorrow. Add it yourself for now."
 	}
 	out.Total = totals(out.Items)
 	for _, it := range out.Items {
-		out.NeedsConfirm = out.NeedsConfirm || it.NeedsConfirm
+		out.NeedsConfirmation = out.NeedsConfirmation || it.NeedsConfirmation
 	}
 	return out
+}
+
+// foodLike: any span with a letter (pure numbers are noise).
+func foodLike(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) fallbackOne(ctx context.Context, userID int64, text string) (string, []parser.Item) {
@@ -170,7 +192,10 @@ type ItemIn struct {
 	KcalHigh    *float64 `json:"kcal_high"`
 	ProteinLow  *float64 `json:"protein_low"`
 	ProteinHigh *float64 `json:"protein_high"`
-	Source      string   `json:"source"` // ai, manual, custom (dish_id rows are always "table")
+	// Source is required: table | did_you_mean | generic | ai_estimate (from
+	// /v1/parse) or custom (numbers typed by the user).
+	Source    string `json:"source"`
+	Confirmed bool   `json:"confirmed"` // required when the item needs confirmation
 }
 
 var slots = map[string]bool{"breakfast": true, "lunch": true, "snacks": true, "dinner": true}
@@ -182,48 +207,79 @@ func f(p *float64, d float64) float64 {
 	return *p
 }
 
-// resolve turns an ItemIn into column values.
+var saveSources = map[string]bool{"table": true, "did_you_mean": true, "generic": true, "ai_estimate": true, "custom": true, "manual": true}
+
+// resolve validates one item and turns it into column values.
+//   - source is required
+//   - anything that needs confirmation (not a confident table match, or a
+//     table match flagged by the sanity check) must come with confirmed=true
+//   - 0 kcal is only saved when the user typed it (custom/manual), or for a
+//     table row whose own value is 0 (water)
 func (s *Service) resolve(in ItemIn) (Entry, error) {
 	var e Entry
+	if !saveSources[in.Source] {
+		return e, errors.New("source is required: table, did_you_mean, generic, ai_estimate or custom")
+	}
 	if in.Qty == 0 {
 		in.Qty = 1
 	}
-	if in.DishID != "" {
+	userTyped := in.Source == "custom" || in.Source == "manual"
+	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {
 		it, err := s.Parser.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
 		if err != nil {
 			return e, err
 		}
+		needs := in.Source != "table" || it.NeedsConfirmation
+		if needs && !in.Confirmed {
+			return e, errors.New("item needs confirmation: send confirmed=true after the user checks it")
+		}
+		if it.Kcal.Best <= 0 {
+			if d, _ := s.Parser.Dish(in.DishID); d.Kcal != 0 {
+				return e, errors.New("refusing to save 0 kcal")
+			}
+		}
 		id := it.DishID
-		e = Entry{DishID: &id, Name: it.Name, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel,
+		src := in.Source
+		if it.Source == parser.SourceGeneric {
+			src = "generic"
+		}
+		return Entry{DishID: &id, Name: it.Name, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel,
 			KcalBest: it.Kcal.Best, KcalLow: it.Kcal.Low, KcalHigh: it.Kcal.High,
-			ProteinBest: it.Protein.Best, ProteinLow: it.Protein.Low, ProteinHigh: it.Protein.High, Source: "table"}
-		return e, nil
+			ProteinBest: it.Protein.Best, ProteinLow: it.Protein.Low, ProteinHigh: it.Protein.High, Source: src, Confirmed: true}, nil
+	}
+	if !userTyped && !in.Confirmed {
+		return e, errors.New("item needs confirmation: send confirmed=true after the user checks it")
 	}
 	name := strings.TrimSpace(in.CustomName)
+	if name == "" && in.DishID != "" {
+		if d, ok := s.Parser.Dish(in.DishID); ok {
+			name = d.Name
+		}
+	}
 	if name == "" || len(name) > 120 {
 		return e, errors.New("each item needs dish_id or custom_name")
 	}
 	if in.Kcal == nil || *in.Kcal < 0 || *in.Kcal > 5000 {
-		return e, errors.New("custom items need kcal (0-5000)")
+		return e, errors.New("this item needs kcal (0-5000)")
+	}
+	if *in.Kcal == 0 && !userTyped {
+		return e, errors.New("refusing to save 0 kcal unless typed in as a custom item")
 	}
 	pr := f(in.ProteinG, 0)
 	if pr < 0 || pr > 300 {
 		return e, errors.New("protein_g out of range")
 	}
-	src := in.Source
-	if src == "" {
-		src = "custom"
-	}
-	if src != "ai" && src != "manual" && src != "custom" && src != "barcode" && src != "photo" {
-		return e, errors.New("source must be ai, manual, custom, barcode or photo")
-	}
 	unit := in.Unit
 	if unit == "" {
 		unit = "count"
 	}
+	src := in.Source
+	if src == "manual" {
+		src = "custom"
+	}
 	k := *in.Kcal
 	return Entry{CustomName: name, Name: name, Qty: in.Qty, Unit: unit, KcalBest: k, KcalLow: f(in.KcalLow, k), KcalHigh: f(in.KcalHigh, k),
-		ProteinBest: pr, ProteinLow: f(in.ProteinLow, pr), ProteinHigh: f(in.ProteinHigh, pr), Source: src}, nil
+		ProteinBest: pr, ProteinLow: f(in.ProteinLow, pr), ProteinHigh: f(in.ProteinHigh, pr), Source: src, Confirmed: true}, nil
 }
 
 const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at`
@@ -304,11 +360,16 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	items := in.Items
 	var unmatched []string
+	toConfirm := []parser.Item{}
 	if len(items) == 0 && strings.TrimSpace(in.Text) != "" {
-		// convenience: save only what the table recognised; unmatched comes back
+		// convenience: save only confident table matches; the rest comes back to confirm
 		p := s.Parser.Parse(in.Text)
 		for _, it := range p.Items {
-			items = append(items, ItemIn{DishID: it.DishID, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel})
+			if it.NeedsConfirmation {
+				toConfirm = append(toConfirm, it)
+				continue
+			}
+			items = append(items, ItemIn{DishID: it.DishID, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel, Source: it.Source})
 		}
 		unmatched = p.Unmatched
 	}
@@ -332,9 +393,9 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
 			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,true) RETURNING `+cols,
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING `+cols,
 			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
-			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source))
+			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed))
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
@@ -354,7 +415,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	if unmatched == nil {
 		unmatched = []string{}
 	}
-	httpx.JSON(w, 201, map[string]any{"entries": out, "unmatched": unmatched, "summary": sum})
+	httpx.JSON(w, 201, map[string]any{"entries": out, "unmatched": unmatched, "needs_confirmation": toConfirm, "summary": sum})
 }
 
 func (s *Service) handleList(w http.ResponseWriter, r *http.Request) {
@@ -462,13 +523,16 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		}
 		slot = *in.Slot
 	}
-	it := ItemIn{Qty: e.Qty, Unit: e.Unit, OilLevel: e.OilLevel, CustomName: e.CustomName, Source: e.Source}
+	it := ItemIn{Qty: e.Qty, Unit: e.Unit, OilLevel: e.OilLevel, CustomName: e.CustomName, Source: e.Source, Confirmed: true}
+	if !saveSources[it.Source] {
+		it.Source = "custom"
+	}
 	if e.DishID != nil {
 		it.DishID = *e.DishID
 	} else {
 		k, p := e.KcalBest, e.ProteinBest
 		it.Kcal, it.ProteinG = &k, &p
-		if e.Source == "table" {
+		if e.Source == "table" || e.Source == "did_you_mean" {
 			it.Source = "custom"
 		}
 	}
@@ -502,7 +566,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		it.ProteinG = in.ProteinG
 	}
 	if it.DishID == "" && in.Kcal != nil {
-		it.Source = "manual"
+		it.Source = "custom"
+	}
+	if in.DishID != nil && *in.DishID != "" {
+		it.Source = "table" // user picked the dish
 	}
 	ne, err := s.resolve(it)
 	if err != nil {

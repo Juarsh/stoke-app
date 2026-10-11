@@ -107,7 +107,7 @@ func Suggest(p *parser.Parser, in Input) []Option {
 	var mains []dishes.Dish
 	for _, d := range p.Table() {
 		// branded rows are for logging what people ate, not for recommending brands
-		if !d.Allowed(in.Diet) || skipCat[d.Category] || skipID[d.ID] || d.Unit == "spoon" || d.Brand != "" {
+		if !d.Allowed(in.Diet) || skipCat[d.Category] || skipID[d.ID] || d.Unit == "spoon" || d.Brand != "" || d.NeedsConfirm {
 			continue
 		}
 		oil := ""

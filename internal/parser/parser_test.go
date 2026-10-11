@@ -127,16 +127,16 @@ func TestMacros(t *testing.T) {
 func TestSanityCheck(t *testing.T) {
 	p := newP(t)
 	it := p.Parse("6 plate momos").Items[0]
-	if !it.NeedsConfirm || len(it.Alternatives) < 2 || it.Alternatives[0].Unit != "piece" {
+	if !it.NeedsConfirmation || len(it.Alternatives) < 2 || it.Alternatives[0].Unit != "piece" {
 		t.Errorf("6 plates: %+v", it)
 	}
-	if it := p.Parse("6 momos").Items[0]; it.NeedsConfirm {
+	if it := p.Parse("6 momos").Items[0]; it.NeedsConfirmation {
 		t.Errorf("6 pieces flagged: %+v", it)
 	}
-	if it := p.Parse("2 roti").Items[0]; it.NeedsConfirm {
+	if it := p.Parse("2 roti").Items[0]; it.NeedsConfirmation {
 		t.Errorf("normal flagged")
 	}
-	if it := p.Parse("5 plate chicken biryani").Items[0]; !it.NeedsConfirm {
+	if it := p.Parse("5 plate chicken biryani").Items[0]; !it.NeedsConfirmation {
 		t.Errorf("over 1000 kcal not flagged: %+v", it)
 	}
 }
@@ -175,5 +175,36 @@ func TestIgnoreListSafe(t *testing.T) {
 	r := p.Parse("fish xyzzy")
 	if len(r.Items) == 0 && !strings.Contains(strings.Join(r.Unmatched, " "), "fish") {
 		t.Errorf("fish dropped: %+v", r)
+	}
+}
+
+func TestSourcesAndConfirmation(t *testing.T) {
+	p := newP(t)
+	cases := map[string]struct {
+		src     string
+		confirm bool
+	}{
+		"2 roti":          {SourceTable, false},
+		"2 chapatii":      {SourceDidYouMean, true},
+		"paneer lababdar": {SourceGeneric, true},
+		"6 plate momos":   {SourceTable, true},
+		"soya chaap":      {SourceTable, false},
+	}
+	for in, want := range cases {
+		it := p.Parse(in).Items[0]
+		if it.Source != want.src || it.NeedsConfirmation != want.confirm {
+			t.Errorf("%q: source %s confirm %v, want %+v", in, it.Source, it.NeedsConfirmation, want)
+		}
+	}
+	// generic items never 0 kcal and carry a wide range
+	it := p.Parse("mutton something new").Items[0]
+	if it.Kcal.Best <= 0 || it.Kcal.High < 1.4*it.Kcal.Best {
+		t.Errorf("generic range: %+v", it)
+	}
+	// chaap is never corrected to chaas
+	for _, s := range []string{"chaap", "soya chaap", "soy chaap"} {
+		if it := p.Parse(s).Items[0]; it.DishID != "soya_chaap" {
+			t.Errorf("%q -> %s", s, it.DishID)
+		}
 	}
 }

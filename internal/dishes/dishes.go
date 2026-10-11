@@ -36,8 +36,9 @@ type Dish struct {
 	FatG         float64  `json:"fat_g"`   // estimate (see macro_note)
 	MacroNote    string   `json:"macro_note"`
 	NeedsVerify  bool     `json:"needs_verification"`
-	PieceGrams   float64  `json:"piece_grams,omitempty"` // countable plate dishes: "8 momos" = 8 pieces
-	Parts        []Part   `json:"parts,omitempty"`       // combos: split into these when a portion is given
+	PieceGrams   float64  `json:"piece_grams,omitempty"`   // countable plate dishes: "8 momos" = 8 pieces
+	Parts        []Part   `json:"parts,omitempty"`         // combos: split into these when a portion is given
+	NeedsConfirm bool     `json:"needs_confirm,omitempty"` // generic placeholder rows: always ask the user
 }
 
 // Part is one component of a combo per one standard portion of the combo.

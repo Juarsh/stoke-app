@@ -123,12 +123,16 @@ func TestParseShape(t *testing.T) {
 	srv, _ := setup(t, nil)
 	var r struct {
 		Items []struct {
-			Name       string `json:"name"`
-			DishID     string `json:"dish_id"`
-			AIEstimate bool   `json:"ai_estimate"`
+			Name              string `json:"name"`
+			DishID            string `json:"dish_id"`
+			AIEstimate        bool   `json:"ai_estimate"`
+			Source            string
+			NeedsConfirmation bool `json:"needs_confirmation"`
+			Kcal              struct{ Best float64 }
 		}
-		Unmatched []string
-		Total     struct {
+		NeedsConfirmation bool `json:"needs_confirmation"`
+		Unmatched         []string
+		Total             struct {
 			Kcal, KcalLow, KcalHigh float64
 			ProteinG                float64 `json:"protein_g"`
 		}
@@ -138,8 +142,15 @@ func TestParseShape(t *testing.T) {
 	if c := call(t, srv, "POST", "/v1/parse", "a", M{"text": "2 roti dal sabzi thoda ghee, quinoa bowl"}, &r); c != 200 {
 		t.Fatal(c)
 	}
-	if len(r.Items) != 4 || r.Items[0].DishID != "roti" || r.Total.Kcal <= 0 || r.Total.ProteinG <= 0 || r.UsedAI {
+	if len(r.Items) != 5 || r.Items[0].DishID != "roti" || r.Total.Kcal <= 0 || r.Total.ProteinG <= 0 || r.UsedAI {
 		t.Errorf("parse: %+v", r)
+	}
+	// unknown text is never 0 kcal: a generic placeholder that needs confirmation
+	if q := r.Items[4]; q.Source != "generic" || !q.NeedsConfirmation || q.Kcal.Best <= 0 || !r.NeedsConfirmation {
+		t.Errorf("placeholder: %+v", r.Items[4])
+	}
+	if r.Items[0].Source != "table" || r.Items[0].NeedsConfirmation {
+		t.Errorf("table item: %+v", r.Items[0])
 	}
 	if len(r.Unmatched) == 0 || r.Fallback != "not_configured" {
 		t.Errorf("unmatched/fallback: %+v", r)
@@ -164,7 +175,7 @@ func TestAICapAndFlag(t *testing.T) {
 	}
 	for i := 0; i < 20; i++ {
 		call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti quinoa"}, &r)
-		if !r.UsedAI || len(r.Items) != 2 || !r.Items[1].AIEstimate || r.Items[1].Source != "ai" || r.Items[0].AIEstimate {
+		if !r.UsedAI || len(r.Items) != 2 || !r.Items[1].AIEstimate || r.Items[1].Source != "ai_estimate" || r.Items[0].AIEstimate {
 			t.Fatalf("call %d: %+v", i, r)
 		}
 	}
@@ -179,7 +190,7 @@ func TestAICapAndFlag(t *testing.T) {
 		Message     string
 	}{}
 	call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti quinoa"}, &r)
-	if r.UsedAI || r.Fallback != "cap_reached" || len(r.CustomItems) != 1 || r.Message == "" || ai.calls != 20 {
+	if r.UsedAI || r.Fallback != "cap_reached" || len(r.CustomItems) != 1 || r.Message == "" || ai.calls != 20 || len(r.Items) != 2 || r.Items[1].Source != "generic" {
 		t.Errorf("21st call: %+v (ai calls %d)", r, ai.calls)
 	}
 	// other users have their own cap
@@ -246,14 +257,14 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 		t.Fatalf("create: %+v", cr)
 	}
 	// custom item (cap reached path) and an explicit slot/date
-	if c := call(t, srv, "POST", "/v1/entries", u, M{"local_date": "2026-10-13", "slot": "dinner", "items": []M{{"custom_name": "ghar ka cake", "kcal": 300, "protein_g": 4}}}, &cr); c != 201 || cr.Entries[0].Source != "custom" {
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"local_date": "2026-10-13", "slot": "dinner", "items": []M{{"custom_name": "ghar ka cake", "kcal": 300, "protein_g": 4, "source": "custom"}}}, &cr); c != 201 || cr.Entries[0].Source != "custom" {
 		t.Fatalf("custom: %d %+v", c, cr)
 	}
 	// bad items
-	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{{"dish_id": "nope"}}}, nil); c != 400 {
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{{"dish_id": "nope", "source": "table"}}}, nil); c != 400 {
 		t.Errorf("unknown dish: %d", c)
 	}
-	if c := call(t, srv, "POST", "/v1/entries", u, M{"slot": "brunch", "items": []M{{"dish_id": "roti"}}}, nil); c != 400 {
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"slot": "brunch", "items": []M{{"dish_id": "roti", "source": "table"}}}, nil); c != 400 {
 		t.Errorf("bad slot: %d", c)
 	}
 
@@ -371,5 +382,53 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 	call(t, srv, "GET", "/v1/entries?date=2026-10-14", u, nil, &list) // re-creates an empty user
 	if len(list.Entries) != 0 {
 		t.Errorf("data survived account deletion")
+	}
+}
+
+func TestSaveRules(t *testing.T) {
+	srv, _ := setup(t, nil)
+	u := "saver"
+	cases := []struct {
+		name string
+		item M
+		want int
+	}{
+		{"no source", M{"dish_id": "roti", "qty": 2}, 400},
+		{"table ok", M{"dish_id": "roti", "qty": 2, "source": "table"}, 201},
+		{"table but implausible, unconfirmed", M{"dish_id": "momos", "qty": 6, "unit": "plate", "source": "table"}, 400},
+		{"table implausible, confirmed", M{"dish_id": "momos", "qty": 6, "unit": "plate", "source": "table", "confirmed": true}, 201},
+		{"did_you_mean unconfirmed", M{"dish_id": "roti", "source": "did_you_mean"}, 400},
+		{"did_you_mean confirmed", M{"dish_id": "roti", "source": "did_you_mean", "confirmed": true}, 201},
+		{"generic row unconfirmed", M{"dish_id": "generic_paneer_dish", "source": "generic"}, 400},
+		{"generic row confirmed", M{"dish_id": "generic_paneer_dish", "source": "generic", "confirmed": true}, 201},
+		{"generic row sent as table", M{"dish_id": "generic_paneer_dish", "source": "table"}, 400},
+		{"placeholder unconfirmed", M{"custom_name": "quinoa", "kcal": 250, "source": "generic"}, 400},
+		{"ai unconfirmed", M{"custom_name": "quinoa", "kcal": 250, "source": "ai_estimate"}, 400},
+		{"ai confirmed", M{"custom_name": "quinoa", "kcal": 250, "protein_g": 8, "source": "ai_estimate", "confirmed": true}, 201},
+		{"ai 0 kcal", M{"custom_name": "quinoa", "kcal": 0, "source": "ai_estimate", "confirmed": true}, 400},
+		{"generic 0 kcal", M{"custom_name": "x", "kcal": 0, "source": "generic", "confirmed": true}, 400},
+		{"custom typed 0 kcal", M{"custom_name": "black tea", "kcal": 0, "source": "custom"}, 201},
+		{"table water 0 kcal", M{"dish_id": "water", "qty": 2, "source": "table"}, 201},
+		{"bad source", M{"dish_id": "roti", "source": "magic"}, 400},
+	}
+	for _, c := range cases {
+		if got := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{c.item}}, nil); got != c.want {
+			t.Errorf("%s: got %d want %d", c.name, got, c.want)
+		}
+	}
+	// text-only save keeps only confident table matches
+	var cr struct {
+		Entries           []entry
+		NeedsConfirmation []M `json:"needs_confirmation"`
+		Unmatched         []string
+	}
+	call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti, paneer lababdar, quinoa"}, &cr)
+	if len(cr.Entries) != 1 || len(cr.NeedsConfirmation) != 1 || len(cr.Unmatched) != 1 {
+		t.Errorf("text save: %+v", cr)
+	}
+	for _, e := range cr.Entries {
+		if e.KcalBest <= 0 {
+			t.Errorf("0 kcal saved: %+v", e)
+		}
 	}
 }

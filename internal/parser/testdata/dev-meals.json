@@ -294,8 +294,13 @@
   },
   {
    "in": "paneer tikka masala",
-   "want": [],
-   "note": "not in table -> fallback"
+   "want": [
+    [
+     "generic_paneer_dish",
+     1
+    ]
+   ],
+   "note": "unknown protein dish -> generic paneer item, needs confirmation"
   },
   {
    "in": "chhole chawal",
@@ -645,6 +650,229 @@
    "want": [
     [
      "sabzi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 soya chaap",
+   "want": [
+    [
+     "soya_chaap",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "soy chaap tikka",
+   "want": [
+    [
+     "soya_chaap",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "chaap aur chaas",
+   "want": [
+    [
+     "soya_chaap",
+     1
+    ],
+    [
+     "chaas",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "chicken lababdar",
+   "want": [
+    [
+     "generic_chicken_dish",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "fish amritsari 2",
+   "want": [
+    [
+     "generic_fish_dish",
+     1
+    ]
+   ],
+   "unmatched": []
+  },
+  {
+   "in": "panner kolhapuri",
+   "want": [
+    [
+     "generic_paneer_dish",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "rajma with rice, 1 bowl",
+   "want": [
+    [
+     "rajma",
+     0.5
+    ],
+    [
+     "rice",
+     0.5
+    ]
+   ]
+  },
+  {
+   "in": "dal aur chawal 2 katori",
+   "want": [
+    [
+     "dal",
+     1
+    ],
+    [
+     "rice",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "paratha with gobi filling",
+   "want": [
+    [
+     "gobi_paratha",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 paratha mooli wale",
+   "want": [
+    [
+     "mooli_paratha",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "aloo bhara paratha",
+   "want": [
+    [
+     "aloo_paratha",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "paratha aur aloo sabzi",
+   "want": [
+    [
+     "paratha",
+     1
+    ],
+    [
+     "aloo_sabzi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "teen ande ka omelette",
+   "want": [
+    [
+     "omelette",
+     3
+    ]
+   ]
+  },
+  {
+   "in": "omelette 2 ande wala",
+   "want": [
+    [
+     "omelette",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "egg bhurji 4 egg",
+   "want": [
+    [
+     "egg_bhurji",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "veg maggi",
+   "want": [
+    [
+     "maggi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "veg momos 6",
+   "want": [
+    [
+     "momos",
+     6
+    ]
+   ]
+  },
+  {
+   "in": "misal pav",
+   "want": [
+    [
+     "misal_pav",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 appam with stew",
+   "want": [
+    [
+     "appam",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "luchi 4 aloo posto",
+   "want": [
+    [
+     "luchi",
+     4
+    ],
+    [
+     "aloo_posto",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "1 chicken kathi roll",
+   "want": [
+    [
+     "chicken_roll",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "lays ka packet aur frooti",
+   "want": [
+    [
+     "potato_chips",
+     1
+    ],
+    [
+     "mango_drink",
      1
     ]
    ]

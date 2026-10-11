@@ -51,7 +51,20 @@ type Rules struct {
 	FuzzyFirst      bool                `json:"fuzzy_same_first_letter"`
 	DevDigits       string              `json:"devanagari_digits"`
 	DevWords        map[string]string   `json:"devanagari_words"`
-	Sanity          struct {
+	GenericProtein  map[string]string   `json:"generic_protein_dish"`
+	FormWords       []string            `json:"form_words"`
+	ModifierWords   []string            `json:"modifier_words"`
+	StuffingWords   []string            `json:"stuffing_words"`
+	Connectors      []string            `json:"connectors"`
+	EggWords        []string            `json:"egg_words"`
+	EggsPerPortion  map[string]float64  `json:"eggs_per_portion"`
+	FuzzyMinSim     float64             `json:"fuzzy_min_similarity"`
+	UnknownItem     struct {
+		Kcal     [3]float64 `json:"kcal"`
+		ProteinG [3]float64 `json:"protein_g"`
+		Name     string     `json:"name"`
+	} `json:"unknown_item"`
+	Sanity struct {
 		MaxItemKcal float64 `json:"max_item_kcal"`
 		MaxMultiple float64 `json:"max_portion_multiple"`
 	} `json:"sanity"`
@@ -75,21 +88,33 @@ type Item struct {
 	OilLevel   string  `json:"oil_level"` // less, normal, extra ("" when the dish has no cooking oil)
 	Kcal       Range   `json:"kcal"`
 	Protein    Range   `json:"protein_g"`
-	CarbsG     float64 `json:"carbs_g"` // estimate
-	FatG       float64 `json:"fat_g"`   // estimate
-	Source     string  `json:"source"`
+	CarbsG     float64 `json:"carbs_g"`     // estimate
+	FatG       float64 `json:"fat_g"`       // estimate
+	Source     string  `json:"source"`      // table | did_you_mean | generic | ai_estimate
+	DataSource string  `json:"data_source"` // where the numbers come from: estimate | usda_fdc | open_food_facts | ai
 	SourceNote string  `json:"source_note"`
 	Fuzzy      bool    `json:"fuzzy"`
 	FromCombo  string  `json:"from_combo,omitempty"` // set when a combo dish was split into parts
 	// NeedsConfirm flags implausible amounts (over max_item_kcal or more than
 	// max_portion_multiple standard portions); Alternatives offers readings
 	// such as pieces instead of plates.
-	NeedsConfirm bool          `json:"needs_confirm"`
-	Alternatives []Alternative `json:"alternatives,omitempty"`
-	AIEstimate   bool          `json:"ai_estimate"`
+	NeedsConfirmation bool          `json:"needs_confirmation"`
+	Alternatives      []Alternative `json:"alternatives,omitempty"`
+	AIEstimate        bool          `json:"ai_estimate"`
 
 	explicit bool // quantity/unit came from the text
+	generic  bool
+	clause   int  // comma-separated part of the text
+	joined   bool // linked to the previous item by "with"/"aur"
 }
+
+// Response sources. Only confident table matches skip confirmation.
+const (
+	SourceTable      = "table"
+	SourceDidYouMean = "did_you_mean"
+	SourceGeneric    = "generic"
+	SourceAI         = "ai_estimate"
+)
 
 // Alternative is another reading of an implausible item.
 type Alternative struct {
@@ -106,22 +131,27 @@ type Result struct {
 }
 
 type Parser struct {
-	r        Rules
-	dish     map[string]*dishes.Dish // term -> dish
-	byID     map[string]*dishes.Dish
-	table    []dishes.Dish
-	maxLen   int
-	byWords  map[int][]string // n-word terms, for fuzzy
-	unitOf   map[string]string
-	oilOf    map[string]string
-	small    map[string]bool
-	oilNoun  map[string]bool
-	oilSuf   map[string]bool
-	filler   map[string]bool
-	fat      map[string]bool
-	genitive map[string]bool
-	devDigit map[rune]rune
-	reMult   *regexp.Regexp
+	r         Rules
+	dish      map[string]*dishes.Dish // term -> dish
+	byID      map[string]*dishes.Dish
+	table     []dishes.Dish
+	maxLen    int
+	byWords   map[int][]string // n-word terms, for fuzzy
+	unitOf    map[string]string
+	oilOf     map[string]string
+	small     map[string]bool
+	oilNoun   map[string]bool
+	oilSuf    map[string]bool
+	filler    map[string]bool
+	fat       map[string]bool
+	genitive  map[string]bool
+	formWord  map[string]bool
+	modifier  map[string]bool
+	stuffing  map[string]bool
+	connector map[string]bool
+	eggWord   map[string]bool
+	devDigit  map[rune]rune
+	reMult    *regexp.Regexp
 }
 
 // New builds a parser from the embedded rules and the given dish table.
@@ -159,6 +189,7 @@ func New(ds []dishes.Dish) (*Parser, error) {
 		p.devDigit[r] = rune('0' + i)
 	}
 	p.small, p.oilNoun, p.oilSuf, p.fat, p.genitive = set(p.r.SmallWords), set(p.r.OilNouns), set(p.r.OilSuffixes), set(p.r.FatDishes), set(p.r.GenitiveWords)
+	p.formWord, p.modifier, p.stuffing, p.connector, p.eggWord = set(p.r.FormWords), set(p.r.ModifierWords), set(p.r.StuffingWords), set(p.r.Connectors), set(p.r.EggWords)
 	p.filler = set(append(append([]string{}, p.r.Fillers...), p.r.BrandWords...))
 	pre := make([]string, len(p.r.MultPrefixes))
 	for i, m := range p.r.MultPrefixes {
@@ -329,7 +360,16 @@ func (p *Parser) fuzzyWord(a, b string) bool {
 	if p.r.FuzzyFirst && a[0] != b[0] {
 		return false
 	}
-	return lev(a, b, p.r.FuzzyMaxDist) <= p.r.FuzzyMaxDist
+	la, lb := len([]rune(a)), len([]rune(b))
+	if la-lb > 1 || lb-la > 1 {
+		return false
+	}
+	// protein / ingredient words are never "corrected" into something else
+	if ka, ok := p.r.ProteinWords[a]; ok && ka != p.r.ProteinWords[b] {
+		return false
+	}
+	d := lev(a, b, p.r.FuzzyMaxDist)
+	return d <= p.r.FuzzyMaxDist && 1-float64(d)/float64(max(la, lb)) >= p.r.FuzzyMinSim
 }
 
 // matchDish tries, longest first, an exact term and then a typo-tolerant
@@ -394,22 +434,35 @@ func (p *Parser) Parse(text string) Result {
 	res := Result{Items: []Item{}, Unmatched: []string{}}
 	var pd pending
 	var unk []string
+	clause := 0
+	joined := false // a connector ("with", "aur") since the last item
 	flushUnk := func() {
-		if len(unk) > 0 {
-			res.Unmatched = append(res.Unmatched, strings.Join(unk, " "))
-			unk = nil
+		if len(unk) == 0 {
+			return
 		}
+		span := strings.Join(unk, " ")
+		unk = nil
+		if it, ok := p.genericProtein(span, clause); ok {
+			res.Items = append(res.Items, it)
+			return
+		}
+		res.Unmatched = append(res.Unmatched, span)
 	}
-	last := func() *Item {
-		if len(res.Items) == 0 {
-			return nil
+	last := func() *Item { return lastItem(&res) }
+	push := func(items []Item) {
+		for k := range items {
+			items[k].clause = clause
+			items[k].joined = joined && len(res.Items) > 0 && res.Items[len(res.Items)-1].clause == clause
 		}
-		return &res.Items[len(res.Items)-1]
+		res.Items = append(res.Items, items...)
+		joined = false
 	}
 	for i := 0; i < len(toks); i++ {
 		t := toks[i]
 		if t.sep {
 			flushUnk()
+			clause++
+			joined = false
 			continue
 		}
 		if t.mult != 0 {
@@ -431,35 +484,86 @@ func (p *Parser) Parse(text string) Result {
 		if _, ok := p.r.ProteinWords[t.w]; ok && p.attachProtein(t.w, &res) {
 			continue // already folded into the last item ("momos chicken")
 		}
+		// a form word after a bare protein ("paneer tikka masala", "chicken roll")
+		if p.formWord[t.w] && p.dish[t.w] == nil {
+			if li := last(); li != nil && !li.explicit && p.isProteinWord(li.Matched) && li.FromCombo == "" {
+				span := li.Matched + " " + t.w
+				for i+1 < len(toks) && (p.formWord[toks[i+1].w]) {
+					i++
+					span += " " + toks[i].w
+				}
+				if g, ok := p.genericProtein(span, li.clause); ok {
+					g.Quantity, g.explicit = li.Quantity, li.explicit
+					res.Items[len(res.Items)-1] = g
+					continue
+				}
+			}
+			if li := last(); li != nil && li.clause == clause && len(unk) == 0 {
+				continue // "chicken tikka masala": a form word after a full dish adds nothing
+			}
+		}
 		if !t.isN || t.w == "" {
 			if d, n, fz := p.matchDish(toks, i); d != nil {
-				flushUnk()
 				matched := make([]string, n)
 				for k := 0; k < n; k++ {
 					matched[k] = toks[i+k].word()
 				}
 				// "ghee wala" right after an oily dish: extra oil on that dish
 				if p.fat[d.ID] && i+n < len(toks) && p.oilSuf[toks[i+n].w] {
+					flushUnk()
 					if li := last(); li != nil && li.OilLevel != "" {
 						*li = p.withOil(li, "extra")
-						i += n
-						continue
+					} else {
+						pd.oil = "extra"
 					}
-					pd.oil = "extra"
 					i += n
 					continue
 				}
+				// "do ande ka omelette": the egg count belongs to the egg dish
+				if p.eggWord[strings.Join(matched, " ")] {
+					if j, ed := p.eggDishAhead(toks, i+n); ed != nil {
+						flushUnk()
+						eggs := 1.0
+						if pd.hasQty {
+							eggs = pd.qty * nz(pd.factor)
+						}
+						pd = pending{qty: eggs / p.r.EggsPerPortion[ed.ID], hasQty: true, oil: pd.oil}
+						its := p.build(ed, pd, strings.Join(wordsOf(toks[i:j+1]), " "), false)
+						push(its)
+						pd = pending{}
+						i = j
+						continue
+					}
+				}
+				// variant from a modifier word before it ("aloo bhara paratha", "veg momos")
+				if v, ok := p.variantFromUnk(d, unk); ok {
+					d = v
+					unk = unk[:len(unk)-1]
+				}
+				flushUnk()
 				d = p.proteinVariant(d, toks, i, n, &res)
+				var skip int
+				d, skip = p.variantAhead(d, toks, i+n)
 				items := p.build(d, pd, strings.Join(matched, " "), fz)
-				res.Items = append(res.Items, items...)
+				push(items)
 				pd = pending{}
-				i += n - 1
+				i += n - 1 + skip
 				continue
 			}
 		}
 		if t.isN {
+			// "omelette 2 egg ka": egg count for the egg dish before it
+			if li := last(); li != nil && !li.explicit && p.r.EggsPerPortion[li.DishID] > 0 && i+1 < len(toks) && p.eggWord[toks[i+1].w] {
+				*li = p.rescale(li, t.num/p.r.EggsPerPortion[li.DishID], li.Unit)
+				li.explicit = true
+				i++
+				for i+1 < len(toks) && (p.genitive[toks[i+1].w] || p.oilSuf[toks[i+1].w]) {
+					i++
+				}
+				continue
+			}
 			// trailing quantity: "maggie 1.5", "khichdi with ghee 1 bowl"
-			if tgt := p.trailTarget(&res); tgt >= 0 && !pd.hasQty && p.trailing(toks, i) {
+			if tgt := p.trailTarget(&res); tgt >= 0 && !pd.hasQty && (p.trailing(toks, i) || p.countBetween(&res, tgt, toks, i)) {
 				u, f := "", 1.0
 				if i+1 < len(toks) && !toks[i+1].sep {
 					if uu, ff := p.unitFor(toks[i+1].w); uu != "" {
@@ -493,8 +597,7 @@ func (p *Parser) Parse(text string) Result {
 			continue
 		}
 		if lvl, ok := p.oilOf[w]; ok {
-			// post-modifier "dal kam oil" / "sabzi less tel": change that dish.
-			// ("zyada ghee" falls through and adds a ghee item.)
+			// post-modifier "dal kam oil": change that dish ("zyada ghee" adds a ghee item)
 			if li := last(); li != nil && lvl != "extra" && i+1 < len(toks) && p.oilNoun[toks[i+1].w] && li.OilLevel != "" {
 				*li = p.withOil(li, lvl)
 				i++
@@ -512,7 +615,12 @@ func (p *Parser) Parse(text string) Result {
 			i++
 			continue
 		}
-		if p.filler[w] || p.oilSuf[w] || p.genitive[w] {
+		if p.connector[w] {
+			flushUnk()
+			joined = true
+			continue
+		}
+		if p.filler[w] || p.oilSuf[w] || p.genitive[w] || p.stuffing[w] {
 			continue
 		}
 		if pd.hasQty && len(unk) == 0 {
@@ -520,7 +628,7 @@ func (p *Parser) Parse(text string) Result {
 		}
 		pd = pending{}
 		// unknown word glued to a one-word dish ("paneer tikka masala"): the
-		// dish match is probably wrong, so send the phrase to the fallback.
+		// dish match is probably wrong, so the phrase goes on as one span.
 		if len(unk) == 0 {
 			var glued []string
 			for k := i - 1; k >= 0; k-- {
@@ -541,9 +649,141 @@ func (p *Parser) Parse(text string) Result {
 	flushUnk()
 	for i := range res.Items {
 		res.Items[i].explicit = false
-		p.sanity(&res.Items[i])
+		p.finish(&res.Items[i])
 	}
 	return res
+}
+
+func wordsOf(ts []token) []string {
+	var out []string
+	for _, t := range ts {
+		if !t.sep {
+			out = append(out, t.word())
+		}
+	}
+	return out
+}
+
+func (p *Parser) isProteinWord(s string) bool {
+	_, ok := p.r.ProteinWords[s]
+	return ok
+}
+
+// genericProtein turns an unknown span that mentions a protein ("paneer
+// lababdar", "soya chaap roll") into a wide-range generic item.
+func (p *Parser) genericProtein(span string, clause int) (Item, bool) {
+	ws := strings.Fields(span)
+	qty := 1.0
+	if v, err := strconv.ParseFloat(ws[0], 64); err == nil && v > 0 {
+		qty, ws = v, ws[1:]
+	}
+	for _, w := range ws {
+		if kind, ok := p.r.ProteinWords[w]; ok {
+			d := p.dishByID(p.r.GenericProtein[kind])
+			if d == nil {
+				return Item{}, false
+			}
+			it := Item{DishID: d.ID, Name: d.Name, Matched: span, DataSource: d.Source, SourceNote: d.SourceNote, generic: true, clause: clause}
+			return p.compute(d, it, qty, ""), true
+		}
+	}
+	return Item{}, false
+}
+
+// variantFromUnk: the unknown word just before a dish is a modifier with its
+// own row ("aloo bhara paratha" -> aloo paratha, "veg momos").
+func (p *Parser) variantFromUnk(d *dishes.Dish, unk []string) (*dishes.Dish, bool) {
+	if len(unk) == 0 {
+		return nil, false
+	}
+	w := unk[len(unk)-1]
+	for _, name := range append([]string{d.Name}, d.Aliases...) {
+		fs := strings.Fields(name)
+		for _, base := range []string{name, fs[len(fs)-1]} { // "aloo" + "stuffed paratha" -> "aloo paratha"
+			if v, ok := p.dish[w+" "+base]; ok && v != d {
+				return v, true
+			}
+		}
+	}
+	return nil, false
+}
+
+// variantAhead: "paratha with aloo filling", "paratha aloo wala",
+// "momos veg wale". Needs a stuffing word (filling, stuffed, wala...) or a
+// modifier word, so "paratha aur aloo sabzi" is left alone.
+func (p *Parser) variantAhead(d *dishes.Dish, toks []token, j int) (*dishes.Dish, int) {
+	var cand string
+	stuffed := false
+	k := j
+	for ; k < len(toks) && k < j+4 && !toks[k].sep && !toks[k].isN; k++ {
+		w := toks[k].w
+		switch {
+		case p.stuffing[w] || p.genitive[w]:
+			if w != "with" {
+				stuffed = true
+			}
+		case cand == "":
+			cand = w
+		default:
+			k = len(toks) + 1
+		}
+		if k > len(toks) {
+			break
+		}
+		if cand != "" && stuffed {
+			break
+		}
+	}
+	if cand == "" || k > len(toks) {
+		return d, 0
+	}
+	if !stuffed && !p.modifier[cand] {
+		return d, 0
+	}
+	for _, name := range append([]string{d.Name}, d.Aliases...) {
+		if v, ok := p.dish[cand+" "+name]; ok && v != d {
+			// consume through the stuffing words that follow
+			e := k
+			if e >= len(toks) {
+				e = len(toks) - 1
+			}
+			for e+1 < len(toks) && (p.stuffing[toks[e+1].w] || p.genitive[toks[e+1].w]) && toks[e+1].w != "with" {
+				e++
+			}
+			return v, e - j + 1
+		}
+	}
+	return d, 0
+}
+
+// eggDishAhead finds an egg dish right after an egg count ("2 ande ka omelette").
+func (p *Parser) eggDishAhead(toks []token, j int) (int, *dishes.Dish) {
+	for j < len(toks) && !toks[j].sep && (p.genitive[toks[j].w] || p.oilSuf[toks[j].w] || p.filler[toks[j].w]) {
+		j++
+	}
+	if j >= len(toks) || toks[j].sep {
+		return 0, nil
+	}
+	d, n, _ := p.matchDish(toks, j)
+	if d == nil || p.r.EggsPerPortion[d.ID] == 0 {
+		return 0, nil
+	}
+	return j + n - 1, d
+}
+
+// finish sets the response source and needs_confirmation.
+func (p *Parser) finish(it *Item) {
+	d := p.dishByID(it.DishID)
+	switch {
+	case it.generic || (d != nil && d.NeedsConfirm):
+		it.Source = SourceGeneric
+	case it.Fuzzy:
+		it.Source = SourceDidYouMean
+	default:
+		it.Source = SourceTable
+	}
+	p.sanity(it)
+	it.NeedsConfirmation = it.Source != SourceTable || it.NeedsConfirmation
 }
 
 func (p *Parser) sanity(it *Item) {
@@ -551,7 +791,7 @@ func (p *Parser) sanity(it *Item) {
 	if d == nil || (it.Kcal.Best <= p.r.Sanity.MaxItemKcal && it.Grams <= p.r.Sanity.MaxMultiple*d.PortionGrams) {
 		return
 	}
-	it.NeedsConfirm = true
+	it.NeedsConfirmation = true
 	alt := func(q float64, u, label string) {
 		c := p.compute(d, Item{}, q, u)
 		it.Alternatives = append(it.Alternatives, Alternative{Quantity: q, Unit: c.Unit, Kcal: c.Kcal.Best, Label: label})
@@ -648,10 +888,40 @@ func (p *Parser) trailTarget(res *Result) int {
 }
 
 func (p *Parser) applyTrailing(res *Result, k int, qty float64, unit string) {
+	// "dal with rice, 1 bowl": one bowl shared by the dishes joined by "with"/"aur"
+	if unit != "" {
+		group := []int{k}
+		for j := k; j > 0 && res.Items[j].joined; {
+			j--
+			if res.Items[j].clause != res.Items[k].clause || res.Items[j].explicit {
+				break
+			}
+			if p.fat[res.Items[j].DishID] {
+				continue
+			}
+			group = append(group, j)
+		}
+		if len(group) > 1 {
+			var sum float64
+			for _, g := range group {
+				sum += p.dishByID(res.Items[g].DishID).PortionGrams
+			}
+			for _, g := range group {
+				it := &res.Items[g]
+				share := qty * p.dishByID(it.DishID).PortionGrams / sum
+				*it = p.rescale(it, round(share, 2), unit)
+				it.explicit = true
+			}
+			return
+		}
+	}
 	it := &res.Items[k]
 	d := p.dishByID(it.DishID)
 	if it.FromCombo == "" && len(d.Parts) > 0 {
 		parts := p.expand(d, qty, unit, it.OilLevel, it.Matched, it.Fuzzy)
+		for i := range parts {
+			parts[i].clause = it.clause
+		}
 		res.Items = append(res.Items[:k], append(parts, res.Items[k+1:]...)...)
 		return
 	}
@@ -686,6 +956,17 @@ func (p *Parser) trailing(toks []token, i int) bool {
 		j++
 	}
 	return j >= len(toks) || toks[j].sep
+}
+
+// countBetween: "luchi 4 aloo posto" - a bare number after a counted dish
+// (roti, luchi, idli) and before a bowl/plate dish belongs to the counted one.
+func (p *Parser) countBetween(res *Result, tgt int, toks []token, i int) bool {
+	if i+1 >= len(toks) || toks[i+1].sep || toks[i+1].isN || p.unitOf[toks[i+1].w] != "" {
+		return false
+	}
+	prev := p.dishByID(res.Items[tgt].DishID)
+	next, _, _ := p.matchDish(toks, i+1)
+	return prev != nil && next != nil && prev.Unit == "count" && next.Unit != "count" && toks[i].w == ""
 }
 
 func (p *Parser) unitGrams(d *dishes.Dish, unit string) float64 {
@@ -729,7 +1010,7 @@ func (p *Parser) build(d *dishes.Dish, pd pending, matched string, fuzzy bool) [
 	if d.PieceGrams > 0 && pd.hasQty && (unit == "" || unit == "count") {
 		unit = "piece" // "8 momos" = 8 pieces
 	}
-	it := Item{DishID: d.ID, Name: d.Name, Matched: matched, Source: d.Source, SourceNote: d.SourceNote, Fuzzy: fuzzy, explicit: pd.hasQty}
+	it := Item{DishID: d.ID, Name: d.Name, Matched: matched, DataSource: d.Source, SourceNote: d.SourceNote, Fuzzy: fuzzy, explicit: pd.hasQty}
 	it = p.compute(d, it, qty, unit)
 	if d.OilSensitive {
 		if oil == "" {
@@ -751,7 +1032,7 @@ func (p *Parser) expand(d *dishes.Dish, qty float64, unit, oil, matched string, 
 	var out []Item
 	for _, pt := range d.Parts {
 		pd := p.dishByID(pt.DishID)
-		it := Item{DishID: pd.ID, Name: pd.Name, Matched: matched, Source: pd.Source, SourceNote: pd.SourceNote, Fuzzy: fuzzy, FromCombo: d.ID, explicit: true}
+		it := Item{DishID: pd.ID, Name: pd.Name, Matched: matched, DataSource: pd.Source, SourceNote: pd.SourceNote, Fuzzy: fuzzy, FromCombo: d.ID, explicit: true}
 		it = p.compute(pd, it, round(pt.Qty*f, 2), pt.Unit)
 		if pd.OilSensitive {
 			o := oil
@@ -897,7 +1178,7 @@ func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, 
 	if qty <= 0 || qty > 5000 {
 		return Item{}, errors.New("quantity out of range")
 	}
-	it := Item{DishID: d.ID, Name: d.Name, Matched: d.Name, Source: d.Source, SourceNote: d.SourceNote}
+	it := Item{DishID: d.ID, Name: d.Name, Matched: d.Name, Source: SourceTable, DataSource: d.Source, SourceNote: d.SourceNote}
 	it = p.compute(d, it, qty, unit)
 	if d.OilSensitive {
 		if oil == "" {
@@ -908,7 +1189,21 @@ func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, 
 		}
 		it = p.withOil(&it, oil)
 	}
+	p.sanity(&it)
+	if d.NeedsConfirm {
+		it.Source, it.NeedsConfirmation = SourceGeneric, true
+	}
 	return it, nil
+}
+
+// Unknown is the placeholder for text nothing could estimate (no table row,
+// no AI): never 0 kcal, wide range, always needs confirmation.
+func (p *Parser) Unknown(span string) Item {
+	u := p.r.UnknownItem
+	return Item{Name: span, Matched: span, Quantity: 1, Unit: "count", Source: SourceGeneric, DataSource: "estimate",
+		SourceNote: "Placeholder for unrecognised food; please confirm or enter your own numbers",
+		Kcal:       Range{u.Kcal[0], u.Kcal[1], u.Kcal[2]}, Protein: Range{u.ProteinG[0], u.ProteinG[1], u.ProteinG[2]},
+		NeedsConfirmation: true}
 }
 
 // Dish returns a table row by id.
