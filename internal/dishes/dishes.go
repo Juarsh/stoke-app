@@ -32,6 +32,19 @@ type Dish struct {
 	Category     string   `json:"category"` // bread, rice, dal, combo, main, protein, breakfast, snack, drink, fruit, sweet, condiment
 	Brand        string   `json:"brand"`
 	Version      int      `json:"version"`
+	CarbsG       float64  `json:"carbs_g"` // estimate (see macro_note)
+	FatG         float64  `json:"fat_g"`   // estimate (see macro_note)
+	MacroNote    string   `json:"macro_note"`
+	NeedsVerify  bool     `json:"needs_verification"`
+	PieceGrams   float64  `json:"piece_grams,omitempty"` // countable plate dishes: "8 momos" = 8 pieces
+	Parts        []Part   `json:"parts,omitempty"`       // combos: split into these when a portion is given
+}
+
+// Part is one component of a combo per one standard portion of the combo.
+type Part struct {
+	DishID string  `json:"dish_id"`
+	Qty    float64 `json:"qty"`
+	Unit   string  `json:"unit"`
 }
 
 // Allowed reports whether a dish fits a diet preference (veg < egg < nonveg).

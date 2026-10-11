@@ -25,22 +25,28 @@ Response 200:
       "name": "roti",
       "matched_text": "roti",
       "quantity": 2,
-      "unit": "count",              // count | katori | spoon | plate | glass | gram
+      "unit": "count",              // count | piece | katori | spoon | plate | glass | gram
       "grams": 80,
       "oil_level": "",              // less | normal | extra, "" if the dish has no cooking oil
       "kcal":      { "low": 165, "best": 220, "high": 275 },
       "protein_g": { "low": 5.2, "best": 7,   "high": 8.8 },
       "source": "estimate",         // estimate | usda_fdc | open_food_facts | ai
       "source_note": "Our estimate: home-style recipe ...",
+      "carbs_g": 32, "fat_g": 4.9,  // estimates (see dish macro_note)
       "fuzzy": false,               // matched via typo tolerance
+      "from_combo": "",             // e.g. "chole_bhature" when a combo with a portion was split into parts
+      "needs_confirm": false,       // over 1000 kcal or >3x the standard portion
+      "alternatives": [],           // when needs_confirm: [{quantity, unit, kcal, label}] e.g. pieces instead of plates
       "ai_estimate": false          // true = show "AI estimate" badge, user must confirm
     }
   ],
   "unmatched": ["quinoa"],          // text the table didn't recognise
   "total": {                        // best guess = sum of item "best"
     "kcal": 575, "kcal_low": 450, "kcal_high": 700,
-    "protein_g": 19, "protein_low": 14.6, "protein_high": 23.4
+    "protein_g": 19, "protein_low": 14.6, "protein_high": 23.4,
+    "carbs_g": 80, "fat_g": 18      // estimates
   },
+  "needs_confirm": false,
   "used_ai": false,
   "fallback": "not_configured",     // none | used | not_configured | cap_reached | error
   "custom_items": [ { "custom_name": "quinoa", "needs_input": true } ],
@@ -73,3 +79,10 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 | `GET /v1/streak` | current, best, freezes_left (this Mon-Sun week), logged_today, freeze_saved_on |
 | `GET /v1/coach/suggestions?date=` | `{remaining, message, options[3]}`; each option has `items` ready to POST to /v1/entries |
 | `GET /healthz` | Liveness |
+
+## Parser notes
+- Hindi script: known Devanagari words and digits are transliterated (`devanagari_words` in rules.json); unknown ones land in `unmatched`.
+- Pieces: dishes with `piece_grams` (momos, pani puri...) read a bare number as pieces ("8 momos").
+- Combos with `parts` (chole bhature, rajma chawal...) are split into parts when a portion is given; without one they stay a single item.
+- Fats (ghee/butter/oil) are always spoons, capped at 6; a trailing quantity after a fat binds to the main dish.
+- `x2` / `2x` multiply the previous dish; "packet" = one standard pack portion.

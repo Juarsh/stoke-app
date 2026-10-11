@@ -5,6 +5,7 @@ package food
 import (
 	"context"
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -38,6 +39,8 @@ type Total struct {
 	ProteinG    float64 `json:"protein_g"` // best guess
 	ProteinLow  float64 `json:"protein_low"`
 	ProteinHigh float64 `json:"protein_high"`
+	CarbsG      float64 `json:"carbs_g"` // estimate
+	FatG        float64 `json:"fat_g"`   // estimate
 }
 
 type CustomItem struct {
@@ -46,19 +49,26 @@ type CustomItem struct {
 }
 
 type ParseResponse struct {
-	Items       []parser.Item `json:"items"`
-	Unmatched   []string      `json:"unmatched"`
-	Total       Total         `json:"total"`
-	UsedAI      bool          `json:"used_ai"`
-	Fallback    string        `json:"fallback"` // none, used, not_configured, cap_reached, error
-	CustomItems []CustomItem  `json:"custom_items"`
-	Message     string        `json:"message,omitempty"`
-	Slot        string        `json:"slot"`
+	Items        []parser.Item `json:"items"`
+	Unmatched    []string      `json:"unmatched"`
+	Total        Total         `json:"total"`
+	UsedAI       bool          `json:"used_ai"`
+	NeedsConfirm bool          `json:"needs_confirm"` // any item implausibly large; see items[].alternatives
+	Fallback     string        `json:"fallback"`      // none, used, not_configured, cap_reached, error
+	CustomItems  []CustomItem  `json:"custom_items"`
+	Message      string        `json:"message,omitempty"`
+	Slot         string        `json:"slot"`
 }
 
 func totals(items []parser.Item) Total {
 	k, p := parser.Totals(items)
-	return Total{k.Best, k.Low, k.High, p.Best, p.Low, p.High}
+	t := Total{Kcal: k.Best, KcalLow: k.Low, KcalHigh: k.High, ProteinG: p.Best, ProteinLow: p.Low, ProteinHigh: p.High}
+	for _, it := range items {
+		t.CarbsG += it.CarbsG
+		t.FatG += it.FatG
+	}
+	t.CarbsG, t.FatG = math.Round(t.CarbsG*10)/10, math.Round(t.FatG*10)/10
+	return t
 }
 
 // Parse runs the table parser, then the fallback for unmatched text within the daily cap.
@@ -89,6 +99,9 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		}
 	}
 	out.Total = totals(out.Items)
+	for _, it := range out.Items {
+		out.NeedsConfirm = out.NeedsConfirm || it.NeedsConfirm
+	}
 	return out
 }
 

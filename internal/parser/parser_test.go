@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/akarsh/calorie-tracker/internal/dishes"
@@ -81,5 +82,98 @@ func BenchmarkParse(b *testing.B) {
 	p := newP(b)
 	for i := 0; i < b.N; i++ {
 		p.Parse("2 roti dal sabzi thoda ghee aur 1 katori rajma chawal")
+	}
+}
+
+func TestOilRules(t *testing.T) {
+	p := newP(t)
+	if it := p.Parse("dal kam tel").Items[0]; it.OilLevel != "less" {
+		t.Errorf("kam tel: %+v", it)
+	}
+	if it := p.Parse("sabzi ghee wali").Items[0]; it.OilLevel != "extra" {
+		t.Errorf("ghee wali: %+v", it)
+	}
+	r := p.Parse("aloo paratha zyada ghee")
+	if len(r.Items) != 2 || r.Items[1].Quantity != 2 {
+		t.Errorf("zyada ghee: %+v", r.Items)
+	}
+}
+
+func TestNoFallbackForFillers(t *testing.T) {
+	p := newP(t)
+	for _, s := range []string{"bas thoda sa rice", "grilled paneer", "2 glass paani", "momos chicken wale"} {
+		if r := p.Parse(s); len(r.Unmatched) != 0 || len(r.Items) == 0 {
+			t.Errorf("%q: %+v", s, r)
+		}
+	}
+}
+
+func TestProteinOverride(t *testing.T) {
+	p := newP(t)
+	r := p.Parse("chicken steamed momos")
+	if len(r.Items) != 1 || r.Items[0].DishID != "chicken_momos" {
+		t.Errorf("%+v", r.Items)
+	}
+}
+
+func TestMacros(t *testing.T) {
+	p := newP(t)
+	it := p.Parse("2 roti").Items[0]
+	if it.CarbsG <= 0 || it.FatG <= 0 {
+		t.Errorf("macros: %+v", it)
+	}
+}
+
+func TestSanityCheck(t *testing.T) {
+	p := newP(t)
+	it := p.Parse("6 plate momos").Items[0]
+	if !it.NeedsConfirm || len(it.Alternatives) < 2 || it.Alternatives[0].Unit != "piece" {
+		t.Errorf("6 plates: %+v", it)
+	}
+	if it := p.Parse("6 momos").Items[0]; it.NeedsConfirm {
+		t.Errorf("6 pieces flagged: %+v", it)
+	}
+	if it := p.Parse("2 roti").Items[0]; it.NeedsConfirm {
+		t.Errorf("normal flagged")
+	}
+	if it := p.Parse("5 plate chicken biryani").Items[0]; !it.NeedsConfirm {
+		t.Errorf("over 1000 kcal not flagged: %+v", it)
+	}
+}
+
+// Protein / ingredient words must never be ignored: they modify a dish or become an item.
+func TestIgnoreListSafe(t *testing.T) {
+	p := newP(t)
+	for w := range p.r.ProteinWords {
+		if p.filler[w] || p.oilSuf[w] || p.genitive[w] {
+			t.Errorf("protein word %q is on the ignore list", w)
+		}
+	}
+	for _, d := range p.Table() {
+		for _, term := range append([]string{d.Name}, d.Aliases...) {
+			if p.filler[term] {
+				t.Errorf("dish term %q (%s) is on the ignore list", term, d.ID)
+			}
+		}
+	}
+	for _, w := range []string{"chicken", "paneer", "egg", "fish", "mutton", "soya chunks", "anda", "tofu"} {
+		r := p.Parse(w)
+		if len(r.Items) == 0 && len(r.Unmatched) == 0 {
+			t.Errorf("%q dropped", w)
+		}
+		if len(r.Items) != 1 {
+			t.Errorf("%q: want an item, got %+v", w, r)
+		}
+	}
+	// as modifiers
+	for in, want := range map[string]string{"chicken momos": "chicken_momos", "egg biryani": "egg_biryani", "paneer paratha": "paneer_paratha", "steamed chicken momos": "chicken_momos"} {
+		if r := p.Parse(in); len(r.Items) != 1 || r.Items[0].DishID != want {
+			t.Errorf("%q: %+v", in, r.Items)
+		}
+	}
+	// unknown dish with a protein word: the word reaches the fallback, never silently dropped
+	r := p.Parse("fish xyzzy")
+	if len(r.Items) == 0 && !strings.Contains(strings.Join(r.Unmatched, " "), "fish") {
+		t.Errorf("fish dropped: %+v", r)
 	}
 }
