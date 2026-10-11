@@ -154,7 +154,17 @@ confident it returns 200 with `entries: []` and the `needs_confirmation` list.
   project-wide daily cap `AI_GLOBAL_DAILY_CAP` (default 200, 0 = unlimited;
   `fallback: "global_cap_reached"`). When either cap is reached, the span gets
   a generic confirm card (`source=generic`).
-- `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | error.
+- A per-minute limit across the whole project (`AI_PER_MINUTE`, default 8;
+  set it below 0 for no limit). Over the limit, the response has
+  `fallback: "rate_limited"` and the span gets a generic confirm card. The
+  limiter runs inside each server process, so with several instances set it
+  per instance.
+- `AI_MODE=gemini` makes one REST `generateContent` call
+  (`GEMINI_MODEL`, default gemini-2.5-flash) with a strict JSON
+  `responseSchema` and an 8-second timeout. Errors, timeouts, bad JSON,
+  invalid ranges, or spans that weren't asked about become generic confirm
+  cards (`fallback: "error"`).
+- `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | rate_limited | error.
 - Weekly review: `go run ./cmd/aicache-export -days 7 -limit 50 > top.csv`
   lists the most-hit cached answers. A cached dish becomes a table row only by
   adding it to dishes.json by hand, checked against a real source.
@@ -167,6 +177,7 @@ that span comes back as `source=table`, `learned=true` and
 `needs_confirmation=false`. A later confirmation overwrites it.
 
 - `GET /v1/remembered` returns `{"remembered":[{id, span, dish_id, custom_name, qty, unit, oil_level, kcal_best, kcal_low, kcal_high, protein_best, protein_low, protein_high, carbs_g, fat_g, uses, updated_at}]}`.
+- A `PATCH /v1/entries/{id}` that changes the dish, quantity, unit, oil level, name, or numbers is also remembered. It uses the entry's stored `span` (saved on create), or `span` in the PATCH body if one is sent. Send `"remember": false` to skip.
 - `DELETE /v1/remembered/{id}` resets one remembered food. It returns 204, or 404 if the id is not yours.
 - `DELETE /v1/remembered` resets all of them and returns `{"deleted": n}`.
 

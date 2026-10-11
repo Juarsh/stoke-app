@@ -25,13 +25,16 @@ Dish table: values are our own estimates or generic public data (USDA FDC, Open 
 ## AI modes
 
 `AI_MODE` can be `off` (default, no AI, generic confirm cards), `gemini`
-(needs `GEMINI_API_KEY`; the client is still a stub that makes no network
-call), or `stub`. In stub mode a deterministic fake Gemini answers each span
+(real REST generateContent call), or `stub`. In stub mode a deterministic fake Gemini answers each span
 with numbers derived from a hash of the text. Stub mode also enables the
 `/test/ai/*` hooks described in API.md, so never use it in production.
+Stub mode only starts when `APP_ENV` is `dev` or `test`; the server refuses
+to start otherwise. `AI_MODE=gemini` requires `GEMINI_API_KEY`, and
+`GEMINI_MODEL` is optional. `AI_PER_MINUTE` sets the project-wide limit on
+AI calls per minute (default 8). Tests never call the real Gemini API.
 `AI_GLOBAL_DAILY_CAP` sets the project-wide daily limit on AI calls
 (default 200).
 
-Example: `AI_MODE=stub DATABASE_URL=... go run ./cmd/api`
+Example: `APP_ENV=dev AI_MODE=stub DATABASE_URL=... go run ./cmd/api`
 
 Weekly cache review: `go run ./cmd/aicache-export > top.csv`

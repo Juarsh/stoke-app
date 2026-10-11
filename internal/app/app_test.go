@@ -31,7 +31,7 @@ func (fakeVerifier) Verify(_ context.Context, tok string) (auth.Identity, error)
 }
 
 // fakeAI just selects AI_MODE=stub in setup.
-type fakeAI struct{}
+type fakeAI struct{ perMinute int }
 
 var errSkip = errors.New("skip")
 
@@ -55,6 +55,10 @@ func setup(t *testing.T, ai *fakeAI) (*httptest.Server, *pgxpool.Pool) {
 	cfg := Config{DB: pool, Verifier: fakeVerifier{}}
 	if ai != nil {
 		cfg.AIMode = "stub"
+		cfg.AIPerMinute = ai.perMinute
+		if cfg.AIPerMinute == 0 {
+			cfg.AIPerMinute = -1 // most tests don't exercise the per-minute limiter
+		}
 	}
 	h, err := New(cfg)
 	if err != nil {
@@ -311,6 +315,32 @@ func TestRememberedFoods(t *testing.T) {
 	}
 	if c := call(t, srv, "DELETE", "/v1/remembered", "rm", nil, nil); c != 200 {
 		t.Errorf("reset all: %d", c)
+	}
+	// a PATCH correction is remembered for the entry's span
+	var cr2 struct{ Entries []entry }
+	call(t, srv, "POST", "/v1/entries", "rm", M{"items": []M{{"dish_id": "paneer_butter_masala", "qty": 1, "unit": "katori",
+		"source": "did_you_mean", "confirmed": true, "span": "paneer lababdar"}}}, &cr2)
+	call(t, srv, "DELETE", "/v1/remembered", "rm", nil, nil)
+	if c := call(t, srv, "PATCH", fmt.Sprintf("/v1/entries/%d", cr2.Entries[0].ID), "rm", M{"dish_id": "kadai_paneer"}, nil); c != 200 {
+		t.Fatalf("patch: %d", c)
+	}
+	r = parseOut{}
+	call(t, srv, "POST", "/v1/parse", "rm", M{"text": "paneer lababdar"}, &r)
+	if !r.Items[0].Learned || r.Items[0].Name != "Kadai paneer" && r.Items[0].Name != "kadai_paneer" {
+		t.Errorf("patch correction not remembered: %+v", r.Items[0])
+	}
+}
+
+func TestAIRateLimited(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{perMinute: 8})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	var last parseOut
+	for i := 0; i < 9; i++ {
+		last = parseOut{}
+		call(t, srv, "POST", "/v1/parse", fmt.Sprintf("rl%d", i), M{"text": fmt.Sprintf("zorb%c", 'a'+i)}, &last)
+	}
+	if aiCalls(t, srv) != 8 || last.Fallback != "rate_limited" || last.Items[0].Source != "generic" {
+		t.Errorf("9th call in a minute: calls %d %+v", aiCalls(t, srv), last)
 	}
 }
 

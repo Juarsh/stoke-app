@@ -8,7 +8,12 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+type execer interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
 
 // Reading is a user's remembered interpretation of a normalized text span
 // ("Remembered foods"). It is private to that user and never goes into the
@@ -79,7 +84,7 @@ func (r Reading) item(matched string) parser.Item {
 }
 
 // remember stores what the user confirmed for a span (insert or overwrite).
-func remember(ctx context.Context, tx pgx.Tx, uid int64, span string, e Entry) error {
+func remember(ctx context.Context, tx execer, uid int64, span string, e Entry) error {
 	key := Normalize(span)
 	if key == "" {
 		return nil

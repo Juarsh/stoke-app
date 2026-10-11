@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -29,6 +30,9 @@ func env(k, d string) string {
 }
 
 func main() {
+	if err := checkStubGuard(os.Getenv("AI_MODE"), os.Getenv("APP_ENV")); err != nil {
+		log.Fatal(err)
+	}
 	ctx := context.Background()
 	pool, err := db.Open(ctx, env("DATABASE_URL", "postgres://calorie:calorie@localhost:5432/calorie"))
 	if err != nil {
@@ -49,7 +53,8 @@ func main() {
 		}
 		v = auth.NewGoogleVerifier(ids)
 	}
-	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap()})
+	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap(),
+		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL")})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,4 +74,28 @@ func globalCap() int64 {
 		log.Fatalf("AI_GLOBAL_DAILY_CAP must be a non-negative integer")
 	}
 	return n
+}
+
+func intEnv(k string, def int) int {
+	v := os.Getenv(k)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Fatalf("%s must be an integer", k)
+	}
+	return n
+}
+
+// checkStubGuard refuses AI_MODE=stub unless APP_ENV is dev or test: stub
+// mode exposes unauthenticated /test/ai/* hooks.
+func checkStubGuard(aiMode, appEnv string) error {
+	if aiMode == "stub" && appEnv != "dev" && appEnv != "test" {
+		return fmt.Errorf("AI_MODE=stub needs APP_ENV=dev or test (got %q)", appEnv)
+	}
+	if aiMode == "gemini" && os.Getenv("GEMINI_API_KEY") == "" {
+		return fmt.Errorf("AI_MODE=gemini needs GEMINI_API_KEY")
+	}
+	return nil
 }

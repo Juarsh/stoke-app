@@ -34,6 +34,8 @@ type Service struct {
 	Summary  Rebuilder
 	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
 	GlobalCap atomic.Int64
+	// Limiter caps AI calls per minute project-wide (nil = no limit).
+	Limiter *Limiter
 }
 
 // ---------- parse ----------
@@ -161,7 +163,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		out.Items = append(out.Items, scaleItem(ph, counts[sp]))
 		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: sp, NeedsInput: true})
 	}
-	if out.Fallback == "cap_reached" || out.Fallback == "global_cap_reached" {
+	if out.Fallback == "cap_reached" || out.Fallback == "global_cap_reached" || out.Fallback == "rate_limited" {
 		out.Message = "AI estimates are back tomorrow. Add it yourself for now."
 	}
 	out.Total = totals(out.Items)
@@ -246,6 +248,9 @@ func (s *Service) fallbackBatch(ctx context.Context, userID int64, spans []strin
 	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
 		return "not_configured", nil
 	}
+	if !s.Limiter.Allow() {
+		return "rate_limited", nil
+	}
 	today := httpx.Today()
 	var calls int
 	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
@@ -310,6 +315,7 @@ type Entry struct {
 	TableVer    *int      `json:"dish_table_version"`
 	CarbsG      float64   `json:"carbs_g"`
 	FatG        float64   `json:"fat_g"`
+	Span        string    `json:"span"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	DeletedAt   *string   `json:"deleted_at"`
@@ -477,14 +483,14 @@ func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 		Source: src, Confirmed: true, ClientID: cid, TableVer: in.DishTableVersion}, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g`
+const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span`
 
 func (s *Service) scan(row pgx.Row) (Entry, error) {
 	var e Entry
 	var d time.Time
 	var del *time.Time
 	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG)
+		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span)
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
@@ -608,11 +614,11 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
-			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING `+cols,
+			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING `+cols,
 			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
 			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
-			e.ClientID, e.TableVer, e.CarbsG, e.FatG))
+			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span)))
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
@@ -727,6 +733,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		Kcal         *float64   `json:"kcal"`
 		ProteinG     *float64   `json:"protein_g"`
 		IfUnmodSince *time.Time `json:"if_unmodified_since"`
+		// Span overrides the stored parsed span; the corrected reading is
+		// remembered for it (set "remember": false to skip).
+		Span     *string `json:"span"`
+		Remember *bool   `json:"remember"`
 	}
 	if !httpx.Decode(w, r, &in) {
 		return
@@ -821,6 +831,17 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpx.Error(w, 500, "save failed")
 		return
+	}
+	span := e.Span
+	if in.Span != nil {
+		span = *in.Span
+	}
+	corrected := in.DishID != nil || in.Qty != nil || in.Unit != nil || in.OilLevel != nil || in.CustomName != nil || in.Kcal != nil || in.ProteinG != nil
+	if corrected && span != "" && (in.Remember == nil || *in.Remember) {
+		if err := remember(r.Context(), s.DB, uid, span, saved); err != nil {
+			httpx.Error(w, 500, "save failed")
+			return
+		}
 	}
 	if !day.Equal(oldDay) {
 		if _, err := s.Summary.Rebuild(r.Context(), uid, oldDay); err != nil {

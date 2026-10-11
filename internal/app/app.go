@@ -29,6 +29,9 @@ type Config struct {
 	GeminiKey string
 	// GlobalAICap is the project-wide daily AI call limit (0 = unlimited).
 	GlobalAICap int64
+	// AIPerMinute is the project-wide AI calls per minute (default 8; <0 = unlimited).
+	AIPerMinute int
+	GeminiModel string
 }
 
 func New(c Config) (http.Handler, error) {
@@ -43,7 +46,7 @@ func New(c Config) (http.Handler, error) {
 			stub = &food.Stub{}
 			c.Fallback = stub
 		case "gemini":
-			c.Fallback = food.Gemini{APIKey: c.GeminiKey}
+			c.Fallback = food.Gemini{APIKey: c.GeminiKey, Model: c.GeminiModel}
 		default:
 			c.Fallback = food.NoFallback{}
 		}
@@ -55,6 +58,10 @@ func New(c Config) (http.Handler, error) {
 	gl := &goals.Service{DB: c.DB}
 	fs := &food.Service{DB: c.DB, Parser: p, Fallback: c.Fallback, Summary: sum}
 	fs.GlobalCap.Store(c.GlobalAICap)
+	if c.AIPerMinute == 0 {
+		c.AIPerMinute = 8
+	}
+	fs.Limiter = food.NewLimiter(c.AIPerMinute)
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{
