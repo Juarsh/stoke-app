@@ -54,7 +54,8 @@ func main() {
 		v = auth.NewGoogleVerifier(ids)
 	}
 	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap(),
-		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL")})
+		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"),
+		AdminToken: adminToken()})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,4 +99,13 @@ func checkStubGuard(aiMode, appEnv string) error {
 		return fmt.Errorf("AI_MODE=gemini needs GEMINI_API_KEY")
 	}
 	return nil
+}
+
+// ADMIN_TOKEN enables /admin/*; it must be long enough to be a real secret.
+func adminToken() string {
+	t := os.Getenv("ADMIN_TOKEN")
+	if t != "" && len(t) < 24 {
+		log.Fatal("ADMIN_TOKEN must be at least 24 characters")
+	}
+	return t
 }

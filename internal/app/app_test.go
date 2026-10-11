@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/akarsh/calorie-tracker/internal/dishes"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -847,5 +848,137 @@ func TestProteinAlias(t *testing.T) {
 	}
 	if c := call(t, srv, "POST", "/v1/entries", "pa", M{"items": []M{{"custom_name": "shake", "kcal": 200, "protein": 25, "source": "custom"}}}, &cr); c != 201 || cr.Entries[0].ProteinBest != 25 {
 		t.Errorf("protein alias: %d %+v", c, cr)
+	}
+}
+
+const testAdmin = "test-admin-token-0123456789abcdef"
+
+func admin(t *testing.T, srv *httptest.Server, method, path, token string, body any, out any) int {
+	t.Helper()
+	var rd io.Reader = http.NoBody
+	if body != nil {
+		b, _ := json.Marshal(body)
+		rd = bytes.NewReader(b)
+	}
+	req, _ := http.NewRequest(method, srv.URL+path, rd)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if out != nil {
+		if s, ok := out.(*string); ok {
+			b, _ := io.ReadAll(resp.Body)
+			*s = string(b)
+		} else {
+			_ = json.NewDecoder(resp.Body).Decode(out)
+		}
+	}
+	return resp.StatusCode
+}
+
+func TestAdminExportImport(t *testing.T) {
+	_, pool := setup(t, nil)
+	h, err := New(Config{DB: pool, Verifier: fakeVerifier{}, AIMode: "stub", AIPerMinute: -1, AdminToken: testAdmin})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(h)
+	defer srv.Close()
+	// no / wrong token
+	if c := admin(t, srv, "GET", "/admin/ai-cache/top", "", nil, nil); c != 401 {
+		t.Errorf("no token: %d", c)
+	}
+	if c := admin(t, srv, "GET", "/admin/ai-cache/top", "wrong", nil, nil); c != 401 {
+		t.Errorf("wrong token: %d", c)
+	}
+	// make cache entries: one meal twice (1 call + 1 hit), another once
+	parseAI(t, srv, "a1", "kuttu cheela")
+	parseAI(t, srv, "a2", "kuttu cheela")
+	parseAI(t, srv, "a3", "thalipeeth")
+	var top struct {
+		Top []struct {
+			Text  string
+			Hits  int
+			Items []M
+		}
+	}
+	if c := admin(t, srv, "GET", "/admin/ai-cache/top?days=7", testAdmin, nil, &top); c != 200 || len(top.Top) != 2 || top.Top[0].Text != "kuttu cheela" || top.Top[0].Hits != 1 {
+		t.Fatalf("export json: %d %+v", c, top)
+	}
+	var csvOut string
+	admin(t, srv, "GET", "/admin/ai-cache/top?format=csv", testAdmin, nil, &csvOut)
+	if !strings.HasPrefix(csvOut, "text,hits,") || !strings.Contains(csvOut, "kuttu cheela,1,") {
+		t.Errorf("export csv: %q", csvOut)
+	}
+	// import: checked row with a source note -> new table version
+	var before []M
+	call(t, srv, "GET", "/v1/dishes", "", nil, &before)
+	row := M{"id": "kuttu_cheela", "name": "kuttu cheela", "aliases": []string{"kuttu chilla"}, "unit": "katori", "portion_grams": 150,
+		"kcal": 260, "kcal_low": 220, "kcal_high": 310, "protein_g": 3, "protein_low": 2, "protein_high": 4, "carbs_g": 45, "fat_g": 8,
+		"diet": "veg", "category": "breakfast", "source": "usda_fdc", "source_note": "Checked against IFCT 2017 buckwheat flour recipe calc",
+		"from_cache": []string{"Kuttu Cheela"}}
+	noNote := M{}
+	for k, v := range row {
+		noNote[k] = v
+	}
+	noNote["source_note"] = ""
+	if c := admin(t, srv, "POST", "/admin/dishes/import", testAdmin, M{"items": []M{noNote}}, nil); c != 400 {
+		t.Errorf("import without source note: %d", c)
+	}
+	if c := admin(t, srv, "POST", "/admin/dishes/import", "", M{"items": []M{row}}, nil); c != 401 {
+		t.Errorf("import without token: %d", c)
+	}
+	var imp struct {
+		Version int `json:"dish_table_version"`
+		Added   []string
+		Dropped int `json:"dropped_cache"`
+	}
+	v1 := dishes.TableVersion(dishes.MustLoad())
+	if c := admin(t, srv, "POST", "/admin/dishes/import", testAdmin, M{"items": []M{row}, "note": "week 41 review"}, &imp); c != 201 || imp.Version != v1+1 || imp.Dropped != 1 {
+		t.Fatalf("import: %d %+v", c, imp)
+	}
+	var after []M
+	call(t, srv, "GET", "/v1/dishes", "", nil, &after)
+	if len(after) != len(before)+1 {
+		t.Errorf("table not updated: %d -> %d", len(before), len(after))
+	}
+	// the meal is now a strict table answer (no AI), and old-version entries still validate
+	c, r := parseAI(t, srv, "a4", "1 katori kuttu cheela")
+	if c != 200 || r.Answer != "table" {
+		t.Errorf("imported dish not used: %d %+v", c, r)
+	}
+	var cr struct{ Entries []entry }
+	if c := call(t, srv, "POST", "/v1/entries", "a4", M{"items": []M{{"dish_id": "roti", "qty": 1, "source": "table", "dish_table_version": v1}}}, &cr); c != 201 {
+		t.Errorf("old version entry after import: %d", c)
+	}
+	// a restarted server picks up the imported version from the DB
+	h2, err := New(Config{DB: pool, Verifier: fakeVerifier{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv2 := httptest.NewServer(h2)
+	defer srv2.Close()
+	var again []M
+	call(t, srv2, "GET", "/v1/dishes", "", nil, &again)
+	if len(again) != len(after) {
+		t.Errorf("restart lost the import: %d vs %d", len(again), len(after))
+	}
+	// invalid table (alias clash) is refused
+	clash := M{}
+	for k, v := range row {
+		clash[k] = v
+	}
+	clash["id"], clash["aliases"] = "roti_two", []string{"chapati"}
+	if c := admin(t, srv, "POST", "/admin/dishes/import", testAdmin, M{"items": []M{clash}}, nil); c != 422 {
+		t.Errorf("alias clash: %d", c)
+	}
+	// no token configured -> 404
+	srv3, _ := setup(t, nil)
+	if c := admin(t, srv3, "GET", "/admin/ai-cache/top", testAdmin, nil, nil); c != 404 {
+		t.Errorf("admin without ADMIN_TOKEN: %d", c)
 	}
 }

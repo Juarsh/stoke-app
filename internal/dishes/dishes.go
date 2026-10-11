@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 //go:embed dishes.json
@@ -84,4 +86,43 @@ func TableVersion(ds []Dish) int {
 		v = max(v, d.Version)
 	}
 	return v
+}
+
+var snakeID = regexp.MustCompile(`^[a-z0-9]+(_[a-z0-9]+)*$`)
+
+// Validate checks a whole table: stable snake_case unique ids, sane ranges,
+// known units/diets, and no alias pointing at two dishes.
+func Validate(ds []Dish) error {
+	ids := map[string]bool{}
+	terms := map[string]string{}
+	for _, d := range ds {
+		if !snakeID.MatchString(d.ID) || ids[d.ID] {
+			return fmt.Errorf("dish %q: id must be unique snake_case", d.ID)
+		}
+		ids[d.ID] = true
+		switch {
+		case strings.TrimSpace(d.Name) == "":
+			return fmt.Errorf("dish %s: name required", d.ID)
+		case d.Unit == "" || d.PortionGrams <= 0:
+			return fmt.Errorf("dish %s: unit and portion_grams required", d.ID)
+		case d.KcalLow > d.Kcal || d.Kcal > d.KcalHigh || d.Kcal < 0 || d.KcalHigh > 3000:
+			return fmt.Errorf("dish %s: need 0 <= kcal_low <= kcal <= kcal_high < 3000", d.ID)
+		case d.ProteinLow > d.ProteinG || d.ProteinG > d.ProteinHigh || d.ProteinLow < 0:
+			return fmt.Errorf("dish %s: need protein_low <= protein_g <= protein_high", d.ID)
+		case d.CarbsG < 0 || d.FatG < 0:
+			return fmt.Errorf("dish %s: carbs_g/fat_g must be >= 0", d.ID)
+		case d.Diet != "veg" && d.Diet != "egg" && d.Diet != "nonveg":
+			return fmt.Errorf("dish %s: diet must be veg, egg or nonveg", d.ID)
+		case d.Version < 1:
+			return fmt.Errorf("dish %s: version must be >= 1", d.ID)
+		}
+		for _, t := range append([]string{strings.ToLower(d.Name)}, d.Aliases...) {
+			t = strings.ToLower(strings.TrimSpace(t))
+			if o, ok := terms[t]; ok && o != d.ID {
+				return fmt.Errorf("dish %s: alias %q already belongs to %s", d.ID, t, o)
+			}
+			terms[t] = d.ID
+		}
+	}
+	return nil
 }

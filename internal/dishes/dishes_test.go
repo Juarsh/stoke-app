@@ -45,3 +45,9 @@ func TestTable(t *testing.T) {
 		}
 	}
 }
+
+func TestTableValidates(t *testing.T) {
+	if err := Validate(MustLoad()); err != nil {
+		t.Fatal(err)
+	}
+}

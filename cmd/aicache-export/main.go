@@ -1,9 +1,10 @@
-// Command aicache-export writes the most-used cached AI answers of the last
-// N days as CSV for the weekly manual review. Reviewed dishes are added to
-// dishes.json by hand against a real source; the cache itself never becomes
-// table rows automatically. Run weekly, e.g. cron: 0 9 * * MON.
+// Command aicache-export writes the most-hit cached AI answers of the last
+// N days, with hit counts, for the weekly manual review (JSON or CSV).
+// Reviewed dishes go back in through POST /admin/dishes/import (admin token)
+// with a source note; the cache never becomes table rows automatically.
+// The same data is at GET /admin/ai-cache/top?days=7&limit=50&format=csv.
 //
-//	DATABASE_URL=... go run ./cmd/aicache-export -days 7 -limit 50 > top.csv
+//	DATABASE_URL=... go run ./cmd/aicache-export -days 7 -limit 50 -format csv > top.csv
 package main
 
 import (
@@ -11,44 +12,38 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/akarsh/calorie-tracker/internal/db"
-	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/food"
 )
 
 func main() {
 	days := flag.Int("days", 7, "look-back window")
 	limit := flag.Int("limit", 50, "rows")
+	format := flag.String("format", "csv", "csv or json")
 	flag.Parse()
 	ctx := context.Background()
 	pool, err := db.Open(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	rows, err := pool.Query(ctx, `SELECT norm_text, hits, items, created_at::date::text FROM ai_cache
-		WHERE last_hit_at > now() - make_interval(days => $1) ORDER BY hits DESC, norm_text LIMIT $2`, *days, *limit)
+	top, err := food.TopCache(ctx, pool, *days, *limit)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
-	w := csv.NewWriter(os.Stdout)
-	_ = w.Write([]string{"text", "hits", "first_seen", "ai_name", "qty", "unit", "kcal_best", "kcal_low", "kcal_high", "protein_best", "review_status"})
-	for rows.Next() {
-		var text, first string
-		var hits int
-		var raw []byte
-		if err := rows.Scan(&text, &hits, &raw, &first); err != nil {
-			log.Fatal(err)
-		}
-		var items []parser.Item
-		_ = json.Unmarshal(raw, &items)
-		for _, it := range items {
-			f := func(x float64) string { return fmt.Sprint(x) }
-			_ = w.Write([]string{text, fmt.Sprint(hits), first, it.Name, f(it.Quantity), it.Unit, f(it.Kcal.Best), f(it.Kcal.Low), f(it.Kcal.High), f(it.Protein.Best), "unreviewed"})
-		}
+	switch *format {
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", " ")
+		err = enc.Encode(map[string]any{"days": *days, "top": top})
+	case "csv":
+		err = food.WriteCSV(csv.NewWriter(os.Stdout), top)
+	default:
+		log.Fatal("-format must be csv or json")
 	}
-	w.Flush()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

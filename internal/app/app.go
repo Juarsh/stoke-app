@@ -33,6 +33,8 @@ type Config struct {
 	// AIPerMinute is the queue drain rate: AI calls per minute (default 8; <0 = no spacing).
 	AIPerMinute int
 	GeminiModel string
+	// AdminToken enables /admin/* (Bearer token); empty = routes 404.
+	AdminToken string
 	// Dishes overrides the embedded table (tests simulate table updates).
 	Dishes []dishes.Dish
 }
@@ -67,7 +69,15 @@ func New(c Config) (http.Handler, error) {
 	}
 	sum := &summary.Service{DB: c.DB, Contributors: []summary.Contributor{food.Contributor{}, activity.Contributor{}}}
 	gl := &goals.Service{DB: c.DB}
-	fs := &food.Service{DB: c.DB, Parser: p, Fallback: c.Fallback, Summary: sum}
+	live := &food.Live{}
+	live.Set(p)
+	// a table imported by an admin (newer than the embedded one) wins
+	if np, _, err := vers.Latest(context.Background(), dishes.TableVersion(c.Dishes)); err != nil {
+		return nil, err
+	} else if np != nil {
+		live.Set(np)
+	}
+	fs := &food.Service{DB: c.DB, Parser: p, Live: live, Fallback: c.Fallback, Summary: sum}
 	fs.Versions = vers
 	fs.GlobalCap.Store(c.GlobalAICap)
 	if c.AIPerMinute == 0 {
@@ -80,7 +90,7 @@ func New(c Config) (http.Handler, error) {
 		fs,
 		&activity.Service{DB: c.DB, Summary: sum, Goals: gl},
 		gl, sum,
-		&coach.Service{Parser: p, Goals: gl, Summary: sum, Advisor: c.Advisor},
+		&coach.Service{Parser: p, Table: live.Get, Goals: gl, Summary: sum, Advisor: c.Advisor},
 	}
 	mux := http.NewServeMux()
 	wrap := auth.Middleware(c.Verifier, auth.PGUsers{DB: c.DB})
@@ -90,6 +100,7 @@ func New(c Config) (http.Handler, error) {
 	if stub != nil {
 		fs.TestRoutes(mux, stub)
 	}
+	fs.AdminRoutes(mux, c.AdminToken)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, 200, map[string]any{"ok": true, "time": time.Now().UTC()})
 	})

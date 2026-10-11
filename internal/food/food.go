@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -34,6 +35,9 @@ type Service struct {
 	Summary  Rebuilder
 	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
 	GlobalCap atomic.Int64
+	// Live is the current dish table (swapped by admin imports).
+	Live     *Live
+	importMu sync.Mutex
 	// Queue holds AI jobs and drains them at the per-minute cap.
 	Queue *Queue
 	// Versions holds every published dish table (nil = current only).
@@ -94,7 +98,7 @@ func totals(items []parser.Item) Total {
 // remembered food). Otherwise the WHOLE meal goes to the AI: a cache hit
 // answers at once; a miss is queued and Parse returns a pending job.
 func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bool) (ParseResponse, *Job) {
-	res := s.Parser.Parse(text)
+	res := s.parser().Parse(text)
 	slot := httpx.SlotFor(httpx.Now())
 
 	// remembered readings stand in for their spans
@@ -130,7 +134,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		}
 		rest.Unmatched = append(rest.Unmatched, u)
 	}
-	if len(rest.Items) == 0 && len(rest.Unmatched) == 0 && len(items) > 0 || len(rest.Items) > 0 && s.Parser.TableOnly(rest) {
+	if len(rest.Items) == 0 && len(rest.Unmatched) == 0 && len(items) > 0 || len(rest.Items) > 0 && s.parser().TableOnly(rest) {
 		out := ParseResponse{Items: append(items, rest.Items...), Unmatched: []string{}, Fallback: "none", Answer: "table",
 			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
 		return finishResp(out), nil
@@ -193,7 +197,7 @@ func (s *Service) genericResponse(res parser.Result, slot string) ParseResponse 
 			continue
 		}
 		cnt, key := splitCount(u)
-		out.Items = append(out.Items, scaleItem(s.Parser.Unknown(key), cnt))
+		out.Items = append(out.Items, scaleItem(s.parser().Unknown(key), cnt))
 		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: key, NeedsInput: true})
 	}
 	return out
@@ -445,7 +449,8 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	userTyped := in.Source == "custom" || in.Source == "manual"
 	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {
 		// validate against the table version the client used (any published one)
-		tp, ver := s.Parser, s.Parser.TableVersion()
+		tp := s.parser()
+		ver := tp.TableVersion()
 		if in.DishTableVersion != nil && s.Versions != nil {
 			p, err := s.Versions.Parser(ctx, *in.DishTableVersion)
 			if errors.Is(err, ErrUnknownVersion) {
@@ -507,7 +512,7 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	}
 	name := strings.TrimSpace(in.CustomName)
 	if name == "" && in.DishID != "" {
-		if d, ok := s.Parser.Dish(in.DishID); ok {
+		if d, ok := s.parser().Dish(in.DishID); ok {
 			name = d.Name
 		}
 	}
@@ -547,7 +552,7 @@ func (s *Service) draft(in ItemIn, cid *string) (Entry, int, error) {
 		e.Unit = "count"
 	}
 	if in.DishID != "" {
-		it, err := s.Parser.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
+		it, err := s.parser().Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
 		if err != nil {
 			return e, 400, err
 		}
@@ -591,7 +596,7 @@ func (s *Service) scan(row pgx.Row) (Entry, error) {
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
-		if dd, ok := s.Parser.Dish(*e.DishID); ok {
+		if dd, ok := s.parser().Dish(*e.DishID); ok {
 			e.Name = dd.Name
 		}
 	}
@@ -640,7 +645,9 @@ func (s *Service) handleParse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) handleDishes(w http.ResponseWriter, r *http.Request) {
-	httpx.JSON(w, 200, s.Parser.Table())
+	p := s.parser()
+	w.Header().Set("X-Dish-Table-Version", strconv.Itoa(p.TableVersion()))
+	httpx.JSON(w, 200, p.Table())
 }
 
 func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
@@ -670,8 +677,8 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	toConfirm := []parser.Item{}
 	if len(items) == 0 && strings.TrimSpace(in.Text) != "" {
 		// convenience: save only confident table matches; the rest comes back to confirm
-		p := s.Parser.Parse(in.Text)
-		strict := s.Parser.TableOnly(p)
+		p := s.parser().Parse(in.Text)
+		strict := s.parser().TableOnly(p)
 		for _, it := range p.Items {
 			if it.NeedsConfirmation || !strict {
 				it.NeedsConfirmation = true

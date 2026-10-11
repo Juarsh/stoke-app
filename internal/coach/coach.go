@@ -167,7 +167,9 @@ func unitLabel(u string, q float64) string {
 }
 
 type Service struct {
-	Parser  *parser.Parser
+	Parser *parser.Parser
+	// Table, when set, returns the live dish table (admin imports swap it).
+	Table   func() *parser.Parser
 	Goals   *goals.Service
 	Summary *summary.Service
 	Advisor Advisor
@@ -227,7 +229,11 @@ func (s *Service) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	in := Input{KcalLeft: rem.KcalLeft, ProteinLeft: rem.ProteinLeft, Diet: s.Goals.Diet(r.Context(), uid), Slot: httpx.SlotFor(httpx.Now())}
-	opts := Suggest(s.Parser, in)
+	tp := s.Parser
+	if s.Table != nil {
+		tp = s.Table()
+	}
+	opts := Suggest(tp, in)
 	if ref, err := s.Advisor.Refine(r.Context(), in, opts); err == nil {
 		opts = ref
 	}

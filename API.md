@@ -291,3 +291,31 @@ The integration tests create a throwaway database with a unique name
 (`ct_run_<random>`) for each run and drop it afterwards. They never touch
 `calorie_test`. `TEST_PG_ADMIN_URL` must be a role that can create databases
 (default `postgres://calorie:calorie@localhost:5432/postgres`).
+
+## Admin (needs `ADMIN_TOKEN`)
+
+Send `Authorization: Bearer <ADMIN_TOKEN>`. The token must be at least 24
+characters. A missing or wrong token returns 401. If `ADMIN_TOKEN` isn't set,
+these routes don't exist (404).
+
+- `GET /admin/ai-cache/top?days=7&limit=50[&format=csv]` lists the most-hit
+  cached AI answers used in the last N days, with hit counts. JSON is
+  `{"days": 7, "top": [{text, hits, first_seen, last_hit, items: [...]}]}`.
+  CSV has one row per item. The CLI does the same:
+  `go run ./cmd/aicache-export -format json|csv`.
+- `POST /admin/dishes/import` with
+  `{"note": "...", "items": [{<dish row as in dishes.json>, "from_cache": ["meal text", ...]}]}`
+  takes items that were checked by hand. Each item needs a `source` (not
+  `ai`) and a non-empty `source_note` saying where the numbers were checked.
+  New ids are added and existing ids are replaced. The whole table is
+  validated (unique snake_case ids, ranges, no alias clashes; 422 on
+  failure). Then it is published as **a new dish table version**, the
+  running server switches to it at once, and the `from_cache` entries are
+  removed from the AI cache. Returns 201
+  `{dish_table_version, added, replaced, dropped_cache}`. Older versions
+  stay valid for offline entries. After a restart, the newest published
+  version wins.
+- To keep the repo and the app's offline copy canonical, run
+  `go run ./cmd/dishes-pull > internal/dishes/dishes.json` and commit the
+  result. Until you do, a server built from an older `dishes.json` still
+  starts and uses the newer published table.

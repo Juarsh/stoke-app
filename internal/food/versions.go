@@ -92,3 +92,31 @@ func (vs *Versions) Known(ctx context.Context) []int {
 	}
 	return out
 }
+
+// Adopt makes a newly published version current (keeps the old parsers).
+func (vs *Versions) Adopt(n *Versions) {
+	vs.mu.Lock()
+	defer vs.mu.Unlock()
+	for v, p := range n.parsers {
+		vs.parsers[v] = p
+	}
+	if n.Current > vs.Current {
+		vs.Current = n.Current
+	}
+}
+
+// Latest loads the newest published snapshot if it's newer than have.
+func (vs *Versions) Latest(ctx context.Context, have int) (*parser.Parser, int, error) {
+	var v int
+	if err := vs.DB.QueryRow(ctx, `SELECT COALESCE(MAX(version),0) FROM dish_table_versions`).Scan(&v); err != nil || v <= have {
+		return nil, have, err
+	}
+	p, err := vs.Parser(ctx, v)
+	if err != nil {
+		return nil, have, err
+	}
+	vs.mu.Lock()
+	vs.Current = v
+	vs.mu.Unlock()
+	return p, v, nil
+}
