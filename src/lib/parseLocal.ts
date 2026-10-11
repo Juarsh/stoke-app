@@ -28,7 +28,7 @@ export function totalOf(items: Item[]): ParseTotal {
  * text becomes a generic placeholder item (never 0 kcal) plus a custom item. */
 export function parseLocal(text: string, now = new Date()): ParseResponse {
   const r = parser.parse(text.trim());
-  const items: Item[] = [...r.items];
+  const items: Item[] = [...r.items]; // everyday combos arrive as their parts (parser rule, same as backend)
   const custom_items: ParseResponse['custom_items'] = [];
   for (const u of r.unmatched) {
     if (!/\p{L}/u.test(u)) continue;

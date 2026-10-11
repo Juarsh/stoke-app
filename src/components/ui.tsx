@@ -1,15 +1,16 @@
 import { createContext, ReactNode, useContext } from 'react';
-import { Modal, Pressable, PressableProps, ScrollView, Text, TextInput, TextInputProps, TextProps, View, ViewProps } from 'react-native';
+import { Modal, Pressable, StyleSheet, PressableProps, ScrollView, Text, TextInput, TextInputProps, TextProps, View, ViewProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { makeStyles, useTheme } from '../theme';
 import { devaFamily, hasDevanagari, typeScale } from '../theme/tokens';
 import { Glows, Grad } from './Gradient';
+import { Icon } from './Icon';
 
 /** True inside a Card: the light `over` grey is only legible (≥4.5:1) on a card, never on the bare background. */
 const OnCard = createContext(false);
 
 type Variant = keyof typeof typeScale;
-export type Tone = 'text' | 'text2' | 'muted' | 'em' | 'emChip' | 'gold' | 'goldOnGrad' | 'ai' | 'danger' | 'over' | 'onGrad' | 'onCoach' | 'onCheck' | 'popText' | 'steps' | 'freeze' | 'warn'
+export type Tone = 'text' | 'text2' | 'muted' | 'em' | 'emChip' | 'gold' | 'goldOnGrad' | 'ai' | 'danger' | 'over' | 'onGrad' | 'onCoach' | 'onCheck' | 'popText' | 'steps' | 'freeze' | 'warn' | 'delete' | 'accentText' | 'onAccent'
   | 'primary' | 'primaryText' | 'accent' | 'aiText' | 'onPrimary' | 'infoText';
 export function T({ v = 'body', tone = 'text', style, children, ...p }: TextProps & { v?: Variant; tone?: Tone }) {
   const t = useTheme();
@@ -56,7 +57,7 @@ export function Card({ style, tone = 'card', dashed, outline, children, ...p }: 
     <OnCard.Provider value>
       <View {...p} style={[s.card, { backgroundColor: bg }, coach && { overflow: 'hidden', borderWidth: 0 },
         dashed && { borderStyle: 'dashed', borderColor: t.c.ai, borderWidth: 1.5 }, outline === 'check' && { borderColor: t.c.text2, borderWidth: 1.5 }, style]}>
-        {coach ? <Grad colors={[t.c.coach1, t.c.coach2, t.c.coach3]} /> : <View style={s.highlight} pointerEvents="none" />}
+        {coach ? <View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.coach1 }]} pointerEvents="none" /> : <View style={s.highlight} pointerEvents="none" />}
         {children}
       </View>
     </OnCard.Provider>
@@ -66,13 +67,18 @@ export function Card({ style, tone = 'card', dashed, outline, children, ...p }: 
 export function Button({ title, kind = 'primary', disabled, style, ...p }: PressableProps & { title: string; kind?: 'primary' | 'soft' | 'danger' | 'ghost' | 'onCoach' }) {
   const t = useTheme(); const s = useStyles();
   const grad = kind === 'primary' && !disabled;
-  const bg = disabled ? t.c.track : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
-  const fg: Tone = disabled ? 'muted' : grad ? 'onGrad' : kind === 'danger' ? 'danger' : kind === 'onCoach' ? 'onCoach' : 'emChip';
+  const bg = disabled ? t.c.track : grad ? t.c.accentFill : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
+  const fg: Tone = disabled ? 'muted' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : 'emChip';
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
-      style={(st) => [s.btn, { backgroundColor: bg }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.danger }, st.pressed && { opacity: 0.85 }, style as object]}>
-      {grad ? <Grad colors={[t.c.grad1, t.c.grad2, t.c.grad3]} /> : null}
-      <T v="button" tone={fg}>{title}</T>
+      style={(st) => [s.btn, { backgroundColor: bg }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, st.pressed && { opacity: 0.85 }, style as object]}>
+      {kind === 'danger' ? (
+        // delete: always the trash icon + the word "Delete" (never colour alone)
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="trash" color={disabled ? t.c.muted : t.c.delete} size={18} />
+          <T v="button" tone={fg}>{/^delete\b/i.test(title) ? title : `Delete · ${title}`}</T>
+        </View>
+      ) : <T v="button" tone={fg}>{title}</T>}
     </Pressable>
   );
 }

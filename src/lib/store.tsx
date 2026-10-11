@@ -3,10 +3,10 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, FoodEntry, localDate, Profile } from './domain';
+import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
-import { resolvePending } from './pending';
+import { fillPending, resolvePending } from './pending';
 import { enqueue, flush, Op, PendingFood } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
@@ -42,7 +42,7 @@ function useStoreValue() {
       const sent = s.queue;
       const { rest, resolved } = await flush(sent, sender);
       // ops added while we were sending stay queued after the remaining ones
-      setS((p) => ({ ...p, queue: [...rest, ...p.queue.slice(sent.length)], entries: [...p.entries, ...resolved] }));
+      setS((p) => ({ ...p, queue: [...rest, ...p.queue.slice(sent.length)], entries: mergeEntries(p.entries, resolved) }));
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
@@ -96,9 +96,21 @@ function useStoreValue() {
       const n = entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id });
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),
-    /** Remove a review entry: it was never synced, so it just goes. */
-    dropReview: (id: string) => upd((p) => ({ ...p, entries: p.entries.filter((e) => e.id !== id) })),
-    addPending: (fs: PendingFood[]) => upd((p) => ({ ...p, queue: fs.reduce((q, food) => enqueue(q, { kind: 'pending', food, tries: 0 }), p.queue) })),
+    /** Remove a review entry (it is on the server as needs_review, so delete it there too). */
+    dropReview: (id: string) => upd((p) => ({
+      ...p, entries: p.entries.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),
+      queue: enqueue(p.queue, { kind: 'delete', id, tries: 0 }),
+    })),
+    /** Late AI answer for a queued food (see fillPending): unconfirmed review entries, keyed by the stable id. */
+    fillPending: (id: string, items: Item[]) => upd((p) => { const r = fillPending(p.entries, p.queue, id, items); return r.changed ? { ...p, entries: r.entries, queue: r.queue } : p; }),
+    /** Queue foods with no number yet. `at` defaults to now; pass 0 to send them straight to items to review. */
+    addPending: (fs: PendingFood[]) => upd((p) => {
+      fs = fs.map((f) => ({ at: Date.now(), ...f }));
+      const ph = fs.map((f) => pendingEntry(f));
+      let q = p.queue;
+      for (let i = 0; i < fs.length; i++) { q = enqueue(q, { kind: 'upsert', entry: ph[i], tries: 0 }); q = enqueue(q, { kind: 'pending', food: fs[i], tries: 0 }); }
+      return { ...p, entries: [...p.entries, ...ph], queue: q };
+    }),
     deleteAll: async () => { await api.deleteMe().catch(() => {}); setS(EMPTY); },
   };
 }

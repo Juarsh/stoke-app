@@ -13,6 +13,8 @@ export const config = {
   get mock() { return !this.apiUrl; },
   /** QA only: fake AI estimates in mock mode. */
   mockAi: process.env.EXPO_PUBLIC_MOCK_AI === '1',
+  /** QA only: delay mock AI answers (ms) so the Estimating state can be captured. */
+  mockAiDelay: Number(process.env.EXPO_PUBLIC_MOCK_AI_DELAY ?? 0),
   google: { android: extra.googleAndroidClientId ?? '', web: extra.googleWebClientId ?? '', ios: extra.googleIosClientId ?? '' },
 };
 /** Cut-order flags (spec): steps ring and Community tab can be switched off without layout changes. */

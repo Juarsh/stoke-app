@@ -24,10 +24,9 @@ const FloatingBar = memo(function FloatingBar({ state, navigation }: BarProps) {
         const on = state.routes[state.index]?.key === r.key;
         return (
           <Pressable key={r.key} onPress={() => navigation.navigate(r.name)} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={LABEL[r.name]}
-            style={{ flex: on ? 1.6 : 1, borderRadius: t.radius.full, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            {on ? <Grad colors={[t.c.grad1, t.c.grad2, t.c.grad3]} /> : null}
-            <Icon name={ICON[r.name]} color={on ? t.c.onGrad : t.c.muted} size={20} />
-            {on ? <T v="label" tone="onGrad">{LABEL[r.name]}</T> : null}
+            style={{ backgroundColor: on ? t.c.accentFill : 'transparent', flex: on ? 1.6 : 1, borderRadius: t.radius.full, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Icon name={ICON[r.name]} color={on ? t.c.onAccent : t.c.muted} size={20} />
+            {on ? <T v="label" tone="onAccent">{LABEL[r.name]}</T> : null}
           </Pressable>
         );
       })}

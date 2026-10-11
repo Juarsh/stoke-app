@@ -102,13 +102,14 @@ test('remembered readings skip confirmation next time', () => {
   expect(reasonWord(parseLocal('20 roti').items[0])).toBe('portion');
 });
 import { resolvePending } from '../src/lib/pending';
+import type { FoodEntry } from '../src/lib/domain';
 import { counted, dayTotals, loggedDays, reviewEntry } from '../src/lib/domain';
 import { pendingFor } from '../src/lib/syncQueue';
 describe('pending foods never save an unwarned number', () => {
   const food = { id: 'p', span: 'x', slot: 'lunch' as const, local_date: '2026-10-12', raw_text: 'x' };
   const resp = (items: ReturnType<typeof parser.parse>['items']) => ({ parse: async () => ({ items } as never) });
   test('confident table match auto-saves', async () => {
-    const [e] = (await resolvePending(resp(parser.parse('dal').items), food))!;
+    const [e] = (await resolvePending(resp(parser.parse('dal').items), food)) as FoodEntry[];
     expect(e.needs_review).toBeFalsy(); expect(e.confirmed).toBe(true); expect(counted(e)).toBe(true);
   });
   test.each([
@@ -117,12 +118,14 @@ describe('pending foods never save an unwarned number', () => {
     ['generic', parser.parse('paneer lababdar').items[0]],
   ])('%s becomes a review entry: not counted, not synced', async (_n, it) => {
     expect((it as { needs_confirmation: boolean }).needs_confirmation).toBe(true);
-    const [e] = (await resolvePending(resp([it as never]), food))!;
+    const [e] = (await resolvePending(resp([it as never]), food)) as FoodEntry[];
     expect(e.needs_review).toBe(true); expect(e.confirmed).toBe(false); expect(counted(e)).toBe(false);
     expect(e.kcal.best).toBe(0); expect(e.review_item).toBeDefined();
+    // synced as needs_review (server streak), still not counted
+    const sent: FoodEntry[] = [];
     const { rest, resolved } = await flush([{ kind: 'pending', food, tries: 0 }],
-      { upsertEntry: async () => { throw new Error('must not sync'); }, deleteEntry: async () => {}, deleteRemembered: async () => {}, resolvePending: async () => [e] }, 0);
-    expect(rest).toEqual([]); expect(resolved).toEqual([e]);
+      { upsertEntry: async (x) => { sent.push(x); }, deleteEntry: async () => {}, deleteRemembered: async () => {}, resolvePending: async () => [e] }, 0);
+    expect(rest).toEqual([]); expect(resolved).toEqual([e]); expect(sent.map((x) => x.needs_review)).toEqual([true]);
   });
   test('review entries and pending are left out of totals', () => {
     const ok = entryFromItem(parser.parse('dal').items[0], { slot: 'lunch', raw_text: 'dal', local_date: '2026-10-12', tableVersion: 1, id: 'a' });
@@ -140,4 +143,12 @@ test('streak: a day with only pending or needs-review items still counts; calori
   expect(dayTotals([rv]).kcal).toBe(0);
   const gone = { ...rv, deleted_at: '2026-10-11T10:00:00Z' };
   expect(loggedDays([gone]).size).toBe(0);
+});
+import { BRAND } from '../src/theme/tokens';
+test('brand roles are separate tokens; over-target is neutral, never accent or delete', () => {
+  for (const m of ['light', 'dark'] as const) {
+    const b = BRAND[m];
+    for (const k of ['accentText', 'accentFill', 'delete', 'warn', 'over', 'streak'] as const) expect(typeof b[k]).toBe('string');
+    expect(b.over).not.toBe(b.accentFill); expect(b.over).not.toBe(b.delete);
+  }
 });

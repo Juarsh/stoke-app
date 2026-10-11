@@ -17,8 +17,8 @@ export function rangeLines(it: Pick<Item, 'kcal' | 'protein_g' | 'data_source' |
   ].filter(Boolean);
 }
 
-export function ItemCard({ it, slot, confirmed, remembered, onEdit, onConfirm: _onConfirm, onRemove, onSlot }: {
-  it: Item; slot: Slot; confirmed: boolean; remembered?: boolean; onEdit: (it: Item) => void; onConfirm?: () => void; onRemove: () => void; onSlot: () => void;
+export function ItemCard({ it, slot, confirmed, remembered, plain, onEdit, onConfirm: _onConfirm, onRemove, onSlot }: {
+  it: Item; slot: Slot; confirmed: boolean; remembered?: boolean; /** all-estimates screen: no dashed outline */ plain?: boolean; onEdit: (it: Item) => void; onConfirm?: () => void; onRemove: () => void; onSlot: () => void;
 }) {
   const t = useTheme();
   const [pop, setPop] = useState(false);
@@ -26,21 +26,29 @@ export function ItemCard({ it, slot, confirmed, remembered, onEdit, onConfirm: _
   const dish = parser.dishById(it.dish_id);
   const ai = it.ai_estimate;
   return (
-    <Card dashed={ai && !confirmed}>
+    <Card dashed={ai && !confirmed && !plain}>
       <Row style={{ justifyContent: 'space-between' }}>
         <FoodTile seed={it.dish_id || it.name} category={dish?.category} size={36} />
         <Row style={{ flex: 1, flexWrap: 'wrap' }}>
           <T v="bodyStrong">{it.name}</T>
           {dish?.brand ? <Badge kind="brand" label="brand" /> : null}
-          {ai ? <Badge kind="ai" label="AI estimate" /> : null}
+          {ai ? <Badge kind="ai" label="Estimate" /> : null}
         </Row>
         <Pressable onPress={() => setPop(true)} hitSlop={12} accessibilityRole="button"
           accessibilityLabel={`${it.kcal.best} calories, estimated range ${it.kcal.low} to ${it.kcal.high}, ${SOURCE_LABEL(it.data_source)}`}>
           <Row><T v="number">{it.kcal.best}</T><Icon name="info" color={t.c.muted} size={16} /></Row>
         </Pressable>
       </Row>
+      {it.default_portion && !ai ? (
+        // assumed portion: inline, medium weight + dotted underline, tap opens the portion selector. No chip, no dashed outline; Add confirms it.
+        <T tone="text2">Read as:{' '}
+          <T v="bodyStrong" style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }} onPress={() => setSheet(true)}
+            accessibilityRole="button" accessibilityLabel={`Portion assumed: ${portionLabel(it.quantity, it.unit)}. Double-tap to change`}>{portionLabel(it.quantity, it.unit)}</T>
+          {' · '}<T tone="em" onPress={() => setSheet(true)} accessibilityRole="button">Change</T>
+        </T>
+      ) : null}
       <Row style={{ flexWrap: 'wrap', gap: 6 }}>
-        <Chip kind={ai ? 'ai' : 'primary'} label={portionLabel(it.quantity, it.unit)} a11y={`Portion, ${portionLabel(it.quantity, it.unit)}, double-tap to edit`} onPress={() => setSheet(true)} />
+        {it.default_portion && !ai ? null : <Chip kind={ai ? 'ai' : 'primary'} label={portionLabel(it.quantity, it.unit)} a11y={`Portion, ${portionLabel(it.quantity, it.unit)}, double-tap to edit`} onPress={() => setSheet(true)} />}
         {it.oil_level ? <Chip kind={ai ? 'ai' : 'primary'} label={`oil: ${it.oil_level}`} a11y={`Oil level ${it.oil_level}, double-tap to edit`} onPress={() => setSheet(true)} /> : null}
         <Chip kind="neutral" label={`${SLOT_LABEL[slot]} ✎`} a11y={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} onPress={onSlot} />
       </Row>

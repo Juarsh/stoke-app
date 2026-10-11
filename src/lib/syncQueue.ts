@@ -5,7 +5,7 @@
 import type { FoodEntry, Slot } from './domain';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
-export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string }
+export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued */ at?: number }
 type Retry = { tries: number; nextAt?: number };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)
@@ -16,11 +16,12 @@ export type Op =
 export interface Sender {
   upsertEntry(e: FoodEntry): Promise<void>; deleteEntry(id: string): Promise<void>;
   /** Resolve a pending food into entries, or null if still unknown (stays queued). */
-  resolvePending(f: PendingFood): Promise<FoodEntry[] | null>;
+  /** entries, null (still unknown) or { job_id } (server is working on it: poll that job next time) */
+  resolvePending(f: PendingFood): Promise<FoodEntry[] | null | { job_id: string }>;
   deleteRemembered(id?: number): Promise<void>;
 }
 
-const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : o.kind === 'pending' ? o.food.id : `${o.kind}:${o.id}`);
+const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : o.kind === 'pending' ? `pending:${o.food.id}` : `${o.kind}:${o.id}`);
 
 /** Coalesce: a newer op for the same id replaces older queued ops. */
 export function enqueue(q: Op[], op: Op): Op[] {
@@ -44,14 +45,17 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
       else if (op.kind === 'forgetAll') await s.deleteRemembered();
       else {
         const es = await s.resolvePending(op.food);
+        if (es && 'job_id' in es) { rest[0] = { ...op, food: { ...op.food, job_id: es.job_id || undefined } }; throw new Error(es.job_id ? 'job running' : 'job lost'); }
         if (!es) throw new Error('still pending');
         resolved.push(...es);
         // review entries stay on the device until confirmed
-        rest.push(...es.filter((e) => !e.needs_review).map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
+        // review entries sync too (state needs_review): they count for the server streak, not in totals
+        rest.push(...es.map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
       }
       rest.shift();
     } catch {
-      rest[0] = { ...op, tries: op.tries + 1, nextAt: now + backoffMs(op.tries + 1) } as Op;
+      const cur = rest[0];
+      rest[0] = { ...cur, tries: op.tries + 1, nextAt: now + backoffMs(op.tries + 1) } as Op;
       break;
     }
   }
@@ -61,3 +65,9 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
 /** Queued pending foods for a day (shown as '— kcal', never counted). */
 export const pendingFor = (q: Op[], date?: string): PendingFood[] =>
   q.flatMap((o) => (o.kind === 'pending' && (!date || o.food.local_date === date) ? [o.food] : []));
+
+/** Designer: a queued food still unresolved after ~10 s moves to "items to review". */
+export const STALE_PENDING_MS = 10_000;
+export const isStale = (f: PendingFood, now = Date.now()) => now - (f.at ?? 0) >= STALE_PENDING_MS;
+/** Offline = the head of the queue has failed at least once. */
+export const isOffline = (q: Op[]) => q.some((o) => o.tries > 0);

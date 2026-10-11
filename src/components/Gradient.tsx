@@ -20,7 +20,12 @@ export const Grad = memo(function Grad({ colors, angle135 = true }: { colors: st
 });
 
 /** Static radial background glows (emerald top-left, teal top-right, saffron bottom); drawn once per screen, no blur. */
+/** v3.2: background glows removed (only the ring has a gradient): a solid page background instead. */
 export const Glows = memo(function Glows() {
+  const t = useTheme();
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: t.c.bg }]} />;
+});
+export const GlowsV4 = memo(function GlowsV4() {
   const { c } = useTheme();
   const g = (id: string, cx: string, cy: string, col: string) => (
     <RadialGradient id={id} cx={cx} cy={cy} rx="70%" ry="45%" fx={cx} fy={cy}>

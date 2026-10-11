@@ -38,14 +38,12 @@ export const HeroArc = memo(function HeroArc({ eaten, target, kcalLeft }: { eate
   );
 });
 
-export const Bar = memo(function Bar({ pct, from, to }: { pct: number; from: string; to: string }) {
+/** Solid bar (only the ring has a gradient). `to` kept for call sites. */
+export const Bar = memo(function Bar({ pct, from }: { pct: number; from: string; to?: string }) {
   const t = useTheme();
   return (
     <View style={{ height: 6, borderRadius: 3, backgroundColor: t.c.track, overflow: 'hidden' }}>
-      <Svg width={`${Math.min(100, Math.max(0, pct * 100))}%`} height={6}>
-        <Defs><LinearGradient id={`b${from}${to}`.replace(/[^a-z0-9]/gi, '')} x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor={from} /><Stop offset="1" stopColor={to} /></LinearGradient></Defs>
-        <Path d="M0 0 H1000 V6 H0 Z" fill={`url(#${`b${from}${to}`.replace(/[^a-z0-9]/gi, '')})`} />
-      </Svg>
+      <View style={{ width: `${Math.min(100, Math.max(0, pct * 100))}%`, height: 6, backgroundColor: from }} />
     </View>
   );
 });

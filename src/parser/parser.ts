@@ -31,6 +31,9 @@ export interface Rules {
   sanity: { max_item_kcal: number; max_portion_multiple: number; max_count_multiple: number };
   style_words: string[]; stopwords: string[]; min_placeholder_len: number; confidence: Record<string, number>;
   fuzzy_never_to_categories: string[]; typical_sides: Record<string, string[]>;
+  strict_require_stated_quantity?: boolean;
+  /** combo dish id -> parts at default portions ("_doc" ignored) */
+  everyday_combos?: Record<string, unknown>;
 }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
@@ -42,6 +45,8 @@ export interface Item {
   needs_confirmation: boolean;
   /** 0-1 from match quality and context; below rules.confidence.threshold it needs confirmation. flags say why. */
   confidence?: number; flags?: string[];
+  /** no count or unit typed: the dish's standard portion was used ('Read as: 1 katori · Change'). */
+  default_portion: boolean;
   alternatives?: Alternative[]; ai_estimate: boolean;
   /** from the user's remembered readings (server parse) */
   learned?: boolean;
@@ -50,7 +55,7 @@ export type ItemSource = 'table' | 'did_you_mean' | 'generic' | 'ai_estimate';
 /** leftover: words/numbers the parser could not use (incl. short/stopword leftovers that never become placeholders). */
 export interface ParseResult { items: Item[]; unmatched: string[]; leftover: number }
 
-type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[] };
+type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[]; everyday?: boolean };
 /** Go Item.pen: add a confidence deduction once (copy-on-write). */
 const pen = (it: It, f: string) => { if (!it.pens?.includes(f)) it.pens = [...(it.pens ?? []), f]; };
 interface Token { w: string; num: number; isN: boolean; sep: boolean; mult: number }
@@ -427,8 +432,11 @@ export class Parser {
     }
     flushUnk();
     if (pd.hasQty) leftover++; // a number nothing used
+    const ev = this.everydayCombos(items);
+    items.splice(0, items.length, ...ev);
     const present = new Set(items.map((x) => x.dish_id));
     for (const it of items) {
+      it.default_portion = !it.explicit; // a count/unit was in the text?
       it.explicit = false;
       if (leftover > 0 || unmatched.length > 0) pen(it, 'leftover_in_meal');
       const sides = this.r.typical_sides[it.dish_id];
@@ -542,7 +550,7 @@ export class Parser {
     const it: It = this.sanity({ ...x, source });
     if (it.fuzzy) pen(it, 'fuzzy');
     if (it.source === 'generic') pen(it, 'generic');
-    if (it.from_combo) pen(it, 'combo_or_split');
+    if (it.from_combo && !it.everyday) pen(it, 'combo_or_split');
     const conf = this.r.confidence;
     let c = 1;
     for (const f of it.pens ?? []) c += has(conf, f) ? conf[f] : conf.leftover_in_meal;
@@ -553,7 +561,7 @@ export class Parser {
     const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
-    const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, ...base } = it;
+    const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, ...base } = it;
     return base;
   }
 
@@ -680,6 +688,32 @@ export class Parser {
     return null;
   }
 
+  /** Everyday combo rows (rules.everyday_combos) read without a portion, or in their own unit ("2 plate dal chawal"),
+   * become their parts at default portions; the combo's quantity multiplies the parts. Other units keep the split rule. */
+  private everydayCombos(items: It[]): It[] {
+    const ec = this.r.everyday_combos ?? {};
+    const out: It[] = [];
+    for (const it of items) {
+      const raw = has(ec, it.dish_id) && it.dish_id !== '_doc' ? ec[it.dish_id] : undefined;
+      const d = this.dishById(it.dish_id);
+      if (!Array.isArray(raw) || !d || it.fuzzy || (it.explicit && it.unit !== d.unit) || raw.length === 0) { out.push(it); continue; }
+      const n = it.quantity <= 0 ? 1 : it.quantity;
+      for (const pt of raw as { dish_id: string; qty?: number }[]) {
+        const cd = this.dishById(pt.dish_id);
+        if (!cd) continue;
+        let q = pt.qty ?? 0;
+        if (q === 0) q = 1;
+        let c: It = { ...blank(), dish_id: cd.id, name: cd.name, matched_text: it.matched_text, data_source: cd.source, source_note: cd.source_note,
+          from_combo: d.id, everyday: true, clause: it.clause, joined: it.joined };
+        if (this.fat.has(cd.id)) q *= this.r.default_fat_spoons;
+        c = this.compute(cd, c, round(q * n, 2), '');
+        if (cd.oil_sensitive) c = this.withOil(c, 'normal');
+        out.push(c);
+      }
+    }
+    return out;
+  }
+
   private unitFor(w: string): [string, number] {
     const u = this.unitOf.get(w);
     if (u === undefined) return ['', 0];
@@ -723,7 +757,7 @@ export class Parser {
     if (this.fat.has(d.id)) { oil = ''; capped = (unit === '' || unit === 'spoon') && qty > this.r.max_fat_spoons; }
     if ((d.parts?.length ?? 0) > 0 && pd.unit !== '' && pd.unit !== d.unit) return this.expand(d, qty, unit, oil, matched, fuzzy);
     if ((d.piece_grams ?? 0) > 0 && pd.hasQty && (unit === '' || unit === 'count')) unit = 'piece';
-    let it: It = { ...blank(), dish_id: d.id, name: d.name, matched_text: matched, data_source: d.source, source_note: d.source_note, fuzzy, explicit: pd.hasQty };
+    let it: It = { ...blank(), dish_id: d.id, name: d.name, matched_text: matched, data_source: d.source, source_note: d.source_note, fuzzy, explicit: pd.hasQty || pd.unit !== '' };
     it = this.compute(d, it, qty, unit);
     if (capped) { pen(it, 'capped'); it.needs_confirmation = true; }
     if (d.oil_sensitive) it = this.withOil(it, (oil || 'normal') as OilLevel);
@@ -827,7 +861,7 @@ export const UNITS = ['count', 'piece', 'katori', 'spoon', 'plate', 'glass', 'gr
 const blank = (): Item => ({
   dish_id: '', name: '', matched_text: '', quantity: 0, unit: '', grams: 0, oil_level: '',
   kcal: { low: 0, best: 0, high: 0 }, protein_g: { low: 0, best: 0, high: 0 }, carbs_g: 0, fat_g: 0,
-  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false, learned: false,
+  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false, learned: false, default_portion: false,
 });
 
 function wordsOf(ts: Token[], word: (t: Token) => string): string[] {

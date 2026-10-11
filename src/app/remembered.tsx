@@ -20,7 +20,7 @@ export default function Remembered() {
           </Row>
         </Card>
       ))}
-      {rows.length ? <Button kind="danger" title="Reset all" onPress={() => Alert.alert('Reset all remembered foods?', 'We’ll ask again next time.', [
+      {rows.length ? <Button kind="soft" title="Reset all" onPress={() => Alert.alert('Reset all remembered foods?', 'We’ll ask again next time.', [
         { text: 'Cancel', style: 'cancel' }, { text: 'Reset all', style: 'destructive', onPress: () => st.forget() }])} /> : null}
     </Screen>
   );

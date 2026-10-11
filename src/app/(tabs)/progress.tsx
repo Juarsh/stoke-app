@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
-import { addDays, counted, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
-import { pendingFor, PendingFood } from '@/lib/syncQueue';
+import { addDays, counted, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
+import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
+import { PendingRow } from '@/components/PendingRow';
 import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -18,7 +19,7 @@ function asItem(e: FoodEntry): Item {
   return { dish_id: e.dish_id ?? '', name: e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item', matched_text: e.raw_text,
     quantity: e.qty, unit: e.unit, grams: 0, oil_level: e.oil_level, kcal: e.kcal, protein_g: e.protein_g,
     source: 'table', data_source: e.source === 'table' ? (parser.dishById(e.dish_id ?? '')?.source ?? 'estimate') : e.source, source_note: e.source_note,
-    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirmation: false };
+    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirmation: false, default_portion: false };
 }
 
 type Day = { date: string; kcal: number; protein: number; entries: FoodEntry[]; reviews: number; pending: PendingFood[] };
@@ -27,11 +28,7 @@ const DayRow = memo(function DayRow({ day, onPick }: { day: Day; onPick: (e: Foo
     <Card>
       <Row style={{ justifyContent: 'space-between' }}><T v="bodyStrong">{day.date}</T><T tone="muted">{day.kcal} kcal · {day.protein} g</T></Row>
       {day.reviews ? <ReviewLink date={day.date} n={day.reviews} /> : null}
-      {day.pending.map((f) => (
-        <Row key={f.id} style={{ justifyContent: 'space-between', minHeight: 40 }} accessibilityLabel={`${f.span}, calories pending`}>
-          <T tone="text2" style={{ flex: 1 }}>{SLOT_LABEL[f.slot]} · {f.span} · pending</T><T tone="muted">— kcal</T>
-        </Row>
-      ))}
+      {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
       {day.entries.filter(counted).map((e) => (
         <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${e.custom_name || e.dish_id}`} style={{ minHeight: 40, justifyContent: 'center' }}>
           <Row style={{ justifyContent: 'space-between' }}>
@@ -53,7 +50,7 @@ export default function Progress() {
     const pend = pendingFor(st.queue);
     for (const f of pend) if (!by.has(f.local_date)) by.set(f.local_date, []);
     return [...by.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([date, entries]) => ({
-      date, entries, ...dayTotals(entries), reviews: entries.filter((e) => e.needs_review).length, pending: pend.filter((f) => f.local_date === date) }));
+      date, entries, ...dayTotals(entries), reviews: entries.filter(toReview).length, pending: pend.filter((f) => f.local_date === date && !isStale(f)) })).map((x) => ({ ...x, reviews: x.reviews + pend.filter((f) => f.local_date === x.date && isStale(f)).length }));
   }, [st.entries, st.queue]);
   const today = localDate();
   const cal = useMemo(() => Array.from({ length: 28 }, (_, i) => addDays(today, i - 27)), [today]);

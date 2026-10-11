@@ -34,9 +34,10 @@ export const readingOf = (it: Item, now = new Date()): Reading =>
 
 /** Muted reason word for a CHECK card (design-notes "Log confirm patterns"). */
 export function reasonWord(it: Item): string {
+  const f = it.flags ?? [];
   if (it.source === 'generic') return 'generic';
-  if (it.alternatives?.length) return 'portion';
-  if (it.source === 'did_you_mean') return 'fuzzy';
-  if (it.from_combo) return 'combo';
+  if (it.alternatives?.length || f.includes('sanity') || f.includes('capped')) return 'portion';
+  if (it.fuzzy || f.includes('fuzzy')) return 'fuzzy';
+  if (it.from_combo || f.includes('combo_or_split')) return 'combo';
   return 'check';
 }

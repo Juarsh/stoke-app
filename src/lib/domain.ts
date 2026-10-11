@@ -27,6 +27,8 @@ export interface FoodEntry {
   /** A pending food that resolved to something uncertain (AI estimate, generic, did-you-mean). Not counted, not synced,
    * until the user confirms review_item in the confirm UI. */
   needs_review?: boolean; review_item?: Item;
+  /** server-side placeholder for a pending food (needs_review, no numbers); replaced when the food resolves */
+  pending?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
@@ -119,6 +121,16 @@ export function loggedDays(entries: FoodEntry[], pendingDates: string[] = []): S
   return new Set([...entries.filter((e) => !e.deleted_at).map((e) => e.local_date), ...pendingDates]);
 }
 
+/** Placeholder entry for a pending food, synced as needs_review so the server streak matches. */
+export function pendingEntry(f: { id: string; span: string; slot: Slot; local_date: string; raw_text: string }, now = new Date()): FoodEntry {
+  const z = { low: 0, best: 0, high: 0 }, t = now.toISOString();
+  return { id: f.id, local_date: f.local_date, slot: f.slot, raw_text: f.raw_text, dish_id: null, custom_name: f.span, qty: 1, unit: 'count', oil_level: '',
+    kcal: z, protein_g: z, source: 'custom', source_note: 'Pending', confirmed: false, dish_table_version: 0, created_at: t, updated_at: t, deleted_at: null,
+    span: f.span, needs_review: true, pending: true };
+}
+/** Items the user can review now (pending placeholders are shown as '— kcal' rows instead). */
+export const toReview = (e: FoodEntry) => !e.deleted_at && !!e.needs_review && !e.pending && !!e.review_item;
+
 export function dayTotals(entries: FoodEntry[]) {
   let kcal = 0, protein = 0;
   for (const e of entries) if (counted(e)) { kcal += e.kcal.best; protein += e.protein_g.best; }
@@ -127,3 +139,10 @@ export function dayTotals(entries: FoodEntry[]) {
 
 /** ~0.04 kcal per step (rough, shown as ≈). */
 export const stepsKcal = (steps: number) => Math.round(steps * 0.04);
+
+/** Resolved entries replace same-id entries (the pending placeholder) and append the rest. */
+export function mergeEntries(old: FoodEntry[], add: FoodEntry[]): FoodEntry[] {
+  const by = new Map(add.map((e) => [e.id, e]));
+  const out = old.map((e) => by.get(e.id) ?? e);
+  return [...out, ...add.filter((e) => !old.some((o) => o.id === e.id))];
+}

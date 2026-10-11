@@ -2,7 +2,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 const P: Record<string, string> = {
   today: 'M4 11l8-7 8 7v9H4z',
-  warn: 'M12 4l9 16H3zM12 10v4M12 17v.5', chevron: 'M9 5l7 7-7 7',
+  warn: 'M12 4l9 16H3zM12 10v4M12 17v.5', trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3', chevron: 'M9 5l7 7-7 7',
   log: 'M12 7v10M7 12h10',
   progress: 'M5 20V11M11 20V5M17 20v-6',
   coach: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z',

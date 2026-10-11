@@ -15,6 +15,7 @@ import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { ReviewLink } from '@/components/ReviewLink';
+import { PendingRow } from '@/components/PendingRow';
 import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -57,17 +58,17 @@ export default function Today() {
               </Pressable>
             </Row>
           </Row>
-          {d.reviews.length ? <ReviewLink date={d.date} n={d.reviews.length} /> : null}
+          {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} /> : null}
           <HeroArc eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} />
           <View style={s.pair}>
             <Card style={s.half}>
               <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Protein</T><T v="number">{Math.round(d.proteinLeft)} g left</T></Row>
-              <Bar pct={protPct} from={t.c.gradGold1} to={t.c.gradGold2} />
+              <Bar pct={protPct} from={t.c.accentFill} />
             </Card>
             {flags.steps ? (
               <Card style={s.half}>
                 <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Steps</T><T v="number">{d.steps.toLocaleString('en-IN')}</T></Row>
-                <Bar pct={d.steps / (d.profile?.stepsTarget ?? 8000)} from={t.c.stepsBar1} to={t.c.stepsBar2} />
+                <Bar pct={d.steps / (d.profile?.stepsTarget ?? 8000)} from={t.c.emTintLine} />
                 <T v="caption" tone="muted">≈{d.burn} kcal · {d.profile?.addStepKcal ? 'in budget' : 'not in budget'}</T>
               </Card>
             ) : null}
@@ -78,12 +79,8 @@ export default function Today() {
             {d.streak.freezeJustUsed ? <T v="caption" tone="freeze">❄ Freeze saved your {d.streak.current}-day streak</T>
               : d.streak.current === 0 && d.loggedDates.size > 0 ? <T v="caption" tone="muted">Streak paused. Start again today.</T> : null}
           </Row>
-          {d.pending.map((f) => (
-            <Row key={f.id} style={{ justifyContent: 'space-between' }} accessibilityLabel={`${f.span}, calories pending`}>
-              <T tone="text2" style={{ flex: 1 }}>{f.span} · waiting for an estimate</T><T tone="muted">— kcal</T>
-            </Row>
-          ))}
-          {d.entries.length || d.pending.length || d.reviews.length ? null : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
+          {d.pending.map((f) => <PendingRow key={f.id} label={f.span} state={d.offline ? 'offline' : 'estimating'} />)}
+          {d.entries.length || d.pending.length || d.reviewCount ? null : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
           {d.entries.length ? (
             <FlatList horizontal data={d.entries} keyExtractor={keyOf} renderItem={renderTile} showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 10 }} initialNumToRender={4} windowSize={3} removeClippedSubviews />
