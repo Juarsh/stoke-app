@@ -569,5 +569,12 @@
    20
   ],
   "name": "unknown item"
- }
+ },
+ "wrap_forms": [
+  "roll",
+  "wrap",
+  "frankie",
+  "kathi"
+ ],
+ "generic_wrap_dish": "generic_wrap"
 }

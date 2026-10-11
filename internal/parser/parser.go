@@ -59,6 +59,8 @@ type Rules struct {
 	EggWords        []string            `json:"egg_words"`
 	EggsPerPortion  map[string]float64  `json:"eggs_per_portion"`
 	FuzzyMinSim     float64             `json:"fuzzy_min_similarity"`
+	WrapForms       []string            `json:"wrap_forms"`
+	GenericWrapDish string              `json:"generic_wrap_dish"`
 	UnknownItem     struct {
 		Kcal     [3]float64 `json:"kcal"`
 		ProteinG [3]float64 `json:"protein_g"`
@@ -498,8 +500,14 @@ func (p *Parser) Parse(text string) Result {
 					continue
 				}
 			}
-			if li := last(); li != nil && li.clause == clause && len(unk) == 0 {
-				continue // "chicken tikka masala": a form word after a full dish adds nothing
+			if li := last(); li != nil && li.clause == clause && len(unk) == 0 && li.FromCombo == "" {
+				// "soya chaap roll", "paneer tikka wrap": the form changes the dish
+				if g, ok := p.applyForm(li, t.w); ok {
+					res.Items[len(res.Items)-1] = g
+				} else {
+					li.Matched += " " + t.w // "chicken tikka masala": same dish, word kept in matched_text
+				}
+				continue
 			}
 		}
 		if !t.isN || t.w == "" {
@@ -667,6 +675,57 @@ func wordsOf(ts []token) []string {
 func (p *Parser) isProteinWord(s string) bool {
 	_, ok := p.r.ProteinWords[s]
 	return ok
+}
+
+// applyForm handles a form word right after a matched dish. A wrap form
+// ("roll", "wrap", "frankie") looks for "<dish> roll", then "<protein> roll",
+// then the generic protein dish, then a generic wrap. Other forms look for
+// "<dish> <form>". ok=false means the dish stays as it is.
+func (p *Parser) applyForm(li *Item, form string) (Item, bool) {
+	d := p.dishByID(li.DishID)
+	if d == nil {
+		return Item{}, false
+	}
+	mk := func(nd *dishes.Dish, generic bool) (Item, bool) {
+		it := Item{DishID: nd.ID, Name: nd.Name, Matched: li.Matched + " " + form, DataSource: nd.Source, SourceNote: nd.SourceNote,
+			generic: generic, clause: li.clause, joined: li.joined, explicit: li.explicit, Fuzzy: li.Fuzzy}
+		q, u := 1.0, ""
+		if li.explicit && (li.Unit == "count" || li.Unit == "piece") {
+			q = li.Quantity
+		}
+		return p.compute(nd, it, q, u), true
+	}
+	for _, name := range append([]string{d.Name}, d.Aliases...) {
+		if v, ok := p.dish[name+" "+form]; ok && v != d {
+			return mk(v, false)
+		}
+	}
+	isWrap := false
+	for _, w := range p.r.WrapForms {
+		isWrap = isWrap || w == form
+	}
+	if !isWrap {
+		return Item{}, false
+	}
+	for _, w := range strings.Fields(d.Name) {
+		if kind, ok := p.r.ProteinWords[w]; ok {
+			for pw, k := range p.r.ProteinWords {
+				if k != kind {
+					continue
+				}
+				if v, ok := p.dish[pw+" roll"]; ok {
+					return mk(v, false)
+				}
+			}
+			if g := p.dishByID(p.r.GenericProtein[kind]); g != nil {
+				return mk(g, true)
+			}
+		}
+	}
+	if g := p.dishByID(p.r.GenericWrapDish); g != nil {
+		return mk(g, true)
+	}
+	return Item{}, false
 }
 
 // genericProtein turns an unknown span that mentions a protein ("paneer
@@ -1216,3 +1275,6 @@ func (p *Parser) Dish(id string) (dishes.Dish, bool) {
 
 // Table returns the dish table (for GET /v1/dishes and the coach).
 func (p *Parser) Table() []dishes.Dish { return p.table }
+
+// TableVersion is the dish table version this parser uses.
+func (p *Parser) TableVersion() int { return dishes.TableVersion(p.table) }

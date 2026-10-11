@@ -208,3 +208,23 @@ func TestSourcesAndConfirmation(t *testing.T) {
 		}
 	}
 }
+
+func TestFormAfterDish(t *testing.T) {
+	p := newP(t)
+	for in, want := range map[string]string{
+		"soya chaap roll":       "soya_chaap_roll",
+		"2 soya chaap roll":     "soya_chaap_roll",
+		"paneer tikka roll":     "paneer_roll",
+		"tandoori chicken wrap": "chicken_roll",
+		"rajma wrap":            "generic_wrap",
+		"chicken tikka masala":  "chicken_tikka",
+	} {
+		r := p.Parse(in)
+		if len(r.Items) != 1 || r.Items[0].DishID != want || len(r.Unmatched) != 0 {
+			t.Errorf("%q: got %+v unmatched %v, want %s", in, r.Items, r.Unmatched, want)
+		}
+	}
+	if it := p.Parse("rajma wrap").Items[0]; !it.NeedsConfirmation || it.Source != SourceGeneric {
+		t.Errorf("generic wrap must need confirmation: %+v", it)
+	}
+}

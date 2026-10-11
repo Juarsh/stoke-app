@@ -432,3 +432,62 @@ func TestSaveRules(t *testing.T) {
 		}
 	}
 }
+
+func TestClientIDVersionAndNumbers(t *testing.T) {
+	srv, _ := setup(t, nil)
+	u := "app"
+	// table: 2 roti = 220 kcal, 7 g protein (version 1)
+	good := M{"dish_id": "roti", "qty": 2, "unit": "count", "source": "table", "client_id": "c-1", "dish_table_version": 1,
+		"kcal": 221, "kcal_low": 165, "kcal_high": 275, "protein_g": 7, "protein_low": 5.2, "protein_high": 8.8, "carbs_g": 40, "fat_g": 3}
+	var cr struct {
+		Entries    []entry
+		Duplicates []string
+	}
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{good}}, &cr); c != 201 {
+		t.Fatalf("create: %d", c)
+	}
+	first := cr.Entries[0]
+	if first.KcalBest != 221 {
+		t.Errorf("client's confirmed numbers not stored: %+v", first)
+	}
+	// repeat client_id: same entry back, nothing new
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{good}}, &cr); c != 200 || cr.Entries[0].ID != first.ID || len(cr.Duplicates) != 1 {
+		t.Errorf("idempotency: %d %+v", c, cr)
+	}
+	var list struct{ Entries []M }
+	call(t, srv, "GET", "/v1/entries", u, nil, &list)
+	if len(list.Entries) != 1 || list.Entries[0]["carbs_g"].(float64) != 40 || list.Entries[0]["client_id"] != "c-1" || list.Entries[0]["dish_table_version"].(float64) != 1 {
+		t.Errorf("stored fields: %+v", list.Entries)
+	}
+	mod := func(k string, v any) M {
+		m := M{}
+		for a, b := range good {
+			m[a] = b
+		}
+		m["client_id"] = "c-" + k
+		if v == nil {
+			delete(m, k)
+		} else {
+			m[k] = v
+		}
+		return m
+	}
+	for name, c := range map[string]struct {
+		item M
+		want int
+	}{
+		"kcal off":            {mod("kcal", 300.0), 422},
+		"protein off":         {mod("protein_g", 12.0), 422},
+		"old table version":   {mod("dish_table_version", 0), 409},
+		"numbers, no version": {mod("dish_table_version", nil), 400},
+		"range excludes best": {mod("kcal_high", 200.0), 422},
+	} {
+		if got := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{c.item}}, nil); got != c.want {
+			t.Errorf("%s: got %d want %d", name, got, c.want)
+		}
+	}
+	// delete by client_id (the app's id)
+	if c := call(t, srv, "DELETE", "/v1/entries/c-1", u, nil, nil); c != 204 {
+		t.Errorf("delete by client_id: %d", c)
+	}
+}

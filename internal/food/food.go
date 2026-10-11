@@ -5,6 +5,7 @@ package food
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -173,6 +174,10 @@ type Entry struct {
 	ProteinHigh float64   `json:"protein_high"`
 	Source      string    `json:"source"`
 	Confirmed   bool      `json:"confirmed"`
+	ClientID    *string   `json:"client_id"`
+	TableVer    *int      `json:"dish_table_version"`
+	CarbsG      float64   `json:"carbs_g"`
+	FatG        float64   `json:"fat_g"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	DeletedAt   *string   `json:"deleted_at"`
@@ -196,6 +201,23 @@ type ItemIn struct {
 	// /v1/parse) or custom (numbers typed by the user).
 	Source    string `json:"source"`
 	Confirmed bool   `json:"confirmed"` // required when the item needs confirmation
+	// ClientID makes saves idempotent: a repeat returns the stored entry.
+	ClientID string `json:"client_id"`
+	// DishTableVersion is required when a table item carries the client's own
+	// numbers; they are checked against that version, never silently replaced.
+	DishTableVersion *int     `json:"dish_table_version"`
+	CarbsG           *float64 `json:"carbs_g"`
+	FatG             *float64 `json:"fat_g"`
+}
+
+// Tolerances for checking a client's numbers against the table.
+const (
+	kcalTolAbs, kcalTolRel = 2.0, 0.02
+	protTolAbs, protTolRel = 0.5, 0.03
+)
+
+func within(got, want, abs, rel float64) bool {
+	return math.Abs(got-want) <= math.Max(abs, rel*math.Abs(want))
 }
 
 var slots = map[string]bool{"breakfast": true, "lunch": true, "snacks": true, "dinner": true}
@@ -215,40 +237,77 @@ var saveSources = map[string]bool{"table": true, "did_you_mean": true, "generic"
 //     table match flagged by the sanity check) must come with confirmed=true
 //   - 0 kcal is only saved when the user typed it (custom/manual), or for a
 //     table row whose own value is 0 (water)
-func (s *Service) resolve(in ItemIn) (Entry, error) {
+func (s *Service) resolve(in ItemIn) (Entry, int, error) {
 	var e Entry
+	bad := func(code int, msg string) (Entry, int, error) { return e, code, errors.New(msg) }
 	if !saveSources[in.Source] {
-		return e, errors.New("source is required: table, did_you_mean, generic, ai_estimate or custom")
+		return bad(400, "source is required: table, did_you_mean, generic, ai_estimate or custom")
+	}
+	if len(in.ClientID) > 100 {
+		return bad(400, "client_id too long")
 	}
 	if in.Qty == 0 {
 		in.Qty = 1
 	}
+	cid := func() *string {
+		if in.ClientID == "" {
+			return nil
+		}
+		c := in.ClientID
+		return &c
+	}()
 	userTyped := in.Source == "custom" || in.Source == "manual"
 	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {
 		it, err := s.Parser.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
 		if err != nil {
-			return e, err
+			return bad(400, err.Error())
 		}
 		needs := in.Source != "table" || it.NeedsConfirmation
 		if needs && !in.Confirmed {
-			return e, errors.New("item needs confirmation: send confirmed=true after the user checks it")
+			return bad(400, "item needs confirmation: send confirmed=true after the user checks it")
 		}
-		if it.Kcal.Best <= 0 {
-			if d, _ := s.Parser.Dish(in.DishID); d.Kcal != 0 {
-				return e, errors.New("refusing to save 0 kcal")
-			}
-		}
+		ver := s.Parser.TableVersion()
 		id := it.DishID
 		src := in.Source
 		if it.Source == parser.SourceGeneric {
 			src = "generic"
 		}
-		return Entry{DishID: &id, Name: it.Name, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel,
+		e = Entry{DishID: &id, Name: it.Name, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel,
 			KcalBest: it.Kcal.Best, KcalLow: it.Kcal.Low, KcalHigh: it.Kcal.High,
-			ProteinBest: it.Protein.Best, ProteinLow: it.Protein.Low, ProteinHigh: it.Protein.High, Source: src, Confirmed: true}, nil
+			ProteinBest: it.Protein.Best, ProteinLow: it.Protein.Low, ProteinHigh: it.Protein.High,
+			CarbsG: it.CarbsG, FatG: it.FatG, Source: src, Confirmed: true, ClientID: cid, TableVer: &ver}
+		if in.Kcal != nil || in.ProteinG != nil {
+			// the client's confirmed numbers: check them, store them, never recalculate silently
+			if in.DishTableVersion == nil {
+				return bad(400, "dish_table_version is required when sending numbers for a table item")
+			}
+			if *in.DishTableVersion != ver {
+				return bad(409, fmt.Sprintf("dish_table_version %d can't be checked; server table is version %d", *in.DishTableVersion, ver))
+			}
+			if in.Kcal != nil && !within(*in.Kcal, it.Kcal.Best, kcalTolAbs, kcalTolRel) {
+				return bad(422, fmt.Sprintf("kcal %.1f doesn't match table value %.1f for %s", *in.Kcal, it.Kcal.Best, it.DishID))
+			}
+			if in.ProteinG != nil && !within(*in.ProteinG, it.Protein.Best, protTolAbs, protTolRel) {
+				return bad(422, fmt.Sprintf("protein_g %.1f doesn't match table value %.1f for %s", *in.ProteinG, it.Protein.Best, it.DishID))
+			}
+			e.KcalBest = f(in.Kcal, e.KcalBest)
+			e.ProteinBest = f(in.ProteinG, e.ProteinBest)
+			e.KcalLow, e.KcalHigh = f(in.KcalLow, e.KcalLow), f(in.KcalHigh, e.KcalHigh)
+			e.ProteinLow, e.ProteinHigh = f(in.ProteinLow, e.ProteinLow), f(in.ProteinHigh, e.ProteinHigh)
+			if e.KcalLow > e.KcalBest || e.KcalHigh < e.KcalBest || e.ProteinLow > e.ProteinBest || e.ProteinHigh < e.ProteinBest {
+				return bad(422, "ranges must contain the best guess")
+			}
+		}
+		e.CarbsG, e.FatG = f(in.CarbsG, e.CarbsG), f(in.FatG, e.FatG)
+		if e.KcalBest <= 0 {
+			if d, _ := s.Parser.Dish(in.DishID); d.Kcal != 0 {
+				return bad(400, "refusing to save 0 kcal")
+			}
+		}
+		return e, 0, nil
 	}
 	if !userTyped && !in.Confirmed {
-		return e, errors.New("item needs confirmation: send confirmed=true after the user checks it")
+		return bad(400, "item needs confirmation: send confirmed=true after the user checks it")
 	}
 	name := strings.TrimSpace(in.CustomName)
 	if name == "" && in.DishID != "" {
@@ -257,17 +316,17 @@ func (s *Service) resolve(in ItemIn) (Entry, error) {
 		}
 	}
 	if name == "" || len(name) > 120 {
-		return e, errors.New("each item needs dish_id or custom_name")
+		return bad(400, "each item needs dish_id or custom_name")
 	}
 	if in.Kcal == nil || *in.Kcal < 0 || *in.Kcal > 5000 {
-		return e, errors.New("this item needs kcal (0-5000)")
+		return bad(400, "this item needs kcal (0-5000)")
 	}
 	if *in.Kcal == 0 && !userTyped {
-		return e, errors.New("refusing to save 0 kcal unless typed in as a custom item")
+		return bad(400, "refusing to save 0 kcal unless typed in as a custom item")
 	}
 	pr := f(in.ProteinG, 0)
-	if pr < 0 || pr > 300 {
-		return e, errors.New("protein_g out of range")
+	if pr < 0 || pr > 300 || f(in.CarbsG, 0) < 0 || f(in.FatG, 0) < 0 {
+		return bad(400, "protein_g, carbs_g and fat_g must be >= 0 (protein <= 300)")
 	}
 	unit := in.Unit
 	if unit == "" {
@@ -279,17 +338,18 @@ func (s *Service) resolve(in ItemIn) (Entry, error) {
 	}
 	k := *in.Kcal
 	return Entry{CustomName: name, Name: name, Qty: in.Qty, Unit: unit, KcalBest: k, KcalLow: f(in.KcalLow, k), KcalHigh: f(in.KcalHigh, k),
-		ProteinBest: pr, ProteinLow: f(in.ProteinLow, pr), ProteinHigh: f(in.ProteinHigh, pr), Source: src, Confirmed: true}, nil
+		ProteinBest: pr, ProteinLow: f(in.ProteinLow, pr), ProteinHigh: f(in.ProteinHigh, pr), CarbsG: f(in.CarbsG, 0), FatG: f(in.FatG, 0),
+		Source: src, Confirmed: true, ClientID: cid, TableVer: in.DishTableVersion}, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at`
+const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g`
 
 func (s *Service) scan(row pgx.Row) (Entry, error) {
 	var e Entry
 	var d time.Time
 	var del *time.Time
 	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del)
+		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG)
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
@@ -385,22 +445,38 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(r.Context())
 	out := []Entry{}
+	dups := []string{}
+	created := 0
 	for i, it := range items {
-		e, err := s.resolve(it)
+		if it.ClientID != "" {
+			// idempotent: a repeat client_id returns the stored entry unchanged
+			ex, err := s.scan(tx.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND client_id=$2`, uid, it.ClientID))
+			if err == nil {
+				out, dups = append(out, ex), append(dups, it.ClientID)
+				continue
+			}
+			if !errors.Is(err, pgx.ErrNoRows) {
+				httpx.Error(w, 500, "db")
+				return
+			}
+		}
+		e, code, err := s.resolve(it)
 		if err != nil {
-			httpx.Error(w, 400, "item "+strconv.Itoa(i)+": "+err.Error())
+			httpx.Error(w, code, "item "+strconv.Itoa(i)+": "+err.Error())
 			return
 		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
-			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING `+cols,
+			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING `+cols,
 			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
-			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed))
+			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
+			e.ClientID, e.TableVer, e.CarbsG, e.FatG))
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
 		}
 		out = append(out, saved)
+		created++
 	}
 	_, _ = tx.Exec(r.Context(), `INSERT INTO events(user_id,name,props) VALUES ($1,'log',jsonb_build_object('items',$2::int))`, uid, len(out))
 	if err := tx.Commit(r.Context()); err != nil {
@@ -415,7 +491,11 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	if unmatched == nil {
 		unmatched = []string{}
 	}
-	httpx.JSON(w, 201, map[string]any{"entries": out, "unmatched": unmatched, "needs_confirmation": toConfirm, "summary": sum})
+	code := 201
+	if created == 0 {
+		code = 200 // every item was a repeat
+	}
+	httpx.JSON(w, code, map[string]any{"entries": out, "duplicates": dups, "unmatched": unmatched, "needs_confirmation": toConfirm, "summary": sum})
 }
 
 func (s *Service) handleList(w http.ResponseWriter, r *http.Request) {
@@ -450,16 +530,22 @@ func entryTotals(es []Entry) Total {
 		t.ProteinG += e.ProteinBest
 		t.ProteinLow += e.ProteinLow
 		t.ProteinHigh += e.ProteinHigh
+		t.CarbsG += e.CarbsG
+		t.FatG += e.FatG
 	}
 	return t
 }
 
 func (s *Service) load(ctx context.Context, uid int64, r *http.Request) (Entry, int, error) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		return Entry{}, 400, errors.New("bad id")
+	// {id} is the server id, or the app's client_id
+	raw := r.PathValue("id")
+	var e Entry
+	var err error
+	if id, perr := strconv.ParseInt(raw, 10, 64); perr == nil {
+		e, err = s.scan(s.DB.QueryRow(ctx, `SELECT `+cols+` FROM food_entries WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`, id, uid))
+	} else {
+		e, err = s.scan(s.DB.QueryRow(ctx, `SELECT `+cols+` FROM food_entries WHERE client_id=$1 AND user_id=$2 AND deleted_at IS NULL`, raw, uid))
 	}
-	e, err := s.scan(s.DB.QueryRow(ctx, `SELECT `+cols+` FROM food_entries WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`, id, uid))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return e, 404, errors.New("entry not found")
 	}
@@ -571,15 +657,19 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if in.DishID != nil && *in.DishID != "" {
 		it.Source = "table" // user picked the dish
 	}
-	ne, err := s.resolve(it)
+	if it.DishID != "" && it.Source != "custom" {
+		it.Kcal, it.ProteinG = nil, nil // edited dish chips are recomputed from the current table
+	}
+	ne, code, err := s.resolve(it)
 	if err != nil {
-		httpx.Error(w, 400, err.Error())
+		httpx.Error(w, code, err.Error())
 		return
 	}
 	saved, err := s.scan(s.DB.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
-		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=true,updated_at=now()
+		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=true,
+		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,updated_at=now()
 		WHERE id=$1 AND user_id=$2 RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
-		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source))
+		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG))
 	if err != nil {
 		httpx.Error(w, 500, "save failed")
 		return

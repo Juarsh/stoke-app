@@ -109,3 +109,15 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 - "X with Y, 1 bowl" shares the bowl between X and Y in proportion to their standard portions (fats excluded).
 - Modifiers pick a variant row: "paratha with aloo filling", "aloo bhara paratha", "veg momos", "chicken steamed momos".
 - Egg counts go to the egg dish: "teen ande ka omelette" = omelette for 3 eggs, not boiled eggs.
+
+## App contract for POST /v1/entries items (katoricount-app)
+- `client_id` (string, max 100): idempotent per user. Sending a client_id that already exists returns the stored entry unchanged (in `entries`, listed in `duplicates`); the response is 200 if every item was a repeat, else 201. To change an entry use `PATCH /v1/entries/{id}`; `{id}` may be the server id or the client_id (GET and DELETE too).
+- `dish_table_version` (int): the table version the client's numbers came from (current: max `version` in dishes.json, now 1).
+- `kcal`, `kcal_low`, `kcal_high`, `protein_g`, `protein_low`, `protein_high`, `carbs_g`, `fat_g`: what the user confirmed. For table items (dish_id + source table/did_you_mean/generic) the server checks them against that table version and **rejects mismatches, never silently recalculating**:
+  - numbers without `dish_table_version`: 400
+  - a version the server can't check (not the current one): 409
+  - kcal off by more than max(2 kcal, 2%) or protein by more than max(0.5 g, 3%): 422
+  - ranges that don't contain the best guess: 422
+  - otherwise the client's numbers are stored as sent (carbs/fat default to table estimates).
+  Table items sent without numbers are computed from the current table (older clients).
+- Stored per entry: client_id, dish_table_version, confirmed, carbs_g, fat_g (migration 003). Entry responses include them.

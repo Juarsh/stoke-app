@@ -76,3 +76,12 @@ func MustLoad() []Dish {
 	}
 	return ds
 }
+
+// TableVersion is the highest row version; clients send it with saved entries.
+func TableVersion(ds []Dish) int {
+	v := 1
+	for _, d := range ds {
+		v = max(v, d.Version)
+	}
+	return v
+}
