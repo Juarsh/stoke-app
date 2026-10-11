@@ -14,6 +14,7 @@ import { readTodaySteps } from '@/lib/health';
 import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
+import { ReviewLink } from '@/components/ReviewLink';
 import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -56,6 +57,7 @@ export default function Today() {
               </Pressable>
             </Row>
           </Row>
+          {d.reviews.length ? <ReviewLink date={d.date} n={d.reviews.length} /> : null}
           <HeroArc eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} />
           <View style={s.pair}>
             <Card style={s.half}>
@@ -76,10 +78,16 @@ export default function Today() {
             {d.streak.freezeJustUsed ? <T v="caption" tone="freeze">❄ Freeze saved your {d.streak.current}-day streak</T>
               : d.streak.current === 0 && d.loggedDates.size > 0 ? <T v="caption" tone="muted">Streak paused. Start again today.</T> : null}
           </Row>
+          {d.pending.map((f) => (
+            <Row key={f.id} style={{ justifyContent: 'space-between' }} accessibilityLabel={`${f.span}, calories pending`}>
+              <T tone="text2" style={{ flex: 1 }}>{f.span} · waiting for an estimate</T><T tone="muted">— kcal</T>
+            </Row>
+          ))}
+          {d.entries.length || d.pending.length || d.reviews.length ? null : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
           {d.entries.length ? (
             <FlatList horizontal data={d.entries} keyExtractor={keyOf} renderItem={renderTile} showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 10 }} initialNumToRender={4} windowSize={3} removeClippedSubviews />
-          ) : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>

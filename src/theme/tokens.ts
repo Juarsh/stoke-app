@@ -14,6 +14,8 @@ const light = {
   steps: '#1F6FA8', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
   ai: '#5B3E91', aiBg: '#EFE8FA', danger: '#A12F27', track: 'rgba(20,60,45,0.10)',
   onCoachFill: 'rgba(255,255,255,0.16)', check: '#111A16', onCheck: '#FFFFFF', freeze: '#1F6FA8',
+  /** review card text/icon (spec). Never saffron. */
+  warn: '#7E4A1E',
   scrim: 'rgba(8,11,10,0.45)', popBg: '#1A201D', popText: '#F1F4F2', shadow: '#0E1110', glowBtn: 'rgba(19,160,122,0.35)',
   tile: [['#F6CF7E', '#E07A2E'], ['#7FE3C0', '#13A07A'], ['#F4A3A3', '#C9485B'], ['#9CC8F2', '#3A6FC4'], ['#D9C2F5', '#7A55C2']] as string[][],
   shareBg1: '#FBF8F1', shareBg2: '#F1EADB',
@@ -32,6 +34,7 @@ const dark: Palette = {
   steps: '#7FB8E6', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
   ai: '#C6B2F0', aiBg: 'rgba(160,130,230,0.16)', danger: '#F0918A', track: 'rgba(255,255,255,0.08)',
   onCoachFill: 'rgba(255,255,255,0.12)', check: '#F1F4F2', onCheck: '#080B0A', freeze: '#7FB8E6',
+  warn: '#E89A5C',
   scrim: 'rgba(0,0,0,0.6)', popBg: '#202824', popText: '#F1F4F2', shadow: '#000000', glowBtn: 'rgba(19,160,122,0.35)',
   tile: light.tile,
   shareBg1: '#121715', shareBg2: '#0B0E0D',

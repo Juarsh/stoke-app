@@ -9,7 +9,7 @@ import { Glows, Grad } from './Gradient';
 const OnCard = createContext(false);
 
 type Variant = keyof typeof typeScale;
-export type Tone = 'text' | 'text2' | 'muted' | 'em' | 'emChip' | 'gold' | 'goldOnGrad' | 'ai' | 'danger' | 'over' | 'onGrad' | 'onCoach' | 'onCheck' | 'popText' | 'steps' | 'freeze'
+export type Tone = 'text' | 'text2' | 'muted' | 'em' | 'emChip' | 'gold' | 'goldOnGrad' | 'ai' | 'danger' | 'over' | 'onGrad' | 'onCoach' | 'onCheck' | 'popText' | 'steps' | 'freeze' | 'warn'
   | 'primary' | 'primaryText' | 'accent' | 'aiText' | 'onPrimary' | 'infoText';
 export function T({ v = 'body', tone = 'text', style, children, ...p }: TextProps & { v?: Variant; tone?: Tone }) {
   const t = useTheme();

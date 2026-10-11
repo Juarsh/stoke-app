@@ -32,6 +32,7 @@ function Gate() {
         <Stack.Screen name="settings" options={{ presentation: 'card' }} />
         <Stack.Screen name="share" options={{ presentation: 'modal' }} />
         <Stack.Screen name="remembered" />
+        <Stack.Screen name="review" />
       </Stack>
     </>
   );

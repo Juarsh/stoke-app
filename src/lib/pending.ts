@@ -2,7 +2,7 @@
 // the sync queue with NO numbers and filled in only when the server resolves them.
 import { DISH_TABLE_VERSION } from '../parser';
 import type { ParseResponse } from './parseLocal';
-import { entryFromItem, FoodEntry } from './domain';
+import { autoSavable, entryFromItem, FoodEntry, reviewEntry } from './domain';
 import { isPlaceholder } from './itemKind';
 import type { PendingFood } from './syncQueue';
 
@@ -12,5 +12,9 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
   const r = await api.parse(f.span, true);
   const got = r.items.filter((it) => !isPlaceholder(it) && it.kcal.best > 0);
   if (!got.length) return null;
-  return got.map((it, i) => entryFromItem(it, { id: `${f.id}-${i}`, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION }));
+  // only a confident table match is saved; anything uncertain becomes a 'needs review' entry (no unwarned number)
+  return got.map((it, i) => {
+    const o = { id: `${f.id}-${i}`, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION };
+    return autoSavable(it) ? entryFromItem(it, o) : reviewEntry(it, o);
+  });
 }

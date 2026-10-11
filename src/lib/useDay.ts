@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { suggest } from './coach';
-import { computeStreak, dayTotals, localDate, stepsKcal } from './domain';
+import { computeStreak, counted, dayTotals, localDate, loggedDays, stepsKcal } from './domain';
 import { DISHES } from '../parser';
 import { useStore } from './store';
+import { pendingFor } from './syncQueue';
 
 export function useDay(date = localDate()) {
   const st = useStore();
   return useMemo(() => {
     const p = st.profile;
-    const entries = st.entries.filter((e) => e.local_date === date && !e.deleted_at);
+    const entries = st.entries.filter((e) => e.local_date === date && counted(e));
+    const reviews = st.entries.filter((e) => e.local_date === date && !e.deleted_at && e.needs_review);
+    const pending = pendingFor(st.queue, date);
     const tot = dayTotals(entries);
     const steps = st.steps[date] ?? 0;
     const burn = stepsKcal(steps);
@@ -16,9 +19,9 @@ export function useDay(date = localDate()) {
     const proteinTarget = p?.proteinTarget ?? 60;
     const kcalLeft = kcalTarget - tot.kcal;
     const proteinLeft = Math.max(0, Math.round((proteinTarget - tot.protein) * 10) / 10);
-    const loggedDates = new Set(st.entries.filter((e) => !e.deleted_at).map((e) => e.local_date));
+    const loggedDates = loggedDays(st.entries, pendingFor(st.queue).map((f) => f.local_date));
     const streak = computeStreak(loggedDates, localDate());
     const picks = suggest(DISHES, Math.max(0, kcalLeft), proteinLeft, p?.diet ?? 'veg');
-    return { date, entries, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
-  }, [st.entries, st.steps, st.profile, date]);
+    return { date, entries, reviews, pending, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
+  }, [st.entries, st.steps, st.profile, st.queue, date]);
 }

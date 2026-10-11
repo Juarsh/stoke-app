@@ -24,6 +24,19 @@ export interface FoodEntry {
   dish_table_version: number; created_at: string; updated_at: string; deleted_at: string | null;
   /** parse span (matched_text). Sent as ItemIn.span when remember=true, so the backend stores it as a Remembered food. */
   span?: string; remember?: boolean;
+  /** A pending food that resolved to something uncertain (AI estimate, generic, did-you-mean). Not counted, not synced,
+   * until the user confirms review_item in the confirm UI. */
+  needs_review?: boolean; review_item?: Item;
+}
+/** Counted in totals/streak: live and not awaiting review. */
+export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
+/** Only a confident table match may be saved without the user seeing it. */
+export const autoSavable = (it: Item) => it.source === 'table' && !it.needs_confirmation && !it.ai_estimate;
+/** Entry awaiting review: placeholder numbers are zero and never shown as a number. */
+export function reviewEntry(it: Item, o: { slot: Slot; raw_text: string; local_date: string; tableVersion: number; id: string; now?: Date }): FoodEntry {
+  const e = entryFromItem(it, o);
+  const z = { low: 0, best: 0, high: 0 };
+  return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: it };
 }
 
 export const ACTIVITY: Record<Profile['activity'], number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
@@ -101,9 +114,14 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
   };
 }
 
+/** Streak days: anything logged that day counts, even if every item is pending or awaiting review (calories don't). */
+export function loggedDays(entries: FoodEntry[], pendingDates: string[] = []): Set<string> {
+  return new Set([...entries.filter((e) => !e.deleted_at).map((e) => e.local_date), ...pendingDates]);
+}
+
 export function dayTotals(entries: FoodEntry[]) {
   let kcal = 0, protein = 0;
-  for (const e of entries) if (!e.deleted_at) { kcal += e.kcal.best; protein += e.protein_g.best; }
+  for (const e of entries) if (counted(e)) { kcal += e.kcal.best; protein += e.protein_g.best; }
   return { kcal: Math.round(kcal), protein: Math.round(protein * 10) / 10 };
 }
 

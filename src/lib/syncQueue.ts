@@ -46,7 +46,8 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
         const es = await s.resolvePending(op.food);
         if (!es) throw new Error('still pending');
         resolved.push(...es);
-        rest.push(...es.map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
+        // review entries stay on the device until confirmed
+        rest.push(...es.filter((e) => !e.needs_review).map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
       }
       rest.shift();
     } catch {
@@ -56,3 +57,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
   }
   return { rest, resolved };
 }
+
+/** Queued pending foods for a day (shown as '— kcal', never counted). */
+export const pendingFor = (q: Op[], date?: string): PendingFood[] =>
+  q.flatMap((o) => (o.kind === 'pending' && (!date || o.food.local_date === date) ? [o.food] : []));

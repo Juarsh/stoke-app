@@ -3,7 +3,8 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { FoodEntry, localDate, Profile } from './domain';
+import { entryFromItem, FoodEntry, localDate, Profile } from './domain';
+import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { resolvePending } from './pending';
 import { enqueue, flush, Op, PendingFood } from './syncQueue';
@@ -89,6 +90,14 @@ function useStoreValue() {
       return { ...p, learned: l, queue: id === undefined ? p.queue : enqueue(p.queue, { kind: 'forget', id, tries: 0 }) };
     }),
     /** Foods added before their numbers were known: queued, never saved with a number. */
+    /** Confirm a review entry with the (possibly corrected) item: it becomes a normal entry and syncs. */
+    confirmReview: (id: string, it: Item) => upd((p) => {
+      const old = p.entries.find((e) => e.id === id); if (!old) return p;
+      const n = entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id });
+      return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
+    }),
+    /** Remove a review entry: it was never synced, so it just goes. */
+    dropReview: (id: string) => upd((p) => ({ ...p, entries: p.entries.filter((e) => e.id !== id) })),
     addPending: (fs: PendingFood[]) => upd((p) => ({ ...p, queue: fs.reduce((q, food) => enqueue(q, { kind: 'pending', food, tries: 0 }), p.queue) })),
     deleteAll: async () => { await api.deleteMe().catch(() => {}); setS(EMPTY); },
   };

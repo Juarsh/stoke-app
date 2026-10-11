@@ -101,3 +101,43 @@ test('remembered readings skip confirmation next time', () => {
   expect(r.needs_confirmation).toBe(false); expect(r.remembered).toBe(true); expect(r.quantity).toBe(3);
   expect(reasonWord(parseLocal('20 roti').items[0])).toBe('portion');
 });
+import { resolvePending } from '../src/lib/pending';
+import { counted, dayTotals, loggedDays, reviewEntry } from '../src/lib/domain';
+import { pendingFor } from '../src/lib/syncQueue';
+describe('pending foods never save an unwarned number', () => {
+  const food = { id: 'p', span: 'x', slot: 'lunch' as const, local_date: '2026-10-12', raw_text: 'x' };
+  const resp = (items: ReturnType<typeof parser.parse>['items']) => ({ parse: async () => ({ items } as never) });
+  test('confident table match auto-saves', async () => {
+    const [e] = (await resolvePending(resp(parser.parse('dal').items), food))!;
+    expect(e.needs_review).toBeFalsy(); expect(e.confirmed).toBe(true); expect(counted(e)).toBe(true);
+  });
+  test.each([
+    ['ai estimate', { ...parser.parse('dal').items[0], source: 'ai_estimate', ai_estimate: true, needs_confirmation: true }],
+    ['did you mean', parser.parse('2 chapatii').items[0]],
+    ['generic', parser.parse('paneer lababdar').items[0]],
+  ])('%s becomes a review entry: not counted, not synced', async (_n, it) => {
+    expect((it as { needs_confirmation: boolean }).needs_confirmation).toBe(true);
+    const [e] = (await resolvePending(resp([it as never]), food))!;
+    expect(e.needs_review).toBe(true); expect(e.confirmed).toBe(false); expect(counted(e)).toBe(false);
+    expect(e.kcal.best).toBe(0); expect(e.review_item).toBeDefined();
+    const { rest, resolved } = await flush([{ kind: 'pending', food, tries: 0 }],
+      { upsertEntry: async () => { throw new Error('must not sync'); }, deleteEntry: async () => {}, deleteRemembered: async () => {}, resolvePending: async () => [e] }, 0);
+    expect(rest).toEqual([]); expect(resolved).toEqual([e]);
+  });
+  test('review entries and pending are left out of totals', () => {
+    const ok = entryFromItem(parser.parse('dal').items[0], { slot: 'lunch', raw_text: 'dal', local_date: '2026-10-12', tableVersion: 1, id: 'a' });
+    const rv = reviewEntry(parser.parse('2 chapatii').items[0], { slot: 'lunch', raw_text: 'x', local_date: '2026-10-12', tableVersion: 1, id: 'b' });
+    expect(dayTotals([ok, rv]).kcal).toBe(ok.kcal.best);
+    expect(pendingFor([{ kind: 'pending', food, tries: 0 }, { kind: 'upsert', entry: ok, tries: 0 }], '2026-10-12')).toEqual([food]);
+    expect(pendingFor([{ kind: 'pending', food, tries: 0 }], '2026-10-13')).toEqual([]);
+  });
+});
+test('streak: a day with only pending or needs-review items still counts; calories do not', () => {
+  const rv = reviewEntry(parser.parse('2 chapatii').items[0], { slot: 'lunch', raw_text: 'x', local_date: '2026-10-11', tableVersion: 1, id: 'r' });
+  const days = loggedDays([rv], ['2026-10-12']);
+  expect([...days].sort()).toEqual(['2026-10-11', '2026-10-12']);
+  expect(computeStreak(days, '2026-10-12').current).toBe(2);
+  expect(dayTotals([rv]).kcal).toBe(0);
+  const gone = { ...rv, deleted_at: '2026-10-11T10:00:00Z' };
+  expect(loggedDays([gone]).size).toBe(0);
+});
