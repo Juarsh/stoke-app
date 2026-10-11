@@ -319,3 +319,18 @@ these routes don't exist (404).
   `go run ./cmd/dishes-pull > internal/dishes/dishes.json` and commit the
   result. Until you do, a server built from an older `dishes.json` still
   starts and uses the newer published table.
+
+## Default portions (`strict_require_stated_quantity: false`)
+
+The table also answers a meal when a span is an exact or alias match but has
+no count or unit typed, for example "palak paneer". That item uses the dish's
+standard portion, makes no AI call, has `needs_confirmation: false`, and has
+**`default_portion: true`**. The app can show "Read as: 1 katori · Change".
+Adding the item normally confirms it.
+
+A `POST /v1/entries` with only `text` never saves `default_portion` items on
+its own. They come back in `needs_confirmation` for the app to confirm. Items
+with a stated count are saved as before.
+
+Combo rows (dal chawal, rajma chawal, chole bhature, kadhi chawal), generic
+rows, typo matches and leftovers still go to the AI.

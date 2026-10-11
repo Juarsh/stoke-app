@@ -898,7 +898,7 @@ func TestAdminExportImport(t *testing.T) {
 	// make cache entries: one meal twice (1 call + 1 hit), another once
 	parseAI(t, srv, "a1", "kuttu cheela")
 	parseAI(t, srv, "a2", "kuttu cheela")
-	parseAI(t, srv, "a3", "thalipeeth")
+	parseAI(t, srv, "a3", "glarp bites")
 	var top struct {
 		Top []struct {
 			Text  string
@@ -980,5 +980,45 @@ func TestAdminExportImport(t *testing.T) {
 	srv3, _ := setup(t, nil)
 	if c := admin(t, srv3, "GET", "/admin/ai-cache/top", testAdmin, nil, nil); c != 404 {
 		t.Errorf("admin without ADMIN_TOKEN: %d", c)
+	}
+}
+
+// A count-less exact match uses the default portion: table answer, no AI,
+// no confirmation flag, default_portion=true. Text-only saves still ask.
+func TestDefaultPortion(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	var r struct {
+		Answer string
+		Items  []struct {
+			DishID            string `json:"dish_id"`
+			Source            string
+			NeedsConfirmation bool `json:"needs_confirmation"`
+			DefaultPortion    bool `json:"default_portion"`
+			Unit              string
+		}
+	}
+	if c := call(t, srv, "POST", "/v1/parse", "dp", M{"text": "2 roti, palak paneer"}, &r); c != 200 || r.Answer != "table" || aiCalls(t, srv) != 0 {
+		t.Fatalf("count-less meal: %d %+v calls %d", c, r, aiCalls(t, srv))
+	}
+	if a, b := r.Items[0], r.Items[1]; a.DefaultPortion || !b.DefaultPortion || b.NeedsConfirmation || b.Source != "table" || b.Unit == "" {
+		t.Errorf("items: %+v", r.Items)
+	}
+	var cr struct {
+		Entries           []entry
+		NeedsConfirmation []M `json:"needs_confirmation"`
+	}
+	call(t, srv, "POST", "/v1/entries", "dp", M{"text": "palak paneer"}, &cr)
+	if len(cr.Entries) != 0 || len(cr.NeedsConfirmation) != 1 {
+		t.Errorf("text-only save of a default portion must ask: %+v", cr)
+	}
+	cr.Entries, cr.NeedsConfirmation = nil, nil
+	call(t, srv, "POST", "/v1/entries", "dp", M{"text": "2 roti"}, &cr)
+	if len(cr.Entries) != 1 {
+		t.Errorf("stated count text save: %+v", cr)
+	}
+	// the normal Add of the parsed item (app confirms) saves it
+	if c := call(t, srv, "POST", "/v1/entries", "dp", M{"items": []M{{"dish_id": "palak_paneer", "qty": 1, "source": "table"}}}, nil); c != 201 {
+		t.Errorf("add default portion item: %d", c)
 	}
 }

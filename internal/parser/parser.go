@@ -118,6 +118,9 @@ type Item struct {
 	Alternatives []Alternative `json:"alternatives,omitempty"`
 	AIEstimate   bool          `json:"ai_estimate"`
 	Learned      bool          `json:"learned"` // from the user's remembered readings
+	// DefaultPortion: no count or unit was typed, so the dish's standard
+	// portion was used ("Read as: 1 katori · Change").
+	DefaultPortion bool `json:"default_portion"`
 
 	explicit bool // quantity/unit came from the text
 	stated   bool // kept after finish for TableOnly
@@ -769,6 +772,7 @@ func (p *Parser) Parse(text string) Result {
 	for i := range res.Items {
 		it := &res.Items[i]
 		it.stated = it.explicit // a count/unit was in the text
+		it.DefaultPortion = !it.stated
 		it.explicit = false
 		if res.Leftover > 0 || len(res.Unmatched) > 0 {
 			it.pen("leftover_in_meal")

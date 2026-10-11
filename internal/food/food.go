@@ -680,7 +680,8 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		p := s.parser().Parse(in.Text)
 		strict := s.parser().TableOnly(p)
 		for _, it := range p.Items {
-			if it.NeedsConfirmation || !strict {
+			// text-only saves never skip the app's confirm for a guessed portion
+			if it.NeedsConfirmation || !strict || it.DefaultPortion {
 				it.NeedsConfirmation = true
 				toConfirm = append(toConfirm, it)
 				continue
