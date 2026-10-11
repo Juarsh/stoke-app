@@ -362,3 +362,48 @@ split rule and goes to the AI.
 
 "bread butter" used to go to the AI because it matched the `bread_butter`
 combo row, and the strict rule never lets combo rows answer alone.
+
+## Spans, AI contract and overconfidence rules (current; replaces earlier AI notes where they conflict)
+
+**`span_start` / `span_end` on every item.** These are character offsets
+into the user's original text, end exclusive, counted in **UTF-16 code
+units**, which is how JS string indices count. So
+`text.slice(span_start, span_end)` works in the app, Hindi script included.
+
+**AI only fills the gaps.** Confident table items, and remembered foods, keep
+their spans; these are the claimed spans.
+- The AI gets the whole text for context, plus the **unclaimed spans**
+  (offsets and substrings, with noise such as numbers, connectors and fillers
+  dropped).
+- It must return items only for those spans, each with
+  `span_start`/`span_end`/`span_text`.
+- AI items that overlap a table item are dropped.
+- An AI item with no valid position becomes `did_you_mean` with
+  `needs_confirmation=true`, flagged `ai_unplaced`, and is put on the first
+  unclaimed span.
+- An AI item never gets a whole-text span while table items exist.
+- A table word glued to unknown words ("kuttu cheela") is not claimed; the
+  whole phrase goes to the AI.
+- AI items keep the user's own words as `matched_text`. The AI's dish name is
+  in `ai_name`.
+- The cache key is the normalized text plus the claimed spans
+  (dish id @ offsets).
+- The stub (AI_MODE=stub) follows the same contract: one item per unclaimed
+  span, named with the span's own words. In next-answer overrides, items
+  without offsets are placed on the spans in order.
+
+**Remembered foods** are keyed on the user's own text: the span, or the whole
+meal. A remembered whole-meal text, or a remembered unclaimed span, is
+applied before any AI call.
+
+**Linking entries to AI jobs.** `POST /v1/entries` items and `PATCH` accept
+optional `parse_job_id` (alias `job_id`) and `client_item_id`.
+`GET /v1/parse/jobs/{id}` lists the entries saved with that job id.
+
+**Overconfidence rules.** These flags always need a decision:
+- `token_reuse`: one input token feeds at most one item.
+- `adjacent_split`: adjacent dishes must form an everyday pair or combo.
+- `unit_mismatch`: a count or unit must fit the dish's unit ("2 egg curry",
+  "1 glass roti").
+
+Invariant (tested): no confident table item's span overlaps another item's.
