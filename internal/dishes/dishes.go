@@ -27,6 +27,22 @@ type Dish struct {
 	OilSensitive bool     `json:"oil_sensitive"`
 	Source       string   `json:"source"` // usda_fdc, open_food_facts, estimate
 	SourceNote   string   `json:"source_note"`
+	IsEstimate   bool     `json:"is_estimate"`
+	Diet         string   `json:"diet"`     // veg, egg, nonveg
+	Category     string   `json:"category"` // bread, rice, dal, combo, main, protein, breakfast, snack, drink, fruit, sweet, condiment
+	Brand        string   `json:"brand"`
+	Version      int      `json:"version"`
+}
+
+// Allowed reports whether a dish fits a diet preference (veg < egg < nonveg).
+func (d Dish) Allowed(diet string) bool {
+	switch diet {
+	case "veg":
+		return d.Diet == "veg"
+	case "egg":
+		return d.Diet != "nonveg"
+	}
+	return true
 }
 
 // Load returns the embedded dish table.

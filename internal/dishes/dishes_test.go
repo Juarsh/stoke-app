@@ -13,6 +13,9 @@ func TestTable(t *testing.T) {
 		if !units[d.Unit] {
 			t.Errorf("%s: bad unit %q", d.ID, d.Unit)
 		}
+		if d.Diet != "veg" && d.Diet != "egg" && d.Diet != "nonveg" || d.Category == "" {
+			t.Errorf("%s: bad diet/category", d.ID)
+		}
 		if d.SourceNote == "" || d.Source == "" {
 			t.Errorf("%s: missing source", d.ID)
 		}

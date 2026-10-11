@@ -261,13 +261,13 @@ func (p *Parser) matchDish(toks []token, i int) (*dishes.Dish, int, bool) {
 }
 
 type pending struct {
-	qty     float64
-	hasQty  bool
-	unit    string
-	factor  float64
-	oil     string
-	small   bool
-	words   []string
+	qty    float64
+	hasQty bool
+	unit   string
+	factor float64
+	oil    string
+	small  bool
+	words  []string
 }
 
 // Parse parses a meal description.
@@ -467,7 +467,6 @@ func nz(f float64) float64 {
 	}
 	return f
 }
-
 
 func (p *Parser) dishByID(id string) *dishes.Dish {
 	for _, d := range p.dish {
