@@ -141,6 +141,9 @@ confident it returns 200 with `entries: []` and the `needs_confirmation` list.
 
 ## AI fallback
 
+**The "Strict rule and queue" section below replaces the per-span batching and
+the per-minute limiter described in this section.**
+
 - At most **one AI call per meal**. All unknown spans are sent in one batch, with
   their leading counts removed (counts are applied afterwards).
 - **Shared cache** keyed on normalized text (lower case, no punctuation,
@@ -185,7 +188,7 @@ that span comes back as `source=table`, `learned=true` and
 
 - `GET /test/ai/calls` returns `{"calls": n, "global_daily_cap": n}`.
 - `POST /test/ai/calls/reset` sets the call count to 0 and clears the AI cache plus the per-user and global AI counters.
-- `POST /test/ai/next-answer` with `{"items":[{name, quantity, unit, kcal:{low,best,high}, protein:{...}}]}` makes the next call return these items for every span.
+- `POST /test/ai/next-answer` with `{"items":[{name, quantity, unit, kcal:{low,best,high}, protein_g:{low,best,high}}]}` makes the next AI call (for the whole meal) return these items.
 - `POST /test/ai/daily-cap` with `{"cap": n}` sets the project-wide daily cap. 0 means unlimited.
 
 ## Dish table versions
@@ -233,3 +236,58 @@ To confirm, send `PATCH /v1/entries/{id or client_id}` with
 `{"state": "confirmed", ...}`. The normal save rules apply, so a custom item
 must include `kcal`. Once confirmed, the entry counts in totals. Learned
 readings are only remembered from confirmed entries.
+
+
+## Strict rule and queue (replaces earlier AI-fallback behaviour)
+
+**The table answers a meal only if all of these hold:**
+- every span is an exact or alias match;
+- every span has a count or unit stated in the text (`rules.json >
+  strict_require_stated_quantity`, default true);
+- nothing is left over, and no fuzzy match, split, combo or generic row was
+  used;
+- no item has a flag or needs confirmation.
+
+A remembered food (learned reading) counts as a clean table match. This
+includes a remembered reading for the whole meal text.
+
+If the table answers, `POST /v1/parse` returns **200** with `answer: "table"`
+and `status: "done"`.
+
+**Otherwise the whole meal text goes to the AI in one call.** The rule-based
+parse is included in the prompt only as a hint. Every AI item comes back with
+`source=ai_estimate`, `needs_confirmation=true`, and kcal and protein ranges.
+- **Cache hit** (the whole meal's normalized text): 200 with `answer: "ai"` and
+  `fallback: "cache"`. No call is made.
+- **Otherwise** the meal is queued: **202** with
+  `{"status": "pending", "job_id": "...", "fallback": "queued", "items": [], ...}`.
+  Poll `GET /v1/parse/jobs/{job_id}`. It returns 202 `{"status": "pending",
+  "queue_length": n}` until the answer is ready, then 200 with the full parse
+  response. Jobs belong to the user who created them (404 for anyone else)
+  and expire after one hour.
+- The queue runs in the server process and drains at `AI_PER_MINUTE`
+  (default 8). A queue that is full (500 jobs) gives `fallback: "busy"`.
+  Pending jobs are lost on restart; the app should save the meal as
+  `needs_review` and parse it again later.
+- AI not configured, or `use_ai: false`, or a per-user or project-wide daily
+  cap reached: 200 with `answer: "generic"`. This is the rule-based guess with
+  every item set to `needs_confirmation`, plus placeholder cards for unknown
+  text.
+- AI errors, timeouts, and answers outside 0-3000 kcal: the job finishes with
+  `answer: "generic"` and `fallback: "error"`. These answers are never cached.
+
+`POST /v1/entries` with only `text` now saves items only if the meal passes
+the strict rule. Otherwise every item comes back in `needs_confirmation`.
+
+## Field names
+
+Entries use **`protein_g`**. `protein` is also accepted as an alias on
+`POST /v1/entries` items and on `PATCH`. Parse items return
+`protein_g: {low, best, high}`.
+
+## Tests
+
+The integration tests create a throwaway database with a unique name
+(`ct_run_<random>`) for each run and drop it afterwards. They never touch
+`calorie_test`. `TEST_PG_ADMIN_URL` must be a role that can create databases
+(default `postgres://calorie:calorie@localhost:5432/postgres`).

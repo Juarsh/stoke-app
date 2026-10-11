@@ -740,5 +740,6 @@
    "roti",
    "khichdi"
   ]
- }
+ },
+ "strict_require_stated_quantity": true
 }

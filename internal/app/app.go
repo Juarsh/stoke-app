@@ -30,7 +30,7 @@ type Config struct {
 	GeminiKey string
 	// GlobalAICap is the project-wide daily AI call limit (0 = unlimited).
 	GlobalAICap int64
-	// AIPerMinute is the project-wide AI calls per minute (default 8; <0 = unlimited).
+	// AIPerMinute is the queue drain rate: AI calls per minute (default 8; <0 = no spacing).
 	AIPerMinute int
 	GeminiModel string
 	// Dishes overrides the embedded table (tests simulate table updates).
@@ -73,7 +73,7 @@ func New(c Config) (http.Handler, error) {
 	if c.AIPerMinute == 0 {
 		c.AIPerMinute = 8
 	}
-	fs.Limiter = food.NewLimiter(c.AIPerMinute)
+	fs.Start(context.Background(), food.NewQueue(c.AIPerMinute, 500))
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{

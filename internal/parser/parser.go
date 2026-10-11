@@ -52,6 +52,9 @@ type Rules struct {
 	DevDigits       string              `json:"devanagari_digits"`
 	DevWords        map[string]string   `json:"devanagari_words"`
 	GenericProtein  map[string]string   `json:"generic_protein_dish"`
+	// StrictStatedQty: the table answers alone only if every span had a
+	// count or unit in the text ("2 roti", "1 katori dal"); "dal" alone goes to AI.
+	StrictStatedQty bool                `json:"strict_require_stated_quantity"`
 	FormWords       []string            `json:"form_words"`
 	ModifierWords   []string            `json:"modifier_words"`
 	StuffingWords   []string            `json:"stuffing_words"`
@@ -117,6 +120,7 @@ type Item struct {
 	Learned      bool          `json:"learned"` // from the user's remembered readings
 
 	explicit bool // quantity/unit came from the text
+	stated   bool // kept after finish for TableOnly
 	generic  bool
 	clause   int  // comma-separated part of the text
 	joined   bool // linked to the previous item by "with"/"aur"
@@ -764,6 +768,7 @@ func (p *Parser) Parse(text string) Result {
 	}
 	for i := range res.Items {
 		it := &res.Items[i]
+		it.stated = it.explicit // a count/unit was in the text
 		it.explicit = false
 		if res.Leftover > 0 || len(res.Unmatched) > 0 {
 			it.pen("leftover_in_meal")
@@ -1286,7 +1291,7 @@ func (p *Parser) build(d *dishes.Dish, pd pending, matched string, fuzzy bool) [
 	if d.PieceGrams > 0 && pd.hasQty && (unit == "" || unit == "count") {
 		unit = "piece" // "8 momos" = 8 pieces
 	}
-	it := Item{DishID: d.ID, Name: d.Name, Matched: matched, DataSource: d.Source, SourceNote: d.SourceNote, Fuzzy: fuzzy, explicit: pd.hasQty}
+	it := Item{DishID: d.ID, Name: d.Name, Matched: matched, DataSource: d.Source, SourceNote: d.SourceNote, Fuzzy: fuzzy, explicit: pd.hasQty || pd.unit != ""}
 	it = p.compute(d, it, qty, unit)
 	if capped {
 		it.pen("capped")
@@ -1499,3 +1504,23 @@ func (p *Parser) Table() []dishes.Dish { return p.table }
 
 // TableVersion is the dish table version this parser uses.
 func (p *Parser) TableVersion() int { return dishes.TableVersion(p.table) }
+
+// TableOnly reports whether the table may answer this meal on its own (the
+// strict rule): every span is an exact or alias match with a stated count or
+// unit, and nothing was left over, split, combined, fuzzy-matched, flagged
+// or estimated. Anything else goes to the AI with this parse as a hint.
+func (p *Parser) TableOnly(r Result) bool {
+	if len(r.Items) == 0 || len(r.Unmatched) > 0 {
+		return false
+	}
+	for _, it := range r.Items {
+		if d := p.dishByID(it.DishID); d == nil || len(d.Parts) > 0 || d.NeedsConfirm {
+			return false // combo rows and generic rows never answer alone
+		}
+		if it.Source != SourceTable || it.NeedsConfirmation || it.Fuzzy || it.FromCombo != "" || it.generic ||
+			len(it.Flags) > 0 || it.Unit == "" || (p.r.StrictStatedQty && !it.stated) {
+			return false
+		}
+	}
+	return true
+}

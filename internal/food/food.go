@@ -34,8 +34,8 @@ type Service struct {
 	Summary  Rebuilder
 	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
 	GlobalCap atomic.Int64
-	// Limiter caps AI calls per minute project-wide (nil = no limit).
-	Limiter *Limiter
+	// Queue holds AI jobs and drains them at the per-minute cap.
+	Queue *Queue
 	// Versions holds every published dish table (nil = current only).
 	Versions *Versions
 }
@@ -70,6 +70,12 @@ type ParseResponse struct {
 	CustomItems       []CustomItem  `json:"custom_items"`
 	Message           string        `json:"message,omitempty"`
 	Slot              string        `json:"slot"`
+	// Status is "done", or "pending" (HTTP 202) with JobID to poll at
+	// GET /v1/parse/jobs/{job_id}.
+	Status string `json:"status"`
+	JobID  string `json:"job_id,omitempty"`
+	// Answer says who answered: table, ai, or generic (rule-based guess, all to confirm).
+	Answer string `json:"answer,omitempty"`
 }
 
 func totals(items []parser.Item) Total {
@@ -83,98 +89,165 @@ func totals(items []parser.Item) Total {
 	return t
 }
 
-// Parse runs the table parser, applies the user's remembered readings, then
-// sends every remaining unknown span to the AI in ONE batched call (shared
-// cache first, per-user and project-wide daily caps).
-func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bool) ParseResponse {
+// Parse applies the strict rule. The table answers alone only when every
+// span is a clean exact/alias match with a stated count or unit (or a
+// remembered food). Otherwise the WHOLE meal goes to the AI: a cache hit
+// answers at once; a miss is queued and Parse returns a pending job.
+func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bool) (ParseResponse, *Job) {
 	res := s.Parser.Parse(text)
-	out := ParseResponse{Items: []parser.Item{}, Unmatched: res.Unmatched, Fallback: "none", CustomItems: []CustomItem{},
-		Slot: httpx.SlotFor(httpx.Now())}
+	slot := httpx.SlotFor(httpx.Now())
 
-	// 1. remembered readings replace whatever the parser guessed for that span
+	// remembered readings stand in for their spans
 	learned := s.readings(ctx, userID)
+	if cnt, key := splitCount(text); learned[key].Span != "" {
+		// the whole meal is a remembered food
+		out := ParseResponse{Items: []parser.Item{scaleItem(learned[key].item(text), cnt)}, Fallback: "none", Answer: "table",
+			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
+		return finishResp(out), nil
+	}
+	var items []parser.Item
+	rest := parser.Result{}
 	done := map[string]bool{}
 	for _, it := range res.Items {
 		key := Normalize(it.Matched)
 		if rd, ok := learned[key]; ok {
 			if !done[key] {
-				out.Items = append(out.Items, rd.item(it.Matched))
+				items = append(items, rd.item(it.Matched))
 				done[key] = true
 			}
 			continue
 		}
-		out.Items = append(out.Items, it)
+		rest.Items = append(rest.Items, it)
 	}
-	var spans []string
-	counts := map[string]float64{}
 	for _, u := range res.Unmatched {
 		if !foodLike(u) {
 			continue
 		}
 		cnt, key := splitCount(u)
 		if rd, ok := learned[key]; ok {
-			li := rd.item(u)
-			out.Items = append(out.Items, scaleItem(li, cnt))
+			items = append(items, scaleItem(rd.item(u), cnt))
 			continue
 		}
-		if _, seen := counts[key]; !seen {
-			spans = append(spans, key)
-		}
-		counts[key] += cnt
+		rest.Unmatched = append(rest.Unmatched, u)
+	}
+	if len(rest.Items) == 0 && len(rest.Unmatched) == 0 && len(items) > 0 || len(rest.Items) > 0 && s.Parser.TableOnly(rest) {
+		out := ParseResponse{Items: append(items, rest.Items...), Unmatched: []string{}, Fallback: "none", Answer: "table",
+			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
+		return finishResp(out), nil
 	}
 
-	// 2. AI for the rest: cache hits cost nothing; misses share one call
-	got := map[string][]parser.Item{}
-	if len(spans) > 0 && useAI {
-		var miss []string
-		for _, sp := range spans {
-			if items, ok := s.cacheGet(ctx, sp); ok {
-				got[sp] = items
-			} else {
-				miss = append(miss, sp)
-			}
-		}
-		if len(got) > 0 {
-			out.Fallback = "cache"
-		}
-		if len(miss) > 0 {
-			st, fresh := s.fallbackBatch(ctx, userID, miss)
-			if st == "used" {
-				for sp, items := range fresh {
-					got[sp] = items
-					s.cachePut(ctx, sp, items)
-				}
-				out.Fallback = "used"
-			} else if out.Fallback == "none" {
-				out.Fallback = st
-			}
+	hint := append(append([]parser.Item(nil), items...), res.Items...)
+	key := Normalize(text)
+	if useAI {
+		if cached, ok := s.cacheGet(ctx, key); ok {
+			return s.aiResponse(cached, "cache", slot), nil
 		}
 	}
-	for _, sp := range spans {
-		if items, ok := got[sp]; ok && len(items) > 0 {
-			for _, it := range items {
-				it = scaleItem(it, counts[sp])
-				it.AIEstimate, it.Source, it.DataSource = true, parser.SourceAI, "ai"
-				it.NeedsConfirmation = true
-				it.SourceNote = "AI estimate (Gemini) - confirm before saving"
-				out.Items = append(out.Items, it)
-			}
-			out.UsedAI = true
-			continue
-		}
-		// no AI: a generic confirm card for just this span, keeping its count
-		ph := s.Parser.Unknown(sp)
-		out.Items = append(out.Items, scaleItem(ph, counts[sp]))
-		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: sp, NeedsInput: true})
+	generic := func(fb, msg string) (ParseResponse, *Job) {
+		out := s.genericResponse(res, slot)
+		out.Fallback, out.Message = fb, msg
+		return finishResp(out), nil
 	}
-	if out.Fallback == "cap_reached" || out.Fallback == "global_cap_reached" || out.Fallback == "rate_limited" {
-		out.Message = "AI estimates are back tomorrow. Add it yourself for now."
+	if !useAI {
+		return generic("none", "")
+	}
+	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
+		return generic("not_configured", "")
+	}
+	if st := s.reserveAI(ctx, userID); st != "" {
+		return generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
+	}
+	job, ok := s.Queue.Add(userID, text, key, hint, s.genericResponse(res, slot), slot)
+	if !ok {
+		return generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
+	}
+	return ParseResponse{Items: []parser.Item{}, Unmatched: []string{}, CustomItems: []CustomItem{}, Fallback: "queued",
+		Slot: slot, Status: "pending", JobID: job.ID, NeedsConfirmation: true}, job
+}
+
+func finishResp(out ParseResponse) ParseResponse {
+	if out.Unmatched == nil {
+		out.Unmatched = []string{}
 	}
 	out.Total = totals(out.Items)
+	out.NeedsConfirmation = false
 	for _, it := range out.Items {
 		out.NeedsConfirmation = out.NeedsConfirmation || it.NeedsConfirmation
 	}
 	return out
+}
+
+// genericResponse: the rule-based parse with every item to confirm, and a
+// placeholder card per unknown span (used when no AI answer is available).
+func (s *Service) genericResponse(res parser.Result, slot string) ParseResponse {
+	out := ParseResponse{Unmatched: res.Unmatched, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "generic"}
+	for _, it := range res.Items {
+		it.NeedsConfirmation = true
+		if it.Source == parser.SourceTable {
+			it.Source = parser.SourceDidYouMean
+		}
+		out.Items = append(out.Items, it)
+	}
+	for _, u := range res.Unmatched {
+		if !foodLike(u) {
+			continue
+		}
+		cnt, key := splitCount(u)
+		out.Items = append(out.Items, scaleItem(s.Parser.Unknown(key), cnt))
+		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: key, NeedsInput: true})
+	}
+	return out
+}
+
+func (s *Service) aiResponse(items []parser.Item, fb, slot string) ParseResponse {
+	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "ai", Fallback: fb, UsedAI: true}
+	for _, it := range items {
+		it.AIEstimate, it.Source, it.DataSource = true, parser.SourceAI, "ai"
+		it.NeedsConfirmation = true
+		it.SourceNote = "AI estimate (Gemini) - confirm before saving"
+		out.Items = append(out.Items, it)
+	}
+	return finishResp(out)
+}
+
+// runJob is the queue worker's single AI call for one meal.
+func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
+	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Hint)
+	if err != nil || !plausible(items) {
+		out := j.Generic
+		out.Fallback = "error"
+		out.Message = "Couldn't get an AI estimate. Confirm or add it yourself."
+		return finishResp(out)
+	}
+	s.cachePut(ctx, j.Key, items) // raw AI answer only
+	return s.aiResponse(items, "used", j.Slot)
+}
+
+// reserveAI counts one call against the per-user and project-wide daily
+// caps; it returns a fallback status when either is reached.
+func (s *Service) reserveAI(ctx context.Context, userID int64) string {
+	today := httpx.Today()
+	var calls int
+	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
+		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
+		RETURNING calls`, userID, today, AICapPerDay).Scan(&calls)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "cap_reached"
+	}
+	if err != nil {
+		return "error"
+	}
+	gc := s.GlobalCap.Load() // 0 = unlimited, but always counted
+	err = s.DB.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
+		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
+		RETURNING calls`, today, gc).Scan(&calls)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "global_cap_reached"
+	}
+	if err != nil {
+		return "error"
+	}
+	return ""
 }
 
 // foodLike: any span with a letter (pure numbers are noise).
@@ -246,54 +319,6 @@ func (s *Service) cachePut(ctx context.Context, key string, items []parser.Item)
 	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_cache(norm_text,items) VALUES ($1,$2) ON CONFLICT (norm_text) DO NOTHING`, key, b)
 }
 
-// fallbackBatch makes the single AI call for a meal, inside the per-user cap
-// and the project-wide daily cap.
-func (s *Service) fallbackBatch(ctx context.Context, userID int64, spans []string) (string, map[string][]parser.Item) {
-	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
-		return "not_configured", nil
-	}
-	if !s.Limiter.Allow() {
-		return "rate_limited", nil
-	}
-	today := httpx.Today()
-	var calls int
-	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
-		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
-		RETURNING calls`, userID, today, AICapPerDay).Scan(&calls)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "cap_reached", nil
-	}
-	if err != nil {
-		return "error", nil
-	}
-	{
-		gc := s.GlobalCap.Load() // 0 = unlimited, but always counted
-		err = s.DB.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
-			ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
-			RETURNING calls`, today, gc).Scan(&calls)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "global_cap_reached", nil
-		}
-		if err != nil {
-			return "error", nil
-		}
-	}
-	got, err := s.Fallback.EstimateBatch(ctx, spans)
-	if errors.Is(err, ErrNotConfigured) {
-		return "not_configured", nil
-	}
-	if err != nil || len(got) == 0 {
-		return "error", nil
-	}
-	// reject implausible answers: never cached or shown (generic card instead)
-	for sp, items := range got {
-		if !plausible(items) {
-			delete(got, sp)
-		}
-	}
-	return "used", got
-}
-
 // ---------- entries ----------
 
 type Entry struct {
@@ -338,6 +363,7 @@ type ItemIn struct {
 	CustomName  string   `json:"custom_name"`
 	Kcal        *float64 `json:"kcal"`
 	ProteinG    *float64 `json:"protein_g"`
+	ProteinAlt  *float64 `json:"protein"` // accepted alias for protein_g
 	KcalLow     *float64 `json:"kcal_low"`
 	KcalHigh    *float64 `json:"kcal_high"`
 	ProteinLow  *float64 `json:"protein_low"`
@@ -391,6 +417,9 @@ var saveSources = map[string]bool{"table": true, "did_you_mean": true, "generic"
 func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	var e Entry
 	bad := func(code int, msg string) (Entry, int, error) { return e, code, errors.New(msg) }
+	if in.ProteinG == nil {
+		in.ProteinG = in.ProteinAlt
+	}
 	if !saveSources[in.Source] {
 		return bad(400, "source is required: table, did_you_mean, generic, ai_estimate or custom")
 	}
@@ -575,6 +604,7 @@ func (s *Service) scan(row pgx.Row) (Entry, error) {
 
 func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handler) {
 	mux.Handle("POST /v1/parse", wrap(http.HandlerFunc(s.handleParse)))
+	mux.Handle("GET /v1/parse/jobs/{id}", wrap(http.HandlerFunc(s.handleJob)))
 	mux.Handle("GET /v1/dishes", http.HandlerFunc(s.handleDishes)) // public: the app's offline table
 	mux.Handle("POST /v1/entries", wrap(http.HandlerFunc(s.handleCreate)))
 	mux.Handle("GET /v1/entries", wrap(http.HandlerFunc(s.handleList)))
@@ -601,7 +631,12 @@ func (s *Service) handleParse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	useAI := in.UseAI == nil || *in.UseAI
-	httpx.JSON(w, 200, s.Parse(r.Context(), httpx.UserID(r), in.Text, useAI))
+	out, job := s.Parse(r.Context(), httpx.UserID(r), in.Text, useAI)
+	if job != nil {
+		httpx.JSON(w, 202, out)
+		return
+	}
+	httpx.JSON(w, 200, out)
 }
 
 func (s *Service) handleDishes(w http.ResponseWriter, r *http.Request) {
@@ -636,8 +671,10 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	if len(items) == 0 && strings.TrimSpace(in.Text) != "" {
 		// convenience: save only confident table matches; the rest comes back to confirm
 		p := s.Parser.Parse(in.Text)
+		strict := s.Parser.TableOnly(p)
 		for _, it := range p.Items {
-			if it.NeedsConfirmation {
+			if it.NeedsConfirmation || !strict {
+				it.NeedsConfirmation = true
 				toConfirm = append(toConfirm, it)
 				continue
 			}
@@ -808,6 +845,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		CustomName   *string    `json:"custom_name"`
 		Kcal         *float64   `json:"kcal"`
 		ProteinG     *float64   `json:"protein_g"`
+		ProteinAlt   *float64   `json:"protein"` // alias
 		IfUnmodSince *time.Time `json:"if_unmodified_since"`
 		// Span overrides the stored parsed span; the corrected reading is
 		// remembered for it (set "remember": false to skip).
@@ -818,6 +856,9 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	if !httpx.Decode(w, r, &in) {
 		return
+	}
+	if in.ProteinG == nil {
+		in.ProteinG = in.ProteinAlt
 	}
 	uid := httpx.UserID(r)
 	e, code, err := s.load(r.Context(), uid, r)

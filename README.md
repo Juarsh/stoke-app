@@ -30,7 +30,7 @@ with numbers derived from a hash of the text. Stub mode also enables the
 `/test/ai/*` hooks described in API.md, so never use it in production.
 Stub mode only starts when `APP_ENV` is `dev` or `test`; the server refuses
 to start otherwise. `AI_MODE=gemini` requires `GEMINI_API_KEY`, and
-`GEMINI_MODEL` is optional. `AI_PER_MINUTE` sets the project-wide limit on
+`GEMINI_MODEL` is optional. `AI_PER_MINUTE` sets the AI queue drain rate,
 AI calls per minute (default 8). Tests never call the real Gemini API.
 `AI_GLOBAL_DAILY_CAP` sets the project-wide daily limit on AI calls
 (default 200).
@@ -38,3 +38,7 @@ AI calls per minute (default 8). Tests never call the real Gemini API.
 Example: `APP_ENV=dev AI_MODE=stub DATABASE_URL=... go run ./cmd/api`
 
 Weekly cache review: `go run ./cmd/aicache-export > top.csv`
+
+Tests: `go test ./...`. The integration tests create a throwaway database
+named `ct_run_<random>` and drop it when they finish. `TEST_PG_ADMIN_URL`
+must point at a role that has CREATEDB.

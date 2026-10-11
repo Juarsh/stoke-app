@@ -9,7 +9,6 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/dishes"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -38,10 +37,10 @@ var errSkip = errors.New("skip")
 
 func setup(t *testing.T, ai *fakeAI) (*httptest.Server, *pgxpool.Pool) {
 	t.Helper()
-	url := os.Getenv("TEST_DATABASE_URL")
-	if url == "" {
-		url = "postgres://calorie:calorie@localhost:5432/calorie_test"
+	if testDBURL == "" {
+		t.Skip("no throwaway test database (see TestMain)")
 	}
+	url := testDBURL
 	ctx := context.Background()
 	pool, err := db.Open(ctx, url)
 	if err != nil {
@@ -160,7 +159,7 @@ func TestParseShape(t *testing.T) {
 		}
 		NeedsConfirmation bool `json:"needs_confirmation"`
 	}
-	call(t, srv, "POST", "/v1/parse", "a", M{"text": "2 roti dal sabzi"}, &r2)
+	call(t, srv, "POST", "/v1/parse", "a", M{"text": "2 roti, 1 katori dal"}, &r2)
 	if r2.Items[0].Source != "table" || r2.Items[0].NeedsConfirmation || r2.NeedsConfirmation {
 		t.Errorf("table item: %+v", r2.Items[0])
 	}
@@ -186,88 +185,15 @@ type parseOut struct {
 	Fallback    string
 	CustomItems []M `json:"custom_items"`
 	Message     string
+	Status      string
+	JobID       string `json:"job_id"`
+	Answer      string
 }
 
 func aiCalls(t *testing.T, srv *httptest.Server) int {
 	var c struct{ Calls int }
 	call(t, srv, "GET", "/test/ai/calls", "", nil, &c)
 	return c.Calls
-}
-
-func TestAICapAndFlag(t *testing.T) {
-	srv, _ := setup(t, &fakeAI{})
-	for i := 0; i < 20; i++ {
-		var r parseOut
-		call(t, srv, "POST", "/v1/parse", "cap", M{"text": fmt.Sprintf("2 roti quinoa%c", 'a'+i)}, &r)
-		if !r.UsedAI || len(r.Items) != 2 || !r.Items[1].AIEstimate || r.Items[1].Source != "ai_estimate" || !r.Items[1].NeedsConfirmation {
-			t.Fatalf("call %d: %+v", i, r)
-		}
-	}
-	var r parseOut
-	call(t, srv, "POST", "/v1/parse", "cap", M{"text": "2 roti zzquinoa"}, &r)
-	if r.UsedAI || r.Fallback != "cap_reached" || len(r.CustomItems) != 1 || r.Message == "" || aiCalls(t, srv) != 20 || r.Items[1].Source != "generic" {
-		t.Errorf("21st call: %+v", r)
-	}
-	r = parseOut{}
-	call(t, srv, "POST", "/v1/parse", "other", M{"text": "yyquinoa"}, &r)
-	if !r.UsedAI {
-		t.Errorf("other user capped")
-	}
-	r = parseOut{}
-	call(t, srv, "POST", "/v1/parse", "other2", M{"text": "xxquinoa", "use_ai": false}, &r)
-	if r.UsedAI || aiCalls(t, srv) != 21 {
-		t.Errorf("use_ai false: %+v", r)
-	}
-}
-
-func TestAIBatchCacheAndGlobalCap(t *testing.T) {
-	srv, _ := setup(t, &fakeAI{})
-	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
-	// three unknown spans -> ONE call; counts stay with their span
-	var r parseOut
-	call(t, srv, "POST", "/v1/parse", "u1", M{"text": "2 roti, quinoa bowl, 3 khakhra, kombucha"}, &r)
-	if aiCalls(t, srv) != 1 || len(r.Items) != 4 {
-		t.Fatalf("batch: calls %d items %+v", aiCalls(t, srv), r.Items)
-	}
-	// cache hit (another user too): no call, still ai_estimate + confirm
-	r = parseOut{}
-	call(t, srv, "POST", "/v1/parse", "u2", M{"text": "Quinoa  Bowl!"}, &r)
-	if aiCalls(t, srv) != 1 || r.Fallback != "cache" || r.Items[0].Source != "ai_estimate" || !r.Items[0].NeedsConfirmation {
-		t.Errorf("cache hit: calls %d %+v", aiCalls(t, srv), r)
-	}
-	// user corrections never enter the shared cache
-	var cr struct{ Entries []entry }
-	call(t, srv, "POST", "/v1/entries", "u1", M{"items": []M{{"custom_name": "my quinoa", "qty": 1, "unit": "katori", "kcal": 999,
-		"protein_g": 30, "source": "ai_estimate", "confirmed": true, "span": "quinoa bowl"}}}, &cr)
-	r = parseOut{}
-	call(t, srv, "POST", "/v1/parse", "u3", M{"text": "quinoa bowl"}, &r)
-	if r.Items[0].Kcal.Best == 999 || r.Items[0].Source != "ai_estimate" {
-		t.Errorf("correction leaked into shared cache: %+v", r.Items[0])
-	}
-	// project-wide cap -> generic confirm cards, no call
-	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 1}, nil)
-	r = parseOut{}
-	call(t, srv, "POST", "/v1/parse", "u4", M{"text": "dragonfruit smoothie"}, &r)
-	if aiCalls(t, srv) != 1 || r.Fallback != "global_cap_reached" || r.Items[0].Source != "generic" || !r.Items[0].NeedsConfirmation {
-		t.Errorf("global cap: calls %d %+v", aiCalls(t, srv), r)
-	}
-	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 0}, nil)
-	// implausible AI answers (0 or 3000+ kcal) are rejected and never cached
-	for i, k := range []float64{0, 3200} {
-		call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{{"name": "x", "quantity": 1, "unit": "count", "kcal": M{"low": k, "best": k, "high": k}}}}, nil)
-		span := []string{"zorbo mix", "glarp feast"}[i]
-		r = parseOut{}
-		call(t, srv, "POST", "/v1/parse", "u5", M{"text": span}, &r)
-		if r.Items[0].Source != "generic" || r.Items[0].Kcal.Best == k {
-			t.Errorf("implausible %v shown: %+v", k, r.Items[0])
-		}
-		before := aiCalls(t, srv)
-		r = parseOut{}
-		call(t, srv, "POST", "/v1/parse", "u5", M{"text": span}, &r)
-		if aiCalls(t, srv) != before+1 {
-			t.Errorf("implausible %v was cached", k)
-		}
-	}
 }
 
 func TestRememberedFoods(t *testing.T) {
@@ -332,19 +258,6 @@ func TestRememberedFoods(t *testing.T) {
 	}
 }
 
-func TestAIRateLimited(t *testing.T) {
-	srv, _ := setup(t, &fakeAI{perMinute: 8})
-	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
-	var last parseOut
-	for i := 0; i < 9; i++ {
-		last = parseOut{}
-		call(t, srv, "POST", "/v1/parse", fmt.Sprintf("rl%d", i), M{"text": fmt.Sprintf("zorb%c", 'a'+i)}, &last)
-	}
-	if aiCalls(t, srv) != 8 || last.Fallback != "rate_limited" || last.Items[0].Source != "generic" {
-		t.Errorf("9th call in a minute: calls %d %+v", aiCalls(t, srv), last)
-	}
-}
-
 func TestHooks404OutsideStub(t *testing.T) {
 	srv, _ := setup(t, nil)
 	for _, rt := range [][2]string{{"GET", "/test/ai/calls"}, {"POST", "/test/ai/calls/reset"}, {"POST", "/test/ai/next-answer"}, {"POST", "/test/ai/daily-cap"}} {
@@ -399,7 +312,7 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 			StreakDay int `json:"streak_day"`
 		}
 	}
-	if c := call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti dal"}, &cr); c != 201 {
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti, 1 katori dal"}, &cr); c != 201 {
 		t.Fatalf("create: %d", c)
 	}
 	if len(cr.Entries) != 2 || cr.Entries[0].Slot != "lunch" || cr.Entries[0].LocalDate != "2026-10-14" || len(cr.Unmatched) != 0 || !cr.Summary.Logged || cr.Summary.StreakDay != 1 {
@@ -575,7 +488,7 @@ func TestSaveRules(t *testing.T) {
 	if len(cr.Entries) != 0 || len(cr.NeedsConfirmation) != 2 || len(cr.Unmatched) != 1 {
 		t.Errorf("text save with leftovers must save nothing: %+v", cr)
 	}
-	call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti dal"}, &cr)
+	call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti, 1 katori dal"}, &cr)
 	if len(cr.Entries) != 2 {
 		t.Errorf("clean text save: %+v", cr)
 	}
@@ -782,5 +695,157 @@ func TestNeedsReviewStreakNotCalories(t *testing.T) {
 	}
 	if c := call(t, srv, "POST", "/v1/entries", u, M{"items": []M{{"custom_name": "x", "state": "maybe"}}}, nil); c != 400 {
 		t.Errorf("bad state: %d", c)
+	}
+}
+
+// parseAI posts a meal and, if it's queued (202), polls the job until done.
+func parseAI(t *testing.T, srv *httptest.Server, user, text string) (int, parseOut) {
+	t.Helper()
+	var r parseOut
+	c := call(t, srv, "POST", "/v1/parse", user, M{"text": text}, &r)
+	if c != 202 {
+		return c, r
+	}
+	if r.Status != "pending" || r.JobID == "" {
+		t.Fatalf("202 without a job: %+v", r)
+	}
+	for i := 0; i < 200; i++ {
+		var j parseOut
+		jc := call(t, srv, "GET", "/v1/parse/jobs/"+r.JobID, user, nil, &j)
+		if jc == 200 {
+			return 202, j
+		}
+		if jc != 202 {
+			t.Fatalf("job poll: %d", jc)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("job never finished")
+	return 0, r
+}
+
+func TestStrictTableOrWholeMealAI(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	// clean: every span exact with a stated count/unit -> table, 200, no AI
+	c, r := parseAI(t, srv, "s1", "2 roti, 1 katori dal")
+	if c != 200 || r.Answer != "table" || r.Items[0].Source != "table" || r.Items[0].NeedsConfirmation || aiCalls(t, srv) != 0 {
+		t.Errorf("clean meal: %d %+v", c, r)
+	}
+	// anything else -> the WHOLE meal in one queued AI call
+	for i, text := range []string{"dal chawal", "2 chapatii", "2 roti quinoa", "rajma with rice, 1 bowl", "1 plate chole bhature"} {
+		c, r = parseAI(t, srv, "s1", text)
+		if c != 202 || r.Answer != "ai" || len(r.Items) == 0 || aiCalls(t, srv) != i+1 {
+			t.Fatalf("%q: %d calls %d %+v", text, c, aiCalls(t, srv), r)
+		}
+		for _, it := range r.Items {
+			if it.Source != "ai_estimate" || !it.NeedsConfirmation || !it.AIEstimate {
+				t.Errorf("%q: AI item not flagged: %+v", text, it)
+			}
+		}
+	}
+	// same meal again (another user, different spacing/case): cache, no call, still ai_estimate
+	calls := aiCalls(t, srv)
+	c, r = parseAI(t, srv, "s2", "Dal  Chawal!")
+	if c != 200 || r.Fallback != "cache" || r.Items[0].Source != "ai_estimate" || !r.Items[0].NeedsConfirmation || aiCalls(t, srv) != calls {
+		t.Errorf("cache: %d %+v", c, r)
+	}
+	// use_ai=false: rule-based guess, everything to confirm
+	var g parseOut
+	call(t, srv, "POST", "/v1/parse", "s3", M{"text": "paneer lababdar", "use_ai": false}, &g)
+	if g.Answer != "generic" || !g.Items[0].NeedsConfirmation {
+		t.Errorf("no-AI guess: %+v", g)
+	}
+	// jobs are private
+	var p parseOut
+	call(t, srv, "POST", "/v1/parse", "s4", M{"text": "mystery bowl one"}, &p)
+	if c := call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "s5", nil, nil); c != 404 {
+		t.Errorf("other user's job: %d", c)
+	}
+}
+
+func TestAICapsAndBadAnswers(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	for i := 0; i < 20; i++ {
+		if c, _ := parseAI(t, srv, "cap", fmt.Sprintf("zorb meal %d", i)); c != 202 {
+			t.Fatalf("call %d: %d", i, c)
+		}
+	}
+	c, r := parseAI(t, srv, "cap", "zorb meal last")
+	if c != 200 || r.Fallback != "cap_reached" || r.Answer != "generic" || r.Message == "" || aiCalls(t, srv) != 20 {
+		t.Errorf("per-user cap: %d %+v", c, r)
+	}
+	// project-wide cap
+	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 21}, nil)
+	parseAI(t, srv, "other", "glarp one")
+	c, r = parseAI(t, srv, "other", "glarp two")
+	if r.Fallback != "global_cap_reached" || aiCalls(t, srv) != 21 {
+		t.Errorf("global cap: %d %+v", c, r)
+	}
+	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 0}, nil)
+	// implausible answers: generic card, never cached
+	for i, k := range []float64{0, 3200} {
+		call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{{"name": "x", "quantity": 1, "unit": "count", "kcal": M{"low": k, "best": k, "high": k}}}}, nil)
+		text := []string{"weird thing a", "weird thing b"}[i]
+		_, r = parseAI(t, srv, "bad", text)
+		if r.Answer != "generic" || r.Fallback != "error" {
+			t.Errorf("implausible %v shown: %+v", k, r)
+		}
+		before := aiCalls(t, srv)
+		parseAI(t, srv, "bad", text)
+		if aiCalls(t, srv) != before+1 {
+			t.Errorf("implausible %v was cached", k)
+		}
+	}
+	// user corrections never reach the shared cache
+	parseAI(t, srv, "u1", "quinoa bowl")
+	call(t, srv, "POST", "/v1/entries", "u1", M{"items": []M{{"custom_name": "my quinoa", "qty": 1, "kcal": 999, "protein_g": 30,
+		"source": "ai_estimate", "confirmed": true, "span": "quinoa bowl"}}}, nil)
+	_, r = parseAI(t, srv, "u3", "quinoa bowl")
+	if r.Items[0].Kcal.Best == 999 || r.Items[0].Source != "ai_estimate" {
+		t.Errorf("correction leaked into the shared cache: %+v", r.Items[0])
+	}
+	// ...but the user who confirmed it gets it back as a learned table answer
+	_, r = parseAI(t, srv, "u1", "quinoa bowl")
+	if r.Answer != "table" || !r.Items[0].Learned || r.Items[0].Kcal.Best != 999 {
+		t.Errorf("remembered food: %+v", r)
+	}
+}
+
+func TestQueueSpacesCalls(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{perMinute: 600}) // 100ms apart
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	start := time.Now()
+	var ids []string
+	for i := 0; i < 3; i++ {
+		var r parseOut
+		if c := call(t, srv, "POST", "/v1/parse", "q", M{"text": fmt.Sprintf("queue meal %d", i)}, &r); c != 202 {
+			t.Fatalf("enqueue: %d", c)
+		}
+		ids = append(ids, r.JobID)
+	}
+	for _, id := range ids {
+		for {
+			if c := call(t, srv, "GET", "/v1/parse/jobs/"+id, "q", nil, nil); c == 200 {
+				break
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+	if d := time.Since(start); d < 190*time.Millisecond {
+		t.Errorf("3 calls drained in %v; want spacing of 100ms", d)
+	}
+}
+
+func TestProteinAlias(t *testing.T) {
+	srv, _ := setup(t, nil)
+	var cr struct {
+		Entries []struct {
+			ProteinBest float64 `json:"protein_best"`
+		}
+	}
+	if c := call(t, srv, "POST", "/v1/entries", "pa", M{"items": []M{{"custom_name": "shake", "kcal": 200, "protein": 25, "source": "custom"}}}, &cr); c != 201 || cr.Entries[0].ProteinBest != 25 {
+		t.Errorf("protein alias: %d %+v", c, cr)
 	}
 }
