@@ -34,9 +34,7 @@
  {
   "id": "tandoori_roti",
   "name": "tandoori roti",
-  "aliases": [
-   "tandoori"
-  ],
+  "aliases": [],
   "unit": "count",
   "portion_grams": 60.0,
   "kcal": 160.0,
@@ -6585,9 +6583,7 @@
  {
   "id": "veg_manchurian",
   "name": "veg manchurian",
-  "aliases": [
-   "manchurian"
-  ],
+  "aliases": [],
   "unit": "katori",
   "portion_grams": 150,
   "kcal": 280,

@@ -149,8 +149,20 @@ func TestParseShape(t *testing.T) {
 	if q := r.Items[4]; q.Source != "generic" || !q.NeedsConfirmation || q.Kcal.Best <= 0 || !r.NeedsConfirmation {
 		t.Errorf("placeholder: %+v", r.Items[4])
 	}
-	if r.Items[0].Source != "table" || r.Items[0].NeedsConfirmation {
-		t.Errorf("table item: %+v", r.Items[0])
+	// a meal with leftovers flags every item; a clean meal doesn't
+	if !r.Items[0].NeedsConfirmation {
+		t.Errorf("leftover meal not flagged: %+v", r.Items[0])
+	}
+	var r2 struct {
+		Items []struct {
+			Source            string
+			NeedsConfirmation bool `json:"needs_confirmation"`
+		}
+		NeedsConfirmation bool `json:"needs_confirmation"`
+	}
+	call(t, srv, "POST", "/v1/parse", "a", M{"text": "2 roti dal sabzi"}, &r2)
+	if r2.Items[0].Source != "table" || r2.Items[0].NeedsConfirmation || r2.NeedsConfirmation {
+		t.Errorf("table item: %+v", r2.Items[0])
 	}
 	if len(r.Unmatched) == 0 || r.Fallback != "not_configured" {
 		t.Errorf("unmatched/fallback: %+v", r)
@@ -250,10 +262,10 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 			StreakDay int `json:"streak_day"`
 		}
 	}
-	if c := call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti dal, xyzzy"}, &cr); c != 201 {
+	if c := call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti dal"}, &cr); c != 201 {
 		t.Fatalf("create: %d", c)
 	}
-	if len(cr.Entries) != 2 || cr.Entries[0].Slot != "lunch" || cr.Entries[0].LocalDate != "2026-10-14" || len(cr.Unmatched) != 1 || !cr.Summary.Logged || cr.Summary.StreakDay != 1 {
+	if len(cr.Entries) != 2 || cr.Entries[0].Slot != "lunch" || cr.Entries[0].LocalDate != "2026-10-14" || len(cr.Unmatched) != 0 || !cr.Summary.Logged || cr.Summary.StreakDay != 1 {
 		t.Fatalf("create: %+v", cr)
 	}
 	// custom item (cap reached path) and an explicit slot/date
@@ -423,8 +435,12 @@ func TestSaveRules(t *testing.T) {
 		Unmatched         []string
 	}
 	call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti, paneer lababdar, quinoa"}, &cr)
-	if len(cr.Entries) != 1 || len(cr.NeedsConfirmation) != 1 || len(cr.Unmatched) != 1 {
-		t.Errorf("text save: %+v", cr)
+	if len(cr.Entries) != 0 || len(cr.NeedsConfirmation) != 2 || len(cr.Unmatched) != 1 {
+		t.Errorf("text save with leftovers must save nothing: %+v", cr)
+	}
+	call(t, srv, "POST", "/v1/entries", u, M{"text": "2 roti dal"}, &cr)
+	if len(cr.Entries) != 2 {
+		t.Errorf("clean text save: %+v", cr)
 	}
 	for _, e := range cr.Entries {
 		if e.KcalBest <= 0 {

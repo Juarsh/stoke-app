@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -35,7 +36,7 @@ func TestDevMeals(t *testing.T) {
 		r := p.Parse(m.In)
 		ok := len(r.Items) == len(m.Want)
 		for i := 0; ok && i < len(m.Want); i++ {
-			ok = r.Items[i].DishID == m.Want[i][0].(string) && r.Items[i].Quantity == m.Want[i][1].(float64)
+			ok = r.Items[i].DishID == m.Want[i][0].(string) && math.Abs(r.Items[i].Quantity-m.Want[i][1].(float64)) <= 0.011
 		}
 		if !ok {
 			got := [][]interface{}{}
@@ -187,7 +188,7 @@ func TestSourcesAndConfirmation(t *testing.T) {
 		"2 roti":          {SourceTable, false},
 		"2 chapatii":      {SourceDidYouMean, true},
 		"paneer lababdar": {SourceGeneric, true},
-		"6 plate momos":   {SourceTable, true},
+		"6 plate momos":   {SourceDidYouMean, true},
 		"soya chaap":      {SourceTable, false},
 	}
 	for in, want := range cases {
@@ -226,5 +227,81 @@ func TestFormAfterDish(t *testing.T) {
 	}
 	if it := p.Parse("rajma wrap").Items[0]; !it.NeedsConfirmation || it.Source != SourceGeneric {
 		t.Errorf("generic wrap must need confirmation: %+v", it)
+	}
+}
+
+// Confirmation rate on the dev meals ("everyday" set) - reported, with a ceiling.
+func TestConfirmationRate(t *testing.T) {
+	var f struct{ Meals []devMeal }
+	b, _ := os.ReadFile("testdata/dev-meals.json")
+	_ = json.Unmarshal(b, &f)
+	p := newP(t)
+	items, flagged := 0, 0
+	for _, m := range f.Meals {
+		for _, it := range p.Parse(m.In).Items {
+			items++
+			if it.NeedsConfirmation {
+				flagged++
+			}
+		}
+	}
+	rate := float64(flagged) / float64(items)
+	t.Logf("dev meals (edge cases, 'fresh'): %d items, %d need confirmation (%.1f%%)", items, flagged, 100*rate)
+	if rate > 0.40 {
+		t.Errorf("fresh confirmation rate %.1f%% over the 40%% ceiling", 100*rate)
+	}
+	var ev struct{ Meals []string }
+	b, _ = os.ReadFile("testdata/everyday-meals.json")
+	_ = json.Unmarshal(b, &ev)
+	items, flagged = 0, 0
+	for _, m := range ev.Meals {
+		for _, it := range p.Parse(m).Items {
+			items++
+			if it.NeedsConfirmation {
+				flagged++
+				t.Logf("  everyday flagged: %q %s %v", m, it.DishID, it.Flags)
+			}
+		}
+	}
+	rate = float64(flagged) / float64(items)
+	t.Logf("everyday meals: %d items, %d need confirmation (%.1f%%)", items, flagged, 100*rate)
+	if rate > 0.20 {
+		t.Errorf("everyday confirmation rate %.1f%% over the 20%% ceiling", 100*rate)
+	}
+}
+
+// Wrong-but-confident parses must not slip through: leftovers, splits and
+// combos always flag every affected item.
+func TestNoSilentGuesses(t *testing.T) {
+	p := newP(t)
+	for _, s := range []string{"2 roti xyzzy blorp", "dal with jeera rice, 1 bowl", "1 katori kadhi chawal", "2 chapatii", "paneer lababdar", "3 samosaa"} {
+		for _, it := range p.Parse(s).Items {
+			if !it.NeedsConfirmation {
+				t.Errorf("%q: %s saved silently (conf %.2f flags %v)", s, it.DishID, it.Confidence, it.Flags)
+			}
+		}
+	}
+	// short / stopword leftovers never become placeholders, but still flag the meal
+	r := p.Parse("2 roti hai ok")
+	if len(r.Unmatched) != 0 {
+		t.Errorf("stopwords became placeholders: %v", r.Unmatched)
+	}
+	// style words are never items
+	for _, s := range []string{"tandoori", "masala", "kadai paneer", "malai kofta xyz"} {
+		for _, it := range p.Parse(s).Items {
+			if it.Name == "tandoori" || it.Name == "masala" {
+				t.Errorf("%q: style word became an item", s)
+			}
+		}
+	}
+	// typo keeps its count and never becomes a fruit
+	if it := p.Parse("3 samosaa").Items[0]; it.DishID != "samosa" || it.Quantity != 3 {
+		t.Errorf("fuzzy count: %+v", it)
+	}
+	for _, it := range p.Parse("2 kachoree").Items {
+		d, _ := p.Dish(it.DishID)
+		if d.Category == "fruit" {
+			t.Errorf("snack typo became fruit %s", it.DishID)
+		}
 	}
 }

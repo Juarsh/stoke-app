@@ -433,6 +433,10 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		unmatched = p.Unmatched
 	}
+	if len(items) == 0 && len(toConfirm) > 0 {
+		httpx.JSON(w, 200, map[string]any{"entries": []Entry{}, "duplicates": []string{}, "unmatched": unmatched, "needs_confirmation": toConfirm})
+		return
+	}
 	if len(items) == 0 || len(items) > 30 {
 		httpx.Error(w, 400, "give 1-30 items, or text the table recognises")
 		return

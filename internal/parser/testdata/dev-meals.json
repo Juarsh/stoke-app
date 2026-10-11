@@ -338,11 +338,7 @@
    "in": "dal chawal ghee ke saath 2 plate",
    "want": [
     [
-     "dal",
-     2
-    ],
-    [
-     "rice",
+     "dal_chawal",
      2
     ],
     [
@@ -566,15 +562,11 @@
    "in": "1 plate kadhi chawal",
    "want": [
     [
-     "kadhi",
-     1
-    ],
-    [
-     "rice",
+     "kadhi_chawal",
      1
     ]
    ],
-   "note": "combo split when portion given"
+   "note": "own unit: stays one combo row"
   },
   {
    "in": "kadhi chawal",
@@ -699,7 +691,7 @@
    "want": [
     [
      "generic_fish_dish",
-     1
+     2
     ]
    ],
    "unmatched": []
@@ -717,25 +709,18 @@
    "in": "rajma with rice, 1 bowl",
    "want": [
     [
-     "rajma",
-     0.5
-    ],
-    [
-     "rice",
-     0.5
+     "rajma_chawal",
+     1
     ]
-   ]
+   ],
+   "note": "combo row, one serving, needs confirmation"
   },
   {
    "in": "dal aur chawal 2 katori",
    "want": [
     [
-     "dal",
-     1
-    ],
-    [
-     "rice",
-     1
+     "dal_chawal",
+     2
     ]
    ]
   },
@@ -876,6 +861,20 @@
      1
     ]
    ]
+  },
+  {
+   "in": "dal with jeera rice, 1 bowl",
+   "want": [
+    [
+     "dal",
+     0.38
+    ],
+    [
+     "jeera_rice",
+     0.62
+    ]
+   ],
+   "note": "no combo row: one serving split by calorie share"
   }
  ]
 }
