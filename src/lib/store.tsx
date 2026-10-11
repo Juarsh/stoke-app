@@ -1,18 +1,19 @@
-import Storage from 'expo-sqlite/kv-store';
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ThemePref } from '../theme';
+import type { Learned, Reading } from './learned';
 import { createApi } from './api';
 import { FoodEntry, localDate, Profile } from './domain';
+import { kv } from './kv';
 import { enqueue, flush, Op } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
 interface Persisted {
   user: User | null; profile: Profile | null; entries: FoodEntry[]; steps: Record<string, number>;
-  queue: Op[]; themePref: ThemePref; challenge: Challenge | null; aiUsed: Record<string, number>;
+  queue: Op[]; themePref: ThemePref; challenge: Challenge | null; aiUsed: Record<string, number>; learned: Learned;
 }
-const EMPTY: Persisted = { user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {} };
+const EMPTY: Persisted = { user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {}, learned: {} };
 const KEY = 'app-state-v1';
 
 function useStoreValue() {
@@ -23,9 +24,9 @@ function useStoreValue() {
   const api = useMemo(() => createApi(() => tokenRef.current), []);
 
   useEffect(() => {
-    Storage.getItem(KEY).then((raw) => { if (raw) setS({ ...EMPTY, ...JSON.parse(raw) }); }).finally(() => setReady(true));
+    kv.get(KEY).then((raw) => { if (raw) setS({ ...EMPTY, ...JSON.parse(raw) }); }).finally(() => setReady(true));
   }, []);
-  useEffect(() => { if (ready) Storage.setItem(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
+  useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
   const sync = useCallback(async () => {
     if (api.mock) return; // mock mode: nothing leaves the device; queue is kept for later
@@ -55,6 +56,14 @@ function useStoreValue() {
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),
     setChallenge: (challenge: Challenge | null) => upd((p) => ({ ...p, challenge })),
     useAi: () => upd((p) => ({ ...p, aiUsed: { [localDate()]: (p.aiUsed[localDate()] ?? 0) + 1 } })),
+    remember: (pairs: [string, Reading][]) => {
+      upd((p) => ({ ...p, learned: { ...p.learned, ...Object.fromEntries(pairs) } }));
+      for (const [k, r] of pairs) api.putLearned(k, r).catch(() => {});
+    },
+    forget: (key?: string) => {
+      upd((p) => { if (!key) return { ...p, learned: {} }; const l = { ...p.learned }; delete l[key]; return { ...p, learned: l }; });
+      api.deleteLearned(key).catch(() => {});
+    },
     deleteAll: async () => { await api.deleteMe().catch(() => {}); setS(EMPTY); },
   };
 }

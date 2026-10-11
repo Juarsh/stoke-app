@@ -2891,7 +2891,7 @@
     {
      "dish_id": "soya_chaap",
      "name": "soya chaap",
-     "matched_text": "soy chaap",
+     "matched_text": "soy chaap tikka",
      "quantity": 1,
      "unit": "plate",
      "grams": 200,
@@ -4823,7 +4823,7 @@
     {
      "dish_id": "butter",
      "name": "butter",
-     "matched_text": "butter",
+     "matched_text": "butter masala",
      "quantity": 1,
      "unit": "spoon",
      "grams": 5,
@@ -5884,25 +5884,25 @@
   "out": {
    "items": [
     {
-     "dish_id": "soya_chaap",
-     "name": "soya chaap",
-     "matched_text": "soya chaap",
+     "dish_id": "soya_chaap_roll",
+     "name": "soya chaap roll",
+     "matched_text": "soya chaap roll",
      "quantity": 1,
-     "unit": "plate",
+     "unit": "count",
      "grams": 200,
      "oil_level": "normal",
      "kcal": {
-      "low": 285,
-      "best": 380,
-      "high": 475
+      "low": 345,
+      "best": 460,
+      "high": 575
      },
      "protein_g": {
-      "low": 18,
-      "best": 24,
-      "high": 30
+      "low": 15,
+      "best": 20,
+      "high": 25
      },
-     "carbs_g": 28.2,
-     "fat_g": 19,
+     "carbs_g": 46.6,
+     "fat_g": 21.5,
      "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
@@ -5921,7 +5921,7 @@
     {
      "dish_id": "chicken_tikka",
      "name": "chicken tikka",
-     "matched_text": "chicken tikka",
+     "matched_text": "chicken tikka masala",
      "quantity": 1,
      "unit": "plate",
      "grams": 150,

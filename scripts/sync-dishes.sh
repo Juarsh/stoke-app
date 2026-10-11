@@ -2,12 +2,16 @@
 # Copies the shared dish table + parser rules + dev samples from the Go backend,
 # then regenerates Go-parser golden outputs used by the jest parity tests.
 set -euo pipefail
-BACKEND="${BACKEND:-/workspace/calorie-tracker}"
+REPO="${BACKEND:-/workspace/calorie-tracker}"
+REF="${REF:-HEAD}"   # sync from a COMMIT, never from someone's uncommitted work in progress
 APP="$(cd "$(dirname "$0")/.." && pwd)"
+BACKEND="$(mktemp -d)"
+git -C "$REPO" archive "$REF" internal/dishes internal/parser | tar -x -C "$BACKEND"
+trap 'rm -rf "$BACKEND"' EXIT
 cp "$BACKEND/internal/dishes/dishes.json" "$APP/src/data/dishes.json"
 cp "$BACKEND/internal/parser/rules.json" "$APP/src/data/rules.json"
 cp "$BACKEND/internal/parser/testdata/dev-meals.json" "$APP/src/data/dev-meals.json"
-( cd "$BACKEND" && git rev-parse --short HEAD 2>/dev/null || echo unknown ) > "$APP/src/data/SOURCE_COMMIT"
+git -C "$REPO" rev-parse --short "$REF" > "$APP/src/data/SOURCE_COMMIT"
 if command -v go >/dev/null; then
   T="$(mktemp -d)"; mkdir -p "$T/parser" "$T/dishes"
   cp "$BACKEND/internal/parser/parser.go" "$BACKEND/internal/parser/rules.json" "$T/parser/"

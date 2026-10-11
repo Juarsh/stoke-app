@@ -22,7 +22,7 @@ const config: ExpoConfig = {
     },
     permissions: ['android.permission.health.READ_STEPS'],
   },
-  web: { output: 'static', favicon: './assets/images/favicon.png' },
+  web: { output: 'single', favicon: './assets/images/favicon.png' },
   plugins: [
     'expo-router',
     'expo-sqlite',

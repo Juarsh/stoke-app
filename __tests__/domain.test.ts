@@ -74,3 +74,13 @@ test('item kinds come from the parser source field', () => {
   expect(u.custom_items.length).toBe(1);
 });
 test('light over-grey keeps its contrast floor value', () => { expect(palette.light.over).toBe('#6B6F6D'); });
+import { applyLearned, learnKey, readingOf, reasonWord } from '../src/lib/learned';
+test('remembered readings skip confirmation next time', () => {
+  const [it] = parseLocal('2 chapatii').items;
+  expect(it.needs_confirmation).toBe(true);
+  expect(reasonWord(it)).toBe('fuzzy');
+  const learned = { [learnKey(it.matched_text)]: readingOf({ ...it, quantity: 3 }) };
+  const [r] = applyLearned([it], learned);
+  expect(r.needs_confirmation).toBe(false); expect(r.remembered).toBe(true); expect(r.quantity).toBe(3);
+  expect(reasonWord(parseLocal('20 roti').items[0])).toBe('portion');
+});

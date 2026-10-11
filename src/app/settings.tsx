@@ -50,6 +50,7 @@ export default function Settings() {
         ) : null}
         {sw(!p.showKcalOnCards, (v) => set({ showKcalOnCards: !v }), 'Hide calories on share cards')}
       </Card>
+      <Button kind="soft" title={`Remembered foods · ${Object.keys(st.learned).length}`} onPress={() => router.push('/remembered')} />
       <Button kind="soft" title="Share today" onPress={() => router.push('/share')} />
       <Button kind="ghost" title="Sign out" onPress={() => { st.signOut(); }} />
       <Button kind="danger" title="Delete account & all data" onPress={() => Alert.alert('Delete everything?', 'This removes your account and all logs. It can’t be undone.', [

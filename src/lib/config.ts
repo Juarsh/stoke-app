@@ -11,6 +11,8 @@ export const config = {
   apiUrl: extra.apiUrl ?? '',
   /** No backend URL -> the API client runs in mock mode (all local). */
   get mock() { return !this.apiUrl; },
+  /** QA only: fake AI estimates in mock mode. */
+  mockAi: process.env.EXPO_PUBLIC_MOCK_AI === '1',
   google: { android: extra.googleAndroidClientId ?? '', web: extra.googleWebClientId ?? '', ios: extra.googleIosClientId ?? '' },
 };
 /** Cut-order flags (spec): steps ring and Community tab can be switched off without layout changes. */

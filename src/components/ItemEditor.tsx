@@ -17,8 +17,8 @@ export function rangeLines(it: Pick<Item, 'kcal' | 'protein_g' | 'data_source' |
   ].filter(Boolean);
 }
 
-export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onSlot }: {
-  it: Item; slot: Slot; confirmed: boolean; onEdit: (it: Item) => void; onConfirm?: () => void; onRemove: () => void; onSlot: () => void;
+export function ItemCard({ it, slot, confirmed, remembered, onEdit, onConfirm: _onConfirm, onRemove, onSlot }: {
+  it: Item; slot: Slot; confirmed: boolean; remembered?: boolean; onEdit: (it: Item) => void; onConfirm?: () => void; onRemove: () => void; onSlot: () => void;
 }) {
   const t = useTheme();
   const [pop, setPop] = useState(false);
@@ -44,13 +44,8 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
         {it.oil_level ? <Chip kind={ai ? 'ai' : 'primary'} label={`oil: ${it.oil_level}`} a11y={`Oil level ${it.oil_level}, double-tap to edit`} onPress={() => setSheet(true)} /> : null}
         <Chip kind="neutral" label={`${SLOT_LABEL[slot]} ✎`} a11y={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} onPress={onSlot} />
       </Row>
-      {ai && !confirmed ? (
-        <Row style={{ gap: 6 }}>
-          <Chip kind="ai" label="✓ Looks right" onPress={onConfirm} />
-          <Chip kind="neutral" label="Edit" onPress={() => setSheet(true)} />
-          <Chip kind="neutral" label="Remove" onPress={onRemove} />
-        </Row>
-      ) : null}
+      {ai && !confirmed ? <Row><Chip kind="ai" label="Change" onPress={() => setSheet(true)} /></Row> : null}
+      {remembered ? <T v="caption" tone="em">🔖 Saved from last time</T> : null}
       <Popover visible={pop} onClose={() => setPop(false)} lines={rangeLines(it)} />
       <EditSheet visible={sheet} it={it} onClose={() => setSheet(false)} onSave={(n) => { onEdit(n); setSheet(false); }} onDelete={() => { setSheet(false); onRemove(); }} />
     </Card>

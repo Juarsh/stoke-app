@@ -10,12 +10,12 @@ export interface ParseResponse {
   items: Item[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; needs_confirmation: boolean; fallback: Fallback;
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
 }
-/** Mirrors food.ItemIn per API.md at backend 0b75f5b. The server rejects unknown
- * fields, so client_id / dish_table_version / carbs / fat are only sent once API.md
- * documents them (see ENTRY_EXTRA_FIELDS in api.ts). Dish rows are recomputed server-side. */
+/** Mirrors food.ItemIn per API.md "App contract" (backend ea9dd85). Table items carry the
+ * confirmed numbers + dish_table_version; the server checks them and never recalculates. */
+type Nums = { kcal: number; kcal_low: number; kcal_high: number; protein_g: number; protein_low: number; protein_high: number; carbs_g?: number; fat_g?: number };
 export type ItemIn =
-  | { dish_id: string; qty: number; unit: string; oil_level: string; source: string; confirmed: boolean }
-  | { custom_name: string; kcal: number; protein_g: number; source: string; confirmed: boolean };
+  | ({ dish_id: string; qty: number; unit: string; oil_level: string; source: string; confirmed: boolean; client_id: string; dish_table_version: number } & Nums)
+  | ({ custom_name: string; source: string; confirmed: boolean; client_id: string } & Nums);
 
 export function totalOf(items: Item[]): ParseTotal {
   const [k, p] = totals(items);

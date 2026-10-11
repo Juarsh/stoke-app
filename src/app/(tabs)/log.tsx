@@ -7,15 +7,17 @@ import { Glows } from '@/components/Gradient';
 import { ItemCard, SlotCycle } from '@/components/ItemEditor';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
-import { AnyItem, isPlaceholder, itemKind, needsConfirmation } from '@/lib/itemKind';
+import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
+import { applyLearned, learnKey, LoggedItem, readingOf } from '@/lib/learned';
 import { portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { parseLocal } from '@/lib/parseLocal';
 import { useStore } from '@/lib/store';
+import { config } from '@/lib/config';
 import { DISH_TABLE_VERSION, Item } from '@/parser';
 import { makeStyles } from '@/theme';
 
 const AI_CAP = 20;
-type Draft = { key: string; it: AnyItem; ok: boolean };
+type Draft = { key: string; it: AnyItem & LoggedItem; ok: boolean; corrected?: boolean };
 type Custom = { key: string; name: string; kcal: string; protein: string };
 
 export default function Log() {
@@ -36,8 +38,10 @@ export default function Log() {
   const parsed = useMemo(() => parseLocal(text), [text]);
   useEffect(() => { setEdits({}); setOkd({}); setAi([]); setCustoms([]); setMsg(''); }, [text]);
   // placeholders for unknown text are handled by the AI / custom-item flow below
-  const table: Draft[] = parsed.items.filter((it) => !isPlaceholder(it))
-    .map((it, i) => ({ key: `t${i}`, it: (edits[`t${i}`] ?? it) as AnyItem, ok: !!okd[`t${i}`] || !needsConfirmation(edits[`t${i}`] ?? it) }))
+  // remembered readings are applied first, so the same text never asks again
+  const learnedItems = useMemo(() => applyLearned(parsed.items.filter((it) => !isPlaceholder(it)), st.learned), [parsed, st.learned]);
+  const table: Draft[] = learnedItems
+    .map((it, i) => ({ key: `t${i}`, it: (edits[`t${i}`] ?? it) as Draft['it'], ok: !!okd[`t${i}`] || !(edits[`t${i}`] ?? it).needs_confirmation, corrected: !!edits[`t${i}`] }))
     .filter((d) => edits[d.key] !== null);
   const drafts = [...table, ...ai];
   const pendingUnmatched = parsed.unmatched.filter((u) => !customs.some((c) => c.key === u) && !ai.some((a) => a.key.startsWith(`ai:${u}`)));
@@ -49,7 +53,7 @@ export default function Log() {
     try {
       for (const u of pendingUnmatched) {
         if (aiUsedToday >= AI_CAP) { toCustom([u], 'AI estimates are back tomorrow. Add it yourself for now.'); continue; }
-        if (st.api.mock) { toCustom([u], 'AI estimates need the server (this build is offline/mock). Add it yourself for now.'); continue; }
+        if (st.api.mock && !config.mockAi) { toCustom([u], 'AI estimates need the server (this build is offline/mock). Add it yourself for now.'); continue; }
         const r = await st.api.parse(u, true);
         st.useAi();
         const got = r.items.filter((x) => x.ai_estimate);
@@ -59,14 +63,15 @@ export default function Log() {
     } catch { toCustom(pendingUnmatched, 'Couldn’t reach AI estimates. Add it yourself for now.'); } finally { setBusy(false); }
   }
 
-  const blocked = drafts.filter((d) => !d.ok);
-  const nConfirm = blocked.filter((d) => !d.it.alternatives?.length).length;
-  const nResolve = blocked.length - nConfirm + (customs.some((c) => !(Number(c.kcal) > 0)) ? customs.filter((c) => !(Number(c.kcal) > 0)).length : 0) + pendingUnmatched.length;
+  // Confirmation is the primary action, not a blocker: Add confirms every CHECK/AI item.
+  const unsure = drafts.filter((d) => !d.ok).length;
+  const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // the only disabled state (missing data)
   const total = drafts.reduce((a, d) => a + d.it.kcal.best, 0) + customs.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
   const protein = drafts.reduce((a, d) => a + d.it.protein_g.best, 0) + customs.reduce((a, c) => a + (Number(c.protein) || 0), 0);
   const any = drafts.length + customs.length > 0;
-  const canAdd = any && nConfirm === 0 && nResolve === 0;
-  const addLabel = nConfirm ? `Confirm ${nConfirm} item${nConfirm > 1 ? 's' : ''} to add` : nResolve ? `Resolve ${nResolve} item${nResolve > 1 ? 's' : ''} to add` : 'Add';
+  const canAdd = any && !customMissing;
+  const kcalTxt = Math.round(total).toLocaleString('en-IN');
+  const addLabel = customMissing ? 'Add kcal for the custom item' : unsure ? `✓ All look right · Add ${kcalTxt} kcal` : `✓ Add ${kcalTxt} kcal`;
 
   function add() {
     const date = localDate();
@@ -78,6 +83,9 @@ export default function Log() {
         confirmed: true, dish_table_version: DISH_TABLE_VERSION, created_at: now, updated_at: now, deleted_at: null });
     }
     st.addEntries(es);
+    // remember every reading the user confirmed or corrected (table items with a known dish only)
+    st.remember(drafts.filter((d) => (!d.ok || d.corrected || d.it.source !== 'table') && d.it.dish_id && !d.it.remembered)
+      .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
     setText('');
     router.navigate('/');
   }
@@ -106,8 +114,9 @@ export default function Log() {
             if (!d.ok && k !== 'ai_estimate') {
               return <ConfirmCard key={d.key} it={d.it} onResolve={(x) => { setItem(d, x); confirm(d); }} onRemove={() => remove(d)} />;
             }
+            // (AI items stay unconfirmed until Add; their card offers Change)
             return (
-              <ItemCard key={d.key} it={d.it} slot={slot} confirmed={d.ok} onEdit={(n) => setItem(d, n)} onConfirm={() => confirm(d)} onRemove={() => remove(d)}
+              <ItemCard key={d.key} it={d.it} slot={slot} confirmed={d.ok} remembered={!!d.it.remembered} onEdit={(n) => setItem(d, n)} onConfirm={() => confirm(d)} onRemove={() => remove(d)}
                 onSlot={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} />
             );
           })}
