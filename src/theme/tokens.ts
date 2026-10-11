@@ -1,55 +1,100 @@
-// Designer's final tokens (design-notes.md v3, light + dark). The ONLY place
-// colours, type, spacing, radius and elevation are defined.
-// glass* are placeholders until the bold redesign tokens land (tinted, NO live blur on cards).
-export const palette = {
-  light: {
-    bg: '#F6F4EF', surface: '#FFFFFF', surface2: '#F3F1EB', surface3: '#ECE9E1', line: '#E4E0D6',
-    text: '#16201B', text2: '#3A4540', muted: '#5C6862',
-    primary: '#0F5C45', primary2: '#2E9A72', primarySoft: '#E5EFEA', primaryText: '#0B4835', onPrimary: '#FFFFFF',
-    accent: '#8F5C0A', accent2: '#E5A93A', accentSoft: '#FBF0DC',
-    steps: '#2D6A9F', steps2: '#6BA6D6',
-    info: '#2D6A9F', infoSoft: '#E8F0F7', infoText: '#1E4B73',
-    ai: '#6A4C9C', aiSoft: '#F1EDF8', aiText: '#4A3475',
-    danger: '#A8322A', over: '#6B6F6D', track: '#ECE9E1',
-    popBg: '#1E2622', popText: '#F2F4F3', scrim: 'rgba(14,17,16,0.45)',
-    glass: 'rgba(255,255,255,0.72)', glassBorder: 'rgba(228,224,214,0.9)', navGlass: 'rgba(255,255,255,0.86)', shareBgStart: '#FBF8F1', shareBgEnd: '#F1EADB', shadow: '#0E1110',
-  },
-  dark: {
-    bg: '#0E1110', surface: '#161A18', surface2: '#1C211F', surface3: '#242A27', line: '#2A312D',
-    text: '#E8ECEA', text2: '#C3CBC7', muted: '#98A39D',
-    primary: '#5CC097', primary2: '#8FD9B7', primarySoft: '#1B2E26', primaryText: '#A6E3C7', onPrimary: '#06231A',
-    accent: '#E3B661', accent2: '#F0CF8E', accentSoft: '#2C2517',
-    steps: '#7FB2DE', steps2: '#AFCFEC',
-    info: '#7FB2DE', infoSoft: '#182532', infoText: '#B5D3EE',
-    ai: '#B49BE0', aiSoft: '#251F33', aiText: '#D3C4F0',
-    danger: '#E8877F', over: '#9EA3A0', track: '#242A27',
-    popBg: '#2C3430', popText: '#F2F4F3', scrim: 'rgba(0,0,0,0.6)',
-    glass: 'rgba(22,26,24,0.72)', glassBorder: 'rgba(42,49,45,0.9)', navGlass: 'rgba(22,26,24,0.9)', shareBgStart: '#121715', shareBgEnd: '#0B0E0D', shadow: '#000000',
-  },
-} as const;
-export type ColorTokens = { [K in keyof typeof palette.light]: string };
-
-export const space = { xxs: 4, xs: 8, sm: 12, md: 16, lg: 24, xl: 32, xxl: 48, screen: 16, cardV: 12, cardH: 14, gap: 10 } as const;
-export const radius = { chip: 10, field: 14, button: 16, card: 18, sheet: 28, popover: 12, full: 999 } as const;
-
-const fam = { regular: 'Inter_400Regular', medium: 'Inter_500Medium', semibold: 'Inter_600SemiBold', bold: 'Inter_700Bold', black: 'Inter_800ExtraBold' };
-export const fonts = fam;
-export const typeScale = {
-  display: { fontSize: 30, lineHeight: 36, letterSpacing: -0.6, fontFamily: fam.black },
-  title: { fontSize: 22, lineHeight: 28, letterSpacing: -0.44, fontFamily: fam.bold },
-  headline: { fontSize: 17, lineHeight: 24, fontFamily: fam.bold },
-  bodyStrong: { fontSize: 14, lineHeight: 20, fontFamily: fam.semibold },
-  button: { fontSize: 15, lineHeight: 20, fontFamily: fam.semibold },
-  body: { fontSize: 14, lineHeight: 20, fontFamily: fam.regular },
-  label: { fontSize: 12.5, lineHeight: 16, fontFamily: fam.medium },
-  caption: { fontSize: 12, lineHeight: 16, fontFamily: fam.regular },
-  micro: { fontSize: 10.5, lineHeight: 14, letterSpacing: 0.3, fontFamily: fam.semibold },
-} as const;
-
-/** Light: soft shadows (Android elevation 1/3/8). Dark: no shadows, elevation via lighter surfaces. */
-export const elevation = (dark: boolean, color: string) => {
-  const mk = (e: number, r: number, o: number, y: number) =>
-    dark ? {} : { elevation: e, shadowColor: color, shadowOpacity: o, shadowRadius: r, shadowOffset: { width: 0, height: y } };
-  return { e1: mk(1, 8, 0.06, 2), e2: mk(3, 24, 0.08, 8), e3: mk(8, 40, 0.14, 16) };
+// Designer's FINAL tokens: design-notes.md v4 (bold redesign, dark-first).
+// The only place colours, fonts, type, spacing, radius and elevation live.
+// Older semantic names (surface, primarySoft, …) are kept as aliases onto v4 values.
+const light = {
+  bg: '#F6F1E7', glow1: 'rgba(46,170,130,0.22)', glow2: 'rgba(232,170,70,0.20)', glow3: 'rgba(30,140,150,0.14)',
+  card: 'rgba(255,253,248,0.90)', card2: 'rgba(255,255,255,0.96)', cardLine: 'rgba(20,60,45,0.10)', cardHighlight: 'rgba(255,255,255,0.9)',
+  nav: 'rgba(255,255,255,0.82)', navSolid: '#FFFDF8',
+  text: '#111A16', text2: '#34413B', muted: '#56625C', over: '#6B6F6D',
+  em: '#0E6B50', emChip: '#0B5641', em2: '#13A07A', tint: '#EAF2EC',
+  grad1: '#0E7F61', grad2: '#0E6B50', grad3: '#0B4F5C', onGrad: '#FFFFFF',
+  coach1: '#0B5A44', coach2: '#0D5F69', coach3: '#244F7C', onCoach: '#FFFFFF',
+  gold: '#7A4F06', goldOnGrad: '#F8DA9C', gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: '#FAEFD9',
+  arc1: '#F6CF7E', arc2: '#2FC79A', arc3: '#1D8F9C',
+  steps: '#1F6FA8', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
+  ai: '#5B3E91', aiBg: '#EFE8FA', danger: '#A12F27', track: 'rgba(20,60,45,0.10)',
+  onCoachFill: 'rgba(255,255,255,0.16)', check: '#111A16', onCheck: '#FFFFFF', freeze: '#1F6FA8',
+  scrim: 'rgba(8,11,10,0.45)', popBg: '#1A201D', popText: '#F1F4F2', shadow: '#0E1110', glowBtn: 'rgba(19,160,122,0.35)',
+  tile: [['#F6CF7E', '#E07A2E'], ['#7FE3C0', '#13A07A'], ['#F4A3A3', '#C9485B'], ['#9CC8F2', '#3A6FC4'], ['#D9C2F5', '#7A55C2']] as string[][],
+  shareBg1: '#FBF8F1', shareBg2: '#F1EADB',
 };
-export const sizes = { ring: 96, ringStroke: 9, chip: 28, touch: 48, nav: 68 } as const;
+type Palette = typeof light;
+const dark: Palette = {
+  bg: '#080B0A', glow1: 'rgba(19,160,122,0.30)', glow2: 'rgba(233,169,59,0.10)', glow3: 'rgba(18,124,136,0.28)',
+  card: 'rgba(20,26,23,0.90)', card2: 'rgba(32,40,36,0.94)', cardLine: 'rgba(255,255,255,0.09)', cardHighlight: 'rgba(255,255,255,0.07)',
+  nav: 'rgba(22,28,25,0.82)', navSolid: '#1A201D',
+  text: '#F1F4F2', text2: '#C9D2CD', muted: '#9AA6A0', over: '#9EA3A0',
+  em: '#4FD1A5', emChip: '#4FD1A5', em2: '#7FE3C0', tint: 'rgba(19,160,122,0.12)',
+  grad1: '#7FE3C0', grad2: '#2FB58C', grad3: '#1D8F9C', onGrad: '#04150F',
+  coach1: '#0F5A45', coach2: '#0E5560', coach3: '#1B3F66', onCoach: '#FFFFFF',
+  gold: '#F2C46D', goldOnGrad: '#F8DA9C', gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: 'rgba(233,169,59,0.12)',
+  arc1: '#F6CF7E', arc2: '#2FC79A', arc3: '#1D8F9C',
+  steps: '#7FB8E6', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
+  ai: '#C6B2F0', aiBg: 'rgba(160,130,230,0.16)', danger: '#F0918A', track: 'rgba(255,255,255,0.08)',
+  onCoachFill: 'rgba(255,255,255,0.12)', check: '#F1F4F2', onCheck: '#080B0A', freeze: '#7FB8E6',
+  scrim: 'rgba(0,0,0,0.6)', popBg: '#202824', popText: '#F1F4F2', shadow: '#000000', glowBtn: 'rgba(19,160,122,0.35)',
+  tile: light.tile,
+  shareBg1: '#121715', shareBg2: '#0B0E0D',
+};
+const alias = (p: Palette) => ({
+  ...p,
+  surface: p.card, surface2: p.card2, surface3: p.track, line: p.cardLine,
+  primary: p.em, primary2: p.em2, primarySoft: p.tint, primaryText: p.emChip, onPrimary: p.onGrad,
+  accent: p.gold, accent2: p.gradGold1, accentSoft: p.tintGold, steps2: p.stepsBar1,
+  info: p.freeze, infoSoft: p.tint, infoText: p.text2, aiSoft: p.aiBg, aiText: p.ai,
+  glass: p.card, glassBorder: p.cardLine, navGlass: p.navSolid, shareBgStart: p.shareBg1, shareBgEnd: p.shareBg2,
+});
+export const palette = { light: alias(light), dark: alias(dark) };
+export type ColorTokens = ReturnType<typeof alias>;
+
+export const space = { xxs: 4, xs: 8, sm: 12, md: 16, lg: 24, xl: 32, xxl: 48, screen: 18, cardV: 14, cardH: 16, gap: 10 } as const;
+export const radius = { chip: 999, tile: 14, card: 20, field: 24, button: 999, sheet: 32, popover: 14, nav: 31, full: 999 } as const;
+
+/**
+ * React Native has no font fallback stacks, so <T>/<Field> switch to the
+ * matching Noto Sans Devanagari weight whenever the text contains Devanagari
+ * (see devaFamily). That also applies inside view-shot share cards.
+ */
+export const fonts = {
+  inter: { 400: 'Inter_400Regular', 500: 'Inter_500Medium', 600: 'Inter_600SemiBold', 700: 'Inter_700Bold' },
+  grotesk: { 400: 'SpaceGrotesk_400Regular', 500: 'SpaceGrotesk_500Medium', 600: 'SpaceGrotesk_600SemiBold', 700: 'SpaceGrotesk_700Bold' },
+  deva: { 400: 'NotoSansDevanagari_400Regular', 500: 'NotoSansDevanagari_500Medium', 600: 'NotoSansDevanagari_600SemiBold', 700: 'NotoSansDevanagari_700Bold' },
+} as const;
+type W = 400 | 500 | 600 | 700;
+const g = (w: W) => fonts.grotesk[w];
+const i = (w: W) => fonts.inter[w];
+export const typeScale = {
+  hero: { fontSize: 88, lineHeight: 92, letterSpacing: -2.6, fontFamily: g(700) },
+  displayXl: { fontSize: 72, lineHeight: 74, letterSpacing: -2.2, fontFamily: g(700) },
+  display: { fontSize: 52, lineHeight: 56, letterSpacing: -1.6, fontFamily: g(700) },
+  displayM: { fontSize: 34, lineHeight: 38, letterSpacing: -1, fontFamily: g(700) },
+  title: { fontSize: 24, lineHeight: 30, letterSpacing: -0.7, fontFamily: g(700) },
+  headline: { fontSize: 18, lineHeight: 24, letterSpacing: -0.4, fontFamily: g(700) },
+  number: { fontSize: 17, lineHeight: 22, letterSpacing: -0.3, fontFamily: g(700) },
+  input: { fontSize: 21, lineHeight: 27, fontFamily: g(500) },
+  bodyStrong: { fontSize: 14, lineHeight: 20, fontFamily: i(600) },
+  button: { fontSize: 15, lineHeight: 20, fontFamily: i(700) },
+  body: { fontSize: 14, lineHeight: 20, fontFamily: i(400) },
+  label: { fontSize: 12.5, lineHeight: 16, fontFamily: i(600) },
+  caption: { fontSize: 12, lineHeight: 16, fontFamily: i(400) },
+  eyebrow: { fontSize: 11, lineHeight: 14, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: i(700) },
+  micro: { fontSize: 10.5, lineHeight: 14, letterSpacing: 0.4, fontFamily: i(700) },
+} as const;
+const famWeight = new Map<string, W>();
+for (const set of [fonts.inter, fonts.grotesk]) for (const [w, f] of Object.entries(set)) famWeight.set(f, Number(w) as W);
+const DEVA = /[\u0900-\u097F]/;
+export const hasDevanagari = (s: unknown): boolean => {
+  if (typeof s === 'string') return DEVA.test(s);
+  if (Array.isArray(s)) return s.some(hasDevanagari);
+  return false;
+};
+export const devaFamily = (family: string) => fonts.deva[famWeight.get(family) ?? 400];
+
+/** Light: one soft shadow per card. Dark: no drop shadows (tint steps + top highlight). Buttons keep an emerald glow. */
+export const elevation = (dark: boolean, c: { shadow: string; glowBtn: string }) => ({
+  e1: dark ? {} : { elevation: 3, shadowColor: c.shadow, shadowOpacity: 0.1, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } },
+  e2: dark ? {} : { elevation: 4, shadowColor: c.shadow, shadowOpacity: 0.14, shadowRadius: 20, shadowOffset: { width: 0, height: 12 } },
+  e3: dark ? {} : { elevation: 8, shadowColor: c.shadow, shadowOpacity: 0.16, shadowRadius: 30, shadowOffset: { width: 0, height: 16 } },
+  glow: { elevation: 6, shadowColor: c.glowBtn, shadowOpacity: 1, shadowRadius: 12, shadowOffset: { width: 0, height: 10 } },
+});
+export const sizes = { ring: 96, ringStroke: 9, arc: 250, arcStroke: 14, chip: 32, touch: 48, nav: 62, tile: 44 } as const;

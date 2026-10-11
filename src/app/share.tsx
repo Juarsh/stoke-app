@@ -2,7 +2,7 @@ import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Share, Switch, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { captureRef } from 'react-native-view-shot';
 import { Button, Row, Screen, Segmented, T } from '@/components/ui';
 import { brand } from '@/lib/config';
@@ -29,18 +29,20 @@ export default function ShareScreen() {
           <Svg width={W} height={H} style={{ position: 'absolute' }}>
             <Defs><LinearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={t.c.shareBgStart} /><Stop offset="1" stopColor={t.c.shareBgEnd} /></LinearGradient></Defs>
             <Rect width={W} height={H} fill="url(#bg)" />
+            <Defs><RadialGradient id="sg" cx="0%" cy="0%" rx="90%" ry="60%"><Stop offset="0" stopColor={t.c.glow1} /><Stop offset="1" stopColor={t.c.glow1} stopOpacity={0} /></RadialGradient></Defs>
+            <Rect width={W} height={H} fill="url(#sg)" />
           </Svg>
           {kind === 'streak' ? (
             <>
               <T style={{ fontSize: 56, lineHeight: 64 }}>🔥</T>
-              <T v="display" tone="accent">Day {d.streak.current}</T>
+              <T v="displayXl" tone="gold">Day {d.streak.current}</T>
               <T tone="text2">streak of logging every day</T>
             </>
           ) : (
             <>
               <T v="headline">Today</T>
-              {showKcal ? <T v="display" tone="primary">{d.tot.kcal} kcal</T> : null}
-              <T v="headline" tone="accent">{d.tot.protein} g protein</T>
+              {showKcal ? <T v="display" tone="em">{d.tot.kcal} kcal</T> : null}
+              <T v="headline" tone="gold">{d.tot.protein} g protein</T>
               <T tone="text2">🔥 {d.streak.current}-day streak</T>
             </>
           )}

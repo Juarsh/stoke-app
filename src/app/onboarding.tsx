@@ -28,13 +28,13 @@ export default function Onboarding() {
       <Segmented value={activity} onChange={setActivity} options={[{ value: 'sedentary', label: 'Desk' }, { value: 'light', label: 'Light' }, { value: 'moderate', label: '3–4×/wk' }, { value: 'active', label: 'Daily' }]} />
       <T v="bodyStrong">Food (for coach picks)</T>
       <Segmented value={diet} onChange={setDiet} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg + veg' }, { value: 'nonveg', label: 'Non-veg' }]} />
-      <Card tone="primarySoft">
-        <T v="caption" tone="primaryText">Suggested daily target (editable)</T>
+      <Card tone="coach">
+        <T v="eyebrow" tone="goldOnGrad">Suggested daily target (editable)</T>
         <Row>
           <View style={{ flex: 1 }}><Field label="kcal" keyboardType="numeric" placeholder={String(auto.kcal)} value={kcal} onChangeText={setKcal} /></View>
           <View style={{ flex: 1 }}><Field label="Protein g" keyboardType="numeric" placeholder={String(auto.protein)} value={protein} onChangeText={setProtein} /></View>
         </Row>
-        <T v="caption" tone="muted">Estimated with Mifflin-St Jeor ({goal === 'lose' ? '−400' : goal === 'gain' ? '+300' : '±0'} kcal) and {goal === 'maintain' ? 1.2 : 1.6} g protein per kg.</T>
+        <T v="caption" tone="onCoach">Estimated with Mifflin-St Jeor ({goal === 'lose' ? '−400' : goal === 'gain' ? '+300' : '±0'} kcal) and {goal === 'maintain' ? 1.2 : 1.6} g protein per kg.</T>
       </Card>
       <Button title="Start logging" onPress={() => st.setProfile({ ...base, diet, kcalTarget: Number(kcal) || auto.kcal, proteinTarget: Number(protein) || auto.protein, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true })} />
     </Screen>

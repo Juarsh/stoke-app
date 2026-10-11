@@ -2,13 +2,12 @@
 import { Item, parser, totals } from '../parser';
 import type { Slot } from './domain';
 import { slotFor } from './domain';
-import { CheckedItem, check } from './sanity';
 
 export type Fallback = 'none' | 'used' | 'not_configured' | 'cap_reached' | 'error';
 export interface ParseTotal { kcal: number; kcal_low: number; kcal_high: number; protein_g: number; protein_low: number; protein_high: number }
 /** Mirrors food.ParseResponse in the Go backend. */
 export interface ParseResponse {
-  items: CheckedItem[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; fallback: Fallback;
+  items: Item[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; fallback: Fallback;
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
 }
 /** Mirrors food.ItemIn. We always send the saved snapshot numbers. */
@@ -27,7 +26,7 @@ export function totalOf(items: Item[]): ParseTotal {
 export function parseLocal(text: string, now = new Date()): ParseResponse {
   const r = parser.parse(text.trim());
   return {
-    items: r.items.map(check), unmatched: r.unmatched, total: totalOf(r.items), used_ai: false,
+    items: r.items, unmatched: r.unmatched, total: totalOf(r.items), used_ai: false,
     fallback: 'none', custom_items: r.unmatched.map((u) => ({ custom_name: u, needs_input: true })), slot: slotFor(now),
   };
 }

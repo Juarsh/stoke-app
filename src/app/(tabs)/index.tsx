@@ -1,88 +1,94 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoachCard } from '@/components/CoachCard';
-import { Ring } from '@/components/Ring';
+import { FoodTile } from '@/components/FoodTile';
+import { Glows } from '@/components/Gradient';
+import { Bar, HeroArc } from '@/components/HeroArc';
 import { Badge, Card, Row, T } from '@/components/ui';
 import { flags } from '@/lib/config';
-import type { FoodEntry, Slot } from '@/lib/domain';
+import type { FoodEntry } from '@/lib/domain';
 import { localDate } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
-import { SLOT_LABEL, SLOTS } from '@/lib/labels';
+import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
+import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
-type Row = { slot: Slot; kcal: number; items: FoodEntry[] };
-const MealRow = memo(function MealRow({ row }: { row: Row }) {
+const PlateTile = memo(function PlateTile({ e }: { e: FoodEntry }) {
+  const s = useStyles();
+  const name = e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item';
   return (
-    <Card>
-      <Row style={{ justifyContent: 'space-between' }}><T v="bodyStrong">{SLOT_LABEL[row.slot]}</T><T v="caption" tone="muted">{row.kcal} kcal</T></Row>
-      {row.items.map((e) => (
-        <Row key={e.id} style={{ justifyContent: 'space-between' }}>
-          <T tone="text2" style={{ flex: 1 }}>{e.custom_name || e.dish_id?.replaceAll('_', ' ')} · {e.qty} {e.unit}</T>
-          <T>{e.kcal.best}</T>
-        </Row>
-      ))}
+    <Card style={s.tile}>
+      <FoodTile seed={e.dish_id ?? e.custom_name} category={parser.dishById(e.dish_id ?? '')?.category} />
+      <T v="bodyStrong" numberOfLines={1}>{name}</T>
+      <T v="caption" tone="muted">{SLOT_LABEL[e.slot].slice(0, 1)} · {e.kcal.best}</T>
     </Card>
   );
-}, (a, b) => a.row === b.row);
+});
+const renderTile = ({ item }: { item: FoodEntry }) => <PlateTile e={item} />;
+const keyOf = (e: FoodEntry) => e.id;
 
 export default function Today() {
   const t = useTheme(); const s = useStyles(); const st = useStore(); const d = useDay(); const router = useRouter();
-  const { setSteps } = st;
-  useEffect(() => { readTodaySteps().then((n) => { if (n !== null) { setSteps(localDate(), n); st.api.putSteps(localDate(), n).catch(() => {}); } }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const rows = useMemo<Row[]>(() => SLOTS.map((slot) => {
-    const items = d.entries.filter((e) => e.slot === slot);
-    return { slot, items, kcal: items.reduce((a, e) => a + e.kcal.best, 0) };
-  }).filter((r) => r.items.length), [d.entries]);
-  const over = d.kcalLeft < 0;
-  const header = useMemo(() => (
-    <View style={{ gap: t.space.gap }}>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <T v="title">Today</T>
-        <Row>
-          <Badge kind="accent" label={`🔥 ${d.streak.current}`} />
-          <Pressable onPress={() => router.push('/settings')} accessibilityLabel="Open settings" style={s.avatar} hitSlop={8}>
-            <T v="bodyStrong" tone="primaryText">{(st.user?.name ?? '?').slice(0, 1).toUpperCase()}</T>
-          </Pressable>
-        </Row>
-      </Row>
-      {d.streak.freezeJustUsed ? (
-        <Card tone="infoSoft"><T tone="infoText">❄ Your freeze saved your {d.streak.current}-day streak (used automatically, 1 per week).</T></Card>
-      ) : d.streak.current === 0 && d.loggedDates.size > 0 ? (
-        <Card tone="infoSoft"><T tone="infoText">Streak paused. Start again today.</T></Card>
-      ) : null}
-      <Card tone="glass">
-        <View style={s.big}>
-          <T v="display" tone={over ? 'over' : 'text'} accessibilityLabel={over ? `${-d.kcalLeft} calories over` : `${d.kcalLeft} calories left`}>{over ? `${-d.kcalLeft} kcal over` : d.kcalLeft}</T>
-          {!over ? <T v="caption" tone="muted">calories left</T> : null}
-        </View>
-        <View style={s.rings}>
-          <Ring value={d.tot.kcal} max={d.kcalTarget} from={t.c.primary2} to={t.c.primary} big={`${Math.max(0, d.kcalLeft)}`} caption="kcal left" a11y={`${d.tot.kcal} of ${d.kcalTarget} calories eaten`} />
-          <Ring value={d.tot.protein} max={d.proteinTarget} from={t.c.accent2} to={t.c.accent} big={`${Math.round(d.proteinLeft)} g`} caption="protein left" a11y={`${d.tot.protein} of ${d.proteinTarget} grams protein`} />
-          {flags.steps ? <Ring value={d.steps} max={d.profile?.stepsTarget ?? 8000} from={t.c.steps2} to={t.c.steps} big={d.steps.toLocaleString('en-IN')} caption="steps" a11y={`${d.steps} steps`} /> : null}
-        </View>
-        {flags.steps ? <T v="caption" tone="muted">Steps burned ≈ {d.burn} kcal · {d.profile?.addStepKcal ? 'added to' : 'not added to'} food budget</T> : null}
-      </Card>
-      <CoachCard kcalLeft={d.kcalLeft} proteinLeft={d.proteinLeft} picks={d.picks} />
-    </View>
-  ), [d, t, s, st.user?.name, over, router]);
-  const renderItem = useCallback(({ item }: { item: Row }) => <MealRow row={item} />, []);
+  const { setSteps, api } = st;
+  useEffect(() => {
+    readTodaySteps().then((n) => { if (n !== null) { setSteps(localDate(), n); api.putSteps(localDate(), n).catch(() => {}); } });
+  }, [setSteps, api]);
+  const first = (st.user?.name ?? '').split(' ')[0];
+  const dateLabel = useMemo(() => new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }), []);
+  const openSettings = useCallback(() => router.push('/settings'), [router]);
+  const dietLabel = d.profile?.diet === 'veg' ? 'Veg' : d.profile?.diet === 'egg' ? 'Egg' : 'Non-veg';
+  const protPct = d.proteinTarget ? d.tot.protein / d.proteinTarget : 0;
   return (
-    <SafeAreaView edges={['top']} style={s.screen}>
-      <FlatList data={rows} keyExtractor={(r) => r.slot} renderItem={renderItem} ListHeaderComponent={header}
-        contentContainerStyle={s.list} ItemSeparatorComponent={Sep} removeClippedSubviews initialNumToRender={4} windowSize={5}
-        ListEmptyComponent={<T tone="muted" style={{ marginTop: 12 }}>Nothing logged yet. Tap Log and type it the way you say it.</T>} />
-    </SafeAreaView>
+    <View style={{ flex: 1 }}>
+      <Glows />
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={s.list} removeClippedSubviews>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <View><T v="caption" tone="muted">{dateLabel}</T><T v="title">Namaste{first ? `, ${first}` : ''}</T></View>
+            <Row>
+              <Badge kind="gold" label={`🔥 ${d.streak.current}`} />
+              <Pressable onPress={openSettings} accessibilityLabel="Open settings" style={s.avatar} hitSlop={8}>
+                <T v="bodyStrong" tone="emChip">{(first || '?').slice(0, 1).toUpperCase()}</T>
+              </Pressable>
+            </Row>
+          </Row>
+          <HeroArc eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} />
+          <View style={s.pair}>
+            <Card style={s.half}>
+              <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Protein</T><T v="number">{Math.round(d.proteinLeft)} g left</T></Row>
+              <Bar pct={protPct} from={t.c.gradGold1} to={t.c.gradGold2} />
+            </Card>
+            {flags.steps ? (
+              <Card style={s.half}>
+                <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Steps</T><T v="number">{d.steps.toLocaleString('en-IN')}</T></Row>
+                <Bar pct={d.steps / (d.profile?.stepsTarget ?? 8000)} from={t.c.stepsBar1} to={t.c.stepsBar2} />
+                <T v="caption" tone="muted">≈{d.burn} kcal · {d.profile?.addStepKcal ? 'in budget' : 'not in budget'}</T>
+              </Card>
+            ) : null}
+          </View>
+          <CoachCard kcalLeft={d.kcalLeft} proteinLeft={d.proteinLeft} picks={d.picks} dietLabel={dietLabel} />
+          <Row style={{ justifyContent: 'space-between', marginTop: 4 }}>
+            <T v="headline">Today’s plate</T>
+            {d.streak.freezeJustUsed ? <T v="caption" tone="freeze">❄ Freeze saved your {d.streak.current}-day streak</T>
+              : d.streak.current === 0 && d.loggedDates.size > 0 ? <T v="caption" tone="muted">Streak paused. Start again today.</T> : null}
+          </Row>
+          {d.entries.length ? (
+            <FlatList horizontal data={d.entries} keyExtractor={keyOf} renderItem={renderTile} showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 10 }} initialNumToRender={4} windowSize={3} removeClippedSubviews />
+          ) : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
-const Sep = () => <View style={{ height: 10 }} />;
 const useStyles = makeStyles((t) => ({
-  screen: { flex: 1, backgroundColor: t.c.bg },
-  list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl, gap: t.space.gap },
-  avatar: { width: 36, height: 36, borderRadius: t.radius.full, backgroundColor: t.c.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  rings: { flexDirection: 'row', justifyContent: 'space-evenly' },
-  big: { alignItems: 'center' },
+  list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl * 2, gap: t.space.gap },
+  avatar: { width: 36, height: 36, borderRadius: t.radius.full, backgroundColor: t.c.tint, alignItems: 'center', justifyContent: 'center' },
+  pair: { flexDirection: 'row', gap: t.space.gap },
+  half: { flex: 1 },
+  tile: { width: 120, gap: 6 },
 }));

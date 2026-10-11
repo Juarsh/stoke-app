@@ -26,10 +26,10 @@ export default function Community() {
         </Card>
       ) : (
         <>
-          <Card tone="primarySoft"><T v="bodyStrong" tone="primaryText">Day {daysIn} of 21 · ends {addDays(ch.startDate, 20)}</T><T tone="primaryText">You’ve logged {myDays} days.</T></Card>
+          <Card tone="coach"><T v="eyebrow" tone="goldOnGrad">Day {daysIn} of 21 · ends {addDays(ch.startDate, 20)}</T><T v="displayM" tone="onCoach">{myDays} days logged</T></Card>
           <Card>
             <T v="bodyStrong">Leaderboard · days logged</T>
-            {board.map((m, i) => <Row key={m.name} style={{ justifyContent: 'space-between' }}><T tone={i < 3 ? 'accent' : 'text'}>{i + 1}. {m.name}</T><T>{m.days} / {daysIn}</T></Row>)}
+            {board.map((m, i) => <Row key={m.name} style={{ justifyContent: 'space-between' }}><T tone={i < 3 ? 'gold' : 'text'}>{i + 1}. {m.name}</T><T>{m.days} / {daysIn}</T></Row>)}
             <T v="caption" tone="muted">Only days logged are shown. Members appear once the server is connected.</T>
           </Card>
           <Card><T v="caption" tone="muted">Invite link (opens the app, or the Play Store):</T><T selectable>{link}</T></Card>

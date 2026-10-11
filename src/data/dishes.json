@@ -25,7 +25,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 2.4,
+  "carbs_g": 18.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "tandoori_roti",
@@ -48,7 +52,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.6,
+  "carbs_g": 26.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "naan",
@@ -72,7 +80,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.8,
+  "carbs_g": 44.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "butter_naan",
@@ -95,7 +107,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 10.7,
+  "carbs_g": 47.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "garlic_naan",
@@ -118,7 +134,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.3,
+  "carbs_g": 48.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paratha",
@@ -143,7 +163,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.8,
+  "carbs_g": 28.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "aloo_paratha",
@@ -167,7 +191,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 11.7,
+  "carbs_g": 42.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "gobi_paratha",
@@ -191,7 +219,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 10.5,
+  "carbs_g": 37.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paneer_paratha",
@@ -214,7 +246,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 14.7,
+  "carbs_g": 38.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "methi_paratha",
@@ -238,7 +274,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.0,
+  "carbs_g": 24.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "puri",
@@ -263,7 +303,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.0,
+  "carbs_g": 11.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "bhatura",
@@ -287,7 +331,11 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 12.9,
+  "carbs_g": 37.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "rice",
@@ -310,12 +358,16 @@
   "protein_high": 4.4,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "rice",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.7,
+  "carbs_g": 40.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "brown_rice",
@@ -333,12 +385,16 @@
   "protein_high": 4.4,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "rice",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.6,
+  "carbs_g": 38.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "jeera_rice",
@@ -362,7 +418,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.6,
+  "carbs_g": 45.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "veg_pulao",
@@ -387,7 +447,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.2,
+  "carbs_g": 43.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "veg_biryani",
@@ -411,7 +475,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.3,
+  "carbs_g": 61.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chicken_biryani",
@@ -436,7 +504,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 21.4,
+  "carbs_g": 64.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "mutton_biryani",
@@ -459,7 +531,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 27.6,
+  "carbs_g": 66.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "egg_biryani",
@@ -482,7 +558,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.7,
+  "carbs_g": 61.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "khichdi",
@@ -506,7 +586,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.3,
+  "carbs_g": 40.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "curd_rice",
@@ -530,7 +614,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 6.1,
+  "carbs_g": 35.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "lemon_rice",
@@ -553,7 +641,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 6.7,
+  "carbs_g": 40.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "fried_rice",
@@ -576,7 +668,11 @@
   "category": "rice",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.3,
+  "carbs_g": 62.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dal",
@@ -606,7 +702,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.0,
+  "carbs_g": 18.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "moong_dal",
@@ -629,7 +729,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.3,
+  "carbs_g": 14.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "masoor_dal",
@@ -653,7 +757,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.7,
+  "carbs_g": 15.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chana_dal",
@@ -676,7 +784,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.7,
+  "carbs_g": 20.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dal_makhani",
@@ -700,7 +812,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.7,
+  "carbs_g": 36.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "rajma",
@@ -724,7 +840,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.0,
+  "carbs_g": 27.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chole",
@@ -751,7 +871,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.7,
+  "carbs_g": 31.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kadhi",
@@ -775,7 +899,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.7,
+  "carbs_g": 24.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sambar",
@@ -799,7 +927,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.7,
+  "carbs_g": 14.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "rasam",
@@ -822,7 +954,11 @@
   "category": "dal",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 1.7,
+  "carbs_g": 7.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sabzi",
@@ -852,7 +988,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.2,
+  "carbs_g": 13.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "aloo_sabzi",
@@ -879,7 +1019,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 9.4,
+  "carbs_g": 18.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "aloo_gobi",
@@ -903,7 +1047,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.3,
+  "carbs_g": 14.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "bhindi",
@@ -929,7 +1077,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.8,
+  "carbs_g": 14.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "baingan_bharta",
@@ -954,7 +1106,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.2,
+  "carbs_g": 13.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "palak_paneer",
@@ -977,7 +1133,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 14.4,
+  "carbs_g": 20.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paneer_butter_masala",
@@ -1001,7 +1161,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.3,
+  "carbs_g": 29.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "shahi_paneer",
@@ -1024,7 +1188,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.9,
+  "carbs_g": 30.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kadai_paneer",
@@ -1047,7 +1215,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 16.1,
+  "carbs_g": 23.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "matar_paneer",
@@ -1071,7 +1243,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.9,
+  "carbs_g": 20.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paneer_bhurji",
@@ -1094,7 +1270,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.3,
+  "carbs_g": 17.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paneer",
@@ -1113,12 +1293,17 @@
   "protein_high": 19.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "protein",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "piece_grams": 25,
+  "fat_g": 20.6,
+  "carbs_g": 1.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "tofu",
@@ -1136,12 +1321,16 @@
   "protein_high": 8.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "protein",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.4,
+  "carbs_g": 2.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "lauki_sabzi",
@@ -1166,7 +1355,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.0,
+  "carbs_g": 9.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "tinda",
@@ -1189,7 +1382,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.0,
+  "carbs_g": 9.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "cabbage_sabzi",
@@ -1213,7 +1410,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.6,
+  "carbs_g": 10.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "gajar_matar",
@@ -1236,7 +1437,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 6.7,
+  "carbs_g": 11.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "aloo_matar",
@@ -1259,7 +1464,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 9.4,
+  "carbs_g": 16.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "saag",
@@ -1283,7 +1492,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.9,
+  "carbs_g": 15.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dum_aloo",
@@ -1306,7 +1519,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 12.2,
+  "carbs_g": 24.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "soya_chunks",
@@ -1331,7 +1548,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.6,
+  "carbs_g": 19.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "mushroom_masala",
@@ -1354,7 +1575,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.8,
+  "carbs_g": 13.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chicken_curry",
@@ -1379,7 +1604,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.9,
+  "carbs_g": 9.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "butter_chicken",
@@ -1403,7 +1632,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.3,
+  "carbs_g": 19.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chicken_tikka",
@@ -1424,7 +1657,12 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 30,
+  "fat_g": 10.7,
+  "carbs_g": 5.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "tandoori_chicken",
@@ -1447,7 +1685,12 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 100,
+  "fat_g": 15.0,
+  "carbs_g": 3.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chicken_breast",
@@ -1466,12 +1709,16 @@
   "protein_high": 34.1,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "nonveg",
   "category": "protein",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 3.7,
+  "carbs_g": 1.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "mutton_curry",
@@ -1496,7 +1743,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 16.7,
+  "carbs_g": 15.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "keema",
@@ -1521,7 +1772,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 16.7,
+  "carbs_g": 17.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "fish_curry",
@@ -1546,7 +1801,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 12.2,
+  "carbs_g": 7.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "fish_fry",
@@ -1569,7 +1828,12 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 100,
+  "fat_g": 12.8,
+  "carbs_g": 8.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "egg_curry",
@@ -1594,7 +1858,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 12.2,
+  "carbs_g": 14.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "boiled_egg",
@@ -1617,12 +1885,16 @@
   "protein_high": 6.9,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "egg",
   "category": "protein",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 5.0,
+  "carbs_g": 0.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "omelette",
@@ -1649,7 +1921,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.7,
+  "carbs_g": 3.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "egg_bhurji",
@@ -1673,7 +1949,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 11.0,
+  "carbs_g": 8.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "poha",
@@ -1697,7 +1977,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.3,
+  "carbs_g": 38.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "upma",
@@ -1721,7 +2005,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.7,
+  "carbs_g": 35.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "idli",
@@ -1746,7 +2034,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.2,
+  "carbs_g": 12.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dosa",
@@ -1771,7 +2063,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.7,
+  "carbs_g": 25.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "masala_dosa",
@@ -1794,7 +2090,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 11.7,
+  "carbs_g": 54.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "uttapam",
@@ -1818,7 +2118,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.3,
+  "carbs_g": 32.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "vada",
@@ -1843,7 +2147,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.7,
+  "carbs_g": 20.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pongal",
@@ -1866,7 +2174,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.0,
+  "carbs_g": 36.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dhokla",
@@ -1890,7 +2202,12 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 30,
+  "fat_g": 1.1,
+  "carbs_g": 8.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "besan_chilla",
@@ -1915,7 +2232,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.0,
+  "carbs_g": 19.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "moong_chilla",
@@ -1938,7 +2259,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.3,
+  "carbs_g": 14.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "oats",
@@ -1963,7 +2288,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.0,
+  "carbs_g": 32.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "daliya",
@@ -1987,13 +2316,21 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 1.6,
+  "carbs_g": 35.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "cornflakes",
   "name": "cornflakes",
   "aliases": [
-   "corn flakes"
+   "corn flakes",
+   "kelloggs cornflakes",
+   "kellogg cornflakes",
+   "kellogg's cornflakes",
+   "kelloggs corn flakes"
   ],
   "unit": "katori",
   "portion_grams": 30.0,
@@ -2010,7 +2347,11 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.2,
+  "carbs_g": 25.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "muesli",
@@ -2033,13 +2374,16 @@
   "category": "breakfast",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.2,
+  "carbs_g": 35.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "bread",
   "name": "bread",
   "aliases": [
-   "slice",
    "bread slice",
    "white bread"
   ],
@@ -2053,12 +2397,16 @@
   "protein_high": 2.5,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "bread",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.5,
+  "carbs_g": 11.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "brown_bread",
@@ -2077,12 +2425,16 @@
   "protein_high": 3.9,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "bread",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.6,
+  "carbs_g": 10.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "bread_butter",
@@ -2106,7 +2458,23 @@
   "category": "bread",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "bread",
+    "qty": 1,
+    "unit": "count"
+   },
+   {
+    "dish_id": "butter",
+    "qty": 1,
+    "unit": "spoon"
+   }
+  ],
+  "fat_g": 2.9,
+  "carbs_g": 23.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sandwich",
@@ -2129,7 +2497,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 14.0,
+  "carbs_g": 30.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "paneer_sandwich",
@@ -2152,7 +2524,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 18.0,
+  "carbs_g": 34.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "maggi",
@@ -2175,12 +2551,16 @@
   "protein_high": 7.7,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "diet": "veg",
   "category": "snack",
   "brand": "Nestle Maggi",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 15.5,
+  "carbs_g": 35.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chowmein",
@@ -2205,7 +2585,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 19.0,
+  "carbs_g": 44.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pasta",
@@ -2229,13 +2613,23 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 19.0,
+  "carbs_g": 42.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pizza",
   "name": "pizza",
   "aliases": [
-   "pizza slice"
+   "pizza slice",
+   "margherita",
+   "margherita pizza",
+   "margarita pizza",
+   "dominos margherita",
+   "dominos pizza",
+   "veg pizza"
   ],
   "unit": "count",
   "portion_grams": 100.0,
@@ -2252,7 +2646,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.5,
+  "carbs_g": 26.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "burger",
@@ -2276,7 +2674,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 17.5,
+  "carbs_g": 39.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "momos",
@@ -2301,7 +2703,12 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 30,
+  "fat_g": 15.0,
+  "carbs_g": 32.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chicken_momos",
@@ -2324,7 +2731,12 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 30,
+  "fat_g": 16.0,
+  "carbs_g": 28.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "samosa",
@@ -2348,7 +2760,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.0,
+  "carbs_g": 31.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kachori",
@@ -2371,7 +2787,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 10.0,
+  "carbs_g": 23.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pakora",
@@ -2398,7 +2818,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.8,
+  "carbs_g": 8.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "aloo_tikki",
@@ -2421,7 +2845,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.5,
+  "carbs_g": 18.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pav_bhaji",
@@ -2444,7 +2872,11 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 16.7,
+  "carbs_g": 76.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "vada_pav",
@@ -2468,7 +2900,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 15.0,
+  "carbs_g": 34.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pani_puri",
@@ -2495,7 +2931,12 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 25,
+  "fat_g": 12.5,
+  "carbs_g": 29.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "bhel_puri",
@@ -2519,7 +2960,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 12.5,
+  "carbs_g": 28.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sev_puri",
@@ -2542,7 +2987,12 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 20,
+  "fat_g": 14.0,
+  "carbs_g": 33.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dahi_puri",
@@ -2565,7 +3015,12 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 25,
+  "fat_g": 14.0,
+  "carbs_g": 32.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chaat",
@@ -2589,7 +3044,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 14.0,
+  "carbs_g": 32.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chole_bhature",
@@ -2612,7 +3071,23 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "chole",
+    "qty": 1,
+    "unit": "katori"
+   },
+   {
+    "dish_id": "bhatura",
+    "qty": 2,
+    "unit": "count"
+   }
+  ],
+  "fat_g": 25.0,
+  "carbs_g": 111.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "rajma_chawal",
@@ -2636,7 +3111,23 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "rajma",
+    "qty": 1,
+    "unit": "katori"
+   },
+   {
+    "dish_id": "rice",
+    "qty": 1,
+    "unit": "katori"
+   }
+  ],
+  "fat_g": 14.0,
+  "carbs_g": 59.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dal_chawal",
@@ -2660,7 +3151,23 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "dal",
+    "qty": 1,
+    "unit": "katori"
+   },
+   {
+    "dish_id": "rice",
+    "qty": 1,
+    "unit": "katori"
+   }
+  ],
+  "fat_g": 11.7,
+  "carbs_g": 49.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kadhi_chawal",
@@ -2683,7 +3190,23 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "kadhi",
+    "qty": 1,
+    "unit": "katori"
+   },
+   {
+    "dish_id": "rice",
+    "qty": 1,
+    "unit": "katori"
+   }
+  ],
+  "fat_g": 12.3,
+  "carbs_g": 55.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chole_chawal",
@@ -2708,7 +3231,23 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "parts": [
+   {
+    "dish_id": "chole",
+    "qty": 1,
+    "unit": "katori"
+   },
+   {
+    "dish_id": "rice",
+    "qty": 1,
+    "unit": "katori"
+   }
+  ],
+  "fat_g": 14.3,
+  "carbs_g": 62.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "thali",
@@ -2732,7 +3271,11 @@
   "category": "combo",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 28.3,
+  "carbs_g": 123.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "dahi",
@@ -2753,12 +3296,16 @@
   "protein_high": 5.5,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "protein",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.5,
+  "carbs_g": 7.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "raita",
@@ -2782,7 +3329,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.4,
+  "carbs_g": 10.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "lassi",
@@ -2806,7 +3357,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 7.3,
+  "carbs_g": 31.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chaas",
@@ -2832,7 +3387,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 2.2,
+  "carbs_g": 4.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "milk",
@@ -2852,12 +3411,16 @@
   "protein_high": 8.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 8.6,
+  "carbs_g": 11.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "toned_milk",
@@ -2875,12 +3438,16 @@
   "protein_high": 8.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.0,
+  "carbs_g": 13.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chai",
@@ -2906,7 +3473,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.1,
+  "carbs_g": 10.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "coffee",
@@ -2930,7 +3501,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 3.9,
+  "carbs_g": 12.7,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "black_coffee",
@@ -2948,12 +3523,16 @@
   "protein_high": 0.3,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.0,
+  "carbs_g": 0.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "cold_coffee",
@@ -2976,7 +3555,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.3,
+  "carbs_g": 36.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "banana_shake",
@@ -2999,7 +3582,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 10.0,
+  "carbs_g": 43.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "protein_shake",
@@ -3020,12 +3607,16 @@
   "protein_high": 26.4,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.6,
+  "carbs_g": 2.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "nimbu_pani",
@@ -3050,7 +3641,11 @@
   "category": "drink",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.0,
+  "carbs_g": 15.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "coconut_water",
@@ -3068,12 +3663,16 @@
   "protein_high": 1.9,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 9.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "juice",
@@ -3093,12 +3692,16 @@
   "protein_high": 1.7,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 25.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "cola",
@@ -3119,12 +3722,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "diet": "veg",
   "category": "drink",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.0,
+  "carbs_g": 32.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "banana",
@@ -3144,12 +3751,16 @@
   "protein_high": 1.4,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.3,
+  "carbs_g": 24.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "apple",
@@ -3168,12 +3779,16 @@
   "protein_high": 0.6,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.3,
+  "carbs_g": 22.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "mango",
@@ -3191,12 +3806,16 @@
   "protein_high": 1.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.4,
+  "carbs_g": 27.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "papaya",
@@ -3214,12 +3833,16 @@
   "protein_high": 0.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 15.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "orange",
@@ -3238,12 +3861,16 @@
   "protein_high": 1.3,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 13.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "grapes",
@@ -3261,12 +3888,16 @@
   "protein_high": 0.8,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 16.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "watermelon",
@@ -3284,12 +3915,16 @@
   "protein_high": 1.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.1,
+  "carbs_g": 10.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "guava",
@@ -3307,12 +3942,16 @@
   "protein_high": 2.9,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "fruit",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.2,
+  "carbs_g": 14.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chikki",
@@ -3336,7 +3975,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.7,
+  "carbs_g": 16.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "peanuts",
@@ -3356,12 +3999,16 @@
   "protein_high": 8.2,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "snack",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 14.2,
+  "carbs_g": 3.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "almonds",
@@ -3379,12 +4026,16 @@
   "protein_high": 0.3,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "snack",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.6,
+  "carbs_g": 0.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "roasted_chana",
@@ -3408,7 +4059,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 1.8,
+  "carbs_g": 17.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "makhana",
@@ -3432,7 +4087,11 @@
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.4,
+  "carbs_g": 14.6,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sprouts",
@@ -3457,7 +4116,11 @@
   "category": "protein",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.9,
+  "carbs_g": 16.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "salad",
@@ -3481,7 +4144,11 @@
   "category": "main",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.3,
+  "carbs_g": 5.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "namkeen",
@@ -3501,12 +4168,16 @@
   "protein_high": 4.4,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "diet": "veg",
   "category": "snack",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 9.8,
+  "carbs_g": 13.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "biscuit",
@@ -3527,12 +4198,16 @@
   "protein_high": 0.7,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "diet": "veg",
   "category": "snack",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.2,
+  "carbs_g": 5.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "gulab_jamun",
@@ -3556,7 +4231,12 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "piece_grams": 50,
+  "fat_g": 6.7,
+  "carbs_g": 20.4,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "rasgulla",
@@ -3580,7 +4260,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 4.9,
+  "carbs_g": 14.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "jalebi",
@@ -3604,7 +4288,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.8,
+  "carbs_g": 18.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kheer",
@@ -3628,7 +4316,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 11.1,
+  "carbs_g": 31.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "halwa",
@@ -3654,7 +4346,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 13.3,
+  "carbs_g": 41.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "ladoo",
@@ -3680,7 +4376,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 8.0,
+  "carbs_g": 24.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "barfi",
@@ -3704,7 +4404,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 5.8,
+  "carbs_g": 17.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "ice_cream",
@@ -3728,7 +4432,11 @@
   "category": "sweet",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 6.2,
+  "carbs_g": 18.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "ghee",
@@ -3746,12 +4454,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 5.0,
+  "carbs_g": 0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "butter",
@@ -3770,12 +4482,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.0,
+  "carbs_g": 0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "oil",
@@ -3794,12 +4510,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.9,
+  "carbs_g": 0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "sugar",
@@ -3819,12 +4539,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.0,
+  "carbs_g": 5.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "jaggery",
@@ -3843,12 +4567,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.0,
+  "carbs_g": 9.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "honey",
@@ -3866,12 +4594,16 @@
   "protein_high": 0.0,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 0.0,
+  "carbs_g": 5.2,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "pickle",
@@ -3896,7 +4628,11 @@
   "category": "condiment",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 2.3,
+  "carbs_g": 2.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "papad",
@@ -3920,7 +4656,11 @@
   "category": "condiment",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.4,
+  "carbs_g": 7.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "chutney",
@@ -3945,7 +4685,11 @@
   "category": "condiment",
   "brand": "",
   "is_estimate": true,
-  "version": 1
+  "version": 1,
+  "needs_verification": false,
+  "fat_g": 0.7,
+  "carbs_g": 2.9,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "peanut_butter",
@@ -3963,12 +4707,16 @@
   "protein_high": 4.4,
   "oil_sensitive": false,
   "source": "usda_fdc",
-  "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+  "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
   "diet": "veg",
   "category": "condiment",
   "brand": "",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 7.9,
+  "carbs_g": 2.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "amul_paneer",
@@ -3986,12 +4734,16 @@
   "protein_high": 19.8,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Amul",
   "category": "protein",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 23.2,
+  "carbs_g": 2.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "amul_high_protein_paneer",
@@ -4010,12 +4762,16 @@
   "protein_high": 27.5,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Amul",
   "category": "protein",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 16.7,
+  "carbs_g": 0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "protein_atta_roti",
@@ -4035,12 +4791,16 @@
   "protein_high": 6.6,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "generic",
   "category": "bread",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 2.3,
+  "carbs_g": 15.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "muscleblaze_whey",
@@ -4060,12 +4820,16 @@
   "protein_high": 27.5,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "MuscleBlaze",
   "category": "protein",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 1.4,
+  "carbs_g": 4.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "amul_masti_dahi",
@@ -4084,12 +4848,16 @@
   "protein_high": 5.5,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Amul",
   "category": "protein",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 6.1,
+  "carbs_g": 6.3,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "amul_protein_lassi",
@@ -4108,12 +4876,16 @@
   "protein_high": 16.5,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Amul",
   "category": "drink",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 4.0,
+  "carbs_g": 6.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "epigamia_greek_yogurt",
@@ -4132,12 +4904,16 @@
   "protein_high": 7.7,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Epigamia",
   "category": "protein",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 5.2,
+  "carbs_g": 2.5,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "yippee_noodles",
@@ -4156,19 +4932,23 @@
   "protein_high": 7.2,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Sunfeast",
   "category": "snack",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 15.5,
+  "carbs_g": 36.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
  },
  {
   "id": "kellogg_muesli",
   "name": "kelloggs muesli",
   "aliases": [
    "kellogg muesli",
-   "kelloggs"
+   "kellogg's muesli"
   ],
   "unit": "katori",
   "portion_grams": 50,
@@ -4180,11 +4960,132 @@
   "protein_high": 5.0,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "Typical label values as seen on Open Food Facts (ODbL) / pack labels; varies by brand - verify before launch",
+  "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
   "brand": "Kellogg's",
   "category": "breakfast",
   "diet": "veg",
   "is_estimate": false,
-  "version": 1
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 3.3,
+  "carbs_g": 38.1,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+ },
+ {
+  "id": "mcaloo_tikki",
+  "name": "mcaloo tikki burger",
+  "aliases": [
+   "mcaloo tikki",
+   "mc aloo tikki",
+   "mcaloo",
+   "mcd aloo tikki",
+   "mcdonald's aloo tikki burger"
+  ],
+  "unit": "count",
+  "portion_grams": 150,
+  "kcal": 340,
+  "kcal_low": 306,
+  "kcal_high": 374,
+  "protein_g": 8,
+  "protein_low": 7.2,
+  "protein_high": 8.8,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain's current nutrition page before launch",
+  "brand": "McDonald's India",
+  "category": "snack",
+  "diet": "veg",
+  "is_estimate": false,
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 17.0,
+  "carbs_g": 38.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+ },
+ {
+  "id": "mcveggie",
+  "name": "mcveggie burger",
+  "aliases": [
+   "mcveggie",
+   "mc veggie"
+  ],
+  "unit": "count",
+  "portion_grams": 170,
+  "kcal": 400,
+  "kcal_low": 360,
+  "kcal_high": 440,
+  "protein_g": 10,
+  "protein_low": 9.0,
+  "protein_high": 11.0,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain's current nutrition page before launch",
+  "brand": "McDonald's India",
+  "category": "snack",
+  "diet": "veg",
+  "is_estimate": false,
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 20.0,
+  "carbs_g": 45.0,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+ },
+ {
+  "id": "mcchicken",
+  "name": "mcchicken burger",
+  "aliases": [
+   "mcchicken",
+   "mc chicken"
+  ],
+  "unit": "count",
+  "portion_grams": 170,
+  "kcal": 420,
+  "kcal_low": 378,
+  "kcal_high": 462,
+  "protein_g": 15,
+  "protein_low": 13.5,
+  "protein_high": 16.5,
+  "oil_sensitive": false,
+  "source": "open_food_facts",
+  "source_note": "NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain's current nutrition page before launch",
+  "brand": "McDonald's India",
+  "category": "snack",
+  "diet": "nonveg",
+  "is_estimate": false,
+  "version": 1,
+  "needs_verification": true,
+  "fat_g": 21.0,
+  "carbs_g": 42.8,
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+ },
+ {
+  "id": "water",
+  "name": "water",
+  "aliases": [
+   "paani",
+   "pani",
+   "jal",
+   "plain water"
+  ],
+  "unit": "glass",
+  "portion_grams": 250,
+  "kcal": 0,
+  "kcal_low": 0,
+  "kcal_high": 0,
+  "protein_g": 0,
+  "protein_low": 0,
+  "protein_high": 0,
+  "oil_sensitive": false,
+  "source": "usda_fdc",
+  "source_note": "NEEDS VERIFICATION: plain water has no calories (USDA FoodData Central)",
+  "is_estimate": false,
+  "diet": "veg",
+  "category": "drink",
+  "brand": "",
+  "version": 1,
+  "needs_verification": true,
+  "carbs_g": 0,
+  "fat_g": 0,
+  "macro_note": "estimate: none"
  }
 ]

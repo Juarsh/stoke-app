@@ -48,10 +48,26 @@ test('sync queue coalesces and stops on failure without changing payload', async
   expect(await flush(rest, { upsertEntry: async () => {}, deleteEntry: async () => {} })).toEqual([]);
 });
 import { parseLocal } from '../src/lib/parseLocal';
-test('did-you-mean: >1000 kcal or >3x portion needs confirm with alternatives', () => {
+test('did-you-mean comes from the parser (backend rule: >1000 kcal or >3x portion)', () => {
   const r = parseLocal('20 roti');
   expect(r.items[0].needs_confirm).toBe(true);
-  expect(r.items[0].alternatives!.map((a) => a.quantity)).toContain(2);
-  expect(parseLocal('2 roti').items[0].needs_confirm).toBeUndefined();
-  expect(parseLocal('2000g chicken breast').items[0].alternatives!.some((a) => a.quantity === 200)).toBe(true);
+  expect(r.items[0].alternatives!.some((a) => a.quantity === 1)).toBe(true);
+  expect(parseLocal('2 roti').items[0].needs_confirm).toBe(false);
 });
+import { devaFamily, hasDevanagari, palette } from '../src/theme/tokens';
+import { itemKind, needsConfirmation } from '../src/lib/itemKind';
+test('Devanagari text switches to the matching Noto Sans Devanagari weight', () => {
+  expect(hasDevanagari(['2 ', 'रोटी'])).toBe(true);
+  expect(hasDevanagari('2 roti')).toBe(false);
+  expect(devaFamily('SpaceGrotesk_700Bold')).toBe('NotoSansDevanagari_700Bold');
+  expect(devaFamily('Inter_400Regular')).toBe('NotoSansDevanagari_400Regular');
+});
+test('item kinds: today’s fields and the announced backend fields', () => {
+  const [big] = parseLocal('20 roti').items;
+  expect(itemKind(big)).toBe('did_you_mean'); expect(needsConfirmation(big)).toBe(true);
+  const [ok] = parseLocal('2 roti').items;
+  expect(itemKind(ok)).toBe('table'); expect(needsConfirmation(ok)).toBe(false);
+  expect(itemKind({ ...ok, source: 'generic', needs_confirmation: true })).toBe('generic');
+  expect(needsConfirmation({ ...ok, source: 'generic', needs_confirmation: true })).toBe(true);
+});
+test('light over-grey keeps its contrast floor value', () => { expect(palette.light.over).toBe('#6B6F6D'); });

@@ -1,10 +1,11 @@
 // Item card with editable chips + range popover, and the Edit bottom sheet.
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { DISHES, Item, OilLevel, parser } from '../parser';
+import { DISHES, Item, OilLevel, parser, UNITS } from '../parser';
 import type { Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
+import { FoodTile } from './FoodTile';
 import { Icon } from './Icon';
 import { Badge, Button, Card, Chip, Field, Popover, Row, Segmented, Sheet, T } from './ui';
 
@@ -27,6 +28,7 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
   return (
     <Card dashed={ai && !confirmed}>
       <Row style={{ justifyContent: 'space-between' }}>
+        <FoodTile seed={it.dish_id || it.name} category={dish?.category} size={36} />
         <Row style={{ flex: 1, flexWrap: 'wrap' }}>
           <T v="bodyStrong">{it.name}</T>
           {dish?.brand ? <Badge kind="brand" label="brand" /> : null}
@@ -34,7 +36,7 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
         </Row>
         <Pressable onPress={() => setPop(true)} hitSlop={12} accessibilityRole="button"
           accessibilityLabel={`${it.kcal.best} calories, estimated range ${it.kcal.low} to ${it.kcal.high}, ${SOURCE_LABEL(it.source)}`}>
-          <Row><T v="headline">{it.kcal.best}</T><Icon name="info" color={t.c.muted} size={16} /></Row>
+          <Row><T v="number">{it.kcal.best}</T><Icon name="info" color={t.c.muted} size={16} /></Row>
         </Pressable>
       </Row>
       <Row style={{ flexWrap: 'wrap', gap: 6 }}>
@@ -44,9 +46,9 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
       </Row>
       {ai && !confirmed ? (
         <Row style={{ gap: 6 }}>
-          <Button kind="soft" title="✓ Looks right" onPress={onConfirm} style={{ flex: 1 }} />
-          <Button kind="ghost" title="Edit" onPress={() => setSheet(true)} />
-          <Button kind="ghost" title="Remove" onPress={onRemove} />
+          <Chip kind="ai" label="✓ Looks right" onPress={onConfirm} />
+          <Chip kind="neutral" label="Edit" onPress={() => setSheet(true)} />
+          <Chip kind="neutral" label="Remove" onPress={onRemove} />
         </Row>
       ) : null}
       <Popover visible={pop} onClose={() => setPop(false)} lines={rangeLines(it)} />
@@ -55,7 +57,6 @@ export function ItemCard({ it, slot, confirmed, onEdit, onConfirm, onRemove, onS
   );
 }
 
-const UNITS = ['count', 'katori', 'spoon', 'plate', 'glass', 'gram'];
 export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlotChange }: {
   visible: boolean; it: Item; onClose: () => void; onSave: (it: Item) => void; onDelete: () => void; slot?: Slot; onSlotChange?: (s: Slot) => void;
 }) {
@@ -76,7 +77,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
       <T v="bodyStrong">How many?</T>
       <Row>
         <Button kind="soft" title="−" onPress={() => setQty((q) => Math.max(step, Math.round((q - step) * 100) / 100))} accessibilityLabel="Decrease" />
-        <T v="headline" style={{ minWidth: 48, textAlign: 'center' }}>{qty}</T>
+        <T v="displayM" style={{ minWidth: 64, textAlign: 'center' }}>{qty}</T>
         <Button kind="soft" title="+" onPress={() => setQty((q) => Math.round((q + step) * 100) / 100)} accessibilityLabel="Increase" />
       </Row>
       {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }}>{UNITS.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={u} onPress={() => setUnit(u)} />)}</Row> : null}
@@ -90,8 +91,8 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
       {slot && onSlotChange ? (
         <Segmented value={slot} onChange={onSlotChange} options={SLOTS.map((s) => ({ value: s, label: SLOT_LABEL[s] }))} />
       ) : null}
-      <Card tone="primarySoft">
-        <T v="display" tone="primaryText">{preview.kcal.best} kcal</T>
+      <Card tone="tint">
+        <T v="displayM" tone="emChip">{preview.kcal.best} kcal</T>
         {rangeLines(preview).map((l, i) => <T key={i} v="caption" tone="primaryText">{l}</T>)}
       </Card>
       <Button title="Save changes" onPress={() => onSave(preview)} />
@@ -107,4 +108,3 @@ function scaleAi(it: Item, qty: number): Item {
     protein_g: { low: r(it.protein_g.low, 1), best: r(it.protein_g.best, 1), high: r(it.protein_g.high, 1) } };
 }
 export function SlotCycle(s: Slot): Slot { return SLOTS[(SLOTS.indexOf(s) + 1) % SLOTS.length]; }
-export const _views = View;

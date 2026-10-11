@@ -1,31 +1,653 @@
-{"_doc":"DEV TESTS ONLY - written by Coder while building the parser. Not the accuracy set; Tester's independent 50-meal gold set lives in /workspace/calorie-tests/.",
-"meals":[
-{"in":"2 roti dal sabzi thoda ghee","want":[["roti",2],["dal",1],["sabzi",1],["ghee",1]]},
-{"in":"maggie 1 and half","want":[["maggi",1.5]]},
-{"in":"ek katori rajma chawal","want":[["rajma_chawal",1]]},
-{"in":"3 chapati aur aloo sabji","want":[["roti",3],["aloo_sabzi",1]]},
-{"in":"do anda aur 2 bread","want":[["boiled_egg",2],["bread",2]]},
-{"in":"1 plate poha, chai","want":[["poha",1],["chai",1]]},
-{"in":"dedh katori chawal dal","want":[["rice",1.5],["dal",1]]},
-{"in":"aadha plate biryani","want":[["chicken_biryani",0.5]]},
-{"in":"2 idli sambar coconut chutney","want":[["idli",2],["sambar",1],["chutney",1]]},
-{"in":"masala dosa","want":[["masala_dosa",1]]},
-{"in":"1 glass doodh","want":[["milk",1]]},
-{"in":"paneer butter masala 2 butter naan","want":[["paneer_butter_masala",1],["butter_naan",2]]},
-{"in":"chole bhature","want":[["chole_bhature",1]]},
-{"in":"3 phulka, dal kam oil, salad","want":[["roti",3],["dal",1],["salad",1]]},
-{"in":"2 aloo paratha with dahi and achaar","want":[["aloo_paratha",2],["dahi",1],["pickle",1]]},
-{"in":"1 scoop whey","want":[["protein_shake",1]]},
-{"in":"200g chicken breast","want":[["chicken_breast",200]]},
-{"in":"2 rotis bhindi","want":[["roti",2],["bhindi",1]]},
-{"in":"kela 2","want":[["banana",2]]},
-{"in":"subzi zyada tel wali 2 roti","want":[["sabzi",1],["roti",2]]},
-{"in":"1 samosa aur cutting chai","want":[["samosa",1],["chai",1]]},
-{"in":"egg bhurji 2 pav","want":[["egg_bhurji",1]],"unmatched":["2 pav"]},
-{"in":"teen idly","want":[["idli",3]]},
-{"in":"1 tbsp peanut butter","want":[["peanut_butter",3]]},
-{"in":"paneer tikka masala","want":[],"note":"not in table -> fallback"},
-{"in":"chhole chawal","want":[["chole_chawal",1]]},
-{"in":"2 chapatii","want":[["roti",2]],"note":"typo, fuzzy"},
-{"in":"halwa puri 3","want":[["halwa",1],["puri",3]]}
-]}
+{
+ "_doc": "DEV TESTS ONLY - written by Coder while building the parser. Not the accuracy set; Tester's independent 50-meal gold set lives in /workspace/calorie-tests/.",
+ "meals": [
+  {
+   "in": "2 roti dal sabzi thoda ghee",
+   "want": [
+    [
+     "roti",
+     2
+    ],
+    [
+     "dal",
+     1
+    ],
+    [
+     "sabzi",
+     1
+    ],
+    [
+     "ghee",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "maggie 1 and half",
+   "want": [
+    [
+     "maggi",
+     1.5
+    ]
+   ]
+  },
+  {
+   "in": "ek katori rajma chawal",
+   "want": [
+    [
+     "rajma",
+     0.43
+    ],
+    [
+     "rice",
+     0.43
+    ]
+   ]
+  },
+  {
+   "in": "3 chapati aur aloo sabji",
+   "want": [
+    [
+     "roti",
+     3
+    ],
+    [
+     "aloo_sabzi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "do anda aur 2 bread",
+   "want": [
+    [
+     "boiled_egg",
+     2
+    ],
+    [
+     "bread",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "1 plate poha, chai",
+   "want": [
+    [
+     "poha",
+     1
+    ],
+    [
+     "chai",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "dedh katori chawal dal",
+   "want": [
+    [
+     "rice",
+     1.5
+    ],
+    [
+     "dal",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "aadha plate biryani",
+   "want": [
+    [
+     "chicken_biryani",
+     0.5
+    ]
+   ]
+  },
+  {
+   "in": "2 idli sambar coconut chutney",
+   "want": [
+    [
+     "idli",
+     2
+    ],
+    [
+     "sambar",
+     1
+    ],
+    [
+     "chutney",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "masala dosa",
+   "want": [
+    [
+     "masala_dosa",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "1 glass doodh",
+   "want": [
+    [
+     "milk",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "paneer butter masala 2 butter naan",
+   "want": [
+    [
+     "paneer_butter_masala",
+     1
+    ],
+    [
+     "butter_naan",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "chole bhature",
+   "want": [
+    [
+     "chole_bhature",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "3 phulka, dal kam oil, salad",
+   "want": [
+    [
+     "roti",
+     3
+    ],
+    [
+     "dal",
+     1
+    ],
+    [
+     "salad",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 aloo paratha with dahi and achaar",
+   "want": [
+    [
+     "aloo_paratha",
+     2
+    ],
+    [
+     "dahi",
+     1
+    ],
+    [
+     "pickle",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "1 scoop whey",
+   "want": [
+    [
+     "protein_shake",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "200g chicken breast",
+   "want": [
+    [
+     "chicken_breast",
+     200
+    ]
+   ]
+  },
+  {
+   "in": "2 rotis bhindi",
+   "want": [
+    [
+     "roti",
+     2
+    ],
+    [
+     "bhindi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "kela 2",
+   "want": [
+    [
+     "banana",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "subzi zyada tel wali 2 roti",
+   "want": [
+    [
+     "sabzi",
+     1
+    ],
+    [
+     "roti",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "1 samosa aur cutting chai",
+   "want": [
+    [
+     "samosa",
+     1
+    ],
+    [
+     "chai",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "egg bhurji 2 pav",
+   "want": [
+    [
+     "egg_bhurji",
+     1
+    ]
+   ],
+   "unmatched": [
+    "2 pav"
+   ]
+  },
+  {
+   "in": "teen idly",
+   "want": [
+    [
+     "idli",
+     3
+    ]
+   ]
+  },
+  {
+   "in": "1 tbsp peanut butter",
+   "want": [
+    [
+     "peanut_butter",
+     3
+    ]
+   ]
+  },
+  {
+   "in": "paneer tikka masala",
+   "want": [],
+   "note": "not in table -> fallback"
+  },
+  {
+   "in": "chhole chawal",
+   "want": [
+    [
+     "chole_chawal",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 chapatii",
+   "want": [
+    [
+     "roti",
+     2
+    ]
+   ],
+   "note": "typo, fuzzy"
+  },
+  {
+   "in": "halwa puri 3",
+   "want": [
+    [
+     "halwa",
+     1
+    ],
+    [
+     "puri",
+     3
+    ]
+   ]
+  },
+  {
+   "in": "dal chawal ghee ke saath 2 plate",
+   "want": [
+    [
+     "dal",
+     2
+    ],
+    [
+     "rice",
+     2
+    ],
+    [
+     "ghee",
+     1
+    ]
+   ],
+   "note": "trailing qty binds to the main dish, not ghee"
+  },
+  {
+   "in": "upma thoda butter 1 katori",
+   "want": [
+    [
+     "upma",
+     1
+    ],
+    [
+     "butter",
+     1
+    ]
+   ],
+   "note": "katori on plate dish; butter stays a spoon"
+  },
+  {
+   "in": "2 katori ghee",
+   "want": [
+    [
+     "ghee",
+     2
+    ]
+   ],
+   "note": "fat never measured in katori: spoons"
+  },
+  {
+   "in": "12 spoon oil",
+   "want": [
+    [
+     "oil",
+     6
+    ]
+   ],
+   "note": "fat cap"
+  },
+  {
+   "in": "10 pani puri",
+   "want": [
+    [
+     "pani_puri",
+     10
+    ]
+   ],
+   "note": "pieces"
+  },
+  {
+   "in": "5 veg momos aur 2 plate momos",
+   "want": [
+    [
+     "momos",
+     5
+    ],
+    [
+     "momos",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "dahi puri 4",
+   "want": [
+    [
+     "dahi_puri",
+     4
+    ]
+   ]
+  },
+  {
+   "in": "३ इडली और सांभर",
+   "want": [
+    [
+     "idli",
+     3
+    ],
+    [
+     "sambar",
+     1
+    ]
+   ],
+   "note": "Devanagari"
+  },
+  {
+   "in": "2 paratha और दही",
+   "want": [
+    [
+     "paratha",
+     2
+    ],
+    [
+     "dahi",
+     1
+    ]
+   ],
+   "note": "mixed script"
+  },
+  {
+   "in": "आलू की सब्जी 2 रोटी",
+   "want": [
+    [
+     "aloo_sabzi",
+     1
+    ],
+    [
+     "roti",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "samosa x3",
+   "want": [
+    [
+     "samosa",
+     3
+    ]
+   ]
+  },
+  {
+   "in": "2x vada pav",
+   "want": [
+    [
+     "vada_pav",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "yippee 2 packet",
+   "want": [
+    [
+     "yippee_noodles",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "bas thoda sa rice",
+   "want": [
+    [
+     "rice",
+     0.5
+    ]
+   ]
+  },
+  {
+   "in": "chiken curry 1 katori",
+   "want": [
+    [
+     "chicken_curry",
+     1
+    ]
+   ],
+   "note": "typo"
+  },
+  {
+   "in": "muton biryani",
+   "want": [
+    [
+     "mutton_biryani",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "3 chapatis bhindy",
+   "want": [
+    [
+     "roti",
+     3
+    ],
+    [
+     "bhindi",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "mcveggie and coke",
+   "want": [
+    [
+     "mcveggie",
+     1
+    ],
+    [
+     "cola",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "kelloggs muesli with milk",
+   "want": [
+    [
+     "kellogg_muesli",
+     1
+    ],
+    [
+     "milk",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "2 slice margherita pizza",
+   "want": [
+    [
+     "pizza",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "1 plate kadhi chawal",
+   "want": [
+    [
+     "kadhi",
+     1
+    ],
+    [
+     "rice",
+     1
+    ]
+   ],
+   "note": "combo split when portion given"
+  },
+  {
+   "in": "kadhi chawal",
+   "want": [
+    [
+     "kadhi_chawal",
+     1
+    ]
+   ],
+   "note": "no portion: kept whole"
+  },
+  {
+   "in": "6 chicken momos",
+   "want": [
+    [
+     "chicken_momos",
+     6
+    ]
+   ]
+  },
+  {
+   "in": "momos chicken wale 4",
+   "want": [
+    [
+     "chicken_momos",
+     4
+    ]
+   ]
+  },
+  {
+   "in": "grilled chicken breast 150 g",
+   "want": [
+    [
+     "chicken_breast",
+     150
+    ]
+   ]
+  },
+  {
+   "in": "2 glass paani",
+   "want": [
+    [
+     "water",
+     2
+    ]
+   ]
+  },
+  {
+   "in": "aloo paratha zyada ghee",
+   "want": [
+    [
+     "aloo_paratha",
+     1
+    ],
+    [
+     "ghee",
+     2
+    ]
+   ],
+   "note": "zyada ghee adds ghee"
+  },
+  {
+   "in": "dal kam tel",
+   "want": [
+    [
+     "dal",
+     1
+    ]
+   ]
+  },
+  {
+   "in": "sabzi ghee wali",
+   "want": [
+    [
+     "sabzi",
+     1
+    ]
+   ]
+  }
+ ]
+}

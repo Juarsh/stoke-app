@@ -1,64 +1,110 @@
-import { ReactNode } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import { Modal, Pressable, PressableProps, ScrollView, Text, TextInput, TextInputProps, TextProps, View, ViewProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { makeStyles, useTheme } from '../theme';
-import type { typeScale } from '../theme/tokens';
+import { devaFamily, hasDevanagari, typeScale } from '../theme/tokens';
+import { Glows, Grad } from './Gradient';
+
+/** True inside a Card: the light `over` grey is only legible (≥4.5:1) on a card, never on the bare background. */
+const OnCard = createContext(false);
 
 type Variant = keyof typeof typeScale;
-type Tone = 'text' | 'text2' | 'muted' | 'primary' | 'primaryText' | 'accent' | 'ai' | 'aiText' | 'danger' | 'over' | 'onPrimary' | 'infoText' | 'popText' | 'steps';
-export function T({ v = 'body', tone = 'text', style, ...p }: TextProps & { v?: Variant; tone?: Tone }) {
+export type Tone = 'text' | 'text2' | 'muted' | 'em' | 'emChip' | 'gold' | 'goldOnGrad' | 'ai' | 'danger' | 'over' | 'onGrad' | 'onCoach' | 'onCheck' | 'popText' | 'steps' | 'freeze'
+  | 'primary' | 'primaryText' | 'accent' | 'aiText' | 'onPrimary' | 'infoText';
+export function T({ v = 'body', tone = 'text', style, children, ...p }: TextProps & { v?: Variant; tone?: Tone }) {
   const t = useTheme();
-  return <Text {...p} maxFontSizeMultiplier={1.3} style={[t.type[v], { color: t.c[tone], fontVariant: ['tabular-nums'] }, style]} />;
+  const onCard = useContext(OnCard);
+  // design rule: light-mode `over` grey never on bare background -> fall back to text-2 there
+  const tn: Tone = tone === 'over' && !t.dark && !onCard ? 'text2' : tone;
+  const base = t.type[v];
+  const fam = hasDevanagari(children) ? devaFamily(base.fontFamily) : base.fontFamily;
+  return (
+    <Text {...p} maxFontSizeMultiplier={1.3} style={[base, { fontFamily: fam, color: t.c[tn], fontVariant: ['tabular-nums'] }, style]}>
+      {children}
+    </Text>
+  );
 }
 
-export function Screen({ children, scroll = true, title, right }: { children: ReactNode; scroll?: boolean; title?: string; right?: ReactNode }) {
+export function Screen({ children, scroll = true, title, right, eyebrow }: { children: ReactNode; scroll?: boolean; title?: string; right?: ReactNode; eyebrow?: string }) {
   const s = useStyles();
-  const body = <View style={s.pad}>{title ? <View style={s.bar}><T v="title">{title}</T>{right}</View> : null}{children}</View>;
-  return <SafeAreaView edges={['top']} style={s.screen}>{scroll ? <ScrollView keyboardShouldPersistTaps="handled">{body}</ScrollView> : body}</SafeAreaView>;
+  const body = (
+    <View style={s.pad}>
+      {title ? (
+        <View style={s.bar}>
+          <View>{eyebrow ? <T v="eyebrow" tone="muted">{eyebrow}</T> : null}<T v="title">{title}</T></View>
+          {right}
+        </View>
+      ) : null}
+      {children}
+    </View>
+  );
+  return (
+    <View style={{ flex: 1 }}>
+      <Glows />
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>{scroll ? <ScrollView keyboardShouldPersistTaps="handled">{body}</ScrollView> : body}</SafeAreaView>
+    </View>
+  );
 }
 
-export function Card({ style, tone = 'surface', dashed, ...p }: ViewProps & { tone?: 'surface' | 'glass' | 'primarySoft' | 'accentSoft' | 'infoSoft' | 'aiSoft' | 'surface2'; dashed?: boolean }) {
+type CardTone = 'card' | 'card2' | 'tint' | 'tintGold' | 'aiBg' | 'track' | 'coach' | 'glass' | 'surface' | 'surface2' | 'primarySoft' | 'accentSoft' | 'infoSoft' | 'aiSoft';
+/** Tinted 90%-opaque "glass-look" card: NO live blur. Hairline border + 1px top highlight. */
+export function Card({ style, tone = 'card', dashed, outline, children, ...p }: ViewProps & { tone?: CardTone; dashed?: boolean; outline?: 'check' }) {
   const t = useTheme(); const s = useStyles();
-  return <View {...p} style={[s.card, { backgroundColor: t.c[tone] }, tone === 'glass' && { borderColor: t.c.glassBorder, borderWidth: 1 }, dashed && { borderStyle: 'dashed', borderColor: t.c.ai, borderWidth: 1.5 }, style]} />;
+  const coach = tone === 'coach';
+  const bg = coach ? 'transparent' : t.c[(tone === 'glass' ? 'card' : tone) as keyof typeof t.c] as string;
+  return (
+    <OnCard.Provider value>
+      <View {...p} style={[s.card, { backgroundColor: bg }, coach && { overflow: 'hidden', borderWidth: 0 },
+        dashed && { borderStyle: 'dashed', borderColor: t.c.ai, borderWidth: 1.5 }, outline === 'check' && { borderColor: t.c.text2, borderWidth: 1.5 }, style]}>
+        {coach ? <Grad colors={[t.c.coach1, t.c.coach2, t.c.coach3]} /> : <View style={s.highlight} pointerEvents="none" />}
+        {children}
+      </View>
+    </OnCard.Provider>
+  );
 }
 
-export function Button({ title, kind = 'primary', disabled, style, ...p }: PressableProps & { title: string; kind?: 'primary' | 'soft' | 'danger' | 'ghost' }) {
+export function Button({ title, kind = 'primary', disabled, style, ...p }: PressableProps & { title: string; kind?: 'primary' | 'soft' | 'danger' | 'ghost' | 'onCoach' }) {
   const t = useTheme(); const s = useStyles();
-  const bg = disabled ? t.c.surface3 : kind === 'primary' ? t.c.primary : kind === 'soft' ? t.c.primarySoft : 'transparent';
-  const fg = disabled ? 'muted' : kind === 'primary' ? 'onPrimary' : kind === 'danger' ? 'danger' : 'primaryText';
+  const grad = kind === 'primary' && !disabled;
+  const bg = disabled ? t.c.track : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
+  const fg: Tone = disabled ? 'muted' : grad ? 'onGrad' : kind === 'danger' ? 'danger' : kind === 'onCoach' ? 'onCoach' : 'emChip';
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
-      style={(st) => [s.btn, { backgroundColor: bg }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.danger }, kind === 'primary' && !disabled && t.elev.e1, st.pressed && { opacity: 0.85 }, style as object]}>
-      <T v="button" tone={fg as Tone}>{title}</T>
+      style={(st) => [s.btn, { backgroundColor: bg }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.danger }, st.pressed && { opacity: 0.85 }, style as object]}>
+      {grad ? <Grad colors={[t.c.grad1, t.c.grad2, t.c.grad3]} /> : null}
+      <T v="button" tone={fg}>{title}</T>
     </Pressable>
   );
 }
 
-export function Chip({ label, onPress, kind = 'primary', a11y, selected }: { label: string; onPress?: () => void; kind?: 'primary' | 'ai' | 'neutral'; a11y?: string; selected?: boolean }) {
+export function Chip({ label, onPress, kind = 'primary', a11y, selected, faded }: { label: string; onPress?: () => void; kind?: 'primary' | 'ai' | 'neutral' | 'onCoach'; a11y?: string; selected?: boolean; faded?: boolean }) {
   const t = useTheme(); const s = useStyles();
-  const bg = kind === 'ai' ? t.c.aiSoft : kind === 'neutral' && !selected ? t.c.surface : t.c.primarySoft;
-  const fg: Tone = kind === 'ai' ? 'aiText' : kind === 'neutral' && !selected ? 'text2' : 'primaryText';
+  const bg = kind === 'ai' ? t.c.aiBg : kind === 'onCoach' ? t.c.onCoachFill : kind === 'neutral' && !selected ? t.c.card2 : t.c.tint;
+  const fg: Tone = kind === 'ai' ? 'ai' : kind === 'onCoach' ? 'onCoach' : kind === 'neutral' && !selected ? 'text2' : 'emChip';
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y ?? label} hitSlop={10} style={s.chipHit}>
-      <View style={[s.chip, { backgroundColor: bg }, kind === 'neutral' && !selected && { borderWidth: 1, borderColor: t.c.line }]}>
+    <Pressable onPress={onPress} disabled={!onPress} accessibilityRole="button" accessibilityLabel={a11y ?? label} hitSlop={8} style={s.chipHit}>
+      <View style={[s.chip, { backgroundColor: bg, opacity: faded ? 0.6 : 1 }, kind === 'neutral' && { borderWidth: 1, borderColor: selected ? t.c.em : t.c.cardLine }]}>
         <T v="label" tone={fg}>{label}</T>
       </View>
     </Pressable>
   );
 }
 
-export function Badge({ label, kind }: { label: string; kind: 'ai' | 'brand' | 'accent' }) {
+export function Badge({ label, kind }: { label: string; kind: 'ai' | 'brand' | 'check' | 'gold' }) {
   const t = useTheme(); const s = useStyles();
-  const bg = kind === 'ai' ? t.c.aiSoft : kind === 'accent' ? t.c.accentSoft : t.c.surface3;
-  return <View style={[s.badge, { backgroundColor: bg }]}><T v="micro" tone={kind === 'ai' ? 'aiText' : kind === 'accent' ? 'accent' : 'text2'}>{label.toUpperCase()}</T></View>;
+  const bg = kind === 'ai' ? t.c.aiBg : kind === 'check' ? t.c.check : t.c.tintGold;
+  const fg: Tone = kind === 'ai' ? 'ai' : kind === 'check' ? 'onCheck' : 'gold';
+  return <View style={[s.badge, { backgroundColor: bg }]}><T v="micro" tone={fg}>{label.toUpperCase()}</T></View>;
 }
 
-export function Field(p: TextInputProps & { label?: string }) {
+export function Field(p: TextInputProps & { label?: string; big?: boolean }) {
   const t = useTheme(); const s = useStyles();
+  const base = p.big ? t.type.input : t.type.body;
+  const fam = hasDevanagari(p.value ?? p.defaultValue ?? '') ? devaFamily(base.fontFamily) : base.fontFamily;
   return (
     <View style={{ gap: 4 }}>
       {p.label ? <T v="caption" tone="muted">{p.label}</T> : null}
-      <TextInput placeholderTextColor={t.c.muted} {...p} style={[s.field, t.type.body, { color: t.c.text }, p.style]} />
+      <TextInput placeholderTextColor={t.c.muted} selectionColor={t.c.em} {...p} style={[s.field, base, { fontFamily: fam, color: t.c.text }, p.big && s.fieldBig, p.style]} />
     </View>
   );
 }
@@ -71,8 +117,8 @@ export function Segmented<V extends string>({ value, options, onChange }: { valu
         const on = o.value === value;
         return (
           <Pressable key={o.value} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }}
-            style={[s.segItem, on && { backgroundColor: t.dark ? t.c.primarySoft : t.c.surface, ...t.elev.e1 }]}>
-            <T v="label" tone={on ? 'primaryText' : 'muted'}>{o.label}</T>
+            style={[s.segItem, on && { backgroundColor: t.dark ? t.c.tint : t.c.card2, ...t.elev.e1 }]}>
+            <T v="label" tone={on ? 'emChip' : 'muted'}>{o.label}</T>
           </Pressable>
         );
       })}
@@ -87,15 +133,16 @@ export function Sheet({ visible, onClose, title, children }: { visible: boolean;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={[s.scrim, { backgroundColor: t.c.scrim }]} onPress={onClose} accessibilityLabel="Close" />
-      <View style={[s.sheet, t.elev.e3]}>
-        {title ? <T v="headline" style={{ marginBottom: 8 }}>{title}</T> : null}
-        {children}
-      </View>
+      <OnCard.Provider value>
+        <View style={[s.sheet, t.elev.e3]}>
+          {title ? <T v="headline" style={{ marginBottom: 4 }}>{title}</T> : null}
+          {children}
+        </View>
+      </OnCard.Provider>
     </Modal>
   );
 }
 
-/** Dark range popover ("170 kcal · range 140–210 · recipe estimate"). */
 export function Popover({ visible, onClose, lines }: { visible: boolean; onClose: () => void; lines: string[] }) {
   const t = useTheme(); const s = useStyles();
   return (
@@ -110,20 +157,21 @@ export function Popover({ visible, onClose, lines }: { visible: boolean; onClose
 }
 
 const useStyles = makeStyles((t) => ({
-  screen: { flex: 1, backgroundColor: t.c.bg },
-  pad: { padding: t.space.screen, gap: t.space.gap, paddingBottom: t.space.xxl },
+  pad: { padding: t.space.screen, gap: t.space.gap, paddingBottom: t.sizes.nav + t.space.xxl * 2 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: t.space.xs },
   card: { borderRadius: t.radius.card, paddingVertical: t.space.cardV, paddingHorizontal: t.space.cardH, gap: t.space.xs,
-    borderWidth: t.dark ? 0 : 1, borderColor: t.c.line, ...t.elev.e1 },
+    borderWidth: 1, borderColor: t.c.cardLine, ...t.elev.e1 },
+  highlight: { position: 'absolute', top: 0, left: t.radius.card / 2, right: t.radius.card / 2, height: 1, backgroundColor: t.c.cardHighlight },
   btn: { minHeight: t.sizes.touch, borderRadius: t.radius.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: t.space.md },
   chipHit: { minHeight: t.sizes.touch, justifyContent: 'center' },
   chip: { height: t.sizes.chip, borderRadius: t.radius.chip, paddingHorizontal: t.space.sm, justifyContent: 'center' },
   badge: { borderRadius: t.radius.full, paddingHorizontal: t.space.xs, paddingVertical: 2 },
-  field: { minHeight: t.sizes.touch, borderRadius: t.radius.field, borderWidth: 1, borderColor: t.c.line, backgroundColor: t.c.surface, paddingHorizontal: t.space.sm },
-  seg: { flexDirection: 'row', backgroundColor: t.c.surface3, borderRadius: t.radius.field, padding: 3 },
-  segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: t.radius.field - 3 },
+  field: { minHeight: t.sizes.touch, borderRadius: t.radius.field, borderWidth: 1, borderColor: t.c.cardLine, backgroundColor: t.c.card2, paddingHorizontal: t.space.md },
+  fieldBig: { minHeight: 110, paddingTop: t.space.md, borderColor: t.c.em, textAlignVertical: 'top' as const },
+  seg: { flexDirection: 'row', backgroundColor: t.c.track, borderRadius: t.radius.full, padding: 3 },
+  segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: t.radius.full },
   scrim: { flex: 1 },
-  sheet: { backgroundColor: t.c.surface2, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: t.space.lg, gap: t.space.sm },
+  sheet: { backgroundColor: t.c.navSolid, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: t.space.lg, gap: t.space.sm },
   popWrap: { flex: 1, justifyContent: 'center', padding: t.space.lg },
   pop: { borderRadius: t.radius.popover, padding: t.space.sm, gap: 2 },
 }));

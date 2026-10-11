@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
 import { addDays, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
@@ -15,7 +16,7 @@ function asItem(e: FoodEntry): Item {
   return { dish_id: e.dish_id ?? '', name: e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item', matched_text: e.raw_text,
     quantity: e.qty, unit: e.unit, grams: 0, oil_level: e.oil_level, kcal: e.kcal, protein_g: e.protein_g,
     source: e.source === 'table' ? (parser.dishById(e.dish_id ?? '')?.source ?? 'estimate') : e.source, source_note: e.source_note,
-    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom' };
+    fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirm: false };
 }
 
 type Day = { date: string; kcal: number; protein: number; entries: FoodEntry[] };
@@ -49,8 +50,8 @@ export default function Progress() {
   const header = (
     <View style={{ gap: 10 }}>
       <T v="title">Progress</T>
-      <Card tone="accentSoft">
-        <Row style={{ justifyContent: 'space-between' }}><T v="display" tone="accent">{d.streak.current}</T><T tone="accent">day streak · best {d.streak.best}</T></Row>
+      <Card tone="tintGold">
+        <Row style={{ justifyContent: 'space-between' }}><T v="displayXl" tone="gold">{d.streak.current}</T><T tone="gold">day streak · best {d.streak.best}</T></Row>
         <T v="caption" tone="muted">1 freeze a week, used automatically on a missed day.</T>
       </Card>
       <Card>
@@ -58,9 +59,9 @@ export default function Progress() {
           {cal.map((day) => {
             const logged = d.loggedDates.has(day), frozen = d.streak.frozenDays.includes(day);
             return (
-              <View key={day} style={[s.cell, { backgroundColor: logged ? t.c.primary : frozen ? t.c.infoSoft : t.c.surface2 }]}
+              <View key={day} style={[s.cell, { backgroundColor: logged ? t.c.em : frozen ? t.c.tint : t.c.track }]}
                 accessibilityLabel={`${day}: ${logged ? 'logged' : frozen ? 'freeze used' : 'not logged'}`}>
-                <T v="micro" tone={logged ? 'onPrimary' : frozen ? 'infoText' : 'muted'}>{frozen ? '❄' : day.slice(8)}</T>
+                <T v="micro" tone={logged ? 'onGrad' : frozen ? 'freeze' : 'muted'}>{frozen ? '❄' : day.slice(8)}</T>
               </View>
             );
           })}
@@ -70,7 +71,7 @@ export default function Progress() {
     </View>
   );
   return (
-    <SafeAreaView edges={['top']} style={s.screen}>
+    <View style={{ flex: 1 }}><Glows /><SafeAreaView edges={['top']} style={s.screen}>
       <FlatList data={days} keyExtractor={(x) => x.date} renderItem={({ item }) => <DayRow day={item} onPick={onPick} />}
         ListHeaderComponent={header} contentContainerStyle={s.list} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} removeClippedSubviews windowSize={5} />
       {editing ? (
@@ -79,15 +80,15 @@ export default function Progress() {
           onSave={(n) => {
             // explicit user edit: new snapshot, stamped with the current table version
             st.updateEntry({ ...editing, slot, qty: n.quantity, unit: n.unit, oil_level: n.oil_level, dish_id: editing.dish_id ? n.dish_id : null,
-              kcal: n.kcal, protein_g: n.protein_g, dish_table_version: editing.dish_id ? DISH_TABLE_VERSION : editing.dish_table_version });
+              kcal: n.kcal, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g, dish_table_version: editing.dish_id ? DISH_TABLE_VERSION : editing.dish_table_version });
             setEditing(null);
           }} />
       ) : null}
-    </SafeAreaView>
+    </SafeAreaView></View>
   );
 }
 const useStyles = makeStyles((t) => ({
-  screen: { flex: 1, backgroundColor: t.c.bg },
+  screen: { flex: 1 },
   list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   cell: { width: 38, height: 34, borderRadius: t.radius.chip, alignItems: 'center', justifyContent: 'center' },

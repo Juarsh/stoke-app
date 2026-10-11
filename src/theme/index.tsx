@@ -9,7 +9,7 @@ export interface Theme {
 }
 export const makeTheme = (dark: boolean): Theme => {
   const c = dark ? palette.dark : palette.light;
-  return { dark, c, space, radius, type: typeScale, sizes, elev: elevation(dark, c.shadow) };
+  return { dark, c, space, radius, type: typeScale, sizes, elev: elevation(dark, c) };
 };
 const Ctx = createContext<Theme>(makeTheme(false));
 
