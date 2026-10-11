@@ -1,0 +1,35 @@
+{
+  "_doc": "Data-driven Hinglish parser rules. Shared with the app (TypeScript port) so both parse the same way. Grams per unit are used to convert between a user's unit and a dish's standard portion.",
+  "numbers": {
+    "ek": 1, "one": 1, "a": 1, "an": 1, "do": 2, "two": 2, "teen": 3, "three": 3, "char": 4, "chaar": 4, "four": 4,
+    "paanch": 5, "panch": 5, "five": 5, "chhe": 6, "che": 6, "six": 6, "saat": 7, "seven": 7, "aath": 8, "eight": 8,
+    "nau": 9, "nine": 9, "das": 10, "ten": 10,
+    "aadha": 0.5, "adha": 0.5, "aadhi": 0.5, "adhi": 0.5, "half": 0.5, "dedh": 1.5, "derh": 1.5, "dhai": 2.5, "dhaai": 2.5, "dhaee": 2.5,
+    "sawa": 1.25, "paune": 0.75, "quarter": 0.25
+  },
+  "half_suffixes": ["and half", "and a half", "aur aadha", "aur adha", "& half", "+ half", "n half"],
+  "units": {
+    "count":  {"words": ["piece", "pieces", "pc", "pcs", "nos", "no", "slice", "slices", "scoop", "scoops", "cup", "cups"], "grams": 0},
+    "katori": {"words": ["katori", "katoris", "katora", "kotori", "bowl", "bowls", "vati", "wati"], "grams": 150},
+    "plate":  {"words": ["plate", "plates", "thali"], "grams": 300},
+    "glass":  {"words": ["glass", "glasses", "gilaas", "gilas"], "grams": 250},
+    "spoon":  {"words": ["spoon", "spoons", "chammach", "chamach", "chamchi", "chammch", "tsp", "teaspoon"], "grams": 5},
+    "tbsp":   {"words": ["tbsp", "tablespoon", "bada chammach"], "grams": 15, "as": "spoon", "factor": 3},
+    "gram":   {"words": ["g", "gm", "gms", "gram", "grams", "gr"], "grams": 1}
+  },
+  "oil_words": {
+    "less":  ["kam", "less", "low", "halka", "light", "bina", "no", "without", "dry"],
+    "extra": ["zyada", "jyada", "zyaada", "jada", "extra", "more", "bahut", "heavy", "loaded", "tadka", "wala", "wali", "fried"],
+    "normal":["normal", "regular"]
+  },
+  "oil_nouns": ["oil", "tel", "ghee", "butter", "makhan", "makkhan", "tadka"],
+  "small_words": ["thoda", "thodi", "thora", "thori", "little", "bit", "zara"],
+  "fat_dishes": ["ghee", "butter", "oil"],
+  "small_fat_spoons": 1,
+  "default_fat_spoons": 1,
+  "extra_fat_spoons": 2,
+  "oil_kcal_per_150g": 45,
+  "fillers": ["and", "aur", "or", "with", "ke", "ka", "ki", "saath", "sath", "mein", "me", "mai", "khaya", "khaye", "khayi", "liya", "liye", "piya", "pi", "had", "ate", "i", "of", "the", "some", "bhi", "plus", "n", "&", "+", "also", "today", "aaj", "lunch", "dinner", "breakfast", "nashta", "snack", "for", "my", "in", "then", "phir", "fir"],
+  "fuzzy_min_len": 5,
+  "fuzzy_max_dist": 1
+}

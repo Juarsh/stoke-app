@@ -1,0 +1,2304 @@
+[
+ {
+  "in": "2 roti dal sabzi thoda ghee",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "ghee",
+     "name": "ghee",
+     "matched_text": "ghee",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 5,
+     "oil_level": "",
+     "kcal": {
+      "low": 40,
+      "best": 45,
+      "high": 50
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "maggie 1 and half",
+  "out": {
+   "items": [
+    {
+     "dish_id": "maggi",
+     "name": "maggi",
+     "matched_text": "maggie",
+     "quantity": 1.5,
+     "unit": "plate",
+     "grams": 105,
+     "oil_level": "",
+     "kcal": {
+      "low": 419,
+      "best": 465,
+      "high": 512
+     },
+     "protein_g": {
+      "low": 9.5,
+      "best": 10.5,
+      "high": 11.6
+     },
+     "source": "open_food_facts",
+     "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "ek katori rajma chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "rajma_chawal",
+     "name": "rajma chawal",
+     "matched_text": "rajma chawal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 135,
+      "best": 180,
+      "high": 225
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "3 chapati aur aloo sabji",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "chapati",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 246,
+      "best": 330,
+      "high": 414
+     },
+     "protein_g": {
+      "low": 7.8,
+      "best": 10.5,
+      "high": 13.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_sabzi",
+     "name": "aloo sabzi",
+     "matched_text": "aloo sabji",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 128,
+      "best": 170,
+      "high": 212
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "do anda aur 2 bread",
+  "out": {
+   "items": [
+    {
+     "dish_id": "boiled_egg",
+     "name": "boiled egg",
+     "matched_text": "anda",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 130,
+      "best": 144,
+      "high": 158
+     },
+     "protein_g": {
+      "low": 11.4,
+      "best": 12.6,
+      "high": 13.8
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "bread",
+     "name": "bread",
+     "matched_text": "bread",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 50,
+     "oil_level": "",
+     "kcal": {
+      "low": 120,
+      "best": 134,
+      "high": 148
+     },
+     "protein_g": {
+      "low": 4.2,
+      "best": 4.6,
+      "high": 5
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 plate poha, chai",
+  "out": {
+   "items": [
+    {
+     "dish_id": "poha",
+     "name": "poha",
+     "matched_text": "poha",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 188,
+      "best": 250,
+      "high": 312
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "chai",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 60,
+      "best": 80,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "dedh katori chawal dal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "chawal",
+     "quantity": 1.5,
+     "unit": "katori",
+     "grams": 225,
+     "oil_level": "",
+     "kcal": {
+      "low": 264,
+      "best": 293,
+      "high": 323
+     },
+     "protein_g": {
+      "low": 5.4,
+      "best": 6,
+      "high": 6.6
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "aadha plate biryani",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_biryani",
+     "name": "chicken biryani",
+     "matched_text": "biryani",
+     "quantity": 0.5,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 206,
+      "best": 275,
+      "high": 344
+     },
+     "protein_g": {
+      "low": 9.4,
+      "best": 12.5,
+      "high": 15.6
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 idli sambar coconut chutney",
+  "out": {
+   "items": [
+    {
+     "dish_id": "idli",
+     "name": "idli",
+     "matched_text": "idli",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 90,
+      "best": 120,
+      "high": 150
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "sambar",
+     "name": "sambar",
+     "matched_text": "sambar",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 82,
+      "best": 110,
+      "high": 138
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "chutney",
+     "name": "chutney",
+     "matched_text": "coconut chutney",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 15,
+     "oil_level": "",
+     "kcal": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "protein_g": {
+      "low": 0.4,
+      "best": 0.5,
+      "high": 0.6
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "masala dosa",
+  "out": {
+   "items": [
+    {
+     "dish_id": "masala_dosa",
+     "name": "masala dosa",
+     "matched_text": "masala dosa",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 262,
+      "best": 350,
+      "high": 438
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 glass doodh",
+  "out": {
+   "items": [
+    {
+     "dish_id": "milk",
+     "name": "milk",
+     "matched_text": "doodh",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 140,
+      "best": 155,
+      "high": 170
+     },
+     "protein_g": {
+      "low": 7.2,
+      "best": 8,
+      "high": 8.8
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paneer butter masala 2 butter naan",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paneer_butter_masala",
+     "name": "paneer butter masala",
+     "matched_text": "paneer butter masala",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 248,
+      "best": 330,
+      "high": 412
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "butter_naan",
+     "name": "butter naan",
+     "matched_text": "butter naan",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 480,
+      "best": 640,
+      "high": 800
+     },
+     "protein_g": {
+      "low": 12,
+      "best": 16,
+      "high": 20
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chole bhature",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chole_bhature",
+     "name": "chole bhature",
+     "matched_text": "chole bhature",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 350,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 562,
+      "best": 750,
+      "high": 938
+     },
+     "protein_g": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "3 phulka, dal kam oil, salad",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "phulka",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 246,
+      "best": 330,
+      "high": 414
+     },
+     "protein_g": {
+      "low": 7.8,
+      "best": 10.5,
+      "high": 13.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "less",
+     "kcal": {
+      "low": 67,
+      "best": 105,
+      "high": 165
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "salad",
+     "name": "salad",
+     "matched_text": "salad",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 22,
+      "best": 30,
+      "high": 38
+     },
+     "protein_g": {
+      "low": 0.8,
+      "best": 1,
+      "high": 1.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 aloo paratha with dahi and achaar",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "aloo paratha",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 240,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 450,
+      "best": 600,
+      "high": 750
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dahi",
+     "name": "dahi",
+     "matched_text": "dahi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 81,
+      "best": 90,
+      "high": 99
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 5,
+      "high": 5.5
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "pickle",
+     "name": "pickle",
+     "matched_text": "achaar",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 15,
+     "oil_level": "",
+     "kcal": {
+      "low": 22,
+      "best": 30,
+      "high": 38
+     },
+     "protein_g": {
+      "low": 0.2,
+      "best": 0.2,
+      "high": 0.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 scoop whey",
+  "out": {
+   "items": [
+    {
+     "dish_id": "protein_shake",
+     "name": "protein shake",
+     "matched_text": "scoop whey",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 30,
+     "oil_level": "",
+     "kcal": {
+      "low": 108,
+      "best": 120,
+      "high": 132
+     },
+     "protein_g": {
+      "low": 21.6,
+      "best": 24,
+      "high": 26.4
+     },
+     "source": "open_food_facts",
+     "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "200g chicken breast",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chicken_breast",
+     "name": "chicken breast",
+     "matched_text": "chicken breast",
+     "quantity": 200,
+     "unit": "gram",
+     "grams": 200,
+     "oil_level": "",
+     "kcal": {
+      "low": 296,
+      "best": 330,
+      "high": 364
+     },
+     "protein_g": {
+      "low": 55.8,
+      "best": 62,
+      "high": 68.2
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 rotis bhindi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "rotis",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "bhindi",
+     "name": "bhindi",
+     "matched_text": "bhindi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 105,
+      "best": 140,
+      "high": 175
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "kela 2",
+  "out": {
+   "items": [
+    {
+     "dish_id": "banana",
+     "name": "banana",
+     "matched_text": "kela",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 240,
+     "oil_level": "",
+     "kcal": {
+      "low": 188,
+      "best": 210,
+      "high": 232
+     },
+     "protein_g": {
+      "low": 2.4,
+      "best": 2.6,
+      "high": 2.8
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "subzi zyada tel wali 2 roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "subzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "extra",
+     "kcal": {
+      "low": 121,
+      "best": 175,
+      "high": 230
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 samosa aur cutting chai",
+  "out": {
+   "items": [
+    {
+     "dish_id": "samosa",
+     "name": "samosa",
+     "matched_text": "samosa",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 195,
+      "best": 260,
+      "high": 325
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "cutting chai",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 60,
+      "best": 80,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "egg bhurji 2 pav",
+  "out": {
+   "items": [
+    {
+     "dish_id": "egg_bhurji",
+     "name": "egg bhurji",
+     "matched_text": "egg bhurji",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 100,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 135,
+      "best": 180,
+      "high": 225
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": [
+    "2 pav"
+   ]
+  }
+ },
+ {
+  "in": "teen idly",
+  "out": {
+   "items": [
+    {
+     "dish_id": "idli",
+     "name": "idli",
+     "matched_text": "idly",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 135,
+      "best": 180,
+      "high": 225
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 tbsp peanut butter",
+  "out": {
+   "items": [
+    {
+     "dish_id": "peanut_butter",
+     "name": "peanut butter",
+     "matched_text": "peanut butter",
+     "quantity": 3,
+     "unit": "spoon",
+     "grams": 48,
+     "oil_level": "",
+     "kcal": {
+      "low": 258,
+      "best": 285,
+      "high": 315
+     },
+     "protein_g": {
+      "low": 10.8,
+      "best": 12,
+      "high": 13.2
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "paneer tikka masala",
+  "out": {
+   "items": [],
+   "unmatched": [
+    "paneer tikka masala"
+   ]
+  }
+ },
+ {
+  "in": "chhole chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chole_chawal",
+     "name": "chole chawal",
+     "matched_text": "chhole chawal",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 300,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 322,
+      "best": 430,
+      "high": 538
+     },
+     "protein_g": {
+      "low": 9.8,
+      "best": 13,
+      "high": 16.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 chapatii",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "chapatii",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "halwa puri 3",
+  "out": {
+   "items": [
+    {
+     "dish_id": "halwa",
+     "name": "halwa",
+     "matched_text": "halwa",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 100,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 3,
+      "best": 4,
+      "high": 5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "puri",
+     "name": "puri",
+     "matched_text": "puri",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 75,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "dal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "dal kam oil",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "less",
+     "kcal": {
+      "low": 67,
+      "best": 105,
+      "high": 165
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "zyada ghee wali dal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "ghee",
+     "name": "ghee",
+     "matched_text": "ghee",
+     "quantity": 2,
+     "unit": "spoon",
+     "grams": 10,
+     "oil_level": "",
+     "kcal": {
+      "low": 80,
+      "best": 90,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "extra",
+     "kcal": {
+      "low": 135,
+      "best": 195,
+      "high": 256
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 roti and quinoa bowl xyz",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": [
+    "quinoa xyz"
+   ]
+  }
+ },
+ {
+  "in": "2 roti zyada oil",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "oil",
+     "name": "oil",
+     "matched_text": "oil",
+     "quantity": 2,
+     "unit": "spoon",
+     "grams": 10,
+     "oil_level": "",
+     "kcal": {
+      "low": 80,
+      "best": 88,
+      "high": 96
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1 plate chole bhature extra oil",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chole_bhature",
+     "name": "chole bhature",
+     "matched_text": "chole bhature",
+     "quantity": 1,
+     "unit": "plate",
+     "grams": 350,
+     "oil_level": "extra",
+     "kcal": {
+      "low": 615,
+      "best": 855,
+      "high": 1096
+     },
+     "protein_g": {
+      "low": 15,
+      "best": 20,
+      "high": 25
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "kam tel ki bhindi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "oil",
+     "name": "oil",
+     "matched_text": "tel",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 5,
+     "oil_level": "",
+     "kcal": {
+      "low": 40,
+      "best": 44,
+      "high": 48
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "bhindi",
+     "name": "bhindi",
+     "matched_text": "bhindi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 105,
+      "best": 140,
+      "high": 175
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2 roti dal sabzi thoda ghee aur 1 katori rajma chawal",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 80,
+     "oil_level": "",
+     "kcal": {
+      "low": 164,
+      "best": 220,
+      "high": 276
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "dal",
+     "name": "dal",
+     "matched_text": "dal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 112,
+      "best": 150,
+      "high": 188
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "ghee",
+     "name": "ghee",
+     "matched_text": "ghee",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 5,
+     "oil_level": "",
+     "kcal": {
+      "low": 40,
+      "best": 45,
+      "high": 50
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "rajma_chawal",
+     "name": "rajma chawal",
+     "matched_text": "rajma chawal",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 135,
+      "best": 180,
+      "high": 225
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "thoda rice",
+  "out": {
+   "items": [
+    {
+     "dish_id": "rice",
+     "name": "rice",
+     "matched_text": "rice",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "",
+     "kcal": {
+      "low": 88,
+      "best": 98,
+      "high": 108
+     },
+     "protein_g": {
+      "low": 1.8,
+      "best": 2,
+      "high": 2.2
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "1/2 katori dahi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "dahi",
+     "name": "dahi",
+     "matched_text": "dahi",
+     "quantity": 0.5,
+     "unit": "katori",
+     "grams": 75,
+     "oil_level": "",
+     "kcal": {
+      "low": 41,
+      "best": 45,
+      "high": 50
+     },
+     "protein_g": {
+      "low": 2.3,
+      "best": 2.5,
+      "high": 2.8
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "½ plate pulao",
+  "out": {
+   "items": [
+    {
+     "dish_id": "veg_pulao",
+     "name": "veg pulao",
+     "matched_text": "pulao",
+     "quantity": 0.5,
+     "unit": "plate",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 195,
+      "best": 260,
+      "high": 325
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "maggi and half",
+  "out": {
+   "items": [
+    {
+     "dish_id": "maggi",
+     "name": "maggi",
+     "matched_text": "maggi",
+     "quantity": 1.5,
+     "unit": "plate",
+     "grams": 105,
+     "oil_level": "",
+     "kcal": {
+      "low": 419,
+      "best": 465,
+      "high": 512
+     },
+     "protein_g": {
+      "low": 9.5,
+      "best": 10.5,
+      "high": 11.6
+     },
+     "source": "open_food_facts",
+     "source_note": "Typical label values as seen on Open Food Facts (ODbL) for common Indian brands; varies by brand",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "3roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 3,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 246,
+      "best": 330,
+      "high": 414
+     },
+     "protein_g": {
+      "low": 7.8,
+      "best": 10.5,
+      "high": 13.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "bada chammach ghee",
+  "out": {
+   "items": [
+    {
+     "dish_id": "ghee",
+     "name": "ghee",
+     "matched_text": "ghee",
+     "quantity": 1,
+     "unit": "spoon",
+     "grams": 5,
+     "oil_level": "",
+     "kcal": {
+      "low": 40,
+      "best": 45,
+      "high": 50
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": [
+    "bada"
+   ]
+  }
+ },
+ {
+  "in": "2 tbsp ghee",
+  "out": {
+   "items": [
+    {
+     "dish_id": "ghee",
+     "name": "ghee",
+     "matched_text": "ghee",
+     "quantity": 6,
+     "unit": "spoon",
+     "grams": 30,
+     "oil_level": "",
+     "kcal": {
+      "low": 240,
+      "best": 270,
+      "high": 300
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "ek glass lassi, do samosa",
+  "out": {
+   "items": [
+    {
+     "dish_id": "lassi",
+     "name": "lassi",
+     "matched_text": "lassi",
+     "quantity": 1,
+     "unit": "glass",
+     "grams": 250,
+     "oil_level": "",
+     "kcal": {
+      "low": 165,
+      "best": 220,
+      "high": 275
+     },
+     "protein_g": {
+      "low": 5.2,
+      "best": 7,
+      "high": 8.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "samosa",
+     "name": "samosa",
+     "matched_text": "samosa",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 160,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 390,
+      "best": 520,
+      "high": 650
+     },
+     "protein_g": {
+      "low": 6,
+      "best": 8,
+      "high": 10
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "PANEER tikka 150 g",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paneer",
+     "name": "paneer",
+     "matched_text": "paneer",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 238,
+      "best": 265,
+      "high": 292
+     },
+     "protein_g": {
+      "low": 16.2,
+      "best": 18,
+      "high": 19.8
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "aloo_tikki",
+     "name": "aloo tikki",
+     "matched_text": "tikka",
+     "quantity": 150,
+     "unit": "gram",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 240,
+      "best": 321,
+      "high": 403
+     },
+     "protein_g": {
+      "low": 3.2,
+      "best": 4.3,
+      "high": 5.4
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": true,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "anda bhurji 2",
+  "out": {
+   "items": [
+    {
+     "dish_id": "egg_bhurji",
+     "name": "egg bhurji",
+     "matched_text": "anda bhurji",
+     "quantity": 2,
+     "unit": "katori",
+     "grams": 200,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 270,
+      "best": 360,
+      "high": 450
+     },
+     "protein_g": {
+      "low": 18,
+      "best": 24,
+      "high": 30
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "aloo parantha",
+  "out": {
+   "items": [
+    {
+     "dish_id": "aloo_paratha",
+     "name": "aloo paratha",
+     "matched_text": "aloo parantha",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 225,
+      "best": 300,
+      "high": 375
+     },
+     "protein_g": {
+      "low": 4.5,
+      "best": 6,
+      "high": 7.5
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "chai 2 cup",
+  "out": {
+   "items": [
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "chai",
+     "quantity": 2,
+     "unit": "count",
+     "grams": 240,
+     "oil_level": "",
+     "kcal": {
+      "low": 120,
+      "best": 160,
+      "high": 200
+     },
+     "protein_g": {
+      "low": 3.8,
+      "best": 5,
+      "high": 6.2
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "a",
+  "out": {
+   "items": [],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "do",
+  "out": {
+   "items": [],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "extra butter paneer butter masala",
+  "out": {
+   "items": [
+    {
+     "dish_id": "paneer_butter_masala",
+     "name": "paneer butter masala",
+     "matched_text": "butter paneer",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "extra",
+     "kcal": {
+      "low": 271,
+      "best": 375,
+      "high": 480
+     },
+     "protein_g": {
+      "low": 9,
+      "best": 12,
+      "high": 15
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": [
+    "butter masala"
+   ]
+  }
+ },
+ {
+  "in": "1 katori kam oil sabzi",
+  "out": {
+   "items": [
+    {
+     "dish_id": "oil",
+     "name": "oil",
+     "matched_text": "oil",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "",
+     "kcal": {
+      "low": 1200,
+      "best": 1320,
+      "high": 1440
+     },
+     "protein_g": {
+      "low": 0,
+      "best": 0,
+      "high": 0
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "sabzi",
+     "name": "sabzi",
+     "matched_text": "sabzi",
+     "quantity": 1,
+     "unit": "katori",
+     "grams": 150,
+     "oil_level": "normal",
+     "kcal": {
+      "low": 98,
+      "best": 130,
+      "high": 162
+     },
+     "protein_g": {
+      "low": 2.2,
+      "best": 3,
+      "high": 3.8
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "2.5 roti",
+  "out": {
+   "items": [
+    {
+     "dish_id": "roti",
+     "name": "roti",
+     "matched_text": "roti",
+     "quantity": 2.5,
+     "unit": "count",
+     "grams": 100,
+     "oil_level": "",
+     "kcal": {
+      "low": 205,
+      "best": 275,
+      "high": 345
+     },
+     "protein_g": {
+      "low": 6.5,
+      "best": 8.8,
+      "high": 11
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ },
+ {
+  "in": "kela, seb, chai",
+  "out": {
+   "items": [
+    {
+     "dish_id": "banana",
+     "name": "banana",
+     "matched_text": "kela",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 94,
+      "best": 105,
+      "high": 116
+     },
+     "protein_g": {
+      "low": 1.2,
+      "best": 1.3,
+      "high": 1.4
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "apple",
+     "name": "apple",
+     "matched_text": "seb",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 180,
+     "oil_level": "",
+     "kcal": {
+      "low": 86,
+      "best": 95,
+      "high": 105
+     },
+     "protein_g": {
+      "low": 0.5,
+      "best": 0.5,
+      "high": 0.6
+     },
+     "source": "usda_fdc",
+     "source_note": "Generic values in line with USDA FoodData Central (public domain), scaled to portion; recalled, not re-fetched - verify per FDC ID before launch",
+     "fuzzy": false,
+     "ai_estimate": false
+    },
+    {
+     "dish_id": "chai",
+     "name": "chai",
+     "matched_text": "chai",
+     "quantity": 1,
+     "unit": "count",
+     "grams": 120,
+     "oil_level": "",
+     "kcal": {
+      "low": 60,
+      "best": 80,
+      "high": 100
+     },
+     "protein_g": {
+      "low": 1.9,
+      "best": 2.5,
+      "high": 3.1
+     },
+     "source": "estimate",
+     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "fuzzy": false,
+     "ai_estimate": false
+    }
+   ],
+   "unmatched": []
+  }
+ }
+]

@@ -1,0 +1,49 @@
+import type { ExpoConfig } from 'expo/config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const brand = require('./brand.config.js');
+
+const env = process.env;
+const config: ExpoConfig = {
+  name: brand.name,
+  slug: brand.slug,
+  scheme: brand.scheme,
+  version: '0.1.0',
+  orientation: 'portrait',
+  icon: './assets/images/icon.png',
+  userInterfaceStyle: 'automatic',
+  ios: { bundleIdentifier: brand.iosBundleId, supportsTablet: false },
+  android: {
+    package: brand.androidPackage,
+    adaptiveIcon: {
+      backgroundColor: '#FFFFFF',
+      foregroundImage: './assets/images/android-icon-foreground.png',
+      backgroundImage: './assets/images/android-icon-background.png',
+      monochromeImage: './assets/images/android-icon-monochrome.png',
+    },
+    permissions: ['android.permission.health.READ_STEPS'],
+  },
+  web: { output: 'static', favicon: './assets/images/favicon.png' },
+  plugins: [
+    'expo-router',
+    'expo-sqlite',
+    'expo-sharing',
+    ['expo-splash-screen', { backgroundColor: '#FFFFFF', image: './assets/images/splash-icon.png', imageWidth: 76 }],
+    ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 35, targetSdkVersion: 35 } }],
+    'expo-health-connect',
+  ],
+  experiments: { typedRoutes: true },
+  extra: {
+    brand,
+    apiUrl: env.EXPO_PUBLIC_API_URL || '',
+    googleAndroidClientId: env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '',
+    googleWebClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
+    googleIosClientId: env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '',
+    flags: {
+      steps: env.EXPO_PUBLIC_FLAG_STEPS !== '0',
+      healthConnect: env.EXPO_PUBLIC_FLAG_HEALTH_CONNECT === '1',
+      community: env.EXPO_PUBLIC_FLAG_COMMUNITY !== '0',
+      googleSignIn: env.EXPO_PUBLIC_FLAG_GOOGLE_SIGNIN === '1',
+    },
+  },
+};
+export default config;
