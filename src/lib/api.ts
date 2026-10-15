@@ -42,6 +42,8 @@ export function createApi(getToken: () => string | null) {
         const r = parseLocal(text);
         if (config.mockAi && r.unmatched.length) {
           if (config.mockAiDelay) await new Promise((res) => setTimeout(res, config.mockAiDelay));
+          // QA only: a span containing 'zanthu' simulates a final busy queue -> failed row
+          if (/zanthu/i.test(text)) return { ...r, items: r.items.filter((i) => i.dish_id !== ''), used_ai: false, fallback: 'busy', custom_items: [] };
           // QA only (EXPO_PUBLIC_MOCK_AI=1): fake an AI estimate so the purple AI card can be reviewed without Gemini
           const ai = r.items.filter((i) => i.dish_id === '').map((i) => ({ ...i, source: 'ai_estimate' as const, ai_estimate: true, data_source: 'ai', source_note: 'AI estimate (mock) - confirm before saving' }));
           return { ...r, items: [...r.items.filter((i) => i.dish_id !== ''), ...ai], used_ai: true, fallback: 'used', custom_items: [] };

@@ -2,7 +2,7 @@
 // neutral tile · name + state chip · muted "qty · oil" · kcal (Space Grotesk 17), tappable (opens Edit).
 // Only items needing a real choice sit in a dashed decision card with one helper line and a segmented choice.
 import { memo, ReactNode, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { reasonWord } from '../lib/learned';
 import { portionLabel } from '../lib/labels';
 import { Item, parser } from '../parser';
@@ -164,4 +164,42 @@ const useOpenStyles = makeStyles((t) => ({
   optBtn: { flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1.5, borderColor: t.c.cardLine, backgroundColor: t.c.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 6 },
   warnChip: { backgroundColor: t.c.warnTint, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   warnNote: { backgroundColor: t.c.warnTint, borderWidth: 1, borderColor: t.c.warnTintLine, borderRadius: 12, padding: 12 },
+}));
+
+/** Failed AI estimate (retry failed / busy / daily limit): CUSTOM chip, "—", "not counted", the user's own kcal + Add.
+ * Counts only once a kcal value is added; never part of the batch. */
+export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean }; onKcal: (v: string) => void; onAdd: () => void }) {
+  const s = { ...useStyles(), ...useOpenStyles(), ...useFailedStyles() }; const t = useTheme();
+  const k = Number(row.kcal);
+  return (
+    <View style={s.open}>
+      <View style={s.row}>
+        <FoodTile seed={row.name} size={40} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Row style={{ gap: 6 }}><T v="bodyStrong">{cap(row.name)}</T><Badge kind="brand" label="Custom" /></Row>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <T v="number">{row.added && k > 0 ? Math.round(k).toLocaleString('en-IN') : '—'}</T>
+          {row.added && k > 0 ? null : <T v="caption" tone="muted">not counted</T>}
+        </View>
+      </View>
+      {row.added ? null : (
+        <View style={s.openBody}>
+          <T tone="text2">Couldn’t estimate this. Add the calories yourself.</T>
+          <Row style={{ gap: 8 }}>
+            <TextInput value={row.kcal} onChangeText={onKcal} keyboardType="numeric" placeholder="kcal" placeholderTextColor={t.c.muted}
+              accessibilityLabel={`Calories for ${row.name}`} style={[s.kcalInput, { color: t.c.text, borderColor: t.c.muted }]} />
+            <Pressable onPress={onAdd} disabled={!(k > 0)} accessibilityRole="button" accessibilityState={{ disabled: !(k > 0) }} accessibilityLabel={`Add ${row.name}`}
+              style={[s.addBtn, { backgroundColor: k > 0 ? t.c.accentFill : t.c.card2 }]}>
+              <T v="bodyStrong" tone={k > 0 ? 'onAccent' : 'text2'}>Add</T>
+            </Pressable>
+          </Row>
+        </View>
+      )}
+    </View>
+  );
+}
+const useFailedStyles = makeStyles((t) => ({
+  kcalInput: { width: 96, height: 44, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, backgroundColor: t.c.card },
+  addBtn: { height: 44, minWidth: 72, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
 }));

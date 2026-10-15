@@ -36,14 +36,19 @@ export function PendingRow({ label, sub, state, tile }: { label: string; sub?: s
   const s = useStyles();
   const name = tile ? label.charAt(0).toUpperCase() + label.slice(1) : label;
   return (
-    <Row style={s.row} accessible accessibilityLabel={`${label}, ${state === 'estimating' ? 'estimating calories' : 'pending, not counted'}`}>
+    <Row style={s.row} accessible accessibilityLabel={`${name}, ${state === 'estimating' ? 'Estimating' : 'pending, not counted'}`}>
       {tile ? <FoodTile seed={label} size={40} /> : null}
       <View style={{ flex: 1 }}>
-        <Row style={{ gap: 6 }}><T v="bodyStrong" numberOfLines={1}>{name}</T>{state === 'offline' ? <Badge kind="brand" label="Pending" /> : null}</Row>
-        {state === 'estimating' ? <T v="caption" tone="em">Estimating…</T> : null}
-        {sub ? <T v="caption" tone="muted">{sub}</T> : null}
+        <Row style={{ gap: 6 }}>
+          <T v="bodyStrong" numberOfLines={1}>{name}</T>
+          {state === 'offline' ? <Badge kind="brand" label="Pending" /> : tile ? <Badge kind="ai" label="Estimate" /> : null}
+        </Row>
+        {state === 'estimating' ? <T v="caption" tone={tile ? 'muted' : 'em'}>Estimating…</T> : null}
+        {sub && !tile ? <T v="caption" tone="muted">{sub}</T> : null}
       </View>
-      {state === 'estimating' ? <ShimmerBar /> : <T v="number" tone="muted">— kcal</T>}
+      {state === 'estimating'
+        ? <View style={{ alignItems: 'flex-end', gap: 4 }}><ShimmerBar />{tile ? <T v="caption" tone="muted">not counted</T> : null}</View>
+        : <T v="number" tone="muted">— kcal</T>}
     </Row>
   );
 }

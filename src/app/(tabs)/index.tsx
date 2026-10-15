@@ -91,6 +91,13 @@ export default function Today() {
             {d.streak.freezeJustUsed ? <T v="caption" tone="muted">❄ Freeze saved your streak</T>
               : d.streak.current === 0 && d.loggedDates.size > 0 ? <T v="caption" tone="muted">Streak paused. Start again today.</T> : null}
           </Row>
+          {d.reviews.map((e) => (
+            <Pressable key={e.id} onPress={() => router.push({ pathname: '/review', params: { date: d.date } })} style={s.reviewRow} accessibilityRole="button"
+              accessibilityLabel={`${nameOf(e)}, needs review, not counted`}>
+              <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.review_item?.name ?? nameOf(e)}</T>
+              <T v="caption" tone="muted">— kcal · needs review</T>
+            </Pressable>
+          ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>
             {rows.map((r, i) => (
@@ -123,4 +130,5 @@ const useStyles = makeStyles((t) => ({
   fillRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderTopColor: t.c.emTintLine, gap: 8 },
   plateRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 },
   sep: { borderTopWidth: 1, borderTopColor: t.c.line },
+  reviewRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
 }));

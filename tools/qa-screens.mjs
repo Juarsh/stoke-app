@@ -42,6 +42,11 @@ for (const theme of ['light', 'dark']) {
     await say(txt); await wait(p, 5500);
     await shot(p, `${name}-${theme}`);
   }
+  // estimating + failed AI rows (Oct 15)
+  await say('2 roti, dal, thukpa'); await wait(p, 1400);
+  await shot(p, `log-ai-estimating-${theme}`);
+  await say('2 roti, zanthu'); await wait(p, 5500);
+  await shot(p, `log-estimate-failed-${theme}`);
   // Add while estimating -> confident items saved, estimating ones go to items to review
   await say('2 roti, granola'); await wait(p, 1400);
   await p.getByRole('button', { name: /estimating/ }).click(); await wait(p, 2000);

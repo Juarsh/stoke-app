@@ -1,11 +1,13 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
-import { DecisionCard, Group, ItemRow, OpenRow } from '@/components/LogRows';
+import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
+import { aiStatus, failedCounts, FailedRow, lateAnswer, leaveLog } from '@/lib/aiRows';
+import { ParsePending } from '@/lib/api';
 import { kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
@@ -23,7 +25,7 @@ import { makeStyles } from '@/theme';
 
 const AI_CAP = 20;
 type Draft = { key: string; it: AnyItem & LoggedItem; ok: boolean; corrected?: boolean };
-type Custom = { key: string; name: string; kcal: string; protein: string };
+type Custom = FailedRow; // failed AI estimate (retry failed / busy / cap): the user's own kcal
 
 export default function Log() {
   const st = useStore(); const router = useRouter(); const s = useStyles();
@@ -69,45 +71,65 @@ export default function Log() {
   useEffect(() => { setEstimating([]); setOffline([]); }, [text]);
 
   async function estimateUnknown(spans: string[]) {
-    const toCustom = (us: string[], m: string) => { setCustoms((c) => [...c, ...us.map((u) => ({ key: u, name: u, kcal: '', protein: '' }))]); setMsg(m); };
+    const toCustom = (us: string[], m: string) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false }))]); setMsg(m); };
     if (aiUsedToday >= AI_CAP) return toCustom(spans, 'AI estimates are back tomorrow. Add it yourself for now.');
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
     setEstimating((e) => [...e, ...spans]); setBusy(true);
-    try {
-      const r = await st.api.parse(spans.join(', '), true);
-      st.useAi();
+    // one handler for the first answer and for a late one (polled 202 job): fills the SAME row by stable id
+    const land = (r: Awaited<ReturnType<typeof st.api.parse>>) => {
       const got = r.items.filter((x) => x.ai_estimate);
+      const failed = aiStatus(r) === 'failed';
       spans.forEach((u, k) => {
-        const its = splitBySpan(got, spans)[k];
-        if (handedOff.current.has(ids[k])) { st.fillPending(ids[k], its); return; } // late: fill the review item, unconfirmed
-        if (its.length) setAi((a) => [...a, ...its.map((it, i) => ({ key: `ai:${u}:${ids[k]}:${i}`, it, ok: false }))]);
-        else toCustom([u], r.message ?? 'Add it yourself for now.');
+        const its = failed ? [] : splitBySpan(got, spans)[k];
+        if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
+        if (!its.length) { toCustom([u], 'Couldn’t estimate this. Add the calories yourself.'); return; }
+        setCustoms((cs) => {
+          const l = lateAnswer(cs.find((c) => c.key === u), its);
+          if (l.drop) return cs; // the user's own kcal wins
+          setAi((a) => a.some((x) => x.key.startsWith(`ai:${u}:${ids[k]}:`)) ? a : [...a, ...l.items.map((it, i) => ({ key: `ai:${u}:${ids[k]}:${i}`, it, ok: false }))]);
+          return cs.filter((c) => c.key !== u);
+        });
       });
       setEstimating((e) => e.filter((x) => !spans.includes(x)));
-    } catch {
-      // network down or a 202 job: offline Pending (queued without a number on Add)
-      setEstimating((e) => e.filter((x) => !spans.includes(x)));
-      setOffline((o) => [...o, ...spans.filter((u) => !handedOff.current.has(idFor(u)))]);
-      setMsg('No connection. These stay pending and fill in when you’re back online.');
+    };
+    try {
+      st.useAi();
+      land(await st.api.parse(spans.join(', '), true));
+    } catch (e) {
+      if (e instanceof ParsePending) { // pending job = still estimating; poll, final busy/error = failed
+        const poll = async (n: number): Promise<void> => {
+          await new Promise((res) => setTimeout(res, 2000));
+          try { land(await st.api.parseJob(e.jobId)); }
+          catch (e2) { if (e2 instanceof ParsePending && n < 30) return poll(n + 1); land({ items: [], unmatched: spans, fallback: 'error' } as never); }
+        };
+        void poll(0);
+      } else {
+        // network down: offline Pending (queued without a number on Add)
+        setEstimating((x) => x.filter((y) => !spans.includes(y)));
+        setOffline((o) => [...o, ...spans.filter((u) => !handedOff.current.has(idFor(u)))]);
+        setMsg('No connection. These stay pending and fill in when you’re back online.');
+      }
     } finally { setBusy(false); }
   }
 
   // Confirm batch (design-notes v3.2 Oct 15): only confirmed rows, plain confident rows and server-marked one_tap_ok rows are
   // added/counted. Unit mismatches, AI estimates, estimate_unverified and other choices stay open and out of every total.
-  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })));
-  const kindByKey = new Map(drafts.map((d) => [d.key, kindOf(d.it as ServerItem, d.ok)] as const));
-  const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // missing data blocks Add
-  const { kcal: total, protein } = draftTotals(bp.add.map((r) => r.it), customs);
-  // Offline Pending = '— kcal', not counted. Estimating = shimmer; Add stays enabled and sends them to items to review.
   const nEstimating = pendingUnmatched.filter((u) => !offline.includes(u)).length;
+  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })), nEstimating);
+  const kindByKey = new Map(drafts.map((d) => [d.key, kindOf(d.it as ServerItem, d.ok)] as const));
+  const addedCustoms = customs.filter(failedCounts); // failed rows count only once their kcal is added
+  const { kcal: total, protein } = draftTotals(bp.add.map((r) => r.it), addedCustoms);
+  // Offline Pending = '— kcal', not counted. Estimating = shimmer; Add stays enabled and sends them to items to review.
   const nPending = pendingUnmatched.length - nEstimating;
   const nOpen = bp.open.length;
-  const sum0 = logSummary({ kcal: total, protein, items: bp.add.length + customs.filter((c) => Number(c.kcal) > 0).length, estimating: nEstimating, pending: nPending,
-    toConfirm: 0, estimates: 0, needsKcal: customs.filter((c) => !(Number(c.kcal) > 0)).length });
-  const sum = nOpen ? { ...sum0, total: bp.total, button: bp.button, disabled: bp.add.length + customs.length + pendingUnmatched.length === 0, soFar: false } : sum0;
+  const sum0 = logSummary({ kcal: total, protein, items: bp.add.length + addedCustoms.length, estimating: nEstimating, pending: nPending,
+    toConfirm: 0, estimates: 0, needsKcal: 0 });
+  const openFailed = customs.length - addedCustoms.length;
+  const sum = nOpen || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
-  const canAdd = any && !sum.disabled && !customMissing;
+  // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
+  const canAdd = any;
   const addLabel = sum.button;
   const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
@@ -124,7 +146,7 @@ export default function Log() {
       const id = idFor(span); handedOff.current.add(id);
       return { id, span, slot, local_date: date, raw_text: text, ...(offline.includes(span) ? {} : { at: 0 }) };
     }));
-    for (const c of customs) {
+    for (const c of addedCustoms) {
       const k = Number(c.kcal) || 0, p = Number(c.protein) || 0, now = new Date().toISOString();
       es.push({ id: st.newId(), local_date: date, slot, raw_text: text, dish_id: null, custom_name: c.name, qty: 1, unit: 'count', oil_level: '',
         kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p }, source: 'custom', source_note: 'Your entry',
@@ -134,15 +156,31 @@ export default function Log() {
     // remember every reading the user confirmed or corrected (table items with a known dish only)
     st.remember(adding.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
       .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
-    if (nOpen) { // open rows stay on screen with their own controls; the rest is saved
+    if ((nOpen || openFailed) && adding.length + addedCustoms.length > 0) { // open rows stay on screen with their own controls; the rest is saved
       for (const d of adding) remove(d);
-      setCustoms([]);
+      setCustoms((cs) => cs.filter((c) => !failedCounts(c)));
       setMsg(bp.note);
       return;
     }
+    if (nOpen || openFailed) saveOpen(); // nothing addable: open items go to review (Add stays enabled)
     setText('');
     router.navigate('/');
   }
+  /** Open items -> needs_review entries (streak yes, calories no, never lost). Used by Add-with-nothing-addable and on leaving Log. */
+  function saveOpen() {
+    const open = drafts.filter((d) => !bp.add.some((r) => r.key === d.key));
+    const est = pendingUnmatched.filter((u) => !offline.includes(u) && !handedOff.current.has(idFor(u)));
+    const failed = customs.filter((c) => !failedCounts(c));
+    if (!open.length && !failed.length && !est.length) return false;
+    const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => ({ id: idFor(u), span: u })), slot, text, date: localDate(), newId: st.newId });
+    for (const f of failed) handedOff.current.add(f.id);
+    for (const p of pending) handedOff.current.add(p.id);
+    if (reviews.length) st.addEntries(reviews);
+    if (pending.length) st.addPending(pending);
+    return true;
+  }
+  const leaveRef = useRef(saveOpen); leaveRef.current = saveOpen;
+  useFocusEffect(useCallback(() => () => { if (leaveRef.current()) setText(''); }, []));
   const setItem = (d: Draft, n: Item) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, it: n } : x))) : setEdits((e) => ({ ...e, [d.key]: n }));
   const remove = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.filter((x) => x.key !== d.key)) : setEdits((e) => ({ ...e, [d.key]: null }));
   const confirm = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, ok: true } : x))) : setOkd((o) => ({ ...o, [d.key]: true }));
@@ -182,17 +220,14 @@ export default function Log() {
             </Group>
           ) : null}
           {nEstimating ? <T v="caption" tone="muted">Estimates usually take 1–2 seconds.</T> : nPending ? <T v="caption" tone="muted">{msg}</T> : null}
-          {customs.map((c) => (
-            <Card key={c.key} tone="card2">
-              <Row style={{ justifyContent: 'space-between' }}><T v="bodyStrong">Custom item</T><Badge kind="brand" label="needs numbers" /></Row>
-              {msg ? <T v="caption" tone="muted">{msg}</T> : null}
-              <Field label="Name" value={c.name} onChangeText={(v) => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, name: v } : x)))} />
-              <Row>
-                <View style={{ flex: 1 }}><Field label="kcal" keyboardType="numeric" value={c.kcal} onChangeText={(v) => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, kcal: v } : x)))} /></View>
-                <View style={{ flex: 1 }}><Field label="Protein g" keyboardType="numeric" value={c.protein} onChangeText={(v) => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, protein: v } : x)))} /></View>
-              </Row>
-            </Card>
-          ))}
+          {customs.length ? (
+            <Group>
+              {customs.map((c) => (
+                <FailedAiRow key={c.key} row={c} onKcal={(v) => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, kcal: v } : x)))}
+                  onAdd={() => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, added: true } : x)))} />
+              ))}
+            </Group>
+          ) : null}
         </ScrollView>
         {any ? (
           <View style={s.dock}>

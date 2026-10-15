@@ -31,20 +31,28 @@ export function kindOf(it: ServerItem, confirmed: boolean): Kind {
 }
 
 export type Row = { key: string; it: ServerItem; confirmed: boolean };
-export function plan(rows: Row[]) {
+/** estimating = AI rows still estimating (not counted, no buttons, skipped by the batch). */
+export function plan(rows: Row[], estimating = 0) {
   const add = rows.filter((r) => { const k = kindOf(r.it, r.confirmed); return k === 'counted' || k === 'batch'; });
   const open = rows.filter((r) => !add.includes(r));
   const kcal = add.reduce((a, r) => a + r.it.kcal.best, 0);
   const protein = add.reduce((a, r) => a + r.it.protein_g.best, 0);
   const m = open.length, cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const still = m ? `${m} still ${m === 1 ? 'needs' : 'need'} a choice` : '';
+  const est = estimating ? `${estimating} estimating` : '';
   let button: string, total: string, note = '', disabled = false;
-  if (m === 0) { button = `Add ${n(kcal)} kcal`; total = 'Total'; }
-  else if (add.length === 0) { button = 'Choose for each item to add it'; total = `Total · ${m} ${m === 1 ? 'needs' : 'need'} a choice`; disabled = true; }
-  else {
-    const still = `${m} still ${m === 1 ? 'needs' : 'need'} a choice`;
-    button = `Confirm ${add.length} · ${still}`; total = `Total · ${still}`;
-    const names = open.map((r) => cap(r.it.name));
-    note = `Adds ${n(kcal)} kcal. ${names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(' and ')} ${m === 1 ? 'stays' : 'stay'} open.`;
+  if (m === 0 && !estimating) { button = `Add ${n(kcal)} kcal`; total = 'Total'; }
+  else if (add.length === 0) {
+    button = m ? 'Choose for each item to add it' : `Add 0 kcal · ${est}`;
+    total = ['Total', m ? `${m} ${m === 1 ? 'needs' : 'need'} a choice` : '', est].filter(Boolean).join(' · ');
+    disabled = true;
+  } else {
+    button = [`Confirm ${add.length}`, est, still].filter(Boolean).join(' · ');
+    total = ['Total', est, still].filter(Boolean).join(' · ');
+    if (m) {
+      const names = open.map((r) => cap(r.it.name));
+      note = `Adds ${n(kcal)} kcal. ${names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(' and ')} ${m === 1 ? 'stays' : 'stay'} open.`;
+    }
   }
   return { add, open, kcal, protein, button, total, note, disabled };
 }
