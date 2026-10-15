@@ -214,8 +214,8 @@ func (s *Stub) SetNext(items []parser.Item) {
 
 // EstimateMeal follows the same contract as Gemini: one item per given
 // span, positioned on it (name = the span's own words, so unknown dish words
-// are never dropped). A next-answer override is returned as set; items in it
-// without a position are placed on the spans in order.
+// are never dropped). A next-answer override is returned exactly as set, so
+// rule-breaking answers (overlapping or missing positions) reach the guard.
 func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -223,13 +223,7 @@ func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []pa
 	if s.next != nil {
 		out := append([]parser.Item(nil), (*s.next)...)
 		s.next = nil
-		for i := range out {
-			if out[i].SpanEnd == 0 && len(spans) > 0 {
-				sp := spans[min(i, len(spans)-1)]
-				out[i].SpanStart, out[i].SpanEnd, out[i].Matched = sp.Start, sp.End, sp.Text
-			}
-		}
-		return out, nil
+		return out, nil // verbatim: bad offsets must reach placeAI, the server guard
 	}
 	var out []parser.Item
 	for _, sp := range spans {

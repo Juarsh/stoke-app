@@ -389,8 +389,9 @@ their spans; these are the claimed spans.
 - The cache key is the normalized text plus the claimed spans
   (dish id @ offsets).
 - The stub (AI_MODE=stub) follows the same contract: one item per unclaimed
-  span, named with the span's own words. In next-answer overrides, items
-  without offsets are placed on the spans in order.
+  span, named with the span's own words. Next-answer overrides are returned
+  verbatim, so bad offsets reach the server guard (overlaps with table items
+  are dropped; unplaceable items become did_you_mean flagged ai_unplaced).
 
 **Remembered foods** are keyed on the user's own text: the span, or the whole
 meal. A remembered whole-meal text, or a remembered unclaimed span, is

@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1212,5 +1213,66 @@ func TestAISpanContract(t *testing.T) {
 	last := items[len(items)-1]
 	if last.Source != "did_you_mean" || !last.NC || (last.SpanStart == 0 && last.SpanEnd == len("2 roti, glorbix")) {
 		t.Errorf("unplaced AI item: %+v", items)
+	}
+}
+
+// next-answer overrides go to the server guard (placeAI) verbatim: the stub
+// must not fix rule-breaking answers. Overlaps with claimed table text are
+// dropped; an answer with no position is placed by its words or flagged.
+func TestNextAnswerReachesGuard(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	type it struct {
+		Name      string
+		Source    string
+		Matched   string   `json:"matched_text"`
+		SpanStart int      `json:"span_start"`
+		SpanEnd   int      `json:"span_end"`
+		NC        bool     `json:"needs_confirmation"`
+		Flags     []string `json:"flags"`
+	}
+	get := func(user, text string) []it {
+		var r struct {
+			JobID string `json:"job_id"`
+			Items []it
+		}
+		if call(t, srv, "POST", "/v1/parse", user, M{"text": text}, &r) == 202 {
+			for call(t, srv, "GET", "/v1/parse/jobs/"+r.JobID, user, nil, &r) != 200 {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+		return r.Items
+	}
+	kc := M{"low": 30, "best": 40, "high": 60}
+	// "2 roti, glorbix, zanthu": roti is claimed at [2,6)
+	text := "2 roti, glorbix, zanthu"
+	call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{
+		{"name": "overlapper", "quantity": 1, "unit": "count", "span_start": 0, "span_end": 10, "kcal": kc}, // overlaps roti
+		{"name": "nowhere", "quantity": 1, "unit": "count", "kcal": kc},                                     // no position, words not in text
+		{"name": "zanthu", "quantity": 1, "unit": "count", "kcal": kc},                                      // no position, words in text
+	}}, nil)
+	items := get("g1", text)
+	var roti, unplaced, placed *it
+	for i := range items {
+		switch items[i].Name {
+		case "overlapper":
+			t.Errorf("overlapping AI answer must be dropped: %+v", items)
+		case "nowhere":
+			unplaced = &items[i]
+		case "zanthu":
+			placed = &items[i]
+		}
+		if items[i].Source == "table" {
+			roti = &items[i]
+		}
+	}
+	if roti == nil || roti.NC || text[roti.SpanStart:roti.SpanEnd] != "roti" {
+		t.Errorf("table item must stay confident: %+v", items)
+	}
+	if unplaced == nil || unplaced.Source != "did_you_mean" || !unplaced.NC || !slices.Contains(unplaced.Flags, "ai_unplaced") {
+		t.Errorf("missing position must be flagged ai_unplaced, not corrected by the stub: %+v", items)
+	}
+	if placed == nil || placed.Source != "ai_estimate" || text[placed.SpanStart:placed.SpanEnd] != "zanthu" {
+		t.Errorf("missing position with findable words is placed by the guard: %+v", items)
 	}
 }
