@@ -3932,6 +3932,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 70.0,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -5631,6 +5636,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 300.0,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -6314,6 +6324,11 @@
     "unit": "spoon",
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 30.0,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7100,6 +7115,11 @@
     "unit": "spoon",
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7145,6 +7165,11 @@
     "unit": "spoon",
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7272,6 +7297,11 @@
     "unit": "spoon",
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 150,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7312,6 +7342,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7392,6 +7427,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 70,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -7437,6 +7477,11 @@
     "unit": "spoon",
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 50,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
   ]
  },
@@ -10530,6 +10575,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values for this categ)"
    }
   ]
  },
@@ -10613,6 +10663,11 @@
     "unit": "katori",
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
+   },
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values for this categ)"
    }
   ]
  },

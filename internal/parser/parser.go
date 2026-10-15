@@ -1840,7 +1840,8 @@ func (p *Parser) unitFits(d *dishes.Dish, unit string, hasQty bool) bool {
 			return true
 		case "piece", "count":
 			_, a := d.UnitGrams("piece")
-			return a || d.Unit == "count"
+			_, b := d.UnitGrams("count")
+			return a || b || d.Unit == "count"
 		}
 		_, ok := d.UnitGrams(unit)
 		return ok
