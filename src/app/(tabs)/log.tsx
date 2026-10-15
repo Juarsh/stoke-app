@@ -6,8 +6,8 @@ import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
 import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
-import { aiStatus, failedCounts, FailedRow, failedWaiting, lateAnswer, leaveLog } from '@/lib/aiRows';
-import { ParsePending } from '@/lib/api';
+import { aiStatus, failedCounts, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay } from '@/lib/aiRows';
+import { ApiError, ParsePending } from '@/lib/api';
 import { kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
@@ -70,29 +70,34 @@ export default function Log() {
   }, [unkKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setEstimating([]); setOffline([]); }, [text]);
 
-  async function estimateUnknown(spans: string[], tries = 0) {
+  // Driven by the server's ai_state (backend a72964e). The app never re-asks: a busy Gemini is requeued server-side and
+  // the job stays "estimating", so we just keep polling GET /v1/parse/jobs/{id} until it is answered or failed.
+  const gen = useRef(0);
+  useEffect(() => { gen.current++; }, [text]); // text changed: stop polling for the old spans
+  async function estimateUnknown(spans: string[]) {
+    const myGen = gen.current;
     const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number; resetsAt?: string } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
     if (aiUsedToday >= AI_CAP) return toCustom(spans, '', { reason: 'user_limit' });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
-    const retry = async () => { // same rows, same ids; a later answer fills them
-      try { land(await st.api.parse(spans.join(', '), true)); } catch { /* stays Estimating; Add / leaving hands it to review */ }
-      tries++;
-    };
     setEstimating((e) => [...e, ...spans]); setBusy(true);
-    // one handler for the first answer and for a late one (polled 202 job): fills the SAME row by stable id
+    const done = () => setEstimating((e) => e.filter((x) => !spans.includes(x)));
+    // one handler for the first answer and for a late one (polled job): fills the SAME row by stable id
     const land = (r: Awaited<ReturnType<typeof st.api.parse>>) => {
-      const got = r.items.filter((x) => x.ai_estimate);
       const status = aiStatus(r);
-      if (status === 'estimating' && !(r instanceof ParsePending)) { // retryable (rate_limited / unavailable / timeout): re-queue, stay Estimating
-        if (tries < 5) setTimeout(() => { void retry(); }, 5000 * (tries + 1));
-        return;
+      if (status === 'estimating') return; // no job to poll on an inline answer: stays Estimating; Add / leaving hands it to review
+      if (status === 'failed') {
+        const why = { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at };
+        // every asked span gets a failed row (no AI kcal came for any of them), plus any extra open span the server listed
+        const rows = failedRows(r, spans).filter((u) => !(spanIds.current.has(u) && handedOff.current.has(idFor(u)))); // handed-off spans stay needs_review
+        toCustom(rows, '', why);
+        done(); return;
       }
-      const failed = status === 'failed';
+      const got = r.items.filter((x) => x.ai_estimate);
       spans.forEach((u, k) => {
-        const its = failed ? [] : splitBySpan(got, spans)[k];
+        const its = splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
-        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason, userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
+        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
         setCustoms((cs) => {
           const l = lateAnswer(cs.find((c) => c.key === u), its);
           if (l.drop) return cs; // the user's own kcal wins
@@ -100,22 +105,31 @@ export default function Log() {
           return cs.filter((c) => c.key !== u);
         });
       });
-      setEstimating((e) => e.filter((x) => !spans.includes(x)));
+      done();
+    };
+    const poll = async (p: ParsePending): Promise<void> => {
+      let cur = p;
+      for (;;) {
+        await new Promise((res) => setTimeout(res, pollDelay(cur.nextAttemptAt)));
+        if (gen.current !== myGen) return; // the text changed; handed-off spans are resolved by the sync queue
+        try { land(await st.api.parseJob(cur.jobId)); return; }
+        catch (e2) {
+          if (e2 instanceof ParsePending) { cur = e2; continue; }
+          if (e2 instanceof ApiError && (e2.status === 404 || e2.status === 410)) { // job lost (server restart / expired): offline pending
+            done(); setOffline((o) => [...o, ...spans.filter((u) => !handedOff.current.has(idFor(u)))]); return;
+          }
+          cur = new ParsePending(cur.jobId); // network blip: keep the row Estimating and poll again
+        }
+      }
     };
     try {
       st.useAi();
       land(await st.api.parse(spans.join(', '), true));
     } catch (e) {
-      if (e instanceof ParsePending) { // pending job = still estimating; poll, final busy/error = failed
-        const poll = async (n: number): Promise<void> => {
-          await new Promise((res) => setTimeout(res, 2000));
-          try { land(await st.api.parseJob(e.jobId)); }
-          catch (e2) { if (e2 instanceof ParsePending && n < 30) return poll(n + 1); land({ items: [], unmatched: spans, fallback: 'error' } as never); }
-        };
-        void poll(0);
-      } else {
+      if (e instanceof ParsePending) void poll(e);
+      else {
         // network down: offline Pending (queued without a number on Add)
-        setEstimating((x) => x.filter((y) => !spans.includes(y)));
+        done();
         setOffline((o) => [...o, ...spans.filter((u) => !handedOff.current.has(idFor(u)))]);
         setMsg('No connection. These stay pending and fill in when you’re back online.');
       }

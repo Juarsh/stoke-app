@@ -100,3 +100,68 @@ test('secondary "to review later" counts every open item', () => {
   expect(none.later).toBe('Save · 3 to review later');
   expect(plan([{ key: 'r', it: roti, confirmed: false }]).later).toBe('');
 });
+
+import { failedRows, failedSpans, pollDelay } from '../src/lib/aiRows';
+import { parseJobBody } from '../src/lib/api';
+describe('ai_state drives the row (backend a72964e)', () => {
+  const base = { items: [], unmatched: ['thukpa'], custom_items: [] };
+  test('estimating keeps the row Estimating, even with a busy reason', () => {
+    for (const r of ['rate_limited', 'unavailable', 'timeout', undefined])
+      expect(aiStatus({ ...base, fallback: 'used', ai_state: 'estimating', fallback_reason: r } as never)).toBe('estimating');
+  });
+  test('answered with AI items -> ready; answered with none -> failed', () => {
+    expect(aiStatus({ ...base, items: [thukpa], fallback: 'used', ai_state: 'answered' } as never)).toBe('ready');
+    expect(aiStatus({ ...base, fallback: 'cache', ai_state: 'answered' } as never)).toBe('failed');
+  });
+  test('failed wins over any fallback value', () => {
+    for (const r of ['user_limit', 'daily_limit', 'error'])
+      expect(aiStatus({ ...base, fallback: 'used', ai_state: 'failed', fallback_reason: r } as never)).toBe('failed');
+  });
+  test('pending poll body carries next_attempt_at; still estimating', () => {
+    let err: unknown;
+    try { parseJobBody({ status: 'pending', job_id: 'j1', ai_state: 'estimating', next_attempt_at: '2026-10-15T10:00:30Z' } as never); } catch (e) { err = e; }
+    expect(err).toBeInstanceOf(ParsePending);
+    expect((err as ParsePending).nextAttemptAt).toBe('2026-10-15T10:00:30Z');
+    expect(aiStatus(err)).toBe('estimating');
+  });
+  test('failed body via the job poll returns the response (not a throw) with no kcal', () => {
+    const r = parseJobBody({ status: 'done', ai_state: 'failed', answer: 'none', fallback: 'cap_reached', fallback_reason: 'user_limit', user_daily_limit: 3,
+      ai_resets_at: '2026-10-16T00:00:00-07:00', items: [], unmatched: ['thukpa'], failed_spans: [{ span_start: 0, span_end: 6, text: 'thukpa' }],
+      custom_items: [{ custom_name: 'thukpa', needs_input: true }] } as never);
+    expect(aiStatus(r)).toBe('failed');
+    expect(failedRows(r, ['thukpa'])).toEqual(['thukpa']);
+    expect(failedCopy({ reason: r.fallback_reason, userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }))
+      .toBe(`You’ve used today’s 3 AI estimates. Add the calories yourself, or try again after ${resetTime('2026-10-16T07:00:00Z')}.`);
+  });
+});
+
+describe('failed shape: failed_spans and custom_items needs_input', () => {
+  const r = (o: object) => ({ items: [], unmatched: [], fallback: 'error', ai_state: 'failed', custom_items: [], ...o }) as never;
+  test('failed_spans first', () => expect(failedSpans(r({ failed_spans: [{ span_start: 0, span_end: 6, text: 'thukpa' }],
+    custom_items: [{ custom_name: 'other', needs_input: true }] }), ['x'])).toEqual(['thukpa']));
+  test('then custom_items with needs_input only', () => expect(failedSpans(r({ custom_items: [{ custom_name: 'a', needs_input: true }, { custom_name: 'b', needs_input: false }] }), ['x'])).toEqual(['a']));
+  test('then the asked spans', () => expect(failedSpans(r({}), ['x', 'y'])).toEqual(['x', 'y']));
+  test('rows: every asked span plus extra open spans, no duplicates', () =>
+    expect(failedRows(r({ failed_spans: [{ span_start: 0, span_end: 6, text: 'thukpa' }, { span_start: 8, span_end: 14, text: 'zanthu' }] }), ['thukpa'])).toEqual(['thukpa', 'zanthu']));
+});
+
+describe('poll interval', () => {
+  const now = Date.parse('2026-10-15T10:00:00Z');
+  test('no hint -> 2 s', () => expect(pollDelay(undefined, now)).toBe(2000));
+  test('bad hint -> 2 s', () => expect(pollDelay('soon', now)).toBe(2000));
+  test('past hint -> 2 s floor', () => expect(pollDelay('2026-10-15T09:59:00Z', now)).toBe(2000));
+  test('30 s requeue -> wait until then', () => expect(pollDelay('2026-10-15T10:00:20Z', now)).toBe(20000));
+  test('5 min requeue -> capped at 30 s', () => expect(pollDelay('2026-10-15T10:05:00Z', now)).toBe(30000));
+});
+
+describe('reset time from ai_resets_at (Pacific RFC 3339) in local time', () => {
+  test('midnight PT is the same instant as 07:00Z', () => expect(resetTime('2026-10-16T00:00:00-07:00')).toBe(resetTime('2026-10-16T07:00:00Z')));
+  test('in IST that is 12:30 PM', () => {
+    const d = new Date('2026-10-16T00:00:00-07:00');
+    if (-d.getTimezoneOffset() === 330) expect(resetTime('2026-10-16T00:00:00-07:00')).toBe('12:30 PM');
+  });
+  test('daily_limit copy uses it; missing -> left out', () => {
+    expect(failedCopy({ reason: 'daily_limit', resetsAt: '2026-10-16T00:00:00-07:00' })).toBe(`AI estimates are used up until ${resetTime('2026-10-16T07:00:00Z')}. Add the calories yourself.`);
+    expect(failedCopy({ reason: 'daily_limit', resetsAt: 'garbage' })).toBe('AI estimates are used up for now. Add the calories yourself.');
+  });
+});

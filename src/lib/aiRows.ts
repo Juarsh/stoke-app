@@ -7,20 +7,46 @@ import type { ParseResponse } from './parseLocal';
 import type { PendingFood } from './syncQueue';
 
 export type AiStatus = 'estimating' | 'failed' | 'ready';
-/** A pending job is still estimating; a fallback error / busy / cap (or an answer with no items) is failed. */
-export const RETRYABLE = ['rate_limited', 'unavailable', 'timeout'];
+/** The server's ai_state (API.md @ a72964e) decides the row. A pending job poll (ParsePending) is still estimating.
+ * Only daily_limit / user_limit / error end as failed; rate_limited / unavailable / timeout stay estimating (the server requeues). */
 export function aiStatus(r: ParseResponse | unknown): AiStatus {
   if (r instanceof ParsePending) return 'estimating';
   if (r instanceof Error || !r || typeof r !== 'object') return 'failed';
   const p = r as ParseResponse;
-  // retryable reasons keep the row Estimating (re-queued, waiting for a late answer); only final ones fail it
-  if (RETRYABLE.includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
+  if (p.ai_state === 'estimating') return 'estimating';
+  if (p.ai_state === 'failed') return 'failed';
+  if (p.ai_state === 'answered') return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
+  // answers from a server without ai_state (mock / offline): the old fallback mapping
+  if (['rate_limited', 'unavailable', 'timeout'].includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
   if (['error', 'busy', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
   return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
 }
 
+/** How long to wait before the next poll of a job that is still estimating. next_attempt_at (RFC 3339) is a hint:
+ * wait until then, clamped so a far-off hint never stalls the row and a past one still backs off a little. */
+export function pollDelay(nextAttemptAt?: string, now = Date.now()): number {
+  const MIN = 2000, MAX = 30000;
+  const t = nextAttemptAt ? new Date(nextAttemptAt).getTime() : NaN;
+  if (isNaN(t)) return MIN;
+  return Math.min(MAX, Math.max(MIN, t - now));
+}
+
 /** Failed row: the user's own kcal. Counted only after they press Add on it. */
 export type FailedRow = { key: string; id: string; name: string; kcal: string; protein: string; added: boolean; reason?: string; userDailyLimit?: number; resetsAt?: string };
+
+/** A failed meal (ai_state "failed"): the spans the user has to type calories for. failed_spans when the server
+ * sends them, else custom_items flagged needs_input, else the spans we asked about. Never carries a kcal. */
+export function failedSpans(r: ParseResponse, asked: string[]): string[] {
+  const named = (r.failed_spans ?? []).map((s) => s.text).filter((t) => t.trim());
+  if (named.length) return named;
+  const custom = (r.custom_items ?? []).filter((c) => c.needs_input).map((c) => c.custom_name).filter((t) => t.trim());
+  return custom.length ? custom : asked;
+}
+/** Failed rows to show for a failed meal: every span we asked about, plus any other open span the server listed. */
+export function failedRows(r: ParseResponse, asked: string[]): string[] {
+  const extra = failedSpans(r, asked).filter((t) => !asked.some((a) => a === t || a.includes(t) || t.includes(a)));
+  return [...asked, ...extra];
+}
 /** Failed-row copy by the server's fallback_reason (user_daily_limit from the server; left out when missing). */
 /** ai_resets_at (RFC 3339) in the user's local time, e.g. "12:30 PM"; '' when missing or unreadable. */
 export function resetTime(iso?: string): string {

@@ -12,12 +12,13 @@ export interface RememberedRow { id: number; span: string; dish_id: string | nul
   kcal_best: number; kcal_low: number; kcal_high: number; protein_best: number; protein_low: number; protein_high: number; carbs_g: number; fat_g: number; uses: number; updated_at: string }
 
 export class ApiError extends Error { constructor(public status: number, msg: string) { super(msg); } }
-/** Parse answered 202 {status:'pending', job_id}: the item stays pending; poll the job later. */
-export class ParsePending extends Error { constructor(public jobId: string) { super('parse pending'); } }
-type JobBody = { status?: string; job_id?: string; result?: ParseResponse } & Partial<ParseResponse>;
+/** Parse answered 202 {status:'pending', job_id}: the item stays pending; poll the job later.
+ * next_attempt_at (RFC 3339) is the server's hint for when a requeued job will be tried again. */
+export class ParsePending extends Error { constructor(public jobId: string, public nextAttemptAt?: string) { super('parse pending'); } }
+type JobBody = { status?: string; job_id?: string; next_attempt_at?: string; result?: ParseResponse } & Partial<ParseResponse>;
 /** 202/pending -> ParsePending; done -> the ParseResponse (inline or under result). */
 export function parseJobBody(b: JobBody, jobId?: string): ParseResponse {
-  if (b.status === 'pending' || b.status === 'queued' || b.status === 'running') throw new ParsePending(b.job_id ?? jobId ?? '');
+  if (b.status === 'pending' || b.status === 'queued' || b.status === 'running') throw new ParsePending(b.job_id ?? jobId ?? '', b.next_attempt_at);
   if (b.status === 'failed' || b.status === 'error') throw new ApiError(500, 'parse job failed');
   return (b.result ?? b) as ParseResponse;
 }
