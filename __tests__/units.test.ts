@@ -14,7 +14,7 @@ describe('a bare number means the counting unit', () => {
 });
 
 describe('a count that does not fit its unit is unit_mismatch, with options, out of totals', () => {
-  test.each([['8 plates momos', ['piece', 'plate']], ['6 katori dal', ['katori']], ['2 dal', ['katori']], ['1 plate idli', ['plate']]] as const)('%s', (text, units) => {
+  test.each([['8 plates momos', ['piece', 'plate']], ['6 katori dal', ['katori']]] as const)('%s', (text, units) => {
     const r = parser.parse(text);
     const it = r.items[0];
     expect(it.flags).toContain('unit_mismatch');
@@ -30,11 +30,19 @@ describe('a count that does not fit its unit is unit_mismatch, with options, out
   });
 });
 
+describe('valid units per dish', () => {
+  test.each([['2 dal', 'katori', 300], ['1 plate idli', 'plate', 120]] as const)('%s is valid and confirmed', (text, unit, kcal) => {
+    const it = parser.parse(text).items[0];
+    expect([it.unit, it.source, it.needs_confirmation, it.kcal.best]).toEqual([unit, 'table', false, kcal]);
+    expect(it.flags ?? []).not.toContain('unit_mismatch');
+  });
+});
+
 describe('compound names never split into confident items', () => {
-  test.each(['egg rice', 'chicken rice', '2 paneer roti', '1 plate chicken pulao'])('%s', (text) => {
+  test.each(['egg rice', 'chicken rice', '2 paneer roti', '1 plate chicken pulao', 'roti sabzi', 'idli sambar'])('%s', (text) => {
     for (const it of parser.parse(text).items) { expect(it.source).not.toBe('table'); expect(it.needs_confirmation).toBe(true); }
   });
-  test.each(['idli sambar', '2 roti, 1 katori dal'])('%s is not compound', (text) => {
+  test.each(['idli aur sambar', '2 roti, 1 katori dal'])('%s is not compound', (text) => {
     for (const it of parser.parse(text).items) expect(it.flags ?? []).not.toContain('compound_name');
   });
   test('trailing quantity stops at aur', () => {

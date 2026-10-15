@@ -29,7 +29,19 @@
   "needs_verification": false,
   "fat_g": 2.4,
   "carbs_g": 18.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "tandoori_roti",
@@ -54,7 +66,19 @@
   "needs_verification": false,
   "fat_g": 3.6,
   "carbs_g": 26.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "naan",
@@ -82,7 +106,19 @@
   "needs_verification": false,
   "fat_g": 5.8,
   "carbs_g": 44.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 90.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "butter_naan",
@@ -109,7 +145,19 @@
   "needs_verification": false,
   "fat_g": 10.7,
   "carbs_g": 47.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "garlic_naan",
@@ -136,7 +184,19 @@
   "needs_verification": false,
   "fat_g": 8.3,
   "carbs_g": 48.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "paratha",
@@ -165,7 +225,19 @@
   "needs_verification": false,
   "fat_g": 7.8,
   "carbs_g": 28.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "aloo_paratha",
@@ -193,7 +265,19 @@
   "needs_verification": false,
   "fat_g": 11.7,
   "carbs_g": 42.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "gobi_paratha",
@@ -221,7 +305,19 @@
   "needs_verification": false,
   "fat_g": 10.5,
   "carbs_g": 37.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "paneer_paratha",
@@ -248,7 +344,19 @@
   "needs_verification": false,
   "fat_g": 14.7,
   "carbs_g": 38.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "methi_paratha",
@@ -276,7 +384,19 @@
   "needs_verification": false,
   "fat_g": 7.0,
   "carbs_g": 24.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "puri",
@@ -305,7 +425,19 @@
   "needs_verification": false,
   "fat_g": 5.0,
   "carbs_g": 11.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 25.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "bhatura",
@@ -333,7 +465,19 @@
   "needs_verification": false,
   "fat_g": 12.9,
   "carbs_g": 37.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 80.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "rice",
@@ -365,7 +509,24 @@
   "needs_verification": true,
   "fat_g": 1.7,
   "carbs_g": 40.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "brown_rice",
@@ -392,7 +553,24 @@
   "needs_verification": true,
   "fat_g": 1.6,
   "carbs_g": 38.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "jeera_rice",
@@ -420,7 +598,24 @@
   "needs_verification": false,
   "fat_g": 5.6,
   "carbs_g": 45.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "veg_pulao",
@@ -449,7 +644,24 @@
   "needs_verification": false,
   "fat_g": 7.2,
   "carbs_g": 43.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "veg_biryani",
@@ -477,7 +689,19 @@
   "needs_verification": false,
   "fat_g": 13.3,
   "carbs_g": 61.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chicken_biryani",
@@ -506,7 +730,19 @@
   "needs_verification": false,
   "fat_g": 21.4,
   "carbs_g": 64.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "mutton_biryani",
@@ -533,7 +769,19 @@
   "needs_verification": false,
   "fat_g": 27.6,
   "carbs_g": 66.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "egg_biryani",
@@ -560,7 +808,19 @@
   "needs_verification": false,
   "fat_g": 18.7,
   "carbs_g": 61.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 280.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "khichdi",
@@ -588,7 +848,24 @@
   "needs_verification": false,
   "fat_g": 5.3,
   "carbs_g": 40.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "curd_rice",
@@ -616,7 +893,24 @@
   "needs_verification": false,
   "fat_g": 6.1,
   "carbs_g": 35.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "lemon_rice",
@@ -643,7 +937,24 @@
   "needs_verification": false,
   "fat_g": 6.7,
   "carbs_g": 40.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "fried_rice",
@@ -670,7 +981,19 @@
   "needs_verification": false,
   "fat_g": 13.3,
   "carbs_g": 62.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "dal",
@@ -704,7 +1027,24 @@
   "needs_verification": false,
   "fat_g": 5.0,
   "carbs_g": 18.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "moong_dal",
@@ -731,7 +1071,24 @@
   "needs_verification": false,
   "fat_g": 4.3,
   "carbs_g": 14.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "masoor_dal",
@@ -759,7 +1116,24 @@
   "needs_verification": false,
   "fat_g": 4.7,
   "carbs_g": 15.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chana_dal",
@@ -786,7 +1160,24 @@
   "needs_verification": false,
   "fat_g": 5.7,
   "carbs_g": 20.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "dal_makhani",
@@ -814,7 +1205,24 @@
   "needs_verification": false,
   "fat_g": 8.7,
   "carbs_g": 36.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "rajma",
@@ -842,7 +1250,24 @@
   "needs_verification": false,
   "fat_g": 7.0,
   "carbs_g": 27.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chole",
@@ -873,7 +1298,24 @@
   "needs_verification": false,
   "fat_g": 7.7,
   "carbs_g": 31.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "kadhi",
@@ -901,7 +1343,24 @@
   "needs_verification": false,
   "fat_g": 5.7,
   "carbs_g": 24.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "sambar",
@@ -929,7 +1388,24 @@
   "needs_verification": false,
   "fat_g": 3.7,
   "carbs_g": 14.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "rasam",
@@ -956,7 +1432,24 @@
   "needs_verification": false,
   "fat_g": 1.7,
   "carbs_g": 7.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "sabzi",
@@ -990,7 +1483,24 @@
   "needs_verification": false,
   "fat_g": 7.2,
   "carbs_g": 13.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "aloo_sabzi",
@@ -1021,7 +1531,24 @@
   "needs_verification": false,
   "fat_g": 9.4,
   "carbs_g": 18.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "aloo_gobi",
@@ -1049,7 +1576,24 @@
   "needs_verification": false,
   "fat_g": 8.3,
   "carbs_g": 14.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "bhindi",
@@ -1079,7 +1623,24 @@
   "needs_verification": false,
   "fat_g": 7.8,
   "carbs_g": 14.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "baingan_bharta",
@@ -1108,7 +1669,24 @@
   "needs_verification": false,
   "fat_g": 7.2,
   "carbs_g": 13.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "palak_paneer",
@@ -1135,7 +1713,24 @@
   "needs_verification": false,
   "fat_g": 14.4,
   "carbs_g": 20.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "paneer_butter_masala",
@@ -1163,7 +1758,24 @@
   "needs_verification": false,
   "fat_g": 18.3,
   "carbs_g": 29.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "shahi_paneer",
@@ -1190,7 +1802,24 @@
   "needs_verification": false,
   "fat_g": 18.9,
   "carbs_g": 30.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "kadai_paneer",
@@ -1217,7 +1846,24 @@
   "needs_verification": false,
   "fat_g": 16.1,
   "carbs_g": 23.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "matar_paneer",
@@ -1245,7 +1891,24 @@
   "needs_verification": false,
   "fat_g": 13.9,
   "carbs_g": 20.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "paneer_bhurji",
@@ -1272,7 +1935,24 @@
   "needs_verification": false,
   "fat_g": 18.3,
   "carbs_g": 17.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "paneer",
@@ -1301,7 +1981,34 @@
   "piece_grams": 25,
   "fat_g": 20.6,
   "carbs_g": 1.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "piece",
+    "grams": 25,
+    "source": "per piece (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "count",
+    "grams": 25,
+    "source": "one piece"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "tofu",
@@ -1328,7 +2035,24 @@
   "needs_verification": true,
   "fat_g": 4.4,
   "carbs_g": 2.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "lauki_sabzi",
@@ -1357,7 +2081,24 @@
   "needs_verification": false,
   "fat_g": 5.0,
   "carbs_g": 9.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "tinda",
@@ -1384,7 +2125,24 @@
   "needs_verification": false,
   "fat_g": 5.0,
   "carbs_g": 9.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "cabbage_sabzi",
@@ -1412,7 +2170,24 @@
   "needs_verification": false,
   "fat_g": 5.6,
   "carbs_g": 10.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "gajar_matar",
@@ -1439,7 +2214,24 @@
   "needs_verification": false,
   "fat_g": 6.7,
   "carbs_g": 11.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "aloo_matar",
@@ -1466,7 +2258,24 @@
   "needs_verification": false,
   "fat_g": 9.4,
   "carbs_g": 16.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "saag",
@@ -1494,7 +2303,24 @@
   "needs_verification": false,
   "fat_g": 8.9,
   "carbs_g": 15.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "dum_aloo",
@@ -1521,7 +2347,24 @@
   "needs_verification": false,
   "fat_g": 12.2,
   "carbs_g": 24.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "soya_chunks",
@@ -1550,7 +2393,24 @@
   "needs_verification": false,
   "fat_g": 5.6,
   "carbs_g": 19.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "mushroom_masala",
@@ -1577,7 +2437,24 @@
   "needs_verification": false,
   "fat_g": 7.8,
   "carbs_g": 13.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chicken_curry",
@@ -1606,7 +2483,24 @@
   "needs_verification": false,
   "fat_g": 13.9,
   "carbs_g": 9.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "butter_chicken",
@@ -1634,7 +2528,24 @@
   "needs_verification": false,
   "fat_g": 18.3,
   "carbs_g": 19.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chicken_tikka",
@@ -1660,7 +2571,29 @@
   "piece_grams": 30,
   "fat_g": 10.7,
   "carbs_g": 5.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 30,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 30,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "tandoori_chicken",
@@ -1688,7 +2621,29 @@
   "piece_grams": 100,
   "fat_g": 15.0,
   "carbs_g": 3.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 100,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chicken_breast",
@@ -1716,7 +2671,19 @@
   "needs_verification": true,
   "fat_g": 3.7,
   "carbs_g": 1.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 100.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "mutton_curry",
@@ -1745,7 +2712,24 @@
   "needs_verification": false,
   "fat_g": 16.7,
   "carbs_g": 15.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "keema",
@@ -1774,7 +2758,24 @@
   "needs_verification": false,
   "fat_g": 16.7,
   "carbs_g": 17.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "fish_curry",
@@ -1803,7 +2804,24 @@
   "needs_verification": false,
   "fat_g": 12.2,
   "carbs_g": 7.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "fish_fry",
@@ -1831,7 +2849,24 @@
   "piece_grams": 100,
   "fat_g": 12.8,
   "carbs_g": 8.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 100,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "egg_curry",
@@ -1860,7 +2895,24 @@
   "needs_verification": false,
   "fat_g": 12.2,
   "carbs_g": 14.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "boiled_egg",
@@ -1892,7 +2944,19 @@
   "needs_verification": true,
   "fat_g": 5.0,
   "carbs_g": 0.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "omelette",
@@ -1923,7 +2987,19 @@
   "needs_verification": false,
   "fat_g": 8.7,
   "carbs_g": 3.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "egg_bhurji",
@@ -1951,7 +3027,24 @@
   "needs_verification": false,
   "fat_g": 11.0,
   "carbs_g": 8.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "poha",
@@ -1979,7 +3072,19 @@
   "needs_verification": false,
   "fat_g": 8.3,
   "carbs_g": 38.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "upma",
@@ -2007,7 +3112,19 @@
   "needs_verification": false,
   "fat_g": 7.7,
   "carbs_g": 35.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "idli",
@@ -2036,7 +3153,19 @@
   "needs_verification": false,
   "fat_g": 0.2,
   "carbs_g": 12.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 80.0,
+    "source": "1 plate = 2 idli (Product Engineer decision, common South Indian menu serving) x 40 g per piece (table piece weight)"
+   }
+  ]
  },
  {
   "id": "dosa",
@@ -2065,7 +3194,19 @@
   "needs_verification": false,
   "fat_g": 5.7,
   "carbs_g": 25.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 80.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "masala_dosa",
@@ -2092,7 +3233,19 @@
   "needs_verification": false,
   "fat_g": 11.7,
   "carbs_g": 54.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 160.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "uttapam",
@@ -2120,7 +3273,19 @@
   "needs_verification": false,
   "fat_g": 7.3,
   "carbs_g": 32.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "vada",
@@ -2149,7 +3314,19 @@
   "needs_verification": false,
   "fat_g": 4.7,
   "carbs_g": 20.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "pongal",
@@ -2176,7 +3353,24 @@
   "needs_verification": false,
   "fat_g": 8.0,
   "carbs_g": 36.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "dhokla",
@@ -2205,7 +3399,24 @@
   "piece_grams": 30,
   "fat_g": 1.1,
   "carbs_g": 8.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 30,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "besan_chilla",
@@ -2234,7 +3445,19 @@
   "needs_verification": false,
   "fat_g": 5.0,
   "carbs_g": 19.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 70.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "moong_chilla",
@@ -2261,7 +3484,19 @@
   "needs_verification": false,
   "fat_g": 4.3,
   "carbs_g": 14.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 70.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "oats",
@@ -2290,7 +3525,24 @@
   "needs_verification": false,
   "fat_g": 3.0,
   "carbs_g": 32.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "daliya",
@@ -2318,7 +3570,24 @@
   "needs_verification": false,
   "fat_g": 1.6,
   "carbs_g": 35.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "cornflakes",
@@ -2349,7 +3618,24 @@
   "needs_verification": false,
   "fat_g": 0.2,
   "carbs_g": 25.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 30.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "muesli",
@@ -2376,7 +3662,24 @@
   "needs_verification": false,
   "fat_g": 3.2,
   "carbs_g": 35.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 50.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "bread",
@@ -2404,7 +3707,19 @@
   "needs_verification": true,
   "fat_g": 1.5,
   "carbs_g": 11.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 25.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "brown_bread",
@@ -2432,7 +3747,19 @@
   "needs_verification": true,
   "fat_g": 1.6,
   "carbs_g": 10.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 28.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "bread_butter",
@@ -2472,7 +3799,19 @@
   ],
   "fat_g": 2.9,
   "carbs_g": 23.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 35.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "sandwich",
@@ -2499,7 +3838,19 @@
   "needs_verification": false,
   "fat_g": 14.0,
   "carbs_g": 30.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "paneer_sandwich",
@@ -2526,7 +3877,19 @@
   "needs_verification": false,
   "fat_g": 18.0,
   "carbs_g": 34.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 170.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "maggi",
@@ -2558,7 +3921,19 @@
   "needs_verification": true,
   "fat_g": 15.5,
   "carbs_g": 35.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 70.0,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chowmein",
@@ -2587,7 +3962,19 @@
   "needs_verification": false,
   "fat_g": 19.0,
   "carbs_g": 44.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "pasta",
@@ -2615,7 +4002,19 @@
   "needs_verification": false,
   "fat_g": 19.0,
   "carbs_g": 42.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 200.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "pizza",
@@ -2648,7 +4047,19 @@
   "needs_verification": false,
   "fat_g": 13.5,
   "carbs_g": 26.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "burger",
@@ -2676,7 +4087,19 @@
   "needs_verification": false,
   "fat_g": 17.5,
   "carbs_g": 39.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "momos",
@@ -2706,7 +4129,29 @@
   "piece_grams": 30,
   "fat_g": 15.0,
   "carbs_g": 32.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 180.0,
+    "source": "1 plate = 6 momos, 180 g: Hyprote \"Know your calories - veg momo\" https://hyprote.in/blogs/protein-blog/know-your-calories-veg-momo"
+   },
+   {
+    "unit": "piece",
+    "grams": 30,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 30,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chicken_momos",
@@ -2734,7 +4179,29 @@
   "piece_grams": 30,
   "fat_g": 16.0,
   "carbs_g": 28.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 180.0,
+    "source": "1 plate = 6 momos, 180 g: Hyprote \"Know your calories - veg momo\" https://hyprote.in/blogs/protein-blog/know-your-calories-veg-momo"
+   },
+   {
+    "unit": "piece",
+    "grams": 30,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 30,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "samosa",
@@ -2744,25 +4211,37 @@
    "samosas"
   ],
   "unit": "count",
-  "portion_grams": 80.0,
-  "kcal": 260.0,
-  "kcal_low": 195,
-  "kcal_high": 325,
-  "protein_g": 4.0,
-  "protein_low": 3.0,
-  "protein_high": 5.0,
+  "portion_grams": 75.0,
+  "kcal": 233.0,
+  "kcal_low": 175,
+  "kcal_high": 291,
+  "protein_g": 3.9,
+  "protein_low": 2.9,
+  "protein_high": 4.9,
   "oil_sensitive": true,
-  "source": "estimate",
-  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+  "source": "usda_fdc",
+  "source_note": "USDA FDC FNDDS 2708730 \"Samosa\" (310 kcal/100 g), portion \"Quantity not specified\" 75 g: https://fdc.nal.usda.gov/food-details/2708730/nutrients",
   "diet": "veg",
   "category": "snack",
   "brand": "",
-  "is_estimate": true,
-  "version": 1,
-  "needs_verification": false,
-  "fat_g": 13.0,
-  "carbs_g": 31.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "is_estimate": false,
+  "version": 2,
+  "needs_verification": true,
+  "fat_g": 13.1,
+  "carbs_g": 24.9,
+  "macro_note": "USDA FDC FNDDS values scaled to the portion",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 75.0,
+    "source": "default portion: USDA FDC FNDDS 2708730 \"Samosa\" (310 kcal/100 g), portion \"Quantity not specified\" 75 g: https://fdc.nal.usda.gov/food-details/2708730/nutrients"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "kachori",
@@ -2789,7 +4268,19 @@
   "needs_verification": false,
   "fat_g": 10.0,
   "carbs_g": 23.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "pakora",
@@ -2820,7 +4311,19 @@
   "needs_verification": false,
   "fat_g": 3.8,
   "carbs_g": 8.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 25.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "aloo_tikki",
@@ -2847,7 +4350,19 @@
   "needs_verification": false,
   "fat_g": 7.5,
   "carbs_g": 18.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 70.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "pav_bhaji",
@@ -2874,7 +4389,19 @@
   "needs_verification": false,
   "fat_g": 16.7,
   "carbs_g": 76.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "vada_pav",
@@ -2902,7 +4429,19 @@
   "needs_verification": false,
   "fat_g": 15.0,
   "carbs_g": 34.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "pani_puri",
@@ -2934,7 +4473,29 @@
   "piece_grams": 25,
   "fat_g": 12.5,
   "carbs_g": 29.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 25,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 25,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "bhel_puri",
@@ -2962,7 +4523,19 @@
   "needs_verification": false,
   "fat_g": 12.5,
   "carbs_g": 28.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "sev_puri",
@@ -2990,7 +4563,29 @@
   "piece_grams": 20,
   "fat_g": 14.0,
   "carbs_g": 33.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 20,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 20,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "dahi_puri",
@@ -3018,7 +4613,29 @@
   "piece_grams": 25,
   "fat_g": 14.0,
   "carbs_g": 32.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 25,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "count",
+    "grams": 25,
+    "source": "one piece"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chaat",
@@ -3046,7 +4663,19 @@
   "needs_verification": false,
   "fat_g": 14.0,
   "carbs_g": 32.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chole_bhature",
@@ -3085,7 +4714,19 @@
   ],
   "fat_g": 25.0,
   "carbs_g": 111.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 350.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "rajma_chawal",
@@ -3125,7 +4766,19 @@
   ],
   "fat_g": 14.0,
   "carbs_g": 59.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 350.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "dal_chawal",
@@ -3165,7 +4818,19 @@
   ],
   "fat_g": 11.7,
   "carbs_g": 49.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "kadhi_chawal",
@@ -3204,7 +4869,19 @@
   ],
   "fat_g": 12.3,
   "carbs_g": 55.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chole_chawal",
@@ -3245,7 +4922,19 @@
   ],
   "fat_g": 14.3,
   "carbs_g": 62.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "thali",
@@ -3273,7 +4962,19 @@
   "needs_verification": false,
   "fat_g": 28.3,
   "carbs_g": 123.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 600.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "dahi",
@@ -3303,7 +5004,24 @@
   "needs_verification": true,
   "fat_g": 4.5,
   "carbs_g": 7.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "raita",
@@ -3331,7 +5049,24 @@
   "needs_verification": false,
   "fat_g": 4.4,
   "carbs_g": 10.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "lassi",
@@ -3359,7 +5094,19 @@
   "needs_verification": false,
   "fat_g": 7.3,
   "carbs_g": 31.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chaas",
@@ -3389,7 +5136,19 @@
   "needs_verification": false,
   "fat_g": 2.2,
   "carbs_g": 4.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "milk",
@@ -3418,7 +5177,19 @@
   "needs_verification": true,
   "fat_g": 8.6,
   "carbs_g": 11.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "toned_milk",
@@ -3445,7 +5216,19 @@
   "needs_verification": true,
   "fat_g": 4.0,
   "carbs_g": 13.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chai",
@@ -3475,7 +5258,19 @@
   "needs_verification": false,
   "fat_g": 3.1,
   "carbs_g": 10.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "coffee",
@@ -3503,7 +5298,19 @@
   "needs_verification": false,
   "fat_g": 3.9,
   "carbs_g": 12.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "black_coffee",
@@ -3530,7 +5337,19 @@
   "needs_verification": true,
   "fat_g": 0.0,
   "carbs_g": 0.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "cold_coffee",
@@ -3557,7 +5376,19 @@
   "needs_verification": false,
   "fat_g": 8.3,
   "carbs_g": 36.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "banana_shake",
@@ -3584,7 +5415,19 @@
   "needs_verification": false,
   "fat_g": 10.0,
   "carbs_g": 43.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 300.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "protein_shake",
@@ -3614,7 +5457,19 @@
   "needs_verification": true,
   "fat_g": 1.6,
   "carbs_g": 2.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30.0,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "nimbu_pani",
@@ -3643,7 +5498,19 @@
   "needs_verification": false,
   "fat_g": 0.0,
   "carbs_g": 15.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "coconut_water",
@@ -3670,7 +5537,19 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 9.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "juice",
@@ -3699,7 +5578,19 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 25.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "cola",
@@ -3729,7 +5620,19 @@
   "needs_verification": true,
   "fat_g": 0.0,
   "carbs_g": 32.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 300.0,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "banana",
@@ -3758,7 +5661,19 @@
   "needs_verification": true,
   "fat_g": 0.3,
   "carbs_g": 24.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "apple",
@@ -3786,7 +5701,19 @@
   "needs_verification": true,
   "fat_g": 0.3,
   "carbs_g": 22.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 180.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "mango",
@@ -3813,7 +5740,19 @@
   "needs_verification": true,
   "fat_g": 0.4,
   "carbs_g": 27.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "papaya",
@@ -3840,7 +5779,24 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 15.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "orange",
@@ -3868,7 +5824,19 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 13.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 130.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "grapes",
@@ -3895,7 +5863,24 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 16.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "watermelon",
@@ -3922,7 +5907,24 @@
   "needs_verification": true,
   "fat_g": 0.1,
   "carbs_g": 10.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "guava",
@@ -3949,7 +5951,19 @@
   "needs_verification": true,
   "fat_g": 0.2,
   "carbs_g": 14.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chikki",
@@ -3977,7 +5991,19 @@
   "needs_verification": false,
   "fat_g": 4.7,
   "carbs_g": 16.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 25.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "peanuts",
@@ -4006,7 +6032,24 @@
   "needs_verification": true,
   "fat_g": 14.2,
   "carbs_g": 3.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 30.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "almonds",
@@ -4033,7 +6076,19 @@
   "needs_verification": true,
   "fat_g": 0.6,
   "carbs_g": 0.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 1.2,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "roasted_chana",
@@ -4061,7 +6116,24 @@
   "needs_verification": false,
   "fat_g": 1.8,
   "carbs_g": 17.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 30.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "makhana",
@@ -4089,7 +6161,24 @@
   "needs_verification": false,
   "fat_g": 0.4,
   "carbs_g": 14.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 20.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "sprouts",
@@ -4118,7 +6207,24 @@
   "needs_verification": false,
   "fat_g": 0.9,
   "carbs_g": 16.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "salad",
@@ -4146,7 +6252,24 @@
   "needs_verification": false,
   "fat_g": 0.3,
   "carbs_g": 5.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "namkeen",
@@ -4175,7 +6298,24 @@
   "needs_verification": true,
   "fat_g": 9.8,
   "carbs_g": 13.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 30.0,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "biscuit",
@@ -4205,7 +6345,19 @@
   "needs_verification": true,
   "fat_g": 1.2,
   "carbs_g": 5.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 8.0,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "gulab_jamun",
@@ -4234,7 +6386,24 @@
   "piece_grams": 50,
   "fat_g": 6.7,
   "carbs_g": 20.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "piece",
+    "grams": 50,
+    "source": "per piece (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "rasgulla",
@@ -4262,7 +6431,19 @@
   "needs_verification": false,
   "fat_g": 4.9,
   "carbs_g": 14.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "jalebi",
@@ -4290,7 +6471,19 @@
   "needs_verification": false,
   "fat_g": 5.8,
   "carbs_g": 18.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "kheer",
@@ -4318,7 +6511,24 @@
   "needs_verification": false,
   "fat_g": 11.1,
   "carbs_g": 31.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "halwa",
@@ -4348,7 +6558,24 @@
   "needs_verification": false,
   "fat_g": 13.3,
   "carbs_g": 41.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "ladoo",
@@ -4378,7 +6605,19 @@
   "needs_verification": false,
   "fat_g": 8.0,
   "carbs_g": 24.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "barfi",
@@ -4406,7 +6645,19 @@
   "needs_verification": false,
   "fat_g": 5.8,
   "carbs_g": 17.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "ice_cream",
@@ -4434,7 +6685,24 @@
   "needs_verification": false,
   "fat_g": 6.2,
   "carbs_g": 18.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 70.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "ghee",
@@ -4461,7 +6729,14 @@
   "needs_verification": true,
   "fat_g": 5.0,
   "carbs_g": 0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 5.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "butter",
@@ -4489,7 +6764,14 @@
   "needs_verification": true,
   "fat_g": 4.0,
   "carbs_g": 0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 5.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "oil",
@@ -4517,7 +6799,14 @@
   "needs_verification": true,
   "fat_g": 4.9,
   "carbs_g": 0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 5.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "sugar",
@@ -4546,7 +6835,14 @@
   "needs_verification": true,
   "fat_g": 0.0,
   "carbs_g": 5.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 5.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "jaggery",
@@ -4574,7 +6870,14 @@
   "needs_verification": true,
   "fat_g": 0.0,
   "carbs_g": 9.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 10.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "honey",
@@ -4601,7 +6904,14 @@
   "needs_verification": true,
   "fat_g": 0.0,
   "carbs_g": 5.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 7.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "pickle",
@@ -4630,7 +6940,14 @@
   "needs_verification": false,
   "fat_g": 2.3,
   "carbs_g": 2.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 15.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   }
+  ]
  },
  {
   "id": "papad",
@@ -4658,7 +6975,19 @@
   "needs_verification": false,
   "fat_g": 0.4,
   "carbs_g": 7.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 10.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chutney",
@@ -4687,7 +7016,14 @@
   "needs_verification": false,
   "fat_g": 0.7,
   "carbs_g": 2.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 15.0,
+    "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
+   }
+  ]
  },
  {
   "id": "peanut_butter",
@@ -4714,7 +7050,14 @@
   "needs_verification": true,
   "fat_g": 7.9,
   "carbs_g": 2.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "spoon",
+    "grams": 16.0,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
+   }
+  ]
  },
  {
   "id": "amul_paneer",
@@ -4741,7 +7084,24 @@
   "needs_verification": true,
   "fat_g": 23.2,
   "carbs_g": 2.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "amul_high_protein_paneer",
@@ -4769,7 +7129,24 @@
   "needs_verification": true,
   "fat_g": 16.7,
   "carbs_g": 0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "protein_atta_roti",
@@ -4798,7 +7175,19 @@
   "needs_verification": true,
   "fat_g": 2.3,
   "carbs_g": 15.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "muscleblaze_whey",
@@ -4827,7 +7216,19 @@
   "needs_verification": true,
   "fat_g": 1.4,
   "carbs_g": 4.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 33,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "amul_masti_dahi",
@@ -4855,7 +7256,24 @@
   "needs_verification": true,
   "fat_g": 6.1,
   "carbs_g": 6.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "amul_protein_lassi",
@@ -4883,7 +7301,19 @@
   "needs_verification": true,
   "fat_g": 4.0,
   "carbs_g": 6.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 200,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "epigamia_greek_yogurt",
@@ -4911,7 +7341,19 @@
   "needs_verification": true,
   "fat_g": 5.2,
   "carbs_g": 2.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 90,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "yippee_noodles",
@@ -4939,7 +7381,19 @@
   "needs_verification": true,
   "fat_g": 15.5,
   "carbs_g": 36.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 70,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "kellogg_muesli",
@@ -4967,7 +7421,24 @@
   "needs_verification": true,
   "fat_g": 3.3,
   "carbs_g": 38.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 50,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against cur"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "mcaloo_tikki",
@@ -4998,7 +7469,19 @@
   "needs_verification": true,
   "fat_g": 17.0,
   "carbs_g": 38.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain'"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "mcveggie",
@@ -5026,7 +7509,19 @@
   "needs_verification": true,
   "fat_g": 20.0,
   "carbs_g": 45.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 170,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain'"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "mcchicken",
@@ -5054,7 +7549,19 @@
   "needs_verification": true,
   "fat_g": 21.0,
   "carbs_g": 42.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 170,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: published chain nutrition info as recalled; confirm against the chain'"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "water",
@@ -5084,7 +7591,19 @@
   "needs_verification": true,
   "carbs_g": 0,
   "fat_g": 0,
-  "macro_note": "estimate: none"
+  "macro_note": "estimate: none",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250,
+    "source": "default portion (usda_fdc): NEEDS VERIFICATION: plain water has no calories (USDA FoodData Central)"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "generic_chicken_dish",
@@ -5110,7 +7629,19 @@
   "carbs_g": 23.1,
   "fat_g": 17.5,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown chicken dish (wrap, roll or curry form); wide range, us"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_paneer_dish",
@@ -5136,7 +7667,19 @@
   "carbs_g": 36.2,
   "fat_g": 19.0,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown paneer dish (wrap, roll or curry form); wide range, use"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_egg_dish",
@@ -5162,7 +7705,19 @@
   "carbs_g": 27.2,
   "fat_g": 15.0,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown egg dish (wrap, roll or curry form); wide range, user s"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_soya_chaap_dish",
@@ -5188,7 +7743,19 @@
   "carbs_g": 27.4,
   "fat_g": 16.5,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown soya chaap dish (wrap, roll or curry form); wide range,"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_fish_dish",
@@ -5214,7 +7781,19 @@
   "carbs_g": 17.2,
   "fat_g": 15.0,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown fish dish (wrap, roll or curry form); wide range, user "
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_mutton_dish",
@@ -5240,7 +7819,19 @@
   "carbs_g": 31.8,
   "fat_g": 21.0,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (estimate): Generic placeholder for an unknown mutton dish (wrap, roll or curry form); wide range, use"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "mooli_paratha",
@@ -5268,7 +7859,19 @@
   "needs_verification": false,
   "carbs_g": 36.3,
   "fat_g": 10.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "onion_paratha",
@@ -5296,7 +7899,19 @@
   "needs_verification": false,
   "carbs_g": 36.3,
   "fat_g": 10.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 110,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "stuffed_paratha",
@@ -5324,7 +7939,19 @@
   "needs_verification": false,
   "carbs_g": 41.1,
   "fat_g": 11.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "misal_pav",
@@ -5352,7 +7979,19 @@
   "needs_verification": false,
   "carbs_g": 56.1,
   "fat_g": 21.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "sabudana_khichdi",
@@ -5380,7 +8019,19 @@
   "needs_verification": false,
   "carbs_g": 57.7,
   "fat_g": 14.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "thalipeeth",
@@ -5407,7 +8058,19 @@
   "needs_verification": false,
   "carbs_g": 28.7,
   "fat_g": 8.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "puran_poli",
@@ -5434,7 +8097,19 @@
   "needs_verification": false,
   "carbs_g": 46.5,
   "fat_g": 10.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "bhakri",
@@ -5464,7 +8139,19 @@
   "needs_verification": false,
   "carbs_g": 31.9,
   "fat_g": 1.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "zunka",
@@ -5493,7 +8180,24 @@
   "needs_verification": false,
   "carbs_g": 22.0,
   "fat_g": 8.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "varan_bhaat",
@@ -5521,7 +8225,19 @@
   "needs_verification": false,
   "carbs_g": 60.1,
   "fat_g": 5.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "kanda_bhaji",
@@ -5550,7 +8266,19 @@
   "needs_verification": false,
   "carbs_g": 8.6,
   "fat_g": 5.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "batata_vada",
@@ -5580,7 +8308,19 @@
   "needs_verification": false,
   "carbs_g": 19.5,
   "fat_g": 10.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 70,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "sol_kadhi",
@@ -5607,7 +8347,19 @@
   "needs_verification": false,
   "carbs_g": 8.0,
   "fat_g": 6.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "shrikhand",
@@ -5634,7 +8386,24 @@
   "needs_verification": false,
   "carbs_g": 37.8,
   "fat_g": 8.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "modak",
@@ -5661,7 +8430,19 @@
   "needs_verification": false,
   "carbs_g": 17.9,
   "fat_g": 4.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "appam",
@@ -5689,7 +8470,19 @@
   "needs_verification": false,
   "carbs_g": 23.5,
   "fat_g": 2.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "puttu",
@@ -5716,7 +8509,24 @@
   "needs_verification": false,
   "carbs_g": 48.9,
   "fat_g": 2.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "pesarattu",
@@ -5744,7 +8554,19 @@
   "needs_verification": false,
   "carbs_g": 22.5,
   "fat_g": 6.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "rava_dosa",
@@ -5772,7 +8594,19 @@
   "needs_verification": false,
   "carbs_g": 28.9,
   "fat_g": 9.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "set_dosa",
@@ -5797,7 +8631,19 @@
   "needs_verification": false,
   "carbs_g": 19.6,
   "fat_g": 3.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "neer_dosa",
@@ -5822,7 +8668,19 @@
   "needs_verification": false,
   "carbs_g": 17.6,
   "fat_g": 1.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "bisi_bele_bath",
@@ -5850,7 +8708,19 @@
   "needs_verification": false,
   "carbs_g": 51.2,
   "fat_g": 11.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 250,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "avial",
@@ -5877,7 +8747,24 @@
   "needs_verification": false,
   "carbs_g": 16.1,
   "fat_g": 10.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "idiyappam",
@@ -5905,7 +8792,19 @@
   "needs_verification": false,
   "carbs_g": 13.6,
   "fat_g": 0.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "ragi_mudde",
@@ -5933,7 +8832,19 @@
   "needs_verification": false,
   "carbs_g": 47.3,
   "fat_g": 1.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "curd_vada",
@@ -5962,7 +8873,19 @@
   "needs_verification": false,
   "carbs_g": 23.2,
   "fat_g": 7.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "coconut_rice",
@@ -5990,7 +8913,24 @@
   "needs_verification": false,
   "carbs_g": 41.5,
   "fat_g": 10.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "tamarind_rice",
@@ -6019,7 +8959,24 @@
   "needs_verification": false,
   "carbs_g": 43.2,
   "fat_g": 9.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "kerala_parotta",
@@ -6048,7 +9005,19 @@
   "needs_verification": false,
   "carbs_g": 39.1,
   "fat_g": 13.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 90,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "macher_jhol",
@@ -6076,7 +9045,24 @@
   "needs_verification": false,
   "carbs_g": 7.0,
   "fat_g": 11.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "luchi",
@@ -6103,7 +9089,19 @@
   "needs_verification": false,
   "carbs_g": 9.8,
   "fat_g": 5.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 20,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "aloo_posto",
@@ -6130,7 +9128,24 @@
   "needs_verification": false,
   "carbs_g": 23.6,
   "fat_g": 12.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "shukto",
@@ -6157,7 +9172,24 @@
   "needs_verification": false,
   "carbs_g": 16.2,
   "fat_g": 7.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "mishti_doi",
@@ -6185,7 +9217,24 @@
   "needs_verification": false,
   "carbs_g": 24.0,
   "fat_g": 4.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "sandesh",
@@ -6212,7 +9261,19 @@
   "needs_verification": false,
   "carbs_g": 13.2,
   "fat_g": 3.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 30,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "kosha_mangsho",
@@ -6239,7 +9300,24 @@
   "needs_verification": false,
   "carbs_g": 18.8,
   "fat_g": 23.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chingri_malai_curry",
@@ -6269,7 +9347,24 @@
   "needs_verification": false,
   "carbs_g": 11.5,
   "fat_g": 17.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "ghugni",
@@ -6297,7 +9392,24 @@
   "needs_verification": false,
   "carbs_g": 28.6,
   "fat_g": 7.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "jhal_muri",
@@ -6327,7 +9439,24 @@
   "needs_verification": false,
   "carbs_g": 27.5,
   "fat_g": 6.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 50,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "dabeli",
@@ -6354,7 +9483,19 @@
   "needs_verification": false,
   "carbs_g": 39.1,
   "fat_g": 13.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 120,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "ragda_pattice",
@@ -6382,7 +9523,19 @@
   "needs_verification": false,
   "carbs_g": 50.7,
   "fat_g": 14.8,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 250,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "kulcha",
@@ -6410,7 +9563,19 @@
   "needs_verification": false,
   "carbs_g": 45.5,
   "fat_g": 10.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chole_kulche",
@@ -6438,7 +9603,19 @@
   "needs_verification": false,
   "carbs_g": 69.6,
   "fat_g": 20.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "litti_chokha",
@@ -6465,7 +9642,19 @@
   "needs_verification": false,
   "carbs_g": 33.7,
   "fat_g": 9.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "dal_baati",
@@ -6494,7 +9683,19 @@
   "needs_verification": false,
   "carbs_g": 76.2,
   "fat_g": 35.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 350,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "chilli_paneer",
@@ -6522,7 +9723,24 @@
   "needs_verification": false,
   "carbs_g": 19.0,
   "fat_g": 22.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "chilli_chicken",
@@ -6550,7 +9768,24 @@
   "needs_verification": false,
   "carbs_g": 19.3,
   "fat_g": 18.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "gobi_manchurian",
@@ -6578,7 +9813,24 @@
   "needs_verification": false,
   "carbs_g": 32.4,
   "fat_g": 16.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "veg_manchurian",
@@ -6603,7 +9855,24 @@
   "needs_verification": false,
   "carbs_g": 29.9,
   "fat_g": 15.6,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
  },
  {
   "id": "spring_roll",
@@ -6631,7 +9900,19 @@
   "needs_verification": false,
   "carbs_g": 15.8,
   "fat_g": 8.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 60,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "soya_chaap",
@@ -6663,7 +9944,19 @@
   "needs_verification": false,
   "carbs_g": 28.2,
   "fat_g": 19.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "plate",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "sattu_drink",
@@ -6691,7 +9984,19 @@
   "needs_verification": false,
   "carbs_g": 30.2,
   "fat_g": 1.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "egg_roll",
@@ -6719,7 +10024,19 @@
   "needs_verification": false,
   "carbs_g": 43.8,
   "fat_g": 21.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 180,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chicken_roll",
@@ -6749,7 +10066,19 @@
   "needs_verification": false,
   "carbs_g": 48.1,
   "fat_g": 21.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "paneer_roll",
@@ -6779,7 +10108,19 @@
   "needs_verification": false,
   "carbs_g": 49.0,
   "fat_g": 24.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "veg_roll",
@@ -6809,7 +10150,19 @@
   "needs_verification": false,
   "carbs_g": 49.0,
   "fat_g": 16.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 180,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chicken_shawarma",
@@ -6837,7 +10190,19 @@
   "needs_verification": false,
   "carbs_g": 42.8,
   "fat_g": 25.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 220,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "egg_paratha",
@@ -6865,7 +10230,19 @@
   "needs_verification": false,
   "carbs_g": 33.4,
   "fat_g": 16.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 130,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "potato_chips",
@@ -6895,7 +10272,19 @@
   "needs_verification": true,
   "carbs_g": 27.4,
   "fat_g": 16.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "kurkure",
@@ -6923,7 +10312,19 @@
   "needs_verification": true,
   "carbs_g": 27.4,
   "fat_g": 16.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "cup_noodles",
@@ -6951,7 +10352,19 @@
   "needs_verification": true,
   "carbs_g": 41.0,
   "fat_g": 14.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 70,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "chocolate_bar",
@@ -6982,7 +10395,19 @@
   "needs_verification": true,
   "carbs_g": 24.0,
   "fat_g": 11.9,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 40,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "protein_bar",
@@ -7010,7 +10435,19 @@
   "needs_verification": true,
   "carbs_g": 19.9,
   "fat_g": 6.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 50,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "energy_drink",
@@ -7040,7 +10477,19 @@
   "needs_verification": true,
   "carbs_g": 28.8,
   "fat_g": 0.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 250,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "mango_drink",
@@ -7070,7 +10519,19 @@
   "needs_verification": true,
   "carbs_g": 37.5,
   "fat_g": 0.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "fruit_yogurt",
@@ -7098,7 +10559,19 @@
   "needs_verification": true,
   "carbs_g": 18.6,
   "fat_g": 2.4,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 100,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "malted_milk",
@@ -7129,7 +10602,19 @@
   "needs_verification": true,
   "carbs_g": 32.3,
   "fat_g": 6.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "glass",
+    "grams": 250,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "katori",
+    "grams": 150,
+    "source": "generic katori size (rules.json units: 150 g)"
+   }
+  ]
  },
  {
   "id": "cream_biscuit",
@@ -7159,7 +10644,19 @@
   "needs_verification": true,
   "carbs_g": 9.2,
   "fat_g": 2.3,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 12,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "rusk",
@@ -7187,7 +10684,19 @@
   "needs_verification": true,
   "carbs_g": 9.0,
   "fat_g": 1.1,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 12,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "khakhra",
@@ -7214,7 +10723,19 @@
   "needs_verification": true,
   "carbs_g": 11.4,
   "fat_g": 2.7,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 20,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "cake_slice",
@@ -7242,7 +10763,19 @@
   "needs_verification": true,
   "carbs_g": 37.2,
   "fat_g": 15.0,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 80,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "buttermilk_packet",
@@ -7270,7 +10803,19 @@
   "needs_verification": true,
   "carbs_g": 2.8,
   "fat_g": 1.2,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "soya_chaap_roll",
@@ -7300,7 +10845,19 @@
   "needs_verification": false,
   "carbs_g": 46.6,
   "fat_g": 21.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4"
+  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  },
  {
   "id": "generic_wrap",
@@ -7326,6 +10883,18 @@
   "carbs_g": 48.9,
   "fat_g": 19.6,
   "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
-  "needs_confirm": true
+  "needs_confirm": true,
+  "units": [
+   {
+    "unit": "count",
+    "grams": 200,
+    "source": "default portion (estimate): Generic placeholder for a roll/wrap of an unknown filling; wide range, user should confirm"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   }
+  ]
  }
 ]

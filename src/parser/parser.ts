@@ -16,6 +16,8 @@ export interface Dish {
   diet?: 'veg' | 'egg' | 'nonveg' | string; category?: string; brand?: string; version?: number;
   carbs_g?: number; fat_g?: number; macro_note?: string; needs_verification?: boolean;
   piece_grams?: number; parts?: Part[]; needs_confirm?: boolean;
+  /** every unit this dish comes in, with its gram weight and source; a typed unit not listed is unit_mismatch */
+  units?: { unit: string; grams: number; source: string }[];
 }
 interface UnitRule { words: string[]; grams: number; as?: string; factor?: number }
 export interface Rules {
@@ -612,8 +614,7 @@ export class Parser {
     if (!d || it.quantity <= 0 || it.from_combo) return it;
     const u = it.unit === 'count' && (d.piece_grams ?? 0) > 0 ? 'piece' : it.unit;
     const max = this.r.plausible_max?.[u];
-    const bowlOfCounted = d.unit === 'count' && !((d.piece_grams ?? 0) > 0) && (u === 'plate' || u === 'katori' || u === 'bowl');
-    if (!bowlOfCounted && (max === undefined || it.quantity <= max)) return it;
+    if (max === undefined || it.quantity <= max) return it;
     return this.unitOptions(d, it);
   }
 
@@ -796,6 +797,12 @@ export class Parser {
 
   /** A typed unit must describe the dish's unit; a bare count only fits countable dishes or ones with a piece size. */
   private unitFits(d: Dish, unit: string, hasQty: boolean): boolean {
+    if (d.units?.length) { // the dish's own unit list (Go unitFits): a bare number is its counting unit
+      if (unit === '') return !hasQty || (this.r.eggs_per_portion[d.id] ?? 0) === 0 || this.bareCountFits(d);
+      if (unit === 'g' || unit === 'gram' || unit === 'ml') return true;
+      if (unit === 'piece' || unit === 'count') return d.units.some((u) => u.unit === 'piece') || d.unit === 'count';
+      return d.units.some((u) => u.unit === unit);
+    }
     if (unit === '') return !hasQty || (d.piece_grams ?? 0) > 0 || (this.r.bare_count_units ?? []).includes(d.unit);
     if (unit === d.unit || unit === 'g' || unit === 'gram' || unit === 'ml') return true;
     const uf = this.r.unit_fits ?? {};
@@ -840,7 +847,7 @@ export class Parser {
     for (let i = 0; i < items.length; i++) for (let j = 0; j < items.length; j++) {
       if (i === j || spans[i][0] < 0 || spans[j][0] < 0 || group(i) === group(j)) continue;
       const adj = spans[j][0] === spans[i][1] + 1, q = adj && this.qualifierPair(items[i], items[j]);
-      if (q) { pen(items[i], 'compound_name'); pen(items[j], 'compound_name'); } // reads like one dish name: whole phrase to the AI
+      if (adj) { pen(items[i], 'compound_name'); pen(items[j], 'compound_name'); } // rule 2: adjacent non-combo dishes are one phrase
       if (adj && (q || !this.everydayPair(items[i].dish_id, items[j].dish_id))) { pen(items[i], 'adjacent_split'); pen(items[j], 'adjacent_split'); }
     }
   }
@@ -962,6 +969,8 @@ export class Parser {
   }
 
   private unitGrams(d: Dish, unit: string): number {
+    const own = unit ? d.units?.find((u) => u.unit === unit) : undefined;
+    if (own) return own.grams; // the dish's own sourced weight for this unit
     if (unit === '' || unit === d.unit || unit === 'count') return d.portion_grams;
     if (unit === 'piece') return (d.piece_grams ?? 0) > 0 ? d.piece_grams! : d.portion_grams;
     return this.r.units[unit]?.grams ?? 0;
@@ -992,7 +1001,9 @@ export class Parser {
   }
 
   /** A bowl dish where a bare count does not fit. */
-  private bowlDish(d: Dish): boolean { return !this.unitFits(d, '', true); }
+  private bowlDish(d: Dish): boolean { return !this.bareCountFits(d); }
+  /** old rule, for egg bowls: a bare count only fits countable dishes */
+  private bareCountFits(d: Dish): boolean { return (d.piece_grams ?? 0) > 0 || (this.r.bare_count_units ?? []).includes(d.unit); }
   /** A bowl dish where whole eggs sit in a gravy (rules egg_piece_bowls). */
   private eggBowl(d: Dish): boolean { return (this.r.eggs_per_portion[d.id] ?? 0) > 0 && this.bowlDish(d) && (this.r.egg_piece_bowls ?? []).includes(d.id); }
   private hasEggWord(m: string): boolean { return fields(m).some((w) => this.eggWord.has(w)); }
