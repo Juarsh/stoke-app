@@ -5,7 +5,7 @@ module.exports = {
   name: process.env.APP_NAME || 'KatoriCount',
   slug: process.env.APP_SLUG || 'katoricount',
   scheme: process.env.APP_SCHEME || 'katoricount',
-  androidPackage: process.env.APP_ANDROID_PACKAGE || 'in.katoricount.app',
-  iosBundleId: process.env.APP_IOS_BUNDLE_ID || 'in.katoricount.app',
+  androidPackage: process.env.APP_ANDROID_PACKAGE || 'in.indiancalorie.app',
+  iosBundleId: process.env.APP_IOS_BUNDLE_ID || 'in.indiancalorie.app',
   inviteBaseUrl: process.env.APP_INVITE_BASE_URL || 'https://example.github.io/kc/j',
 };

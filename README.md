@@ -5,7 +5,7 @@ Spec: `/workspace/calorie/spec.md` · Design: `/workspace/calorie/design/` (v4 b
 
 ## Identity (name on hold)
 All identity comes from `brand.config.js` (env-overridable), read by `app.config.ts` and exposed to the UI via `expo-constants`:
-`APP_NAME` (default KatoriCount), `APP_SLUG`, `APP_SCHEME`, `APP_ANDROID_PACKAGE` / `APP_IOS_BUNDLE_ID` (default `in.katoricount.app`), `APP_INVITE_BASE_URL`. No UI string hardcodes the name.
+`APP_NAME` (default KatoriCount), `APP_SLUG`, `APP_SCHEME`, `APP_ANDROID_PACKAGE` / `APP_IOS_BUNDLE_ID` (default `in.indiancalorie.app`, CEO-approved), `APP_INVITE_BASE_URL`. No UI string hardcodes the name.
 
 ## Config / flags (env, all optional)
 | Var | Effect |
