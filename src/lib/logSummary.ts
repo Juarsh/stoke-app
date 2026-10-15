@@ -17,3 +17,11 @@ export function logSummary(c: LogCounts) {
   }
   return { total, button, disabled, allEstimates, soFar, kcalText: n(c.kcal), protein: Math.round(c.protein) };
 }
+
+/** Total of the drafts exactly as shown on their rows (row kcal = item.kcal.best); customs add their typed numbers. */
+export function draftTotals(items: { kcal: { best: number }; protein_g: { best: number } }[], customs: { kcal: string; protein: string }[] = []) {
+  return {
+    kcal: items.reduce((a, i) => a + i.kcal.best, 0) + customs.reduce((a, c) => a + (Number(c.kcal) || 0), 0),
+    protein: items.reduce((a, i) => a + i.protein_g.best, 0) + customs.reduce((a, c) => a + (Number(c.protein) || 0), 0),
+  };
+}

@@ -8,6 +8,7 @@ import { portionLabel } from '../lib/labels';
 import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
+import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { Badge, Row, Segmented, T } from './ui';
@@ -65,10 +66,11 @@ export function DecisionCard({ it, onPick, onEdit, onRemove }: { it: Item; onPic
   const ok = () => onPick({ ...it, needs_confirmation: false, alternatives: undefined });
   if (alts.length) {
     const a = alts[0];
+    const cs = unitChoices(it);
     helper = `Did you mean ${a.unit === 'piece' ? 'pieces' : portionLabel(a.quantity, a.unit)} or ${it.unit}s?`;
-    opts = [{ value: 'alt', label: portionLabel(a.quantity, a.unit) }, { value: 'cur', label: portionLabel(it.quantity, it.unit) }];
-    value = 'alt';
-    choose = (v) => (v === 'alt' ? onPick({ ...parser.edit(it, { quantity: a.quantity, unit: a.unit }), source: it.source, needs_confirmation: false }) : ok());
+    opts = cs.map((c) => ({ value: c.key, label: c.label }));
+    value = unitKey(it); // highlight = the unit the shown kcal is computed for (never a different one)
+    choose = (v) => onPick(chooseUnit(it, v));
   } else if (it.ai_estimate) {
     helper = ''; opts = [{ value: 'use', label: 'Use estimate' }, { value: 'own', label: 'Enter my own' }]; value = 'use';
     choose = (v) => (v === 'use' ? ok() : setSheet(true));

@@ -10,7 +10,7 @@ import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
-import { logSummary } from '@/lib/logSummary';
+import { draftTotals, logSummary } from '@/lib/logSummary';
 import { splitBySpan } from '@/lib/pending';
 import { applyLearned, learnKey, LoggedItem, readingOf } from '@/lib/learned';
 import { portionLabel, SLOT_LABEL } from '@/lib/labels';
@@ -95,8 +95,7 @@ export default function Log() {
   // Confirmation is the primary action, not a blocker: Add confirms every CHECK/AI item.
   const unsure = drafts.filter((d) => !d.ok).length;
   const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // the only disabled state (missing data)
-  const total = drafts.reduce((a, d) => a + d.it.kcal.best, 0) + customs.reduce((a, c) => a + (Number(c.kcal) || 0), 0);
-  const protein = drafts.reduce((a, d) => a + d.it.protein_g.best, 0) + customs.reduce((a, c) => a + (Number(c.protein) || 0), 0);
+  const { kcal: total, protein } = draftTotals(drafts.map((d) => d.it), customs);
   // Offline Pending = '— kcal', not counted. Estimating = shimmer; Add stays enabled and sends them to items to review.
   const nEstimating = pendingUnmatched.filter((u) => !offline.includes(u)).length;
   const nPending = pendingUnmatched.length - nEstimating;
