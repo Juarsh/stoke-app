@@ -4519,12 +4519,12 @@
   "protein_high": 7.5,
   "oil_sensitive": true,
   "source": "estimate",
-  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+  "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured | estimate_unverified: published sources disagree (DietGhar ~171, Khaana 221 kcal/100 g, Cookd ~135 per serving); always confirm.",
   "diet": "veg",
   "category": "snack",
   "brand": "",
   "is_estimate": true,
-  "version": 1,
+  "version": 2,
   "needs_verification": false,
   "fat_g": 12.5,
   "carbs_g": 28.4,
@@ -4540,7 +4540,8 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
-  ]
+  ],
+  "estimate_unverified": true
  },
  {
   "id": "sev_puri",

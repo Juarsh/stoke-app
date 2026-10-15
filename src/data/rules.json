@@ -706,6 +706,7 @@
  "confidence": {
   "threshold": 0.75,
   "fuzzy": -0.35,
+  "estimate_unverified": 0,
   "variant": -0.15,
   "style_ignored": -0.1,
   "trailing_qty": -0.1,

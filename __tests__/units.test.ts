@@ -50,3 +50,15 @@ describe('compound names never split into confident items', () => {
     expect(r.items.find((i) => i.dish_id === 'chai')!.unit).toBe('count');
   });
 });
+
+describe('estimate_unverified dishes are never confident (Go estimate_unverified_test.go)', () => {
+  test.each(['bhel puri', '1 plate bhel puri', '2 roti, 1 bhel puri'])('%s', (text) => {
+    const b = parser.parse(text).items.filter((it) => it.dish_id === 'bhel_puri');
+    expect(b.length).toBeGreaterThan(0);
+    for (const it of b) { expect(it.needs_confirmation).toBe(true); expect(it.source).not.toBe('table'); expect(it.flags).toContain('estimate_unverified'); }
+  });
+  test('recompute keeps it unconfirmed', () => {
+    const it = parser.recompute('bhel_puri', 1, 'plate', 'normal');
+    expect(it.needs_confirmation).toBe(true);
+  });
+});

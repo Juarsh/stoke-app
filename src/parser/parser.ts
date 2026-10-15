@@ -15,7 +15,7 @@ export interface Dish {
   oil_sensitive: boolean; source: string; source_note: string; is_estimate?: boolean;
   diet?: 'veg' | 'egg' | 'nonveg' | string; category?: string; brand?: string; version?: number;
   carbs_g?: number; fat_g?: number; macro_note?: string; needs_verification?: boolean;
-  piece_grams?: number; parts?: Part[]; needs_confirm?: boolean;
+  piece_grams?: number; parts?: Part[]; needs_confirm?: boolean; estimate_unverified?: boolean;
   /** every unit this dish comes in, with its gram weight and source; a typed unit not listed is unit_mismatch */
   units?: { unit: string; grams: number; source: string }[];
 }
@@ -592,6 +592,7 @@ export class Parser {
     const it: It = this.sanity({ ...x, source });
     if (it.fuzzy) pen(it, 'fuzzy');
     if (it.source === 'generic') pen(it, 'generic');
+    if (d?.estimate_unverified) pen(it, 'estimate_unverified'); // sources disagree: never confident
     if (it.from_combo && !it.everyday) pen(it, 'combo_or_split');
     const conf = this.r.confidence;
     let c = 1;
@@ -602,7 +603,7 @@ export class Parser {
     if (pens.length) it.flags = [...pens];
     // leftovers, splits and combos always need a look, whatever the score
     const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby' ||
-      f === 'token_reuse' || f === 'adjacent_split' || f === 'compound_name' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count');
+      f === 'token_reuse' || f === 'adjacent_split' || f === 'compound_name' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count' || f === 'estimate_unverified');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
     const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, eggExtra: _x, ...base } = it;
@@ -1151,6 +1152,7 @@ export class Parser {
     it = this.sanity(it);
     delete (it as It).pens;
     if (d.needs_confirm) it = { ...it, source: 'generic', needs_confirmation: true };
+    if (d.estimate_unverified) it = { ...it, needs_confirmation: true, flags: [...(it.flags ?? []), 'estimate_unverified'] };
     return it;
   }
 
