@@ -65,26 +65,27 @@ type Rules struct {
 		CategoryPairs [][2]string `json:"category_pairs"`
 		DishPairs     [][2]string `json:"dish_pairs"`
 	} `json:"everyday_pairs"`
-	BareCountUnits  []string                   `json:"bare_count_units"`
-	UnitFits        map[string]json.RawMessage `json:"unit_fits"`
-	FormWords       []string                   `json:"form_words"`
-	ModifierWords   []string                   `json:"modifier_words"`
-	StuffingWords   []string                   `json:"stuffing_words"`
-	Connectors      []string                   `json:"connectors"`
-	EggWords        []string                   `json:"egg_words"`
-	EggsPerPortion  map[string]float64         `json:"eggs_per_portion"`
-	EggPieceDish    string                     `json:"egg_piece_dish"`
-	EggPieceBowls   []string                   `json:"egg_piece_bowls"`
-	FuzzyMinSim     float64                    `json:"fuzzy_min_similarity"`
-	WrapForms       []string                   `json:"wrap_forms"`
-	StyleWords      []string                   `json:"style_words"`
-	Stopwords       []string                   `json:"stopwords"`
-	MinPlaceholder  int                        `json:"min_placeholder_len"`
-	Confidence      map[string]float64         `json:"confidence"`
-	FuzzyNeverCats  []string                   `json:"fuzzy_never_to_categories"`
-	TypicalSides    map[string][]string        `json:"typical_sides"`
-	GenericWrapDish string                     `json:"generic_wrap_dish"`
-	UnknownItem     struct {
+	BareCountUnits   []string                   `json:"bare_count_units"`
+	UnitFits         map[string]json.RawMessage `json:"unit_fits"`
+	FormWords        []string                   `json:"form_words"`
+	ModifierWords    []string                   `json:"modifier_words"`
+	StuffingWords    []string                   `json:"stuffing_words"`
+	Connectors       []string                   `json:"connectors"`
+	EggWords         []string                   `json:"egg_words"`
+	EggsPerPortion   map[string]float64         `json:"eggs_per_portion"`
+	EggPieceDish     string                     `json:"egg_piece_dish"`
+	TableOnlyOKFlags []string                   `json:"table_only_ok_flags"`
+	EggPieceBowls    []string                   `json:"egg_piece_bowls"`
+	FuzzyMinSim      float64                    `json:"fuzzy_min_similarity"`
+	WrapForms        []string                   `json:"wrap_forms"`
+	StyleWords       []string                   `json:"style_words"`
+	Stopwords        []string                   `json:"stopwords"`
+	MinPlaceholder   int                        `json:"min_placeholder_len"`
+	Confidence       map[string]float64         `json:"confidence"`
+	FuzzyNeverCats   []string                   `json:"fuzzy_never_to_categories"`
+	TypicalSides     map[string][]string        `json:"typical_sides"`
+	GenericWrapDish  string                     `json:"generic_wrap_dish"`
+	UnknownItem      struct {
 		Kcal     [3]float64 `json:"kcal"`
 		ProteinG [3]float64 `json:"protein_g"`
 		Name     string     `json:"name"`
@@ -1653,11 +1654,22 @@ func (p *Parser) TableOnly(r Result) bool {
 			return false // combo rows and generic rows never answer alone
 		}
 		if it.Source != SourceTable || it.NeedsConfirmation || it.Fuzzy || (it.FromCombo != "" && !it.everyday) || it.generic ||
-			len(it.Flags) > 0 || it.Unit == "" || (p.r.StrictStatedQty && !it.stated) {
+			p.blockingFlags(it.Flags) || it.Unit == "" || (p.r.StrictStatedQty && !it.stated) {
 			return false
 		}
 	}
 	return true
+}
+
+// blockingFlags: any flag except the informational ones (rules
+// table_only_ok_flags, e.g. trailing_qty in "masala dosa 1") keeps the AI on.
+func (p *Parser) blockingFlags(fl []string) bool {
+	for _, f := range fl {
+		if !slices.Contains(p.r.TableOnlyOKFlags, f) {
+			return true
+		}
+	}
+	return false
 }
 
 type comboPart struct {

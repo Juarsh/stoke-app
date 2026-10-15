@@ -536,6 +536,8 @@
   "ando"
  ],
  "egg_piece_dish": "boiled_egg",
+ "_table_only_ok_flags_doc": "informational flags that do not stop a confident table-only answer",
+ "table_only_ok_flags": ["trailing_qty"],
  "_egg_piece_bowls_doc": "bowl dishes where an egg count means whole eggs in gravy: one bowl holds eggs_per_portion eggs, extra eggs are added as egg_piece_dish pieces, all flagged egg_count",
  "egg_piece_bowls": ["egg_curry"],
  "eggs_per_portion": {
