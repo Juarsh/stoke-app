@@ -64,15 +64,16 @@ export default function Progress() {
   const st = useStore(); const d = useDay(); const s = useStyles(); const t = useTheme();
   const [editing, setEditing] = useState<FoodEntry | null>(null);
   const [slot, setSlot] = useState<Slot>('lunch');
+  const today = localDate();
   const days = useMemo<Day[]>(() => {
     const by = new Map<string, FoodEntry[]>();
     for (const e of st.entries) if (!e.deleted_at) by.set(e.local_date, [...(by.get(e.local_date) ?? []), e]);
     const pend = pendingFor(st.queue);
     for (const f of pend) if (!by.has(f.local_date)) by.set(f.local_date, []);
+    by.delete(today); // today lives on the Today tab (frame 6 lists past days only)
     return [...by.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([date, entries]) => ({
       date, entries, ...dayTotals(entries), reviews: entries.filter(toReview).length, pending: pend.filter((f) => f.local_date === date && !isStale(f)) })).map((x) => ({ ...x, reviews: x.reviews + pend.filter((f) => f.local_date === x.date && isStale(f)).length }));
-  }, [st.entries, st.queue]);
-  const today = localDate();
+  }, [st.entries, st.queue, today]);
   // month view, Monday-first: from the Monday on/before the 1st through the Sunday of this week
   const cal = useMemo(() => {
     const first = today.slice(0, 8) + '01';

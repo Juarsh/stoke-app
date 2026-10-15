@@ -27,7 +27,7 @@ function ShimmerBar() {
   const tx = x.interpolate({ inputRange: [0, 1], outputRange: [-24, 58] });
   return (
     <View style={[s.bar, { backgroundColor: t.c.track }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Animated.View style={[s.hi, { backgroundColor: t.c.emTintLine, opacity: still ? 0 : 1, transform: [{ translateX: tx }] }]} />
+      <Animated.View style={[s.hi, { backgroundColor: t.c.accentFill, opacity: still ? 0 : 0.45, transform: [{ translateX: tx }] }]} />
     </View>
   );
 }

@@ -15,16 +15,20 @@ export const RingHero = memo(function RingHero({ eaten, target, kcalLeft, protei
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: S, height: S, alignSelf: 'center' }} accessible
       accessibilityLabel={over ? `${fmt(-kcalLeft)} calories over target of ${fmt(target)}` : `${fmt(kcalLeft)} calories left of ${fmt(target)}, ${fmt(proteinLeft)} grams protein left`}>
-      <Svg width={S} height={S} style={{ position: 'absolute' }}>
+      <Svg width={S + 24} height={S + 24} style={{ position: 'absolute', left: -12, top: -12 }}>
         <Defs>
           <LinearGradient id="ring" x1="1" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={t.c.arc1} /><Stop offset="1" stopColor={t.c.arc3} />
           </LinearGradient>
         </Defs>
-        <Circle cx={S / 2} cy={S / 2} r={r} stroke={t.c.track} strokeWidth={sw} fill="none" />
+        {t.dark && pct > 0 && !over ? [20, 10].map((g, i) => ( // design-notes v3.2: dark ring "glow 10px" (same gradient, not a new one)
+          <Circle key={g} cx={S / 2 + 12} cy={S / 2 + 12} r={r} stroke="url(#ring)" strokeOpacity={i ? 0.16 : 0.08} strokeWidth={sw + g} fill="none" strokeLinecap="round"
+            strokeDasharray={`${C * pct} ${C}`} transform={`rotate(-90 ${S / 2 + 12} ${S / 2 + 12})`} />
+        )) : null}
+        <Circle cx={S / 2 + 12} cy={S / 2 + 12} r={r} stroke={t.c.track} strokeWidth={sw} fill="none" />
         {pct > 0 ? (
-          <Circle cx={S / 2} cy={S / 2} r={r} stroke={over ? t.c.over : 'url(#ring)'} strokeWidth={sw} fill="none" strokeLinecap="round"
-            strokeDasharray={`${C * pct} ${C}`} transform={`rotate(-90 ${S / 2} ${S / 2})`} />
+          <Circle cx={S / 2 + 12} cy={S / 2 + 12} r={r} stroke={over ? t.c.over : 'url(#ring)'} strokeWidth={sw} fill="none" strokeLinecap="round"
+            strokeDasharray={`${C * pct} ${C}`} transform={`rotate(-90 ${S / 2 + 12} ${S / 2 + 12})`} />
         ) : null}
       </Svg>
       {over ? (
