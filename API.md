@@ -465,6 +465,14 @@ above `plausible_max` for that unit (`8 plates momos`, `6 katori dal`).
 - Items with `unit_options` are left out of `total` until the user picks one and saves it; the
   saved entry is recomputed by the server from the chosen qty and unit.
 
+### Unverified estimates (`estimate_unverified`)
+A dish row with `"estimate_unverified": true` in dishes.json has published sources that
+disagree too much to trust one number (today only `bhel_puri`: DietGhar ~171, Khaana 221
+kcal/100 g, Cookd ~135 per serving). It still parses as that dish with no AI call, but the
+item always carries flag `estimate_unverified`, `needs_confirmation: true` and source
+`did_you_mean`, so it is never a confident table save: a save without confirmation is
+treated like any other unconfirmed item (needs_review / 409 confirm path).
+
 ### Compound names (rule 2)
 Any two adjacent table matches with no separator or quantity between them that aren't one
 `everyday_combos` row and aren't a listed pair of whole dish names in `rules.json`

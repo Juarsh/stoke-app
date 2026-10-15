@@ -41,6 +41,11 @@ type Dish struct {
 	PieceGrams   float64  `json:"piece_grams,omitempty"`   // countable plate dishes: "8 momos" = 8 pieces
 	Parts        []Part   `json:"parts,omitempty"`         // combos: split into these when a portion is given
 	NeedsConfirm bool     `json:"needs_confirm,omitempty"` // generic placeholder rows: always ask the user
+	// EstimateUnverified: a table row whose published sources disagree. It
+	// still parses as this dish (no AI call) but is always flagged
+	// estimate_unverified and needs confirmation, so it is never a
+	// confident table save.
+	EstimateUnverified bool `json:"estimate_unverified,omitempty"`
 	// Units: every unit this dish comes in, with its gram weight and where
 	// that weight comes from. A typed unit not listed is unit_mismatch.
 	Units []DishUnit `json:"units,omitempty"`

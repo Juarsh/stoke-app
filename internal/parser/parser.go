@@ -1052,6 +1052,9 @@ func (p *Parser) finish(it *Item) {
 	if it.Source == SourceGeneric {
 		it.pen("generic")
 	}
+	if d != nil && d.EstimateUnverified {
+		it.pen("estimate_unverified")
+	}
 	if it.FromCombo != "" && !it.everyday {
 		it.pen("combo_or_split")
 	}
@@ -1071,7 +1074,7 @@ func (p *Parser) finish(it *Item) {
 	forced := false
 	for _, f := range it.pens {
 		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
-			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count"
+			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count" || f == "estimate_unverified"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -1715,6 +1718,10 @@ func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, 
 	p.sanity(&it)
 	if d.NeedsConfirm {
 		it.Source, it.NeedsConfirmation = SourceGeneric, true
+	}
+	if d.EstimateUnverified { // sources disagree: never a confident save
+		it.NeedsConfirmation = true
+		it.Flags = append(it.Flags, "estimate_unverified")
 	}
 	return it, nil
 }
