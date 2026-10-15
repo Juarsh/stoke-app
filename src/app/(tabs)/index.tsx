@@ -129,6 +129,6 @@ const useStyles = makeStyles((t) => ({
   fill: { backgroundColor: t.c.accentTint, borderRadius: t.radius.card, padding: t.space.cardH, gap: 4, borderWidth: 1, borderColor: t.c.emTintLine },
   fillRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderTopColor: t.c.emTintLine, gap: 8 },
   plateRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 },
-  sep: { borderTopWidth: 1, borderTopColor: t.c.line },
+  sep: { borderTopWidth: 1, borderTopColor: t.c.lineSoft },
   reviewRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
 }));

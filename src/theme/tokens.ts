@@ -25,7 +25,9 @@ export const BRAND = {
 const L = BRAND.light, D = BRAND.dark;
 const light = {
   bg: '#F6F1E7', glow1: 'rgba(46,170,130,0.22)', glow2: 'rgba(232,170,70,0.20)', glow3: 'rgba(30,140,150,0.14)',
-  card: 'rgba(255,253,248,0.90)', card2: 'rgba(255,255,255,0.96)', cardLine: 'rgba(20,60,45,0.10)', cardHighlight: 'rgba(255,255,255,0.9)',
+  card: 'rgba(255,253,248,0.90)', card2: 'rgba(255,255,255,0.96)',
+  // card border (tappable card chrome): muted, same as kcal input; must meet 3:1 (Designer Oct 15)
+  cardLine: '#626664', lineSoft: 'rgba(20,60,45,0.10)', cardHighlight: 'rgba(255,255,255,0.9)',
   nav: 'rgba(255,255,255,0.82)', navSolid: '#FFFDF8',
   text: '#111A16', text2: '#34413B', muted: '#56625C', over: L.over,
   em: L.accentText, emChip: L.accentText, em2: L.accentFill, tint: L.accentTint, emTintLine: L.accentTintLine,
@@ -49,7 +51,9 @@ type Palette = typeof light & { goldOnGrad?: string };
 /** goldOnGrad is dark-only (light uses accentText for those texts). */
 const dark: Palette & { goldOnGrad: string } = {
   bg: '#080B0A', glow1: 'rgba(19,160,122,0.30)', glow2: 'rgba(233,169,59,0.10)', glow3: 'rgba(18,124,136,0.28)',
-  card: 'rgba(20,26,23,0.90)', card2: 'rgba(32,40,36,0.94)', cardLine: 'rgba(255,255,255,0.09)', cardHighlight: 'rgba(255,255,255,0.07)',
+  card: 'rgba(20,26,23,0.90)', card2: 'rgba(32,40,36,0.94)',
+  cardLine: '#9AA6A0', // dark muted (same as kcal input border)
+  lineSoft: 'rgba(255,255,255,0.09)', cardHighlight: 'rgba(255,255,255,0.07)',
   nav: 'rgba(22,28,25,0.82)', navSolid: '#1A201D',
   text: '#F1F4F2', text2: '#C9D2CD', muted: '#9AA6A0', over: D.over,
   em: D.accentText, emChip: D.accentText, em2: D.accentFill, tint: D.accentTint, emTintLine: D.accentTintLine,
@@ -70,7 +74,7 @@ const dark: Palette & { goldOnGrad: string } = {
 const alias = (p: Palette): Palette & ReturnType<typeof aliasOf> => aliasOf(p);
 const aliasOf = (p: Palette) => ({
   ...p,
-  surface: p.card, surface2: p.card2, surface3: p.track, line: p.cardLine,
+  surface: p.card, surface2: p.card2, surface3: p.track, line: p.cardLine, lineSoft: (p as { lineSoft: string }).lineSoft,
   primary: p.em, primary2: p.em2, primarySoft: p.tint, primaryText: p.emChip, onPrimary: p.onGrad,
   accent: p.gold, accent2: p.gradGold1, accentSoft: p.tintGold, steps2: p.stepsBar1,
   info: p.freeze, infoSoft: p.tint, infoText: p.text2, aiSoft: p.aiBg, aiText: p.ai,

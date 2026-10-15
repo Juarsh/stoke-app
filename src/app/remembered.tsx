@@ -15,7 +15,7 @@ export default function Remembered() {
       {rows.length === 0 ? <Card><T tone="muted">Nothing remembered yet.</T></Card> : (
         <Card style={{ paddingVertical: 4 }}>
           {rows.map(([text, r], i) => (
-            <Row key={text} style={[{ justifyContent: 'space-between', minHeight: 56, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: t.c.line }]}>
+            <Row key={text} style={[{ justifyContent: 'space-between', minHeight: 56, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: t.c.lineSoft }]}>
               <View style={{ flex: 1 }}>
                 <T v="bodyStrong" numberOfLines={1}>“{text}”</T>
                 <T v="caption" tone="text2" numberOfLines={1}>→ {r.name} · {portionLabel(r.qty, r.unit)}{r.oil_level && r.oil_level !== 'normal' ? ` · oil ${r.oil_level}` : ''}</T>

@@ -270,6 +270,6 @@ export default function Log() {
 }
 const useStyles = makeStyles((t) => ({
   pad: { padding: t.space.screen, gap: t.space.gap, paddingBottom: t.sizes.nav + 140 },
-  dock: { position: 'absolute', left: 0, right: 0, bottom: t.sizes.nav + 16, gap: 8, paddingHorizontal: t.space.md, paddingTop: 10, paddingBottom: 12, backgroundColor: t.c.bg, borderTopWidth: 1, borderTopColor: t.c.line },
+  dock: { position: 'absolute', left: 0, right: 0, bottom: t.sizes.nav + 16, gap: 8, paddingHorizontal: t.space.md, paddingTop: 10, paddingBottom: 12, backgroundColor: t.c.bg, borderTopWidth: 1, borderTopColor: t.c.lineSoft },
   pill: { paddingVertical: 10, borderRadius: t.radius.full },
 }));

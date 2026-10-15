@@ -38,3 +38,23 @@ test('goldOnGrad is dark-only (#F8DA9C); light uses accentText #A8361F on #FFE3D
   expect(palette.light.accentText).toBe('#A8361F'); expect(palette.light.coach1).toBe('#FFE3DC');
   expect(Math.round(ratio(parse('#A8361F'), parse('#FFE3DC')) * 100) / 100).toBeGreaterThanOrEqual(5.3);
 });
+
+// Non-text UI (WCAG 1.4.11): tappable card borders and the kcal input border need 3:1 against the card.
+test.each(['light', 'dark'] as const)('%s: cardLine (card border) on card >= 3:1', (theme) => {
+  const p = palette[theme];
+  const base = parse(p.bg as string);
+  const card = over(parse(p.card as string), base);
+  const r = ratio(over(parse(p.cardLine as string), card), card);
+  expect({ theme, cardLine: p.cardLine, r: Math.round(r * 100) / 100, ok: r >= 3 }).toMatchObject({ ok: true });
+});
+test.each(['light', 'dark'] as const)('%s: muted (kcal input border) on card >= 3:1', (theme) => {
+  const p = palette[theme];
+  const base = parse(p.bg as string);
+  const card = over(parse(p.card as string), base);
+  const r = ratio(over(parse(p.muted as string), card), card);
+  expect({ theme, muted: p.muted, r: Math.round(r * 100) / 100, ok: r >= 3 }).toMatchObject({ ok: true });
+});
+test('cardLine matches the kcal-input border colour the Designer named', () => {
+  expect(palette.light.cardLine).toBe('#626664');
+  expect(palette.dark.cardLine).toBe(palette.dark.muted);
+});

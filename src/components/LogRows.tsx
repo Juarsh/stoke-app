@@ -95,7 +95,7 @@ export function DecisionCard({ it, onPick, onEdit, onRemove }: { it: Item; onPic
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const useStyles = makeStyles((t) => ({
   group: { backgroundColor: t.c.card, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.line, paddingHorizontal: t.space.cardH },
-  sep: { borderTopWidth: 1, borderTopColor: t.c.line },
+  sep: { borderTopWidth: 1, borderTopColor: t.c.lineSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 10 },
   dotted: { textDecorationLine: 'underline', textDecorationStyle: 'dotted', fontWeight: '500' },
   decision: { borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.text2, paddingHorizontal: t.space.cardH, paddingBottom: t.space.cardV, gap: 8 },

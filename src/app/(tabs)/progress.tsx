@@ -140,7 +140,7 @@ const useStyles = makeStyles((t) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6, columnGap: '1.5%' as never },
   cell: { width: '12.9%' as never, aspectRatio: 1.1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingVertical: 8 },
-  sep: { borderTopWidth: 1, borderTopColor: t.c.line },
+  sep: { borderTopWidth: 1, borderTopColor: t.c.lineSoft },
   dayCard: { backgroundColor: t.c.card, paddingHorizontal: t.space.cardH, borderLeftWidth: 1, borderRightWidth: 1, borderColor: t.c.cardLine },
   top: { borderTopWidth: 1, borderTopLeftRadius: t.radius.card, borderTopRightRadius: t.radius.card, paddingTop: 4 },
   bottom: { borderBottomWidth: 1, borderBottomLeftRadius: t.radius.card, borderBottomRightRadius: t.radius.card, paddingBottom: 4 },
