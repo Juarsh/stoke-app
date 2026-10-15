@@ -54,7 +54,7 @@ test.each(['light', 'dark'] as const)('%s: muted (kcal input border) on card >= 
   const r = ratio(over(parse(p.muted as string), card), card);
   expect({ theme, muted: p.muted, r: Math.round(r * 100) / 100, ok: r >= 3 }).toMatchObject({ ok: true });
 });
-test('cardLine matches the kcal-input border colour the Designer named', () => {
-  expect(palette.light.cardLine).toBe('#626664');
-  expect(palette.dark.cardLine).toBe(palette.dark.muted);
+test('card border is the muted token (same as kcal input); hairlines stay soft', () => {
+  for (const th of ['light', 'dark'] as const) expect(palette[th].cardLine).toBe(palette[th].muted);
+  expect([palette.light.lineSoft, palette.dark.lineSoft]).toEqual(['#E4E0D6', '#252B28']);
 });

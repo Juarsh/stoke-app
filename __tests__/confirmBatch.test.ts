@@ -66,3 +66,12 @@ test('bhel puri (estimate_unverified) is never confident or batched', () => {
   expect(b.flags).toContain('estimate_unverified');
   expect(kindOf({ ...b, one_tap_ok: true }, false)).toBe('unverified');
 });
+
+import { parser as P2 } from '../src/parser';
+import { plan as plan2 } from '../src/lib/confirmBatch';
+test.each([['8 plates momos'], ['bhel puri']])('confirm-none rule for %s alone: no main button, enabled outline only', (txt) => {
+  const it = { ...P2.parse(txt).items[0], one_tap_ok: false, needs_confirmation: true };
+  const p = plan2([{ key: 'a', it, confirmed: false } as never]);
+  expect(p.primary).toBe(false);
+  expect(p.later).toBe('Save · 1 to review later');
+});
