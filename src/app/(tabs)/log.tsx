@@ -152,7 +152,7 @@ export default function Log() {
   const sum = nOpen || openFailed || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
-  const canAdd = any && !(bp.disabled && bp.later); // confirm-none: primary disabled, 'Save · N to review later' is the way out
+  const canAdd = any && !(bp.disabled && bp.later); // confirm-none: the main button is not shown at all; 'Save · N to review later' is the way out
   const addLabel = sum.button;
   const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
@@ -258,7 +258,7 @@ export default function Log() {
               <T v="caption" tone="muted">{sum.total}</T>
               <T v="number">{sum.kcalText} <T v="caption" tone="muted">{sum.soFar ? 'kcal so far' : `kcal · ${sum.protein} g`}</T></T>
             </Row>
-            <Button title={addLabel} disabled={!canAdd} onPress={() => add()} accessibilityLabel={addLabel} />
+            {bp.primary ? <Button title={addLabel} disabled={!canAdd} onPress={() => add()} accessibilityLabel={addLabel} /> : null}
             {bp.later ? <Button kind="outline" title={bp.later} onPress={() => add(true)} accessibilityLabel={bp.later} /> : null}
             {nOpen && bp.add.length ? <T v="caption" tone="muted" style={{ textAlign: 'center' }}>{bp.note}</T> : null}
           </View>

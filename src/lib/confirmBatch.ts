@@ -62,7 +62,9 @@ export function plan(rows: Row[], estimating = 0, waiting = 0) {
   // secondary outline button: save what's confirmed, send every open item (incl. estimating + empty failed rows) to review
   const nLater = m + estimating;
   const later = nLater ? `${add.length ? `Add ${n(kcal)} kcal` : 'Save'} · ${nLater} to review later` : '';
-  return { add, open, kcal, protein, button, total, note, disabled, later };
+  // confirm-none (design-notes Oct 15): no disabled main button; only the enabled outline 'Save · N to review later' shows
+  const primary = !(add.length === 0 && !!later);
+  return { add, open, kcal, protein, button, total, note, disabled, later, primary };
 }
 
 /** Item the user picked from the server's unit_options: recomputed for that unit, no longer a mismatch, confirmed. */

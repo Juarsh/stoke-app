@@ -98,6 +98,7 @@ test('secondary "to review later" counts every open item', () => {
   expect(p.later).toBe(`Add ${roti.kcal.best} kcal · 3 to review later`);
   const none = plan([{ key: 'm', it: momos, confirmed: false }], 1, 1);
   expect(none.later).toBe('Save · 3 to review later');
+  expect(none.primary).toBe(false); expect(p.primary).toBe(true);
   expect(plan([{ key: 'r', it: roti, confirmed: false }]).later).toBe('');
 });
 
@@ -164,4 +165,14 @@ describe('reset time from ai_resets_at (Pacific RFC 3339) in local time', () => 
     expect(failedCopy({ reason: 'daily_limit', resetsAt: '2026-10-16T00:00:00-07:00' })).toBe(`AI estimates are used up until ${resetTime('2026-10-16T07:00:00Z')}. Add the calories yourself.`);
     expect(failedCopy({ reason: 'daily_limit', resetsAt: 'garbage' })).toBe('AI estimates are used up for now. Add the calories yourself.');
   });
+});
+
+describe('gave_up (busy > 30 min) is final', () => {
+  test('failed, generic copy', () => {
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'error', fallback_reason: 'gave_up', ai_state: 'failed', custom_items: [] } as never)).toBe('failed');
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'busy', fallback_reason: 'gave_up', custom_items: [] } as never)).toBe('failed');
+    expect(failedCopy({ reason: 'gave_up' })).toBe('Couldn’t estimate this. Add the calories yourself.');
+  });
+  test.each(['rate_limited', 'unavailable', 'timeout'])('%s is never failed without ai_state', (r) =>
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'error', fallback_reason: r, custom_items: [] } as never)).toBe('estimating'));
 });

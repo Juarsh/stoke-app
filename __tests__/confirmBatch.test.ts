@@ -39,9 +39,10 @@ describe('batch plan (numbers from the API item)', () => {
   test('plural: still need', () => {
     expect(plan([r(roti), r(thukpa, 'a'), r({ ...thukpa, name: 'momos' }, 'b')]).button).toBe('Confirm 1 · 2 still need a choice');
   });
-  test('none one-tap: disabled "Choose for each item to add it", 0 kcal', () => {
+  test('none one-tap: no main button, only "Save · N to review later", 0 kcal', () => {
     const p = plan([r({ ...roti, one_tap_ok: undefined }), r(thukpa)]);
-    expect(p).toMatchObject({ button: 'Choose for each item to add it', disabled: true, kcal: 0, total: 'Total · 2 need a choice' });
+    expect(p).toMatchObject({ kcal: 0, total: 'Total · 2 need a choice', primary: false });
+    expect(p.later).toBe('Save · 2 to review later'); // confirm-none: only the enabled outline button
   });
   test('nothing open: "Add N kcal"; confirmed AI estimate counts', () => {
     expect(plan([r(roti), r(thukpa, 't', true)]).button).toBe('Add 530 kcal');
