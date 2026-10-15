@@ -116,7 +116,9 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 - `kcal`, `kcal_low`, `kcal_high`, `protein_g`, `protein_low`, `protein_high`, `carbs_g`, `fat_g`: what the user confirmed. For table items (dish_id + source table/did_you_mean/generic) the server checks them against that table version and **rejects mismatches, never silently recalculating**:
   - numbers without `dish_table_version`: 400
   - any version the server has published (older ones too) is checked against that version; a version it has never seen: 409 keep-and-retry (see "Dish table versions")
-  - kcal off by more than max(2 kcal, 2%) or protein by more than max(0.5 g, 3%): 422
+  - kcal off by more than max(2 kcal, 2%) or protein by more than max(0.5 g, 3%): saved with the
+    server's own numbers for that dish, qty and unit, `state: "corrected"` (201, not 422). See
+    "Hard-gate rules (065fefd+)" below
   - ranges that don't contain the best guess: 422
   - otherwise the client's numbers are stored as sent (carbs/fat default to table estimates).
   Table items sent without numbers are computed from the table version sent, or the current table if none is sent.
@@ -201,7 +203,7 @@ startup fails: every change to `dishes.json` must bump the version.
 An entry that sends `dish_table_version` is checked against the snapshot for
 that version, including older ones such as entries made offline before an
 update. The entry is stored with the version it sent. Numbers that don't match
-that version's values return 422.
+that version's values are saved `state: "corrected"` with the server's numbers.
 
 If the server has never seen the version (for example, the app was updated
 before this server), it returns **409**:
@@ -423,3 +425,60 @@ to the AI. AI items are placed only by `span_start`/`span_end` or `span_text`;
 an item with no position is never placed by its name (`ai_unplaced`).
 
 Invariant (tested): no confident table item's span overlaps another item's.
+
+
+## Hard-gate rules (current; replace earlier notes where they conflict)
+
+### AI failure keeps the table's answer
+When the AI isn't used or fails (`fallback` = error, busy, timeout (reported as error), cap_reached,
+global_cap_reached, not_configured, or `use_ai:false`), confident table matches stay `source: "table"`,
+`needs_confirmation: false`, no flags. Only the unclaimed spans become `generic` placeholders to
+confirm (with `custom_items`). Example: `2 roti aur 1 plate zorbu` -> roti (table) + placeholder for
+`1 plate zorbu`.
+
+### No unknown words, no AI call
+The AI is called only for a span holding a word nothing in the parse used (or a generic /
+`leftover_nearby` / `compound_name` phrase). Counts, units and number words ("ek", "half plate",
+"2 egg ka") don't count as unknown. Fuzzy matches (`rotti`), split list items (`sambar chutney`)
+and `unit_mismatch` items cover their own words: they come back as `did_you_mean` to confirm and
+the meal makes no AI call (`answer: "table"`, `fallback: "none"`).
+
+### Counting units and plausible counts
+- A bare number means the dish's counting unit: `piece` when the dish has `piece_grams` (momos:
+  `8 momos` = 8 pieces, 400 kcal), otherwise the dish unit (`count` for idli, samosa, roti; `katori`
+  for dal, sabzi).
+- `rules.json` `plausible_max` gives the largest sensible count per unit (plate 3, katori/bowl/glass 4,
+  cup 5, count 12, piece 15, slice 8). A count above it (`8 plates momos`, `6 katori dal`), a counted
+  dish by the plate/katori (`1 plate idli`) and a bare count on a katori dish (`2 dal`) are flagged
+  `unit_mismatch` and need confirmation. Never guessed.
+- Every `unit_mismatch` item carries `unit_options`: `[{qty, unit, kcal}]` with at least the
+  counting-unit reading and the stated reading, e.g. `8 plates momos` ->
+  `[{"qty":8,"unit":"piece","kcal":400},{"qty":8,"unit":"plate","kcal":2400}]`
+  (plus one standard portion when the stated unit is the counting unit).
+- Items with `unit_options` are left out of `total` until the user picks one and saves it; the
+  saved entry is recomputed by the server from the chosen qty and unit.
+
+### Compound names
+Two adjacent table matches with no separator or quantity between them, where the first is a bare
+ingredient word (`protein_words` or `rules.json` `name_qualifier_words`: egg, chicken, paneer, aloo,
+...), read as one dish name (`egg rice`, `chicken pulao`, `paneer roti`). Both get `compound_name`
+and `adjacent_split`, are never confident, and the whole phrase goes to the AI. Only
+`everyday_combos` and `everyday_pairs.dish_pairs` split.
+
+### Trailing quantities stop at separators
+`poha 1 plate aur chai`: the `1 plate` belongs to poha; it never moves past aur/and/with/comma.
+
+### Saving: state "corrected"
+- Table items (`dish_id` + `source` table/did_you_mean/generic): the server always recomputes from
+  dish, qty, unit and oil level. Client kcal/protein that don't match (for example a plate's kcal sent
+  with `unit: "piece"`) are not stored and not rejected: the entry is saved with the server's
+  numbers and `state: "corrected"`. Corrected entries count in totals like confirmed ones and are
+  not remembered as the user's reading. Clients can't send `state: "corrected"`; only `confirmed` or
+  `needs_review`.
+- AI estimates may send `kcal_per_unit` (> 0, <= 3000; 400 otherwise, and only with
+  `source: "ai_estimate"`). `kcal` must equal `kcal_per_unit x qty` (within max(2 kcal, 2%));
+  missing kcal is filled in, a mismatch is saved as `kcal_per_unit x qty` with `state: "corrected"`.
+
+### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
+`{"mode": "error" | "timeout" | ""}`: every following AI call fails that way until mode `""` or
+`/test/ai/calls/reset`. Parse jobs then finish with `fallback: "error"`; confident table items survive.

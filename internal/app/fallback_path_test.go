@@ -27,7 +27,6 @@ func (f failAI) EstimateMeal(ctx context.Context, _ string, _ []food.Span, _ []p
 	return nil, f.err
 }
 
-
 // When the AI fails, confident table matches stay claimed table items; only
 // the unclaimed span becomes a placeholder to confirm.
 func TestFallbackKeepsClaimedItems(t *testing.T) {
