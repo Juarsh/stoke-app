@@ -155,9 +155,10 @@ the per-minute limiter described in this section.**
 - AI answers under or equal to 0 kcal, or at least 3000 kcal per item, are
   rejected. They are not cached or shown, and the span gets the generic
   confirm card.
-- Caps: 20 AI calls per user per day (`fallback: "cap_reached"`), and a
-  project-wide daily cap `AI_GLOBAL_DAILY_CAP` (default 200, 0 = unlimited;
-  `fallback: "global_cap_reached"`). When either cap is reached, the span gets
+- Caps (see "AI quota, retries and fallback_reason" below): `AI_USER_DAILY_CAP`
+  per user per day (default 3; `fallback: "cap_reached"`, `fallback_reason: "user_limit"`)
+  and the project-wide `AI_DAILY_CAP` (default 20; `fallback: "global_cap_reached"`,
+  `fallback_reason: "daily_limit"`). When either cap is reached, the span gets
   a generic confirm card (`source=generic`).
 - A per-minute limit across the whole project (`AI_PER_MINUTE`, default 8;
   set it below 0 for no limit). Over the limit, the response has
@@ -169,7 +170,7 @@ the per-minute limiter described in this section.**
   `responseSchema` and an 8-second timeout. Errors, timeouts, bad JSON,
   invalid ranges, or spans that weren't asked about become generic confirm
   cards (`fallback: "error"`).
-- `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | rate_limited | error.
+- `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | daily_limit | busy | rate_limited | error (see `fallback_reason`).
 - Weekly review: `go run ./cmd/aicache-export -days 7 -limit 50 > top.csv`
   lists the most-hit cached answers. A cached dish becomes a table row only by
   adding it to dishes.json by hand, checked against a real source.
@@ -518,5 +519,64 @@ Go's embedded VCS info.
 | dhokla (piece) | 30 g, 50 kcal, 2 g | 30 g, 80 kcal, 3.4 g | Clearcals recipe https://clearcals.com/recipes/dhokla/ |
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
-`{"mode": "error" | "timeout" | ""}`: every following AI call fails that way until mode `""` or
-`/test/ai/calls/reset`. Parse jobs then finish with `fallback: "error"`; confident table items survive.
+`{"mode": "error" | "timeout" | "busy" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
+`/test/ai/calls/reset`. Parse jobs then finish with `fallback: "error"` (error, timeout), `"busy"`
+(a 429 still failing after the retries) or `"daily_limit"` (a 429 naming the daily quota); confident table items survive.
+
+### AI quota, retries and fallback_reason
+Settings (all env vars):
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `AI_DAILY_CAP` | 20 | Project-wide AI meals per quota day (Gemini free tier: 20 requests/day/model, quotaId `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). 0 = unlimited. `AI_GLOBAL_DAILY_CAP` is still read as the old name. |
+| `AI_USER_DAILY_CAP` | 3 | AI meals per user per quota day, so one user can't use up the day. Below 0 = no per-user limit. |
+| `AI_QUOTA_RESET_TZ` | `America/Los_Angeles` | The caps reset at midnight in this zone, when Google resets its daily quota (12:30 PM IST in PDT, 1:30 PM IST in PST). The `ai_usage` / `ai_global_usage` `local_date` is the date in this zone. |
+| `GEMINI_RPM` | 10 | Global limiter: Gemini HTTP attempts (retries included) are spaced to at most this many a minute across the process; queued jobs wait for a slot instead of bursting. A slot that can't come before the job's deadline is not taken (`rate_limited`). |
+| `AI_PER_MINUTE` | 8 | The job queue's drain rate (unchanged). |
+
+**Retries.** On HTTP 429 or 503 the client retries at most 2 times (3 HTTP attempts per meal). The wait is
+`Retry-After` (seconds or HTTP date) if present, else the `google.rpc.RetryInfo` `retryDelay`, else
+exponential backoff with jitter (1 s, then 2 s base; a random 50-100% of it). A retry that wouldn't
+finish inside the job's time limit (30 s) is not made. Each attempt has an 8 s timeout, capped by the job's deadline.
+Other statuses (400, 403, 500 ...) and timeouts are not retried.
+
+**Daily quota.** A 429 whose `QuotaFailure` names a per-day quota (`quotaId` contains `PerDay`) is never retried:
+the project is marked exhausted until the next reset (`AI_QUOTA_RESET_TZ` midnight). Until then the server makes
+no Gemini calls: parses answer at once with `fallback: "daily_limit"`, `fallback_reason: "daily_limit"`, `ai_resets_at`,
+and generic items to confirm. The flag is in memory (a restart forgets it; the next call's 429 sets it again).
+
+**How attempts are counted.** One meal reserves ONE unit of the per-user and project caps before it is queued,
+whatever happens next: retries of that meal are not counted again, and a meal that fails (busy, error, timeout,
+daily_limit) still counts once (Google may have counted it). Meals answered from the cache, the table, or
+rejected before reserving (`daily_limit` already known, queue full) are not counted.
+
+**fallback_reason** (machine-readable; with `fallback` busy / error / cap_reached / global_cap_reached / daily_limit):
+
+| fallback_reason | When | Extra fields |
+|---|---|---|
+| `user_limit` | this user's `AI_USER_DAILY_CAP` is used up (`fallback: "cap_reached"`) | `user_daily_limit`, `ai_resets_at` |
+| `daily_limit` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at` |
+| `rate_limited` | 429 still failing after the retries, our limiter had no slot in time, or the queue is full (`fallback: "busy"`) | |
+| `unavailable` | 503 still failing after the retries (`fallback: "busy"`) | |
+| `timeout` | the call timed out (`fallback: "error"`) | |
+| `error` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers (`fallback: "error"`) | |
+
+`ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`). Busy, daily_limit and user_limit items are the generic
+estimates (never 0 kcal), `needs_confirmation: true`.
+
+**Logging.** Each failed attempt logs `model`, `attempt=n/3`, `http_status`, Google's `error.status` and `error.code`
+(e.g. `RESOURCE_EXHAUSTED` 429), the kind, `latency_ms` and the retry wait; the job result logs the fallback and
+reason. The API key, the prompt/request body and the answer text are never logged.
+
+### GET /admin/ai-quota (ADMIN_TOKEN)
+`{"quota_day": "2026-10-15", "reset_zone": "America/Los_Angeles", "resets_at": "2026-10-16T00:00:00-07:00",
+"daily_cap": 20, "used": 7, "remaining": 13, "user_daily_cap": 3, "exhausted": false}`; `remaining` is null when
+`daily_cap` is 0 (unlimited) and 0 with `exhausted: true` plus `exhausted_until` after a daily-quota 429.
+
+### one_tap_ok (every parsed item)
+`one_tap_ok: true` only for a confident table item the user can save with one tap: `source: "table"`,
+`needs_confirmation: false`, not an AI estimate, no `unit_options`, and no flag that needs a choice
+(unit_mismatch, estimate_unverified, compound_name, adjacent_split, fuzzy, generic, combo_or_split,
+leftover_*, token_reuse, fractional_combo, egg_count, needs_review). Everything else is `false`: AI estimates,
+did_you_mean, generic placeholders, anything with `needs_confirmation`. Harmless flags (e.g. `trailing_qty`) don't
+block it. Items listed under a text save's `needs_confirmation` are always `false`.

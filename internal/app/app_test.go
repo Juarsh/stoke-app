@@ -193,7 +193,11 @@ func TestParseShape(t *testing.T) {
 }
 
 type parseOut struct {
-	Items []struct {
+	NeedsConfirmation bool   `json:"needs_confirmation"`
+	FallbackReason    string `json:"fallback_reason"`
+	AIResetsAt        string `json:"ai_resets_at"`
+	UserDailyLimit    int64  `json:"user_daily_limit"`
+	Items             []struct {
 		Name              string
 		DishID            string `json:"dish_id"`
 		SpanStart         int    `json:"span_start"`
@@ -203,6 +207,7 @@ type parseOut struct {
 		Source            string
 		Learned           bool
 		NeedsConfirmation bool `json:"needs_confirmation"`
+		OneTapOK          bool `json:"one_tap_ok"`
 		Quantity          float64
 		Kcal              struct{ Best float64 }
 	}
@@ -803,20 +808,21 @@ func TestStrictTableOrWholeMealAI(t *testing.T) {
 func TestAICapsAndBadAnswers(t *testing.T) {
 	srv, _ := setup(t, &fakeAI{})
 	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 3; i++ { // AI_USER_DAILY_CAP default 3
 		if c, _ := parseAI(t, srv, "cap", fmt.Sprintf("zorb meal %d", i)); c != 202 {
 			t.Fatalf("call %d: %d", i, c)
 		}
 	}
 	c, r := parseAI(t, srv, "cap", "zorb meal last")
-	if c != 200 || r.Fallback != "cap_reached" || r.Answer != "generic" || r.Message == "" || aiCalls(t, srv) != 20 {
+	if c != 200 || r.Fallback != "cap_reached" || r.FallbackReason != "user_limit" || r.UserDailyLimit != 3 || r.AIResetsAt == "" ||
+		r.Answer != "generic" || r.Message == "" || aiCalls(t, srv) != 3 {
 		t.Errorf("per-user cap: %d %+v", c, r)
 	}
 	// project-wide cap
-	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 21}, nil)
+	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 4}, nil)
 	parseAI(t, srv, "other", "glarp one")
 	c, r = parseAI(t, srv, "other", "glarp two")
-	if r.Fallback != "global_cap_reached" || aiCalls(t, srv) != 21 {
+	if r.Fallback != "global_cap_reached" || r.FallbackReason != "daily_limit" || r.AIResetsAt == "" || r.UserDailyLimit != 0 || aiCalls(t, srv) != 4 {
 		t.Errorf("global cap: %d %+v", c, r)
 	}
 	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 0}, nil)
@@ -824,12 +830,12 @@ func TestAICapsAndBadAnswers(t *testing.T) {
 	for i, k := range []float64{0, 3200} {
 		call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{{"name": "x", "quantity": 1, "unit": "count", "kcal": M{"low": k, "best": k, "high": k}}}}, nil)
 		text := []string{"weird thing a", "weird thing b"}[i]
-		_, r = parseAI(t, srv, "bad", text)
+		_, r = parseAI(t, srv, fmt.Sprintf("bad%d", i), text) // users differ: 3 AI meals/user/day
 		if r.Answer != "generic" || r.Fallback != "error" {
 			t.Errorf("implausible %v shown: %+v", k, r)
 		}
 		before := aiCalls(t, srv)
-		parseAI(t, srv, "bad", text)
+		parseAI(t, srv, fmt.Sprintf("bad%db", i), text)
 		if aiCalls(t, srv) != before+1 {
 			t.Errorf("implausible %v was cached", k)
 		}

@@ -54,7 +54,8 @@ func main() {
 		v = auth.NewGoogleVerifier(ids)
 	}
 	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap(),
-		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"),
+		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"), GeminiRPM: intEnv("GEMINI_RPM", 10),
+		UserAICap: int64(intEnv("AI_USER_DAILY_CAP", 3)), QuotaResetTZ: os.Getenv("AI_QUOTA_RESET_TZ"),
 		AdminToken: adminToken()})
 	if err != nil {
 		log.Fatal(err)
@@ -66,13 +67,16 @@ func main() {
 
 // AI_GLOBAL_DAILY_CAP: project-wide AI calls per day (default 200, under the lowest reported free-tier Flash RPD; 0 = unlimited).
 func globalCap() int64 {
-	v := os.Getenv("AI_GLOBAL_DAILY_CAP")
+	v := os.Getenv("AI_DAILY_CAP")
 	if v == "" {
-		return 200
+		v = os.Getenv("AI_GLOBAL_DAILY_CAP") // old name
+	}
+	if v == "" {
+		return 20 // Gemini free tier: 20 requests/day/model
 	}
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil || n < 0 {
-		log.Fatalf("AI_GLOBAL_DAILY_CAP must be a non-negative integer")
+		log.Fatalf("AI_DAILY_CAP must be a non-negative integer")
 	}
 	return n
 }

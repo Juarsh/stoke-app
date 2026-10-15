@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -38,6 +39,8 @@ type Service struct {
 	Summary      Rebuilder
 	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
 	GlobalCap atomic.Int64
+	// Quota: per-user cap, reset zone and Google's daily-quota state.
+	Quota *Quota
 	// Live is the current dish table (swapped by admin imports).
 	Live     *Live
 	importMu sync.Mutex
@@ -73,10 +76,17 @@ type ParseResponse struct {
 	Total             Total         `json:"total"`
 	UsedAI            bool          `json:"used_ai"`
 	NeedsConfirmation bool          `json:"needs_confirmation"` // some item must be confirmed before saving
-	Fallback          string        `json:"fallback"`           // none, used, not_configured, cap_reached, error
-	CustomItems       []CustomItem  `json:"custom_items"`
-	Message           string        `json:"message,omitempty"`
-	Slot              string        `json:"slot"`
+	Fallback          string        `json:"fallback"`           // none, used, not_configured, cap_reached, global_cap_reached, daily_limit, busy, error
+	// FallbackReason: why there is no AI answer, machine-readable: user_limit,
+	// daily_limit, rate_limited, unavailable, timeout, error.
+	FallbackReason string `json:"fallback_reason,omitempty"`
+	// AIResetsAt (with user_limit / daily_limit): when the caps reset (RFC 3339).
+	AIResetsAt string `json:"ai_resets_at,omitempty"`
+	// UserDailyLimit (with user_limit): AI_USER_DAILY_CAP.
+	UserDailyLimit int64        `json:"user_daily_limit,omitempty"`
+	CustomItems    []CustomItem `json:"custom_items"`
+	Message        string       `json:"message,omitempty"`
+	Slot           string       `json:"slot"`
 	// Status is "done", or "pending" (HTTP 202) with JobID to poll at
 	// GET /v1/parse/jobs/{job_id}.
 	Status string `json:"status"`
@@ -244,12 +254,28 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
 		return generic("not_configured", "")
 	}
+	if ex, _ := s.Quota.Exhausted(httpx.Now()); ex {
+		// Google's daily quota is used up: no call (and no retry) until its reset
+		return s.dailyLimit(generic("daily_limit", "AI estimates are used up for today. Confirm or add it yourself for now."))
+	}
 	if st := s.reserveAI(ctx, userID); st != "" {
-		return generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
+		out, job := generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
+		switch st {
+		case "cap_reached": // this user's AI_USER_DAILY_CAP
+			out, job = s.dailyLimit(out, job)
+			out.FallbackReason, out.UserDailyLimit = "user_limit", s.userCap()
+			return out, job
+		case "global_cap_reached": // the project's AI_DAILY_CAP
+			return s.dailyLimit(out, job)
+		}
+		out.FallbackReason = "error"
+		return out, job
 	}
 	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open)
 	if !ok {
-		return generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
+		out, job := generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
+		out.FallbackReason = "rate_limited" // our own queue is full
+		return out, job
 	}
 	return ParseResponse{Items: []parser.Item{}, Unmatched: []string{}, CustomItems: []CustomItem{}, Fallback: "queued",
 		Slot: slot, Status: "pending", JobID: job.ID, NeedsConfirmation: true}, job
@@ -283,6 +309,7 @@ func finishResp(out ParseResponse) ParseResponse {
 	if out.Unmatched == nil {
 		out.Unmatched = []string{}
 	}
+	parser.SetOneTap(out.Items)
 	out.Total = totals(out.Items)
 	out.NeedsConfirmation = false
 	for _, it := range out.Items {
@@ -429,22 +456,80 @@ func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
 	placed := placeAI(j.Text, items, j.Spans, j.Claimed, s.parser().Locate)
 	if err != nil || !plausible(items) || len(placed) == 0 {
 		out := j.Generic
-		out.Fallback = "error"
+		out.Fallback, out.FallbackReason = "error", aiFailReason(err, items)
 		out.Message = "Couldn't get an AI estimate. Confirm or add it yourself."
+		var ae *AIError
+		if errors.As(err, &ae) && ae.DailyQuota {
+			s.Quota.MarkExhausted(httpx.Now())
+			out.Fallback = "daily_limit" // project-wide (Google's) quota
+			out.AIResetsAt = s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
+			out.Message = "AI estimates are used up for today. Confirm or add it yourself for now."
+		} else if errors.As(err, &ae) && ae.Busy() {
+			// still rate limited / overloaded after the retries: the generic
+			// estimates stay, all to confirm
+			out.Fallback = "busy"
+			out.Message = "AI estimates are busy. Confirm or add it yourself for now."
+		}
+		log.Printf("ai fallback %s: job=%s reason=%s detail=%q", out.Fallback, j.ID, out.FallbackReason, aiFailDetail(err))
 		return finishResp(out)
 	}
 	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
 	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot)
 }
 
+// aiFailReason is the fallback_reason for a failed AI job: never the key,
+// the prompt or the answer text.
+func aiFailReason(err error, items []parser.Item) string {
+	var ae *AIError
+	switch {
+	case errors.As(err, &ae):
+		return ae.Code()
+	case errors.Is(err, context.DeadlineExceeded):
+		return "timeout"
+	}
+	return "error" // also an implausible or unplaceable answer
+}
+
+// aiFailDetail is the log detail: never the key, prompt or answer.
+func aiFailDetail(err error) string {
+	var ae *AIError
+	if errors.As(err, &ae) {
+		return ae.Reason()
+	}
+	if err == nil {
+		return "answer rejected (implausible or not placed)"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
+	}
+	return "non-http error"
+}
+
+// dailyLimit marks a response whose project-wide daily quota (AI_DAILY_CAP or Google's) is used up.
+func (s *Service) dailyLimit(out ParseResponse, job *Job) (ParseResponse, *Job) {
+	out.FallbackReason, out.AIResetsAt = "daily_limit", s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
+	return out, job
+}
+
+// userCap: AI_USER_DAILY_CAP (0 = no per-user limit).
+func (s *Service) userCap() int64 {
+	if s.Quota == nil {
+		return DefaultUserDailyCap
+	}
+	if c := s.Quota.UserCap.Load(); c > 0 {
+		return c
+	}
+	return 1 << 40
+}
+
 // reserveAI counts one call against the per-user and project-wide daily
 // caps; it returns a fallback status when either is reached.
 func (s *Service) reserveAI(ctx context.Context, userID int64) string {
-	today := httpx.Today()
+	today := s.Quota.Day(httpx.Now())
 	var calls int
 	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
 		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
-		RETURNING calls`, userID, today, AICapPerDay).Scan(&calls)
+		RETURNING calls`, userID, today, s.userCap()).Scan(&calls)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "cap_reached"
 	}
@@ -935,7 +1020,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		for _, it := range p.Items {
 			// text-only saves never skip the app's confirm for a guessed portion
 			if it.NeedsConfirmation || !strict || it.DefaultPortion {
-				it.NeedsConfirmation = true
+				it.NeedsConfirmation, it.OneTapOK = true, false
 				toConfirm = append(toConfirm, it)
 				continue
 			}

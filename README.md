@@ -32,8 +32,11 @@ Stub mode only starts when `APP_ENV` is `dev` or `test`; the server refuses
 to start otherwise. `AI_MODE=gemini` requires `GEMINI_API_KEY`, and
 `GEMINI_MODEL` is optional. `AI_PER_MINUTE` sets the AI queue drain rate,
 AI calls per minute (default 8). Tests never call the real Gemini API.
-`AI_GLOBAL_DAILY_CAP` sets the project-wide daily limit on AI calls
-(default 200).
+`AI_DAILY_CAP` sets the project-wide daily limit on AI meals (default 20, the
+Gemini free tier), `AI_USER_DAILY_CAP` the per-user limit (default 3),
+`AI_QUOTA_RESET_TZ` when they reset (default America/Los_Angeles midnight,
+Google's reset) and `GEMINI_RPM` the global spacing of Gemini attempts
+(default 10). See API.md "AI quota, retries and fallback_reason".
 
 Example: `APP_ENV=dev AI_MODE=stub DATABASE_URL=... go run ./cmd/api`
 

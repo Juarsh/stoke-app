@@ -140,7 +140,12 @@ type Item struct {
 	// reading; the item stays out of the totals until the user picks one.
 	UnitOptions []UnitOption `json:"unit_options,omitempty"`
 	AIEstimate  bool         `json:"ai_estimate"`
-	AIName      string       `json:"ai_name,omitempty"`
+	// OneTapOK: the item can be saved with one tap (no review screen). True
+	// only for a confident table item: source table, no needs_confirmation,
+	// not an AI estimate, no unit_options and no flag that needs a choice
+	// (see oneTapBlockers). Computed last, by SetOneTap.
+	OneTapOK bool   `json:"one_tap_ok"`
+	AIName   string `json:"ai_name,omitempty"`
 	// SpanStart/SpanEnd: where this item came from in the user's original
 	// text, as UTF-16 offsets (JS string indices), end exclusive.
 	SpanStart int  `json:"span_start"`
@@ -520,6 +525,37 @@ type pending struct {
 
 // Parse parses a meal description.
 func (p *Parser) Parse(text string) Result {
+	res := p.parse(text)
+	SetOneTap(res.Items)
+	return res
+}
+
+// oneTapBlockers: flags that mean the user has a choice to make.
+var oneTapBlockers = map[string]bool{"unit_mismatch": true, "estimate_unverified": true, "compound_name": true,
+	"adjacent_split": true, "fuzzy": true, "generic": true, "combo_or_split": true, "leftover_in_meal": true,
+	"leftover_nearby": true, "token_reuse": true, "fractional_combo": true, "egg_count": true, "needs_review": true}
+
+// OneTap reports whether it can be saved with one tap.
+func OneTap(it Item) bool {
+	if it.Source != SourceTable || it.NeedsConfirmation || it.AIEstimate || len(it.UnitOptions) > 0 {
+		return false
+	}
+	for _, f := range it.Flags {
+		if oneTapBlockers[f] {
+			return false
+		}
+	}
+	return true
+}
+
+// SetOneTap sets OneTapOK on every item (call after the last change to an item).
+func SetOneTap(items []Item) {
+	for i := range items {
+		items[i].OneTapOK = OneTap(items[i])
+	}
+}
+
+func (p *Parser) parse(text string) Result {
 	toks := p.tokenize(text)
 	res := Result{Items: []Item{}, Unmatched: []string{}}
 	var pd pending
@@ -1723,6 +1759,7 @@ func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, 
 		it.NeedsConfirmation = true
 		it.Flags = append(it.Flags, "estimate_unverified")
 	}
+	it.OneTapOK = OneTap(it)
 	return it, nil
 }
 

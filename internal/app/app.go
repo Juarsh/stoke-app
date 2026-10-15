@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,13 +29,21 @@ type Config struct {
 	// also enables the /test/ai/* hooks, which 404 in every other mode).
 	AIMode    string
 	GeminiKey string
-	// GlobalAICap is the project-wide daily AI call limit (0 = unlimited).
+	// GlobalAICap is the project-wide daily AI call limit (AI_DAILY_CAP,
+	// default 20 = the free tier's requests per day per model; 0 = unlimited).
 	GlobalAICap int64
+	// UserAICap is the per-user daily AI call limit (AI_USER_DAILY_CAP, default 3; <0 = unlimited).
+	UserAICap int64
+	// QuotaResetTZ: the zone whose midnight resets the caps (AI_QUOTA_RESET_TZ,
+	// default America/Los_Angeles, when Google resets its daily quota).
+	QuotaResetTZ string
 	// AIPerMinute is the queue drain rate: AI calls per minute (default 8; <0 = no spacing).
 	AIPerMinute int
 	// AIQueueMax: waiting AI jobs before parse answers fallback "busy" (default 500).
 	AIQueueMax  int
 	GeminiModel string
+	// GeminiRPM spaces Gemini HTTP attempts, retries included (GEMINI_RPM, default 10).
+	GeminiRPM int
 	// AdminToken enables /admin/* (Bearer token); empty = routes 404.
 	AdminToken string
 	// Dishes overrides the embedded table (tests simulate table updates).
@@ -61,7 +70,11 @@ func New(c Config) (http.Handler, error) {
 			stub = &food.Stub{}
 			c.Fallback = stub
 		case "gemini":
-			c.Fallback = food.Gemini{APIKey: c.GeminiKey, Model: c.GeminiModel}
+			rpm := c.GeminiRPM
+			if rpm == 0 {
+				rpm = 10
+			}
+			c.Fallback = food.Gemini{APIKey: c.GeminiKey, Model: c.GeminiModel, Limiter: food.NewLimiter(rpm)}
 		default:
 			c.Fallback = food.NoFallback{}
 		}
@@ -82,6 +95,21 @@ func New(c Config) (http.Handler, error) {
 	fs := &food.Service{DB: c.DB, Parser: p, Live: live, Fallback: c.Fallback, Summary: sum}
 	fs.Versions = vers
 	fs.GlobalCap.Store(c.GlobalAICap)
+	tz := c.QuotaResetTZ
+	if tz == "" {
+		tz = food.DefaultResetTZ
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return nil, fmt.Errorf("AI_QUOTA_RESET_TZ %q: %w", tz, err)
+	}
+	fs.Quota = &food.Quota{Reset: loc}
+	switch {
+	case c.UserAICap == 0:
+		fs.Quota.UserCap.Store(food.DefaultUserDailyCap)
+	case c.UserAICap > 0:
+		fs.Quota.UserCap.Store(c.UserAICap)
+	}
 	if c.AIPerMinute == 0 {
 		c.AIPerMinute = 8
 	}

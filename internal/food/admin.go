@@ -52,6 +52,7 @@ func AdminOnly(token string, h http.Handler) http.Handler {
 
 func (s *Service) AdminRoutes(mux *http.ServeMux, token string) {
 	mux.Handle("GET /admin/ai-cache/top", AdminOnly(token, http.HandlerFunc(s.handleTopCache)))
+	mux.Handle("GET /admin/ai-quota", AdminOnly(token, http.HandlerFunc(s.handleQuota)))
 	mux.Handle("POST /admin/dishes/import", AdminOnly(token, http.HandlerFunc(s.handleImport)))
 }
 

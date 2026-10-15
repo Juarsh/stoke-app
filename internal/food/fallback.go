@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,8 +47,12 @@ type Gemini struct {
 	APIKey  string
 	Model   string        // default gemini-flash-latest (2.5-flash is closed to new keys)
 	BaseURL string        // default https://generativelanguage.googleapis.com/v1beta (tests point it at a fake server)
-	Timeout time.Duration // default 8s
+	Timeout time.Duration // per HTTP attempt, default 8s (capped by the job's deadline)
 	Client  *http.Client
+	// Limiter spaces every attempt (GEMINI_RPM a minute, shared by all jobs).
+	Limiter *Limiter
+	// Backoff is the first retry's base delay (default 1s; tests set it small).
+	Backoff time.Duration
 }
 
 var geminiItem = map[string]any{
@@ -106,8 +111,6 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 	if cl == nil {
 		cl = http.DefaultClient
 	}
-	ctx, cancel := context.WithTimeout(ctx, to)
-	defer cancel()
 	type h struct {
 		Name     string  `json:"name"`
 		Quantity float64 `json:"quantity"`
@@ -130,28 +133,96 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 			"thinkingConfig":   map[string]any{"thinkingBudget": 0}, // a lookup, not a puzzle: keeps the answer inside the 8s timeout
 		},
 	})
-	req, err := http.NewRequestWithContext(ctx, "POST", base+"/models/"+model+":generateContent", bytes.NewReader(body))
-	if err != nil {
-		return nil, err
+	bo := g.Backoff
+	if bo == 0 {
+		bo = time.Second
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-goog-api-key", g.APIKey)
-	resp, err := cl.Do(req)
-	if err != nil {
-		return nil, err
+	var resp *http.Response
+	for attempt := 1; ; attempt++ {
+		fail := func(status int, gs string, gc int, kind string, lat time.Duration) *AIError {
+			return &AIError{HTTPStatus: status, GoogleStatus: gs, GoogleCode: gc, Model: model, Attempts: attempt, Kind: kind}
+		}
+		if err := g.Limiter.Wait(ctx); err != nil {
+			logAttempt(model, attempt, 0, "", 0, "rate_limited", 0, 0)
+			return nil, fail(0, "", 0, "rate_limited", 0)
+		}
+		actx, cancel := context.WithTimeout(ctx, to)
+		req, err := http.NewRequestWithContext(actx, "POST", base+"/models/"+model+":generateContent", bytes.NewReader(body))
+		if err != nil {
+			cancel()
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-goog-api-key", g.APIKey)
+		t0 := time.Now()
+		r, err := cl.Do(req)
+		lat := time.Since(t0)
+		if err != nil {
+			cancel()
+			kind := "network"
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(actx.Err(), context.DeadlineExceeded) {
+				kind = "timeout"
+			}
+			logAttempt(model, attempt, 0, "", 0, kind, lat, 0)
+			e := fail(0, "", 0, kind, lat)
+			return nil, fmt.Errorf("%w: %w", e, context.DeadlineExceeded) // keep timeout detectable
+		}
+		if r.StatusCode == 200 {
+			resp = r
+			defer cancel()
+			break
+		}
+		var ge struct {
+			Error struct {
+				Code    int
+				Status  string
+				Details []struct {
+					Type       string `json:"@type"`
+					RetryDelay string `json:"retryDelay"`
+					Violations []struct {
+						QuotaID string `json:"quotaId"`
+					} `json:"violations"`
+				}
+			}
+		}
+		_ = json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&ge)
+		r.Body.Close()
+		cancel()
+		ri, qid := "", ""
+		for _, d := range ge.Error.Details {
+			if strings.HasSuffix(d.Type, "google.rpc.RetryInfo") {
+				ri = d.RetryDelay
+			}
+			for _, v := range d.Violations {
+				if isDailyQuota(v.QuotaID) {
+					qid = v.QuotaID
+				}
+			}
+		}
+		e := fail(r.StatusCode, ge.Error.Status, ge.Error.Code, "http", lat)
+		if r.StatusCode == 429 && qid != "" {
+			// daily quota: retrying can't help until Google's reset
+			e.DailyQuota, e.QuotaID = true, qid
+			logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "daily_quota", lat, 0)
+			return nil, e
+		}
+		if !retryable(r.StatusCode) || attempt > MaxRetries {
+			logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "http", lat, 0)
+			return nil, e
+		}
+		wait := retryDelay(r.Header, ri, attempt-1, bo)
+		if dl, ok := ctx.Deadline(); ok && time.Now().Add(wait).After(dl) {
+			logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "http", lat, 0)
+			return nil, e // the retry wouldn't fit in the job's time limit
+		}
+		logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "http", lat, wait)
+		select {
+		case <-time.After(wait):
+		case <-ctx.Done():
+			return nil, e
+		}
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		var ge struct {
-			Error struct{ Status, Message string }
-		}
-		_ = json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&ge)
-		msg := ge.Error.Message
-		if len(msg) > 300 {
-			msg = msg[:300]
-		}
-		return nil, fmt.Errorf("gemini: status %d %s: %s", resp.StatusCode, ge.Error.Status, msg)
-	}
 	var gr struct {
 		Candidates []struct {
 			Content struct {
@@ -211,7 +282,7 @@ type Stub struct {
 	mu    sync.Mutex
 	calls int
 	next  *[]parser.Item
-	fail  string // "error" | "timeout" | "" : every call fails this way until cleared
+	fail  string // "error" | "timeout" | "busy" | "" : every call fails this way until cleared
 }
 
 // SetFail makes every following call fail ("error", "timeout") until "" is set.
@@ -238,6 +309,11 @@ func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []pa
 		return nil, errors.New("stub: forced error")
 	case "timeout":
 		return nil, fmt.Errorf("stub: forced timeout: %w", context.DeadlineExceeded)
+	case "daily_limit": // a 429 naming the free tier's daily quota
+		return nil, &AIError{HTTPStatus: 429, GoogleStatus: "RESOURCE_EXHAUSTED", GoogleCode: 429, Model: "stub", Attempts: 1, Kind: "http",
+			DailyQuota: true, QuotaID: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}
+	case "busy": // what Gemini returns after its retries on 429
+		return nil, &AIError{HTTPStatus: 429, GoogleStatus: "RESOURCE_EXHAUSTED", GoogleCode: 429, Model: "stub", Attempts: MaxRetries + 1, Kind: "http"}
 	}
 	if s.next != nil {
 		out := append([]parser.Item(nil), (*s.next)...)
@@ -258,7 +334,3 @@ func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []pa
 	}
 	return out, nil
 }
-
-// AICapPerDay is the per-user daily cap on fallback calls (spec v2: 20).
-// Since a meal makes at most one call, this is 20 AI-assisted meals a day.
-const AICapPerDay = 20
