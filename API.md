@@ -153,23 +153,21 @@ the per-minute limiter described in this section.**
   Cached answers are still `source=ai_estimate`, `needs_confirmation=true`.
   The cache only stores raw AI answers, never user corrections.
 - AI answers under or equal to 0 kcal, or at least 3000 kcal per item, are
-  rejected. They are not cached or shown, and the span gets the generic
-  confirm card.
+  rejected. They are not cached or shown, and the job ends as `error` (see below).
 - Caps (see "AI quota, retries and fallback_reason" below): `AI_USER_DAILY_CAP`
   per user per day (default 3; `fallback: "cap_reached"`, `fallback_reason: "user_limit"`)
   and the project-wide `AI_DAILY_CAP` (default 20; `fallback: "global_cap_reached"`,
-  `fallback_reason: "daily_limit"`). When either cap is reached, the span gets
-  a generic confirm card (`source=generic`).
+  `fallback_reason: "daily_limit"`). When either cap is reached, the meal ends
+  as failed (see below): no generic kcal.
 - A per-minute limit across the whole project (`AI_PER_MINUTE`, default 8;
-  set it below 0 for no limit). Over the limit, the response has
-  `fallback: "rate_limited"` and the span gets a generic confirm card. The
-  limiter runs inside each server process, so with several instances set it
+  set it below 0 for no limit). Over the limit, the meal is queued and waits.
+  The limiter runs inside each server process, so with several instances set it
   per instance.
 - `AI_MODE=gemini` makes one REST `generateContent` call
   (`GEMINI_MODEL`, default gemini-flash-latest; thinking off) with a strict JSON
-  `responseSchema` and an 8-second timeout. Errors, timeouts, bad JSON,
-  invalid ranges, or spans that weren't asked about become generic confirm
-  cards (`fallback: "error"`).
+  `responseSchema` and an 8-second timeout. Bad JSON, invalid ranges or spans
+  that weren't asked about end the job as `error`. A busy provider
+  (rate_limited / unavailable / timeout) requeues the job instead (see below).
 - `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | daily_limit | busy | rate_limited | error (see `fallback_reason`).
 - Weekly review: `go run ./cmd/aicache-export -days 7 -limit 50 > top.csv`
   lists the most-hit cached answers. A cached dish becomes a table row only by
@@ -264,20 +262,26 @@ parse is included in the prompt only as a hint. Every AI item comes back with
   `fallback: "cache"`. No call is made.
 - **Otherwise** the meal is queued: **202** with
   `{"status": "pending", "job_id": "...", "fallback": "queued", "items": [], ...}`.
-  Poll `GET /v1/parse/jobs/{job_id}`. It returns 202 `{"status": "pending",
-  "queue_length": n}` until the answer is ready, then 200 with the full parse
-  response. Jobs belong to the user who created them (404 for anyone else)
-  and expire after one hour.
+  Poll `GET /v1/parse/jobs/{job_id}`. It returns 202
+  `{"status": "pending", "ai_state": "estimating", "queue_length": n, ...}` until the
+  answer is ready (after a requeue it also has `requeues`, `busy_reason`,
+  `next_attempt_at`), then 200 with the full parse response. The field the app
+  reads to tell estimating from failed is **`ai_state`**: `"estimating"` while
+  the job is pending, `"answered"` when the AI (or cache) filled the row,
+  `"failed"` when no AI answer is coming. Jobs belong to the user who created
+  them (404 for anyone else) and expire after one hour.
 - The queue runs in the server process and drains at `AI_PER_MINUTE`
-  (default 8). A queue that is full (500 jobs) gives `fallback: "busy"`.
+  (default 8). A queue that is full (500 jobs) ends the meal as failed
+  (`fallback: "busy"`, `fallback_reason: "error"`, `ai_state: "failed"`).
   Pending jobs are lost on restart; the app should save the meal as
   `needs_review` and parse it again later.
-- AI not configured, or `use_ai: false`, or a per-user or project-wide daily
-  cap reached: 200 with `answer: "generic"`. This is the rule-based guess with
-  every item set to `needs_confirmation`, plus placeholder cards for unknown
-  text.
-- AI errors, timeouts, and answers outside 0-3000 kcal: the job finishes with
-  `answer: "generic"` and `fallback: "error"`. These answers are never cached.
+- AI not configured, or `use_ai: false`: 200 with `answer: "generic"`. This is
+  the rule-based guess with every item set to `needs_confirmation`, plus
+  placeholder cards for unknown text.
+- A per-user or project-wide daily cap, or an AI error / bad answer: the meal
+  ends as failed (`ai_state: "failed"`, no generic kcal, see "AI quota,
+  retries and fallback_reason"). A busy provider (429/503/timeout) keeps the
+  job pending and requeues it.
 
 `POST /v1/entries` with only `text` now saves items only if the meal passes
 the strict rule. Otherwise every item comes back in `needs_confirmation`.
@@ -520,8 +524,9 @@ Go's embedded VCS info.
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | "busy" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
-`/test/ai/calls/reset`. Parse jobs then finish with `fallback: "error"` (error, timeout), `"busy"`
-(a 429 still failing after the retries) or `"daily_limit"` (a 429 naming the daily quota); confident table items survive.
+`/test/ai/calls/reset`. `error` ends the job as failed (`fallback: "error"`). `busy` and `timeout` keep it
+pending (requeued) until the mode is cleared or the requeue maximum is hit. `daily_limit` ends it as failed
+(`fallback: "daily_limit"`). Confident table items survive.
 
 ### AI quota, retries and fallback_reason
 Settings (all env vars):
@@ -542,27 +547,46 @@ Other statuses (400, 403, 500 ...) and timeouts are not retried.
 
 **Daily quota.** A 429 whose `QuotaFailure` names a per-day quota (`quotaId` contains `PerDay`) is never retried:
 the project is marked exhausted until the next reset (`AI_QUOTA_RESET_TZ` midnight). Until then the server makes
-no Gemini calls: parses answer at once with `fallback: "daily_limit"`, `fallback_reason: "daily_limit"`, `ai_resets_at`,
-and generic items to confirm. The flag is in memory (a restart forgets it; the next call's 429 sets it again).
+no Gemini calls: parses answer at once as a failed meal (`ai_state: "failed"`, `fallback: "daily_limit"`,
+`fallback_reason: "daily_limit"`, `ai_resets_at`; no generic kcal). The flag is in memory (a restart forgets it;
+the next call's 429 sets it again).
 
 **How attempts are counted.** One meal reserves ONE unit of the per-user and project caps before it is queued,
-whatever happens next: retries of that meal are not counted again, and a meal that fails (busy, error, timeout,
-daily_limit) still counts once (Google may have counted it). Meals answered from the cache, the table, or
-rejected before reserving (`daily_limit` already known, queue full) are not counted.
+whatever happens next: retries of that meal are not counted again, and requeueing a busy meal is not counted
+again either. A meal that ends as failed (error, daily_limit) still counts once (Google may have counted it).
+Meals answered from the cache, the table, or rejected before reserving (`daily_limit` already known) are not
+counted. A meal rejected because our own queue is full (`AI_QUEUE_MAX`) gives its reserved unit back.
 
-**fallback_reason** (machine-readable; with `fallback` busy / error / cap_reached / global_cap_reached / daily_limit):
+**Busy means requeue, not a fallback number.** When Gemini is still busy after the retries
+(`fallback_reason` `rate_limited`, `unavailable` or `timeout`: a 429 or 503, the limiter having no slot in
+time, or the call timing out), the job is NOT answered with generic kcal. It stays `status: "pending"`,
+`ai_state: "estimating"`, and goes back into the queue after a delay. The late answer fills the same job id.
+The delays are 30 s, 1 min, 2 min, 3 min, 4 min, then 5 min (the last repeats), and a job is requeued at most
+**6 times** (about 15 minutes after the first try). A requeued job still respects `GEMINI_RPM` and
+`AI_PER_MINUTE`, and does not use the caps again. While it waits, the job poll adds `requeues`,
+`busy_reason` (the last busy reason) and `next_attempt_at` (RFC 3339). When the 6 requeues are used up the
+job ends as failed with `fallback: "error"`, `fallback_reason: "error"`.
 
-| fallback_reason | When | Extra fields |
-|---|---|---|
-| `user_limit` | this user's `AI_USER_DAILY_CAP` is used up (`fallback: "cap_reached"`) | `user_daily_limit`, `ai_resets_at` |
-| `daily_limit` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at` |
-| `rate_limited` | 429 still failing after the retries, our limiter had no slot in time, or the queue is full (`fallback: "busy"`) | |
-| `unavailable` | 503 still failing after the retries (`fallback: "busy"`) | |
-| `timeout` | the call timed out (`fallback: "error"`) | |
-| `error` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers (`fallback: "error"`) | |
+**Failed means the user types the calories.** Only `daily_limit`, `user_limit` and `error` end a meal as
+failed: `ai_state: "failed"`, `status: "done"`, `answer: "none"`. Confident table items stay in `items` as
+they are. Each open span is listed in `failed_spans` (`{span_start, span_end, text}`), `unmatched` and
+`custom_items` (`needs_input: true`) with **no kcal at all** - there is no generic estimate. The row is the
+failed row; the user types the calories.
 
-`ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`). Busy, daily_limit and user_limit items are the generic
-estimates (never 0 kcal), `needs_confirmation: true`.
+**fallback_reason** (machine-readable):
+
+| fallback_reason | ai_state | When | Extra fields |
+|---|---|---|---|
+| `user_limit` | `failed` | this user's `AI_USER_DAILY_CAP` is used up (`fallback: "cap_reached"`) | `user_daily_limit`, `ai_resets_at` |
+| `daily_limit` | `failed` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at` |
+| `rate_limited` | `estimating` | 429 still failing after the retries, or our limiter had no slot in time: the job is requeued (`busy_reason` on the poll) | |
+| `unavailable` | `estimating` | 503 still failing after the retries: the job is requeued | |
+| `timeout` | `estimating` | the call timed out: the job is requeued | |
+| `error` | `failed` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers, the requeue maximum, or our own queue being full (`fallback: "error"`, or `"busy"` when the queue is full) | |
+
+`ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`). Messages: user_limit "You've used today's {n} AI
+estimates. Add the calories yourself.", daily_limit "AI estimates are used up for now. Add the calories yourself.",
+error "Couldn't estimate this. Add the calories yourself."
 
 **Logging.** Each failed attempt logs `model`, `attempt=n/3`, `http_status`, Google's `error.status` and `error.code`
 (e.g. `RESOURCE_EXHAUSTED` 429), the kind, `latency_ms` and the retry wait; the job result logs the fallback and

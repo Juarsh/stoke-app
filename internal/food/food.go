@@ -93,6 +93,13 @@ type ParseResponse struct {
 	JobID  string `json:"job_id,omitempty"`
 	// Answer says who answered: table, ai, or generic (rule-based guess, all to confirm).
 	Answer string `json:"answer,omitempty"`
+	// AIState is what the app reads for an AI-bound meal: "estimating"
+	// (pending job, keep the row in Estimating), "failed" (no AI answer is
+	// coming: daily_limit / user_limit / error; the open spans are in
+	// failed_spans with no kcal, the user types the calories) or "answered"
+	// (AI or cache items). Empty when the AI was not involved.
+	AIState     string `json:"ai_state,omitempty"`
+	FailedSpans []Span `json:"failed_spans,omitempty"`
 	// Entries saved with this job's id (job results only).
 	Entries []JobEntry `json:"entries,omitempty"`
 }
@@ -254,31 +261,31 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
 		return generic("not_configured", "")
 	}
+	failed := func(fb, reason string) (ParseResponse, *Job) {
+		return s.failedResponse(claimed, open, slot, fb, reason), nil
+	}
 	if ex, _ := s.Quota.Exhausted(httpx.Now()); ex {
 		// Google's daily quota is used up: no call (and no retry) until its reset
-		return s.dailyLimit(generic("daily_limit", "AI estimates are used up for today. Confirm or add it yourself for now."))
+		return failed("daily_limit", "daily_limit")
 	}
 	if st := s.reserveAI(ctx, userID); st != "" {
-		out, job := generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
 		switch st {
 		case "cap_reached": // this user's AI_USER_DAILY_CAP
-			out, job = s.dailyLimit(out, job)
-			out.FallbackReason, out.UserDailyLimit = "user_limit", s.userCap()
-			return out, job
+			return failed(st, "user_limit")
 		case "global_cap_reached": // the project's AI_DAILY_CAP
-			return s.dailyLimit(out, job)
+			return failed(st, "daily_limit")
 		}
-		out.FallbackReason = "error"
-		return out, job
+		return failed(st, "error")
 	}
 	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open)
 	if !ok {
-		out, job := generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
-		out.FallbackReason = "rate_limited" // our own queue is full
-		return out, job
+		// our own queue is full (AI_QUEUE_MAX): no job to wait on, so this
+		// ends as error; the reserved call is given back
+		s.releaseAI(ctx, userID)
+		return failed("busy", "error")
 	}
 	return ParseResponse{Items: []parser.Item{}, Unmatched: []string{}, CustomItems: []CustomItem{}, Fallback: "queued",
-		Slot: slot, Status: "pending", JobID: job.ID, NeedsConfirmation: true}, job
+		Slot: slot, Status: "pending", JobID: job.ID, NeedsConfirmation: true, AIState: "estimating"}, job
 }
 
 // setSpans gives items built outside the parser (AI answers, remembered
@@ -425,7 +432,7 @@ func (s *Service) genericResponse(res parser.Result, slot string) ParseResponse 
 // AI items keep the user's own words as matched_text (their span); the
 // AI's dish name is in ai_name.
 func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) ParseResponse {
-	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "ai", Fallback: fb, UsedAI: true}
+	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "ai", Fallback: fb, UsedAI: true, AIState: "answered"}
 	out.Items = append(out.Items, claimed...)
 	for _, it := range ai {
 		if it.Source != parser.SourceDidYouMean {
@@ -445,8 +452,11 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 	return finishResp(out)
 }
 
-// runJob is the queue worker's single AI call for one meal.
-func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
+// runJob is the queue worker's AI call for one meal. requeue=true: Gemini
+// was still busy (rate_limited / unavailable / timeout) after its retries;
+// the job stays pending (estimating) and goes back into the queue, without
+// using the caps again. After MaxRequeues busy tries it ends as error.
+func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Spans, j.Hint)
 	for i := range items {
 		if items[i].AIName == "" {
@@ -455,26 +465,59 @@ func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
 	}
 	placed := placeAI(j.Text, items, j.Spans, j.Claimed, s.parser().Locate)
 	if err != nil || !plausible(items) || len(placed) == 0 {
-		out := j.Generic
-		out.Fallback, out.FallbackReason = "error", aiFailReason(err, items)
-		out.Message = "Couldn't get an AI estimate. Confirm or add it yourself."
+		reason := aiFailReason(err, items)
 		var ae *AIError
 		if errors.As(err, &ae) && ae.DailyQuota {
 			s.Quota.MarkExhausted(httpx.Now())
-			out.Fallback = "daily_limit" // project-wide (Google's) quota
-			out.AIResetsAt = s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
-			out.Message = "AI estimates are used up for today. Confirm or add it yourself for now."
-		} else if errors.As(err, &ae) && ae.Busy() {
-			// still rate limited / overloaded after the retries: the generic
-			// estimates stay, all to confirm
-			out.Fallback = "busy"
-			out.Message = "AI estimates are busy. Confirm or add it yourself for now."
+			log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, aiFailDetail(err))
+			return s.failedResponse(j.Claimed, j.Spans, j.Slot, "daily_limit", "daily_limit"), false
 		}
-		log.Printf("ai fallback %s: job=%s reason=%s detail=%q", out.Fallback, j.ID, out.FallbackReason, aiFailDetail(err))
-		return finishResp(out)
+		if reason == "rate_limited" || reason == "unavailable" || reason == "timeout" {
+			if j.Requeues < MaxRequeues {
+				log.Printf("ai busy, requeued: job=%s reason=%s requeues=%d detail=%q", j.ID, reason, j.Requeues+1, aiFailDetail(err))
+				return ParseResponse{FallbackReason: reason}, true
+			}
+			log.Printf("ai busy, giving up after %d requeues: job=%s reason=%s", j.Requeues, j.ID, reason)
+			out := s.failedResponse(j.Claimed, j.Spans, j.Slot, "error", "error")
+			out.Message = "Couldn't estimate this. Add the calories yourself."
+			return out, false
+		}
+		log.Printf("ai failed error: job=%s reason=%s detail=%q", j.ID, reason, aiFailDetail(err))
+		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "error", "error"), false
 	}
 	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
-	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot)
+	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot), false
+}
+
+// failedResponse: no AI answer is coming (daily_limit, user_limit, error).
+// The confident table items stand; each open span is listed in
+// failed_spans / unmatched / custom_items with NO kcal: the user types it.
+func (s *Service) failedResponse(claimed []parser.Item, open []Span, slot, fb, reason string) ParseResponse {
+	out := ParseResponse{Items: append([]parser.Item{}, claimed...), Unmatched: []string{}, CustomItems: []CustomItem{},
+		Slot: slot, Status: "done", Answer: "none", Fallback: fb, FallbackReason: reason, AIState: "failed",
+		FailedSpans: append([]Span{}, open...)}
+	for _, sp := range open {
+		_, key := splitCount(sp.Text)
+		out.Unmatched = append(out.Unmatched, sp.Text)
+		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: key, NeedsInput: true})
+	}
+	switch reason {
+	case "user_limit":
+		out.AIResetsAt = s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
+		out.UserDailyLimit = s.userCap()
+		out.Message = fmt.Sprintf("You've used today's %d AI estimates. Add the calories yourself.", out.UserDailyLimit)
+	case "daily_limit":
+		out.AIResetsAt = s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
+		out.Message = "AI estimates are used up for now. Add the calories yourself."
+	default:
+		out.Message = "Couldn't estimate this. Add the calories yourself."
+	}
+	sortBySpan(out.Items)
+	out = finishResp(out)
+	if len(open) > 0 {
+		out.NeedsConfirmation = true // the open spans still need the user's kcal
+	}
+	return out
 }
 
 // aiFailReason is the fallback_reason for a failed AI job: never the key,
@@ -612,7 +655,7 @@ func (s *Service) cacheGet(ctx context.Context, key string) ([]parser.Item, bool
 
 func (s *Service) cachePut(ctx context.Context, key string, items []parser.Item) {
 	b, err := json.Marshal(items)
-	if err != nil || len(items) == 0 {
+	if err != nil || len(items) == 0 || s.DB == nil {
 		return
 	}
 	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_cache(norm_text,items) VALUES ($1,$2) ON CONFLICT (norm_text) DO NOTHING`, key, b)
@@ -1477,4 +1520,11 @@ func appendFlag(fs []string, f string) []string {
 		return fs
 	}
 	return append(fs, f)
+}
+
+// releaseAI gives back a call reserved by reserveAI that was never made.
+func (s *Service) releaseAI(ctx context.Context, userID int64) {
+	today := s.Quota.Day(httpx.Now())
+	_, _ = s.DB.Exec(ctx, `UPDATE ai_usage SET calls=calls-1 WHERE user_id=$1 AND local_date=$2 AND calls>0`, userID, today)
+	_, _ = s.DB.Exec(ctx, `UPDATE ai_global_usage SET calls=calls-1 WHERE local_date=$1 AND calls>0`, today)
 }

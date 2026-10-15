@@ -218,6 +218,11 @@ type parseOut struct {
 	Status      string
 	JobID       string `json:"job_id"`
 	Answer      string
+	AIState     string `json:"ai_state"`
+	FailedSpans []M    `json:"failed_spans"`
+	Requeues    int    `json:"requeues"`
+	BusyReason  string `json:"busy_reason"`
+	NextAttempt string `json:"next_attempt_at"`
 }
 
 func aiCalls(t *testing.T, srv *httptest.Server) int {
@@ -815,7 +820,7 @@ func TestAICapsAndBadAnswers(t *testing.T) {
 	}
 	c, r := parseAI(t, srv, "cap", "zorb meal last")
 	if c != 200 || r.Fallback != "cap_reached" || r.FallbackReason != "user_limit" || r.UserDailyLimit != 3 || r.AIResetsAt == "" ||
-		r.Answer != "generic" || r.Message == "" || aiCalls(t, srv) != 3 {
+		r.Answer != "none" || r.AIState != "failed" || len(r.Items) != 0 || len(r.FailedSpans) != 1 || r.Message == "" || aiCalls(t, srv) != 3 {
 		t.Errorf("per-user cap: %d %+v", c, r)
 	}
 	// project-wide cap
@@ -826,12 +831,12 @@ func TestAICapsAndBadAnswers(t *testing.T) {
 		t.Errorf("global cap: %d %+v", c, r)
 	}
 	call(t, srv, "POST", "/test/ai/daily-cap", "", M{"cap": 0}, nil)
-	// implausible answers: generic card, never cached
+	// implausible answers: failed (error), no kcal, never cached
 	for i, k := range []float64{0, 3200} {
 		call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{{"name": "x", "quantity": 1, "unit": "count", "kcal": M{"low": k, "best": k, "high": k}}}}, nil)
 		text := []string{"weird thing a", "weird thing b"}[i]
 		_, r = parseAI(t, srv, fmt.Sprintf("bad%d", i), text) // users differ: 3 AI meals/user/day
-		if r.Answer != "generic" || r.Fallback != "error" {
+		if r.AIState != "failed" || r.FallbackReason != "error" || r.Fallback != "error" || len(r.Items) != 0 {
 			t.Errorf("implausible %v shown: %+v", k, r)
 		}
 		before := aiCalls(t, srv)

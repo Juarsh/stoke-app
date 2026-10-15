@@ -76,11 +76,11 @@ func TestQueueDrainsAtRate(t *testing.T) {
 	q := NewQueue(600, 10) // one per 100ms
 	var mu sync.Mutex
 	var at []time.Time
-	q.run = func(context.Context, *Job) ParseResponse {
+	q.run = func(context.Context, *Job) (ParseResponse, bool) {
 		mu.Lock()
 		at = append(at, time.Now())
 		mu.Unlock()
-		return ParseResponse{Status: "done"}
+		return ParseResponse{Status: "done"}, false
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

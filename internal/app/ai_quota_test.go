@@ -2,6 +2,8 @@ package app
 
 import (
 	"testing"
+
+	"github.com/akarsh/calorie-tracker/internal/food"
 	"time"
 )
 
@@ -16,27 +18,52 @@ type quotaOut struct {
 	ResetZone      string `json:"reset_zone"`
 }
 
-// Still rate limited after the client's retries: fallback busy, generic
-// estimates to confirm (never 0 kcal), counted once against the caps.
-func TestAIBusyAfterRetries(t *testing.T) {
+// Still busy (rate_limited / timeout) after the client's retries: the job
+// stays pending with ai_state estimating and goes back into the queue; the
+// late answer fills the SAME job. Counted once against the caps.
+func TestAIBusyRequeuedThenLateAnswer(t *testing.T) {
+	d := food.RequeueDelays
+	food.RequeueDelays = []time.Duration{150 * time.Millisecond}
+	t.Cleanup(func() { food.RequeueDelays = d })
 	srv, _ := setupCfg(t, &fakeAI{}, func(c *Config) { c.AdminToken, c.GlobalAICap = testAdmin, 20 })
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
 	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "busy"}, nil)
-	_, r := parseAI(t, srv, "busy1", "2 roti aur 1 plate zorbu")
-	if r.Fallback != "busy" || r.FallbackReason != "rate_limited" || !r.NeedsConfirmation || len(r.Items) != 2 {
-		t.Fatalf("busy: %+v", r)
+	var p parseOut
+	if c := call(t, srv, "POST", "/v1/parse", "busy1", M{"text": "2 roti aur 1 plate zorbu"}, &p); c != 202 || p.AIState != "estimating" {
+		t.Fatalf("parse: %d %+v", c, p)
 	}
-	for _, it := range r.Items {
+	var j parseOut
+	for i := 0; i < 100 && j.Requeues == 0; i++ {
+		time.Sleep(5 * time.Millisecond)
+		if c := call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "busy1", nil, &j); c != 202 {
+			t.Fatalf("busy job ended: %d %+v", c, j)
+		}
+	}
+	if j.Status != "pending" || j.AIState != "estimating" || j.Requeues != 1 || j.BusyReason != "rate_limited" || j.NextAttempt == "" {
+		t.Fatalf("busy job: %+v", j)
+	}
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": ""}, nil) // Gemini answers again
+	for i := 0; i < 200; i++ {
+		j = parseOut{}
+		if c := call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "busy1", nil, &j); c == 200 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if j.JobID != p.JobID || j.AIState != "answered" || j.Answer != "ai" || j.FallbackReason != "" || len(j.Items) != 2 {
+		t.Fatalf("late answer: %+v", j)
+	}
+	for _, it := range j.Items {
 		if it.Kcal.Best <= 0 {
 			t.Errorf("zero estimate: %+v", it)
 		}
-		if it.DishID != "roti" && (!it.NeedsConfirmation || it.OneTapOK) {
-			t.Errorf("placeholder must need confirmation: %+v", it)
-		}
 	}
 	var q quotaOut
-	if c := admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q); c != 200 || q.Used != 1 || q.Remaining == nil || *q.Remaining != 19 ||
-		q.DailyCap != 20 || q.UserDailyCap != 3 || q.Exhausted || q.ResetZone != "America/Los_Angeles" {
-		t.Errorf("quota after one failed meal: %d %+v", c, q)
+	if c := admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q); c != 200 || q.Used != 1 || q.Remaining == nil || *q.Remaining != 19 {
+		t.Errorf("requeue counted twice: %d %+v", c, q)
+	}
+	if n := aiCalls(t, srv); n != 2 {
+		t.Errorf("stub calls %d, want 2 (busy + late answer)", n)
 	}
 }
 
@@ -47,7 +74,7 @@ func TestAIDailyQuotaExhausted(t *testing.T) {
 	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
 	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "daily_limit"}, nil)
 	_, r := parseAI(t, srv, "q1", "1 plate zorbu")
-	if r.Fallback != "daily_limit" || r.FallbackReason != "daily_limit" || r.AIResetsAt == "" || !r.NeedsConfirmation {
+	if r.Fallback != "daily_limit" || r.FallbackReason != "daily_limit" || r.AIState != "failed" || len(r.Items) != 0 || r.AIResetsAt == "" || !r.NeedsConfirmation {
 		t.Fatalf("daily quota: %+v", r)
 	}
 	at, err := time.Parse(time.RFC3339, r.AIResetsAt)

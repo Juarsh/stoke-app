@@ -12,7 +12,7 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/parser"
 )
 
-// Job is one meal waiting for (or done with) its single AI call.
+// Job is one meal waiting for (or done with) its AI answer.
 type Job struct {
 	ID      string
 	UserID  int64
@@ -21,24 +21,51 @@ type Job struct {
 	Hint    []parser.Item
 	Claimed []parser.Item // confident table items kept as they are
 	Spans   []Span        // unclaimed parts the AI must answer for
-	Generic ParseResponse // answer if the AI fails
+	Generic ParseResponse // claimed items + open spans, used to build the failed state
 	Slot    string
-	Status  string // pending, done
+	Status  string // pending (estimating), done
 	Result  ParseResponse
 	Created time.Time
+	// Requeues: times Gemini was still busy (rate_limited / unavailable /
+	// timeout) after its retries and the job went back into the queue.
+	Requeues  int
+	NotBefore time.Time // the next attempt waits until then
+	LastBusy  string    // fallback_reason of the last busy attempt
+}
+
+// Requeue policy: a busy job is tried again after RequeueDelays[n] (the
+// last delay repeats), at most MaxRequeues times; then it ends as error.
+// With the defaults: 6 requeues over about 15 minutes after the first try.
+var (
+	RequeueDelays = []time.Duration{30 * time.Second, time.Minute, 2 * time.Minute, 3 * time.Minute, 4 * time.Minute, 5 * time.Minute}
+	MaxRequeues   = 6
+)
+
+func requeueDelay(n int) time.Duration {
+	if n < 0 {
+		n = 0
+	}
+	if n >= len(RequeueDelays) {
+		n = len(RequeueDelays) - 1
+	}
+	return RequeueDelays[n]
 }
 
 // Queue drains AI jobs at a fixed rate (the per-minute cap) on one worker,
-// so bursts wait instead of hitting the provider's rate limit. In-memory:
+// so bursts wait instead of hitting the provider's rate limit. A job whose
+// call came back busy goes back in with a later NotBefore. In-memory:
 // pending jobs are lost on restart, and the app then falls back to its
 // needs_review flow and re-parses later.
 type Queue struct {
 	mu       sync.Mutex
 	jobs     map[string]*Job
-	ch       chan *Job
+	waiting  []*Job // pending jobs, in order of arrival / requeue
+	max      int
+	wake     chan struct{}
 	interval time.Duration
-	run      func(context.Context, *Job) ParseResponse
-	ttl      time.Duration
+	// run makes the AI call; requeue=true means busy: try again later.
+	run func(context.Context, *Job) (res ParseResponse, requeue bool)
+	ttl time.Duration
 }
 
 // NewQueue: perMinute calls a minute (<=0 means no spacing), at most max waiting.
@@ -47,10 +74,17 @@ func NewQueue(perMinute, max int) *Queue {
 	if perMinute > 0 {
 		iv = time.Minute / time.Duration(perMinute)
 	}
-	return &Queue{jobs: map[string]*Job{}, ch: make(chan *Job, max), interval: iv, ttl: time.Hour}
+	return &Queue{jobs: map[string]*Job{}, max: max, wake: make(chan struct{}, 1), interval: iv, ttl: time.Hour}
 }
 
-// Add queues a job; false when the queue is full.
+func (q *Queue) poke() {
+	select {
+	case q.wake <- struct{}{}:
+	default:
+	}
+}
+
+// Add queues a job; false when the queue is full (requeued jobs count).
 func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic ParseResponse, slot string, claimed []parser.Item, spans []Span) (*Job, bool) {
 	b := make([]byte, 12)
 	_, _ = rand.Read(b)
@@ -58,43 +92,75 @@ func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic Par
 		Status: "pending", Created: time.Now(), Claimed: claimed, Spans: spans}
 	q.mu.Lock()
 	q.gc()
-	q.jobs[j.ID] = j
-	q.mu.Unlock()
-	select {
-	case q.ch <- j:
-		return j, true
-	default:
-		q.mu.Lock()
-		delete(q.jobs, j.ID)
+	if len(q.waiting) >= q.max {
 		q.mu.Unlock()
 		return nil, false
 	}
+	q.jobs[j.ID] = j
+	q.waiting = append(q.waiting, j)
+	q.mu.Unlock()
+	q.poke()
+	return j, true
 }
 
-// Run is the worker: one AI call per interval.
+// next takes the first job that is due, or says how long until one is.
+func (q *Queue) next() (*Job, time.Duration) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	now := time.Now()
+	wait := time.Duration(-1)
+	for i, j := range q.waiting {
+		if !j.NotBefore.After(now) {
+			q.waiting = append(q.waiting[:i:i], q.waiting[i+1:]...)
+			return j, 0
+		}
+		if d := j.NotBefore.Sub(now); wait < 0 || d < wait {
+			wait = d
+		}
+	}
+	return nil, wait
+}
+
+// Run is the worker: at most one AI call per interval.
 func (q *Queue) Run(ctx context.Context) {
 	var last time.Time
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		case j := <-q.ch:
-			if wait := q.interval - time.Since(last); wait > 0 {
-				select {
-				case <-time.After(wait):
-				case <-ctx.Done():
-					return
-				}
+		j, wait := q.next()
+		if j == nil {
+			var timer <-chan time.Time
+			if wait >= 0 {
+				timer = time.After(wait)
 			}
-			last = time.Now()
-			cctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			res := q.run(cctx, j)
-			cancel()
-			q.mu.Lock()
+			select {
+			case <-ctx.Done():
+				return
+			case <-q.wake:
+			case <-timer:
+			}
+			continue
+		}
+		if d := q.interval - time.Since(last); d > 0 {
+			select {
+			case <-time.After(d):
+			case <-ctx.Done():
+				return
+			}
+		}
+		last = time.Now()
+		cctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		res, requeue := q.run(cctx, j)
+		cancel()
+		q.mu.Lock()
+		if requeue {
+			j.NotBefore = time.Now().Add(requeueDelay(j.Requeues))
+			j.Requeues++
+			j.LastBusy = res.FallbackReason
+			q.waiting = append(q.waiting, j) // stays pending: no new cap use
+		} else {
 			j.Result, j.Status = res, "done"
 			j.Hint = nil
-			q.mu.Unlock()
 		}
+		q.mu.Unlock()
 	}
 }
 
@@ -109,12 +175,12 @@ func (q *Queue) Get(uid int64, id string) (Job, bool) {
 	return *j, true
 }
 
-// Pending is the number of jobs waiting.
-func (q *Queue) Pending() int { return len(q.ch) }
+// Pending is the number of jobs waiting (requeued ones included).
+func (q *Queue) Pending() int { q.mu.Lock(); defer q.mu.Unlock(); return len(q.waiting) }
 
 func (q *Queue) gc() {
 	for id, j := range q.jobs {
-		if time.Since(j.Created) > q.ttl {
+		if j.Status == "done" && time.Since(j.Created) > q.ttl {
 			delete(q.jobs, id)
 		}
 	}
@@ -135,7 +201,13 @@ func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 	}
 	links := s.jobEntries(r.Context(), j.UserID, j.ID)
 	if j.Status != "done" {
-		httpx.JSON(w, 202, map[string]any{"status": "pending", "job_id": j.ID, "queue_length": s.Queue.Pending(), "entries": links})
+		body := map[string]any{"status": "pending", "ai_state": "estimating", "job_id": j.ID, "queue_length": s.Queue.Pending(),
+			"requeues": j.Requeues, "entries": links}
+		if j.Requeues > 0 {
+			body["busy_reason"] = j.LastBusy // rate_limited | unavailable | timeout: still estimating
+			body["next_attempt_at"] = j.NotBefore.UTC().Format(time.RFC3339)
+		}
+		httpx.JSON(w, 202, body)
 		return
 	}
 	out := j.Result
