@@ -211,10 +211,14 @@ type Stub struct {
 	mu    sync.Mutex
 	calls int
 	next  *[]parser.Item
+	fail  string // "error" | "timeout" | "" : every call fails this way until cleared
 }
 
+// SetFail makes every following call fail ("error", "timeout") until "" is set.
+func (s *Stub) SetFail(mode string) { s.mu.Lock(); defer s.mu.Unlock(); s.fail = mode }
+
 func (s *Stub) Calls() int { s.mu.Lock(); defer s.mu.Unlock(); return s.calls }
-func (s *Stub) Reset()     { s.mu.Lock(); defer s.mu.Unlock(); s.calls, s.next = 0, nil }
+func (s *Stub) Reset()     { s.mu.Lock(); defer s.mu.Unlock(); s.calls, s.next, s.fail = 0, nil, "" }
 func (s *Stub) SetNext(items []parser.Item) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -229,6 +233,12 @@ func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []pa
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls++
+	switch s.fail {
+	case "error":
+		return nil, errors.New("stub: forced error")
+	case "timeout":
+		return nil, fmt.Errorf("stub: forced timeout: %w", context.DeadlineExceeded)
+	}
 	if s.next != nil {
 		out := append([]parser.Item(nil), (*s.next)...)
 		s.next = nil

@@ -41,6 +41,18 @@ var errSkip = errors.New("skip")
 
 func setup(t *testing.T, ai *fakeAI) (*httptest.Server, *pgxpool.Pool) {
 	t.Helper()
+	return setupCfg(t, ai, nil)
+}
+
+// setupWith: a server whose Config the test adjusts (e.g. its own Fallback).
+func setupWith(t *testing.T, mod func(*Config)) *httptest.Server {
+	t.Helper()
+	srv, _ := setupCfg(t, nil, mod)
+	return srv
+}
+
+func setupCfg(t *testing.T, ai *fakeAI, mod func(*Config)) (*httptest.Server, *pgxpool.Pool) {
+	t.Helper()
 	if testDBURL == "" {
 		t.Skip("no throwaway test database (see TestMain)")
 	}
@@ -63,6 +75,9 @@ func setup(t *testing.T, ai *fakeAI) (*httptest.Server, *pgxpool.Pool) {
 		if cfg.AIPerMinute == 0 {
 			cfg.AIPerMinute = -1 // most tests don't exercise the per-minute limiter
 		}
+	}
+	if mod != nil {
+		mod(&cfg)
 	}
 	h, err := New(cfg)
 	if err != nil {
@@ -152,9 +167,10 @@ func TestParseShape(t *testing.T) {
 	if q := r.Items[4]; q.Source != "generic" || !q.NeedsConfirmation || q.Kcal.Best <= 0 || !r.NeedsConfirmation {
 		t.Errorf("placeholder: %+v", r.Items[4])
 	}
-	// a meal with leftovers flags every item; a clean meal doesn't
-	if !r.Items[0].NeedsConfirmation {
-		t.Errorf("leftover meal not flagged: %+v", r.Items[0])
+	// a confident table match stays claimed even when the meal has
+	// leftovers; only the unclaimed span needs confirmation
+	if r.Items[0].NeedsConfirmation || r.Items[0].Source != "table" {
+		t.Errorf("claimed roti lost: %+v", r.Items[0])
 	}
 	var r2 struct {
 		Items []struct {
@@ -268,7 +284,7 @@ func TestRememberedFoods(t *testing.T) {
 
 func TestHooks404OutsideStub(t *testing.T) {
 	srv, _ := setup(t, nil)
-	for _, rt := range [][2]string{{"GET", "/test/ai/calls"}, {"POST", "/test/ai/calls/reset"}, {"POST", "/test/ai/next-answer"}, {"POST", "/test/ai/daily-cap"}} {
+	for _, rt := range [][2]string{{"GET", "/test/ai/calls"}, {"POST", "/test/ai/calls/reset"}, {"POST", "/test/ai/next-answer"}, {"POST", "/test/ai/daily-cap"}, {"POST", "/test/ai/fail"}} {
 		if c := call(t, srv, rt[0], rt[1], "", M{}, nil); c != 404 {
 			t.Errorf("%s %s outside stub: %d", rt[0], rt[1], c)
 		}
@@ -741,7 +757,11 @@ func TestStrictTableOrWholeMealAI(t *testing.T) {
 		t.Errorf("clean meal: %d %+v", c, r)
 	}
 	// anything else -> the WHOLE meal in one queued AI call
-	for i, text := range []string{"paneer lababdar", "2 chapatii", "2 roti quinoa", "rajma with rice, 1 bowl", "1 katori chole bhature"} {
+	// a typo covers its own words: did_you_mean to confirm, never an AI call
+	if c, r := parseAI(t, srv, "s1", "2 chapatii"); c != 200 || r.Items[0].Source != "did_you_mean" || !r.Items[0].NeedsConfirmation || aiCalls(t, srv) != 0 {
+		t.Errorf("typo meal: %d %+v", c, r)
+	}
+	for i, text := range []string{"paneer lababdar", "2 roti quinoa"} {
 		c, r = parseAI(t, srv, "s1", text)
 		if c != 202 || r.Answer != "ai" || len(r.Items) == 0 || aiCalls(t, srv) != i+1 {
 			t.Fatalf("%q: %d calls %d %+v", text, c, aiCalls(t, srv), r)
@@ -750,6 +770,13 @@ func TestStrictTableOrWholeMealAI(t *testing.T) {
 			if it.Source != "ai_estimate" || !it.NeedsConfirmation || !it.AIEstimate {
 				t.Errorf("%q: AI item not flagged: %+v", text, it)
 			}
+		}
+	}
+	// combo readings cover all their words: confirm, no AI call
+	for _, text := range []string{"rajma with rice, 1 bowl", "1 katori chole bhature"} {
+		before := aiCalls(t, srv)
+		if c, r := parseAI(t, srv, "s1", text); c != 200 || len(r.Items) == 0 || !r.Items[0].NeedsConfirmation || aiCalls(t, srv) != before {
+			t.Errorf("%q: %d %+v", text, c, r)
 		}
 	}
 	// same meal again (another user, different spacing/case): cache, no call, still ai_estimate

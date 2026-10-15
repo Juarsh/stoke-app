@@ -41,6 +41,22 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 		stub.SetNext(items)
 		httpx.JSON(w, 200, map[string]any{"ok": true})
 	})
+	// POST /test/ai/fail {"mode":"error"|"timeout"|""}: every AI call fails
+	// that way until mode "" (or /test/ai/calls/reset)
+	mux.HandleFunc("POST /test/ai/fail", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Mode string `json:"mode"`
+		}
+		if !httpx.Decode(w, r, &in) {
+			return
+		}
+		if in.Mode != "" && in.Mode != "error" && in.Mode != "timeout" {
+			httpx.Error(w, 400, "mode must be error, timeout or empty")
+			return
+		}
+		stub.SetFail(in.Mode)
+		httpx.JSON(w, 200, map[string]any{"mode": in.Mode})
+	})
 	mux.HandleFunc("POST /test/ai/daily-cap", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
 			Cap int64 `json:"cap"`

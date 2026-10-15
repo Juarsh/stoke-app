@@ -165,10 +165,34 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 			claimed = append(claimed, c)
 		}
 	}
-	// (a table word glued to unknown words, "kuttu cheela", is already
-	// unconfirmed by the parser's adjacency rule, so it isn't claimed and the
-	// whole phrase reaches the AI as one span)
+	// Parser items that aren't confident (fuzzy "rotti", "sambar" split
+	// from a list, a unit_mismatch count) still cover their words: they stay
+	// as did_you_mean items to confirm, and their words never reach the AI.
+	// Generic placeholders and a table word glued to unknown words
+	// (leftover_nearby, "kuttu cheela") don't cover: that phrase goes to the
+	// AI as one span.
+	for _, it := range res.Items {
+		if _, isLearned := done[Normalize(it.Matched)]; isLearned {
+			continue
+		}
+		if _, ok := s.parser().Claim(it); ok || it.Source == parser.SourceGeneric || hasFlag(it.Flags, "leftover_nearby") {
+			continue
+		}
+		it.NeedsConfirmation = true
+		if it.Source == parser.SourceTable {
+			it.Source = parser.SourceDidYouMean
+		}
+		claimed = append(claimed, it)
+	}
 	spans := unclaimed(text, claimed, s.parser().Noise)
+	unknownWords := map[string]bool{}
+	for _, u := range rest.Unmatched {
+		for _, w := range strings.Fields(Normalize(u)) {
+			if !isNumber(w) {
+				unknownWords[w] = true
+			}
+		}
+	}
 	// a remembered food can also cover an unclaimed span
 	var open []Span
 	for _, sp := range spans {
@@ -180,9 +204,17 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 			claimed = append(claimed, li...)
 			continue
 		}
+		// words the parser already used (counts, units, "ek", "half",
+		// "2 egg ka" folded into an omelette) are not unknown: a span is open
+		// only if it holds a word nothing used, or overlaps an item that
+		// doesn't cover its words (generic, leftover_nearby)
+		if !foodLike(sp.Text) || !hasUnknown(sp, unknownWords, res.Items, claimed) {
+			continue
+		}
 		open = append(open, sp)
 	}
 	sortBySpan(claimed)
+	// no unclaimed span: never call the AI
 	if len(open) == 0 && len(claimed) > 0 {
 		out := ParseResponse{Items: claimed, Unmatched: []string{}, Fallback: "none", Answer: "table",
 			CustomItems: []CustomItem{}, Slot: slot, Status: "done"}
@@ -195,9 +227,11 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 			return s.aiResponse(claimed, cached, hint, "cache", slot), nil
 		}
 	}
+	// without an AI answer, the claimed items still stand; only the open
+	// spans become placeholders to confirm
+	gen := s.fallbackResponse(claimed, open, res, slot)
 	generic := func(fb, msg string) (ParseResponse, *Job) {
-		out := s.genericResponse(res, slot)
-		s.setSpans(out.Items, text)
+		out := gen
 		out.Fallback, out.Message = fb, msg
 		return finishResp(out), nil
 	}
@@ -210,8 +244,6 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	if st := s.reserveAI(ctx, userID); st != "" {
 		return generic(st, "AI estimates are back tomorrow. Confirm or add it yourself for now.")
 	}
-	gen := s.genericResponse(res, slot)
-	s.setSpans(gen.Items, text)
 	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open)
 	if !ok {
 		return generic("busy", "AI estimates are busy. Confirm or add it yourself for now.")
@@ -253,6 +285,56 @@ func finishResp(out ParseResponse) ParseResponse {
 	for _, it := range out.Items {
 		out.NeedsConfirmation = out.NeedsConfirmation || it.NeedsConfirmation
 	}
+	return out
+}
+
+func isNumber(w string) bool {
+	_, err := strconv.ParseFloat(w, 64)
+	return err == nil
+}
+
+// hasUnknown: the span holds a word nothing in the parse used, or overlaps a
+// parser item that was not kept as covering its words.
+func hasUnknown(sp Span, unknown map[string]bool, items, claimed []parser.Item) bool {
+	for _, w := range strings.Fields(Normalize(sp.Text)) {
+		if unknown[w] {
+			return true
+		}
+	}
+	for _, it := range items {
+		if !overlaps(sp.Start, sp.End, it.SpanStart, it.SpanEnd) {
+			continue
+		}
+		kept := false
+		for _, c := range claimed {
+			kept = kept || (c.SpanStart == it.SpanStart && c.SpanEnd == it.SpanEnd)
+		}
+		if !kept {
+			return true
+		}
+	}
+	return false
+}
+
+// fallbackResponse: the claimed items as they are, plus a placeholder to
+// confirm for each unclaimed span (used when no AI answer is available).
+func (s *Service) fallbackResponse(claimed []parser.Item, open []Span, res parser.Result, slot string) ParseResponse {
+	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "generic"}
+	out.Items = append(out.Items, claimed...)
+	for _, sp := range open {
+		cnt, key := splitCount(sp.Text)
+		it := scaleItem(s.parser().Unknown(key), cnt)
+		it.SpanStart, it.SpanEnd = sp.Start, sp.End
+		for _, h := range res.Items { // a known dish glued to these words
+			if overlaps(sp.Start, sp.End, h.SpanStart, h.SpanEnd) && hasFlag(h.Flags, "leftover_nearby") {
+				it.Flags = appendFlag(it.Flags, "leftover_nearby")
+			}
+		}
+		out.Items = append(out.Items, it)
+		out.Unmatched = append(out.Unmatched, sp.Text)
+		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: key, NeedsInput: true})
+	}
+	sortBySpan(out.Items)
 	return out
 }
 

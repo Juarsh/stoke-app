@@ -95,6 +95,9 @@ type Rules struct {
 		MaxMultiple      float64 `json:"max_portion_multiple"`
 		MaxCountMultiple float64 `json:"max_count_multiple"`
 	} `json:"sanity"`
+	// PlausibleMax: the largest count that makes sense in each unit for one
+	// item ("8 plates momos" and "6 katori dal" exceed it -> unit_mismatch).
+	PlausibleMax map[string]float64 `json:"plausible_max"`
 }
 
 // Range is a low / best-guess / high triple.
@@ -131,6 +134,10 @@ type Item struct {
 	Confidence   float64       `json:"confidence"`
 	Flags        []string      `json:"flags,omitempty"`
 	Alternatives []Alternative `json:"alternatives,omitempty"`
+	// UnitOptions: set with unit_mismatch when a count doesn't make sense in
+	// the stated unit. Covers the counting-unit reading and the stated
+	// reading; the item stays out of the totals until the user picks one.
+	UnitOptions []UnitOption `json:"unit_options,omitempty"`
 	AIEstimate   bool          `json:"ai_estimate"`
 	AIName       string        `json:"ai_name,omitempty"`
 	// SpanStart/SpanEnd: where this item came from in the user's original
@@ -175,6 +182,22 @@ type Alternative struct {
 	Unit     string  `json:"unit"`
 	Kcal     float64 `json:"kcal"`
 	Label    string  `json:"label"`
+}
+
+// UnitOption is one reading of an item whose count doesn't fit its unit.
+type UnitOption struct {
+	Quantity float64 `json:"qty"`
+	Unit     string  `json:"unit"`
+	Kcal     float64 `json:"kcal"`
+}
+
+// CountingUnit is the unit a bare number means for a dish: pieces for
+// countable dishes (piece_grams set, or unit count), otherwise its unit.
+func CountingUnit(d dishes.Dish) string {
+	if d.PieceGrams > 0 {
+		return "piece"
+	}
+	return d.Unit
 }
 
 // Result is a parsed meal.
@@ -1039,6 +1062,9 @@ func (p *Parser) finish(it *Item) {
 		c += w
 	}
 	it.Confidence = math.Max(0, round(c, 2))
+	if d != nil && len(it.UnitOptions) == 0 && slices.Contains(it.pens, "unit_mismatch") && it.FromCombo == "" {
+		p.unitOptions(d, it) // every unit_mismatch item offers its readings
+	}
 	it.Flags = append([]string(nil), it.pens...)
 	// leftovers, splits and combos always need a look, whatever the score
 	forced := false
@@ -1057,6 +1083,7 @@ func (p *Parser) finish(it *Item) {
 
 func (p *Parser) sanity(it *Item) {
 	d := p.dishByID(it.DishID)
+	p.plausibleCount(d, it)
 	mult := p.r.Sanity.MaxMultiple
 	if d != nil && (d.Unit == "count" || it.Unit == "piece") {
 		mult = p.r.Sanity.MaxCountMultiple // 4-6 rotis is normal
@@ -1074,6 +1101,56 @@ func (p *Parser) sanity(it *Item) {
 		alt(it.Quantity, "piece", "pieces instead of "+it.Unit)
 	}
 	alt(1, d.Unit, "one standard portion")
+}
+
+// plausibleCount: a typed count above rules plausible_max for its unit is
+// a unit_mismatch ("8 plates momos" = 8 pieces or 8 plates?). Never guess:
+// offer both readings and keep the item out of the totals.
+func (p *Parser) plausibleCount(d *dishes.Dish, it *Item) {
+	if d == nil || it.Quantity <= 0 || it.FromCombo != "" {
+		return
+	}
+	u := it.Unit
+	if u == "count" && d.PieceGrams > 0 {
+		u = "piece"
+	}
+	max, ok := p.r.PlausibleMax[u]
+	// a counted dish served by the plate or katori ("1 plate idli"): how
+	// many pieces is that? ask
+	bowlOfCounted := d.Unit == "count" && d.PieceGrams == 0 && (u == "plate" || u == "katori" || u == "bowl")
+	if !bowlOfCounted && (!ok || it.Quantity <= max) {
+		return
+	}
+	p.unitOptions(d, it)
+}
+
+// unitOptions flags unit_mismatch and offers the counting-unit reading,
+// the stated reading and one standard portion.
+func (p *Parser) unitOptions(d *dishes.Dish, it *Item) {
+	u := it.Unit
+	if u == "count" && d.PieceGrams > 0 {
+		u = "piece"
+	}
+	it.pen("unit_mismatch")
+	it.NeedsConfirmation = true
+	it.UnitOptions = nil
+	add := func(q float64, unit string) {
+		c := p.compute(d, Item{OilLevel: it.OilLevel}, q, unit)
+		for _, o := range it.UnitOptions {
+			if o.Quantity == q && o.Unit == c.Unit {
+				return
+			}
+		}
+		it.UnitOptions = append(it.UnitOptions, UnitOption{Quantity: q, Unit: c.Unit, Kcal: c.Kcal.Best})
+	}
+	cu := CountingUnit(*d)
+	if cu != u {
+		add(it.Quantity, cu)
+	}
+	add(it.Quantity, it.Unit)
+	if cu == u || d.Unit != u {
+		add(1, d.Unit)
+	}
 }
 
 // proteinVariant: "chicken momos" / "chicken steamed momos" / "momos chicken"
@@ -1274,10 +1351,10 @@ func (p *Parser) trailing(toks []token, i int) bool {
 			j++
 		}
 	}
-	for j < len(toks) && !toks[j].sep && p.filler[toks[j].w] {
+	for j < len(toks) && !toks[j].sep && p.filler[toks[j].w] && !p.sep[toks[j].w] {
 		j++
 	}
-	return j >= len(toks) || toks[j].sep
+	return j >= len(toks) || toks[j].sep || p.sep[toks[j].w] // "poha 1 plate aur chai": the plate is poha's
 }
 
 // comboFor finds a table row that is exactly these parts ("rajma" + "rice" -> rajma chawal).
@@ -1570,6 +1647,9 @@ func lev(as, bs string, max int) int {
 func Totals(items []Item) (Range, Range) {
 	var k, pr Range
 	for _, it := range items {
+		if len(it.UnitOptions) > 0 {
+			continue // unit_mismatch: out of the totals until confirmed
+		}
 		k.Low += it.Kcal.Low
 		k.Best += it.Kcal.Best
 		k.High += it.Kcal.High
