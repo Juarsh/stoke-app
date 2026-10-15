@@ -10,6 +10,7 @@ import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { pickUnit } from '../lib/confirmBatch';
+import { failedCopy } from '../lib/aiRows';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { Badge, Row, Segmented, T } from './ui';
@@ -168,7 +169,7 @@ const useOpenStyles = makeStyles((t) => ({
 
 /** Failed AI estimate (retry failed / busy / daily limit): CUSTOM chip, "—", "not counted", the user's own kcal + Add.
  * Counts only once a kcal value is added; never part of the batch. */
-export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean }; onKcal: (v: string) => void; onAdd: () => void }) {
+export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean; reason?: string; userDailyLimit?: number }; onKcal: (v: string) => void; onAdd: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles(), ...useFailedStyles() }; const t = useTheme();
   const k = Number(row.kcal);
   return (
@@ -185,7 +186,7 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
       </View>
       {row.added ? null : (
         <View style={s.openBody}>
-          <T tone="text2">Couldn’t estimate this. Add the calories yourself.</T>
+          <T tone="text2">{failedCopy(row)}</T>
           <Row style={{ gap: 8 }}>
             <TextInput value={row.kcal} onChangeText={onKcal} keyboardType="numeric" placeholder="kcal" placeholderTextColor={t.c.muted}
               accessibilityLabel={`Calories for ${row.name}`} style={[s.kcalInput, { color: t.c.text, borderColor: t.c.muted }]} />

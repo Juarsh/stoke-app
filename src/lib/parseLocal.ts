@@ -3,12 +3,14 @@ import { Item, parser, totals } from '../parser';
 import type { Slot } from './domain';
 import { slotFor } from './domain';
 
-export type Fallback = 'none' | 'used' | 'not_configured' | 'cap_reached' | 'error' | 'busy';
+export type Fallback = 'none' | 'cache' | 'used' | 'not_configured' | 'cap_reached' | 'global_cap_reached' | 'daily_limit' | 'busy' | 'rate_limited' | 'error';
 export interface ParseTotal { kcal: number; kcal_low: number; kcal_high: number; protein_g: number; protein_low: number; protein_high: number; carbs_g: number; fat_g: number }
 /** Mirrors food.ParseResponse in the Go backend. */
 export interface ParseResponse {
   items: Item[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; needs_confirmation: boolean; fallback: Fallback;
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
+  /** why there is no AI answer: user_limit, daily_limit, rate_limited, unavailable, timeout, error */
+  fallback_reason?: string; user_daily_limit?: number;
 }
 /** Mirrors food.ItemIn per API.md "App contract" (backend ea9dd85). Table items carry the
  * confirmed numbers + dish_table_version; the server checks them and never recalculates. */

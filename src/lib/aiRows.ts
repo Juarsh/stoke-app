@@ -12,12 +12,20 @@ export function aiStatus(r: ParseResponse | unknown): AiStatus {
   if (r instanceof ParsePending) return 'estimating';
   if (r instanceof Error || !r || typeof r !== 'object') return 'failed';
   const p = r as ParseResponse;
-  if (['error', 'busy', 'cap_reached', 'not_configured'].includes(p.fallback)) return 'failed';
+  if (['error', 'busy', 'cap_reached', 'global_cap_reached', 'daily_limit', 'rate_limited', 'not_configured'].includes(p.fallback)) return 'failed';
   return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
 }
 
 /** Failed row: the user's own kcal. Counted only after they press Add on it. */
-export type FailedRow = { key: string; id: string; name: string; kcal: string; protein: string; added: boolean };
+export type FailedRow = { key: string; id: string; name: string; kcal: string; protein: string; added: boolean; reason?: string; userDailyLimit?: number };
+/** Failed-row copy by the server's fallback_reason (user_daily_limit from the server; left out when missing). */
+export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit'>): string {
+  if (f.reason === 'user_limit') return `You’ve used today’s ${f.userDailyLimit ? `${f.userDailyLimit} ` : ''}AI estimates. Add the calories yourself, or try again tomorrow.`;
+  if (f.reason === 'daily_limit') return 'AI estimates are used up for today. Add the calories yourself.';
+  return 'Couldn’t estimate this. Add the calories yourself.';
+}
+/** failed rows still waiting for the user's kcal (they count as "still needs a choice") */
+export const failedWaiting = (fs: FailedRow[]) => fs.filter((f) => !failedCounts(f)).length;
 export const failedCounts = (f: FailedRow) => f.added && Number(f.kcal) > 0;
 
 /** Late AI answer for a span: fills the same row (same stable id) as an unconfirmed inline estimate.

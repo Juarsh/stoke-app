@@ -64,3 +64,21 @@ test('closing Log also keeps estimating spans (pending) and unfilled failed rows
   expect(pending).toEqual([expect.objectContaining({ id: 'e1', span: 'thukpa', at: 0 })]);
   expect(reviews.map((e) => [e.id, toReview(e)])).toEqual([['f1', true]]);
 });
+
+import { failedCopy, failedWaiting } from '../src/lib/aiRows';
+describe('failed-row copy by fallback_reason', () => {
+  test('user_limit with the server number', () => expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3 }))
+    .toBe('You’ve used today’s 3 AI estimates. Add the calories yourself, or try again tomorrow.'));
+  test('user_limit without the number', () => expect(failedCopy({ reason: 'user_limit' }))
+    .toBe('You’ve used today’s AI estimates. Add the calories yourself, or try again tomorrow.'));
+  test('daily_limit', () => expect(failedCopy({ reason: 'daily_limit' })).toBe('AI estimates are used up for today. Add the calories yourself.'));
+  test.each([undefined, 'rate_limited', 'timeout', 'error'])('%s -> generic', (r) => expect(failedCopy({ reason: r })).toBe('Couldn’t estimate this. Add the calories yourself.'));
+});
+test('a failed row with no kcal shows in the batch label and never hides', () => {
+  const roti = parser.parse('2 roti').items[0];
+  const f = [{ key: 'z', id: 'z', name: 'zanthu', kcal: '', protein: '', added: false }];
+  expect(failedWaiting(f)).toBe(1);
+  const p = plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting(f));
+  expect(p.button).toBe(`Add ${roti.kcal.best} kcal · 1 still needs a choice`);
+  expect(plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting([{ ...f[0], kcal: '200', added: true }])).button).toBe(`Add ${roti.kcal.best} kcal`);
+});

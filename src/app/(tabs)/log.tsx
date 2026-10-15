@@ -6,7 +6,7 @@ import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
 import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
-import { aiStatus, failedCounts, FailedRow, lateAnswer, leaveLog } from '@/lib/aiRows';
+import { aiStatus, failedCounts, FailedRow, failedWaiting, lateAnswer, leaveLog } from '@/lib/aiRows';
 import { ParsePending } from '@/lib/api';
 import { kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
@@ -71,8 +71,8 @@ export default function Log() {
   useEffect(() => { setEstimating([]); setOffline([]); }, [text]);
 
   async function estimateUnknown(spans: string[]) {
-    const toCustom = (us: string[], m: string) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false }))]); setMsg(m); };
-    if (aiUsedToday >= AI_CAP) return toCustom(spans, 'AI estimates are back tomorrow. Add it yourself for now.');
+    const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
+    if (aiUsedToday >= AI_CAP) return toCustom(spans, '', { reason: 'user_limit' });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
     setEstimating((e) => [...e, ...spans]); setBusy(true);
@@ -83,7 +83,7 @@ export default function Log() {
       spans.forEach((u, k) => {
         const its = failed ? [] : splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
-        if (!its.length) { toCustom([u], 'Couldn’t estimate this. Add the calories yourself.'); return; }
+        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason, userDailyLimit: r.user_daily_limit }); return; }
         setCustoms((cs) => {
           const l = lateAnswer(cs.find((c) => c.key === u), its);
           if (l.drop) return cs; // the user's own kcal wins
@@ -116,7 +116,7 @@ export default function Log() {
   // Confirm batch (design-notes v3.2 Oct 15): only confirmed rows, plain confident rows and server-marked one_tap_ok rows are
   // added/counted. Unit mismatches, AI estimates, estimate_unverified and other choices stay open and out of every total.
   const nEstimating = pendingUnmatched.filter((u) => !offline.includes(u)).length;
-  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })), nEstimating);
+  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })), nEstimating, failedWaiting(customs));
   const kindByKey = new Map(drafts.map((d) => [d.key, kindOf(d.it as ServerItem, d.ok)] as const));
   const addedCustoms = customs.filter(failedCounts); // failed rows count only once their kcal is added
   const { kcal: total, protein } = draftTotals(bp.add.map((r) => r.it), addedCustoms);
@@ -126,7 +126,7 @@ export default function Log() {
   const sum0 = logSummary({ kcal: total, protein, items: bp.add.length + addedCustoms.length, estimating: nEstimating, pending: nPending,
     toConfirm: 0, estimates: 0, needsKcal: 0 });
   const openFailed = customs.length - addedCustoms.length;
-  const sum = nOpen || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
+  const sum = nOpen || openFailed || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
   const canAdd = any;
