@@ -13,7 +13,7 @@ export const BRAND = {
     streak: '#7B2A9A', streakTint: '#F3E3FA',
     warn: '#7A5A00',         // always with ⚠
     delete: '#3B433F',       // neutral; always trash icon + the word "Delete"
-    over: '#656967',         // over target: ring + "kcal over" text, neutral grey
+    over: '#626664',         // over target: ring + "kcal over" text, neutral grey
   },
   dark: {
     accentText: '#FF8A70', accentFill: '#FF7A5C', ringEnd: '#FF5C8A',
@@ -32,13 +32,13 @@ const light = {
   accentText: L.accentText, accentFill: L.accentFill, delete: L.delete,
   grad1: L.accentFill, grad2: L.accentFill, grad3: L.accentFill, onAccent: L.onAccent, accentTint: L.accentTint, onGrad: L.onAccent,
   // Fill/coach card: solid accent tint (no gradients except the ring)
-  coach1: L.accentTint, coach2: L.accentTint, coach3: L.accentTint, onCoach: '#111A16', tileBg: '#EFEAE0', tileIcon: '#34413B', iconStroke: '#A8361F', iconTint: '#FFE3DC', // food icons (v3.2): never accentFill
+  coach1: L.accentTint, coach2: L.accentTint, coach3: L.accentTint, onCoach: '#111A16', tileBg: '#EFEAE0', tileIcon: '#34413B', iconStroke: '#A8361F', iconTint: '#FFCCC0', // food icons (v3.2): never accentFill
   gold: L.streak, gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: L.streakTint,
   arc1: L.accentFill, arc2: L.accentFill, arc3: L.ringEnd,
-  steps: '#1F6DA5', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
+  steps: '#1E6AA1', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
   ai: '#34413B', aiBg: '#EFEAE0', // AI = neutral 'Estimate' chip
   danger: L.delete, track: 'rgba(20,60,45,0.10)',
-  onCoachFill: 'rgba(42,11,4,0.08)', check: '#111A16', onCheck: '#FFFFFF', freeze: '#1F6DA5',
+  onCoachFill: 'rgba(42,11,4,0.08)', check: '#111A16', onCheck: '#FFFFFF', freeze: '#1E6AA1',
   /** review card text/icon, always with ⚠ */
   warn: L.warn,
   scrim: 'rgba(8,11,10,0.45)', popBg: '#1A201D', popText: '#F1F4F2', shadow: '#0E1110', glowBtn: L.accentGlow,
