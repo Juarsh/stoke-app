@@ -1,3 +1,4 @@
+import { useTheme } from '../theme';
 import { useRouter } from 'expo-router';
 import { memo } from 'react';
 import { ScrollView } from 'react-native';
@@ -6,13 +7,14 @@ import { Button, Card, Chip, Row, T } from './ui';
 
 /** Coach gradient card. compact = Today (horizontal pills); full = Coach tab (rows with Log buttons). */
 export const CoachCard = memo(function CoachCard({ kcalLeft, proteinLeft, picks, full, dietLabel }: { kcalLeft: number; proteinLeft: number; picks: Suggestion[]; full?: boolean; dietLabel: string }) {
+  const t = useTheme();
   const router = useRouter();
   const log = (p: Suggestion) => router.push({ pathname: '/log', params: { prefill: p.label } });
   return (
     <Card tone="coach">
       <Row style={{ justifyContent: 'space-between' }}>
         <T v="bodyStrong" tone="onCoach" style={{ flex: 1 }}>
-          <T tone="goldOnGrad">✦ </T>{kcalLeft > 0 ? `Fill ${kcalLeft} kcal · ${proteinLeft} g protein` : 'You’re at your target for today'}
+          <T tone={t.dark ? 'goldOnGrad' : 'accentText'}>✦ </T>{kcalLeft > 0 ? `Fill ${kcalLeft} kcal · ${proteinLeft} g protein` : 'You’re at your target for today'}
         </T>
         <T v="caption" tone="onCoach">{dietLabel}</T>
       </Row>

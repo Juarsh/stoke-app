@@ -1,3 +1,4 @@
+import { useTheme } from '@/theme';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Button, Card, Field, Row, Screen, Segmented, T } from '@/components/ui';
@@ -5,6 +6,7 @@ import { computeTargets, Diet, Goal, Profile } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 
 export default function Onboarding() {
+  const t = useTheme();
   const st = useStore();
   const [goal, setGoal] = useState<Goal>('maintain');
   const [sex, setSex] = useState<'m' | 'f'>('m');
@@ -29,7 +31,7 @@ export default function Onboarding() {
       <T v="bodyStrong">Food (for coach picks)</T>
       <Segmented value={diet} onChange={setDiet} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg + veg' }, { value: 'nonveg', label: 'Non-veg' }]} />
       <Card tone="coach">
-        <T v="eyebrow" tone="goldOnGrad">Suggested daily target (editable)</T>
+        <T v="eyebrow" tone={t.dark ? 'goldOnGrad' : 'accentText'}>Suggested daily target (editable)</T>
         <Row>
           <View style={{ flex: 1 }}><Field label="kcal" keyboardType="numeric" placeholder={String(auto.kcal)} value={kcal} onChangeText={setKcal} /></View>
           <View style={{ flex: 1 }}><Field label="Protein g" keyboardType="numeric" placeholder={String(auto.protein)} value={protein} onChangeText={setProtein} /></View>

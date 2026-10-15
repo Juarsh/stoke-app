@@ -1,3 +1,4 @@
+import { useTheme } from '@/theme';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { Share } from 'react-native';
@@ -8,6 +9,7 @@ import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 
 export default function Community() {
+  const t = useTheme();
   const st = useStore(); const d = useDay(); const router = useRouter();
   if (!flags.community) return <Screen title="Community"><T tone="muted">Coming soon.</T></Screen>;
   const ch = st.challenge;
@@ -26,7 +28,7 @@ export default function Community() {
         </Card>
       ) : (
         <>
-          <Card tone="coach"><T v="eyebrow" tone="goldOnGrad">Day {daysIn} of 21 · ends {addDays(ch.startDate, 20)}</T><T v="displayM" tone="onCoach">{myDays} days logged</T></Card>
+          <Card tone="coach"><T v="eyebrow" tone={t.dark ? 'goldOnGrad' : 'accentText'}>Day {daysIn} of 21 · ends {addDays(ch.startDate, 20)}</T><T v="displayM" tone="onCoach">{myDays} days logged</T></Card>
           <Card>
             <T v="bodyStrong">Leaderboard · days logged</T>
             {board.map((m, i) => <Row key={m.name} style={{ justifyContent: 'space-between' }}><T tone={i < 3 ? 'gold' : 'text'}>{i + 1}. {m.name}</T><T>{m.days} / {daysIn}</T></Row>)}

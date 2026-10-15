@@ -33,7 +33,7 @@ const light = {
   grad1: L.accentFill, grad2: L.accentFill, grad3: L.accentFill, onAccent: L.onAccent, accentTint: L.accentTint, onGrad: L.onAccent,
   // Fill/coach card: solid accent tint (no gradients except the ring)
   coach1: L.accentTint, coach2: L.accentTint, coach3: L.accentTint, onCoach: '#111A16', tileBg: '#EFEAE0', tileIcon: '#34413B', iconStroke: '#A8361F', iconTint: '#FFE3DC', // food icons (v3.2): never accentFill
-  gold: L.streak, goldOnGrad: '#F8DA9C', gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: L.streakTint,
+  gold: L.streak, gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: L.streakTint,
   arc1: L.accentFill, arc2: L.accentFill, arc3: L.ringEnd,
   steps: '#1F6FA8', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
   ai: '#34413B', aiBg: '#EFEAE0', // AI = neutral 'Estimate' chip
@@ -45,8 +45,9 @@ const light = {
   tile: [['#F6CF7E', '#E07A2E'], ['#7FE3C0', '#13A07A'], ['#F4A3A3', '#C9485B'], ['#9CC8F2', '#3A6FC4'], ['#D9C2F5', '#7A55C2']] as string[][],
   shareBg1: '#FBF8F1', shareBg2: '#F1EADB',
 };
-type Palette = typeof light;
-const dark: Palette = {
+type Palette = typeof light & { goldOnGrad?: string };
+/** goldOnGrad is dark-only (light uses accentText for those texts). */
+const dark: Palette & { goldOnGrad: string } = {
   bg: '#080B0A', glow1: 'rgba(19,160,122,0.30)', glow2: 'rgba(233,169,59,0.10)', glow3: 'rgba(18,124,136,0.28)',
   card: 'rgba(20,26,23,0.90)', card2: 'rgba(32,40,36,0.94)', cardLine: 'rgba(255,255,255,0.09)', cardHighlight: 'rgba(255,255,255,0.07)',
   nav: 'rgba(22,28,25,0.82)', navSolid: '#1A201D',
@@ -66,7 +67,8 @@ const dark: Palette = {
   tile: light.tile,
   shareBg1: '#121715', shareBg2: '#0B0E0D',
 };
-const alias = (p: Palette) => ({
+const alias = (p: Palette): Palette & ReturnType<typeof aliasOf> => aliasOf(p);
+const aliasOf = (p: Palette) => ({
   ...p,
   surface: p.card, surface2: p.card2, surface3: p.track, line: p.cardLine,
   primary: p.em, primary2: p.em2, primarySoft: p.tint, primaryText: p.emChip, onPrimary: p.onGrad,
