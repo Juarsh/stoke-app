@@ -39,10 +39,10 @@ describe('valid units per dish', () => {
 });
 
 describe('compound names never split into confident items', () => {
-  test.each(['egg rice', 'chicken rice', '2 paneer roti', '1 plate chicken pulao', 'roti sabzi', 'idli sambar'])('%s', (text) => {
+  test.each(['egg rice', 'chicken rice', '2 paneer roti', '1 plate chicken pulao', 'dal chai'])('%s', (text) => {
     for (const it of parser.parse(text).items) { expect(it.source).not.toBe('table'); expect(it.needs_confirmation).toBe(true); }
   });
-  test.each(['idli aur sambar', '2 roti, 1 katori dal'])('%s is not compound', (text) => {
+  test.each(['idli aur sambar', '2 roti, 1 katori dal', 'roti sabzi', 'idli sambar'])('%s is not compound', (text) => {
     for (const it of parser.parse(text).items) expect(it.flags ?? []).not.toContain('compound_name');
   });
   test('trailing quantity stops at aur', () => {

@@ -36,7 +36,7 @@ export interface Rules {
   strict_require_stated_quantity?: boolean;
   /** combo dish id -> parts at default portions ("_doc" ignored) */
   everyday_combos?: Record<string, unknown>;
-  everyday_pairs?: { category_pairs?: [string, string][]; dish_pairs?: [string, string][] };
+  everyday_pairs?: { dish_pairs?: [string, string][] };
   bare_count_units?: string[];
   unit_fits?: Record<string, unknown>;
   claim_separators?: string[];
@@ -800,7 +800,7 @@ export class Parser {
     if (d.units?.length) { // the dish's own unit list (Go unitFits): a bare number is its counting unit
       if (unit === '') return !hasQty || (this.r.eggs_per_portion[d.id] ?? 0) === 0 || this.bareCountFits(d);
       if (unit === 'g' || unit === 'gram' || unit === 'ml') return true;
-      if (unit === 'piece' || unit === 'count') return d.units.some((u) => u.unit === 'piece') || d.unit === 'count';
+      if (unit === 'piece' || unit === 'count') return d.units.some((u) => u.unit === 'piece' || u.unit === 'count') || d.unit === 'count';
       return d.units.some((u) => u.unit === unit);
     }
     if (unit === '') return !hasQty || (d.piece_grams ?? 0) > 0 || (this.r.bare_count_units ?? []).includes(d.unit);
@@ -847,25 +847,20 @@ export class Parser {
     for (let i = 0; i < items.length; i++) for (let j = 0; j < items.length; j++) {
       if (i === j || spans[i][0] < 0 || spans[j][0] < 0 || group(i) === group(j)) continue;
       const adj = spans[j][0] === spans[i][1] + 1, q = adj && this.qualifierPair(items[i], items[j]);
-      if (adj) { pen(items[i], 'compound_name'); pen(items[j], 'compound_name'); } // rule 2: adjacent non-combo dishes are one phrase
-      if (adj && (q || !this.everydayPair(items[i].dish_id, items[j].dish_id))) { pen(items[i], 'adjacent_split'); pen(items[j], 'adjacent_split'); }
+      // rule 2: adjacent non-combo dishes are one phrase unless a frozen everyday pair (and not "chicken rice")
+      if (adj && (q || !this.everydayPair(items[i].dish_id, items[j].dish_id))) { for (const k of [i, j]) { pen(items[k], 'compound_name'); pen(items[k], 'adjacent_split'); } }
     }
   }
 
-  /** Go qualifierPair: "egg rice", "chicken pulao" - a bare ingredient word naming the next dish. Listed dish pairs still split. */
+  /** Go qualifierPair: "egg rice", "chicken pulao" - a bare ingredient word naming the next dish. */
   private qualifierPair(a: It, b: It): boolean {
-    const dp = this.r.everyday_pairs?.dish_pairs ?? [];
-    if (dp.some(([x, y]) => (x === a.dish_id && y === b.dish_id) || (x === b.dish_id && y === a.dish_id))) return false;
     const w = a.matched_text.trim().toLowerCase();
     return Object.prototype.hasOwnProperty.call(this.r.protein_words, w) || (this.r.name_qualifier_words ?? []).includes(w);
   }
 
   private everydayPair(a: string, b: string): boolean {
     const ep = this.r.everyday_pairs ?? {};
-    if ((ep.dish_pairs ?? []).some(([x, y]) => (x === a && y === b) || (x === b && y === a))) return true;
-    const da = this.dishById(a), db = this.dishById(b);
-    if (!da || !db) return false;
-    return (ep.category_pairs ?? []).some(([x, y]) => (x === da.category && y === db.category) || (x === db.category && y === da.category));
+    return (ep.dish_pairs ?? []).some(([x, y]) => (x === a && y === b) || (x === b && y === a));
   }
 
   /** Words of the original text (letters, digits, marks; '.' inside a word) with normalized forms and UTF-16 offsets. */

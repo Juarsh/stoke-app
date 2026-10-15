@@ -23,15 +23,12 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -63,9 +60,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 7,
@@ -98,9 +96,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 11,
@@ -518,9 +517,10 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 12,
@@ -553,9 +553,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 19,
@@ -633,15 +634,12 @@
      },
      "carbs_g": 25.2,
      "fat_g": 0.4,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -1271,15 +1269,12 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 7,
@@ -1306,15 +1301,12 @@
      },
      "carbs_g": 14.4,
      "fat_g": 7.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 8,
      "span_end": 14,
@@ -2189,23 +2181,23 @@
      "matched_text": "pani puri",
      "quantity": 10,
      "unit": "piece",
-     "grams": 250,
+     "grams": 200,
      "oil_level": "normal",
      "kcal": {
-      "low": 313,
-      "best": 417,
-      "high": 520
+      "low": 232,
+      "best": 308,
+      "high": 385
      },
      "protein_g": {
-      "low": 6.3,
-      "best": 8.3,
-      "high": 10.3
+      "low": 5.5,
+      "best": 7.3,
+      "high": 9.2
      },
-     "carbs_g": 49,
-     "fat_g": 20.8,
+     "carbs_g": 37.5,
+     "fat_g": 14.5,
      "source": "table",
      "data_source": "estimate",
-     "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
+     "source_note": "published recipe calc (6 puri with pani, 120 g, from USDA ingredient values): DietGhar https://www.dietghar.com/foods/pani-puri ; brand label check: Haldiram pani puri, 6 prepared puri = 180 kcal https://international.haldiram.com/namkeen-and-savories/pani-puri",
      "fuzzy": false,
      "needs_confirmation": false,
      "confidence": 1,
@@ -2662,32 +2654,14 @@
      },
      "carbs_g": 72.2,
      "fat_g": 31,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0,
+     "needs_confirmation": false,
+     "confidence": 0.9,
      "flags": [
-      "unit_mismatch",
       "trailing_qty"
-     ],
-     "unit_options": [
-      {
-       "qty": 2,
-       "unit": "plate",
-       "kcal": 620
-      },
-      {
-       "qty": 2,
-       "unit": "count",
-       "kcal": 620
-      },
-      {
-       "qty": 1,
-       "unit": "plate",
-       "kcal": 310
-      }
      ],
      "ai_estimate": false,
      "span_start": 0,
@@ -2854,15 +2828,12 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 10,
@@ -2894,9 +2865,8 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "confidence": 0.25,
+     "confidence": 0.65,
      "flags": [
-      "compound_name",
       "fuzzy"
      ],
      "ai_estimate": false,
@@ -4630,27 +4600,12 @@
      },
      "carbs_g": 37.5,
      "fat_g": 0,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0,
-     "flags": [
-      "unit_mismatch"
-     ],
-     "unit_options": [
-      {
-       "qty": 1,
-       "unit": "glass",
-       "kcal": 150
-      },
-      {
-       "qty": 1,
-       "unit": "count",
-       "kcal": 150
-      }
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 19,
      "span_end": 25,
@@ -5188,15 +5143,12 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -5228,9 +5180,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 7,
@@ -5263,9 +5216,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 11,
@@ -6692,15 +6646,12 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -6727,15 +6678,12 @@
      },
      "carbs_g": 18.2,
      "fat_g": 5,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 10,
@@ -8724,15 +8672,12 @@
      },
      "carbs_g": 12.6,
      "fat_g": 0.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 0,
      "span_end": 4,
@@ -8759,15 +8704,12 @@
      },
      "carbs_g": 14.2,
      "fat_g": 3.7,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 5,
      "span_end": 11,
@@ -8803,15 +8745,12 @@
      },
      "carbs_g": 37.2,
      "fat_g": 4.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -8843,9 +8782,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 7,
@@ -8878,9 +8818,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 11,
@@ -8990,15 +8931,12 @@
      },
      "carbs_g": 25.2,
      "fat_g": 0.4,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -9025,15 +8963,12 @@
      },
      "carbs_g": 14.2,
      "fat_g": 3.7,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 13,
@@ -9185,15 +9120,12 @@
      },
      "carbs_g": 55.8,
      "fat_g": 7.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -9220,15 +9152,12 @@
      },
      "carbs_g": 14.8,
      "fat_g": 8.3,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 16,
@@ -9339,15 +9268,12 @@
      },
      "carbs_g": 85.4,
      "fat_g": 23.4,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 14,
@@ -9374,15 +9300,12 @@
      },
      "carbs_g": 7.4,
      "fat_g": 4.5,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 15,
      "span_end": 19,
@@ -9459,15 +9382,12 @@
      },
      "carbs_g": 10.5,
      "fat_g": 3.1,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 0,
      "span_end": 4,
@@ -9494,15 +9414,12 @@
      },
      "carbs_g": 5.5,
      "fat_g": 1.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "open_food_facts",
      "source_note": "NEEDS VERIFICATION: typical pack-label values (Open Food Facts, ODbL); confirm against current labels before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 5,
      "span_end": 12,
@@ -10042,9 +9959,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 0,
@@ -10077,9 +9995,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 10,
@@ -10362,15 +10281,12 @@
      },
      "carbs_g": 74.4,
      "fat_g": 9.6,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -10397,15 +10313,12 @@
      },
      "carbs_g": 14.4,
      "fat_g": 7.8,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 13,
@@ -10678,15 +10591,12 @@
      },
      "carbs_g": 25.1,
      "fat_g": 0.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 0,
      "span_end": 10,
@@ -10713,15 +10623,12 @@
      },
      "carbs_g": 11.4,
      "fat_g": 8.6,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 11,
      "span_end": 15,
@@ -10757,15 +10664,12 @@
      },
      "carbs_g": 9.2,
      "fat_g": 13.9,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 0,
      "span_end": 13,
@@ -10792,15 +10696,12 @@
      },
      "carbs_g": 40.9,
      "fat_g": 1.7,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 14,
      "span_end": 18,
@@ -10909,15 +10810,12 @@
      },
      "carbs_g": 7.6,
      "fat_g": 12.2,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 0,
      "span_end": 10,
@@ -10944,15 +10842,12 @@
      },
      "carbs_g": 40.9,
      "fat_g": 1.7,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 11,
      "span_end": 15,
@@ -10988,15 +10883,12 @@
      },
      "carbs_g": 51.4,
      "fat_g": 11.4,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -11023,15 +10915,12 @@
      },
      "carbs_g": 2.9,
      "fat_g": 0.7,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 14,
@@ -11220,9 +11109,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 0,
@@ -11255,9 +11145,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 11,
@@ -11381,9 +11272,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 2,
@@ -11416,9 +11308,10 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
-      "compound_name"
+      "compound_name",
+      "adjacent_split"
      ],
      "ai_estimate": false,
      "span_start": 10,
@@ -11767,15 +11660,12 @@
      },
      "carbs_g": 23.6,
      "fat_g": 10,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 2,
      "span_end": 6,
@@ -11802,15 +11692,12 @@
      },
      "carbs_g": 18.3,
      "fat_g": 9.4,
-     "source": "did_you_mean",
+     "source": "table",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": true,
-     "confidence": 0.6,
-     "flags": [
-      "compound_name"
-     ],
+     "needs_confirmation": false,
+     "confidence": 1,
      "ai_estimate": false,
      "span_start": 7,
      "span_end": 17,
