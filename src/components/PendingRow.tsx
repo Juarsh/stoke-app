@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, View } from 'react-native';
 import { makeStyles, useTheme } from '../theme';
+import { FoodTile } from './FoodTile';
 import { Badge, Row, T } from './ui';
 
 export const SHIMMER_MS = 1200;
@@ -31,12 +32,14 @@ function ShimmerBar() {
   );
 }
 
-export function PendingRow({ label, sub, state }: { label: string; sub?: string; state: 'estimating' | 'offline' }) {
+export function PendingRow({ label, sub, state, tile }: { label: string; sub?: string; state: 'estimating' | 'offline'; tile?: boolean }) {
   const s = useStyles();
+  const name = tile ? label.charAt(0).toUpperCase() + label.slice(1) : label;
   return (
     <Row style={s.row} accessible accessibilityLabel={`${label}, ${state === 'estimating' ? 'estimating calories' : 'pending, not counted'}`}>
+      {tile ? <FoodTile seed={label} size={40} /> : null}
       <View style={{ flex: 1 }}>
-        <Row style={{ gap: 6 }}><T v="bodyStrong" numberOfLines={1}>{label}</T>{state === 'offline' ? <Badge kind="brand" label="Pending" /> : null}</Row>
+        <Row style={{ gap: 6 }}><T v="bodyStrong" numberOfLines={1}>{name}</T>{state === 'offline' ? <Badge kind="brand" label="Pending" /> : null}</Row>
         {state === 'estimating' ? <T v="caption" tone="em">Estimating…</T> : null}
         {sub ? <T v="caption" tone="muted">{sub}</T> : null}
       </View>
@@ -45,7 +48,7 @@ export function PendingRow({ label, sub, state }: { label: string; sub?: string;
   );
 }
 const useStyles = makeStyles(() => ({
-  row: { justifyContent: 'space-between', minHeight: 48, gap: 8 },
+  row: { justifyContent: 'space-between', minHeight: 56, gap: 12, paddingVertical: 8 },
   bar: { width: 58, height: 14, borderRadius: 7, overflow: 'hidden' },
   hi: { width: 24, height: 14, borderRadius: 7 },
 }));

@@ -19,14 +19,16 @@ const FloatingBar = memo(function FloatingBar({ state, navigation }: BarProps) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const blur = useNavBlur();
   const routes = state.routes.filter((r) => LABEL[r.name] && (r.name !== 'community' || flags.community));
   const inner = (
-    <View style={{ flexDirection: 'row', height: t.sizes.nav, padding: 6, gap: 4 }}>
+    <View style={{ flexDirection: 'row', height: t.sizes.nav, paddingHorizontal: 4, paddingVertical: 6 }}>
       {routes.map((r) => {
         const on = state.routes[state.index]?.key === r.key;
         return (
           <Pressable key={r.key} onPress={() => navigation.navigate(r.name)} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={LABEL[r.name]}
-            style={{ backgroundColor: on ? t.c.accentFill : 'transparent', flex: on ? 1.6 : 1, borderRadius: t.radius.full, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Icon name={ICON[r.name]} color={on ? t.c.onAccent : t.c.muted} size={20} />
-            {on ? <T v="label" tone="onAccent">{LABEL[r.name]}</T> : null}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+            <View style={{ width: 52, height: 30, borderRadius: t.radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? t.c.accentFill : 'transparent' }}>
+              <Icon name={ICON[r.name]} color={on ? t.c.onAccent : t.c.text2} size={20} />
+            </View>
+            <T v="micro" tone={on ? 'em' : 'text2'} numberOfLines={1} style={{ fontWeight: on ? '600' : '500' }}>{LABEL[r.name]}</T>
           </Pressable>
         );
       })}

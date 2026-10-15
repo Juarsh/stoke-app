@@ -32,7 +32,7 @@ const light = {
   accentText: L.accentText, accentFill: L.accentFill, delete: L.delete,
   grad1: L.accentFill, grad2: L.accentFill, grad3: L.accentFill, onAccent: L.onAccent, accentTint: L.accentTint, onGrad: L.onAccent,
   // Fill/coach card: solid accent tint (no gradients except the ring)
-  coach1: L.accentTint, coach2: L.accentTint, coach3: L.accentTint, onCoach: '#111A16', tileBg: '#EFEAE0', tileIcon: '#34413B',
+  coach1: L.accentTint, coach2: L.accentTint, coach3: L.accentTint, onCoach: '#111A16', tileBg: '#EFEAE0', tileIcon: '#34413B', iconStroke: '#A8361F', iconTint: '#FFE3DC', // food icons (v3.2): never accentFill
   gold: L.streak, goldOnGrad: '#F8DA9C', gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: L.streakTint,
   arc1: L.accentFill, arc2: L.accentFill, arc3: L.ringEnd,
   steps: '#1F6FA8', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',
@@ -54,7 +54,7 @@ const dark: Palette = {
   em: D.accentText, emChip: D.accentText, em2: D.accentFill, tint: D.accentTint, emTintLine: D.accentTintLine,
   accentText: D.accentText, accentFill: D.accentFill, delete: D.delete,
   grad1: D.accentFill, grad2: D.accentFill, grad3: D.accentFill, onAccent: D.onAccent, accentTint: D.accentTint, onGrad: D.onAccent,
-  coach1: D.accentTint, coach2: D.accentTint, coach3: D.accentTint, onCoach: '#F1F4F2', tileBg: '#1F2522', tileIcon: '#C9D2CD',
+  coach1: D.accentTint, coach2: D.accentTint, coach3: D.accentTint, onCoach: '#F1F4F2', tileBg: '#1F2522', tileIcon: '#C9D2CD', iconStroke: '#FF8A70', iconTint: '#3A1C15',
   gold: D.streak, goldOnGrad: '#F8DA9C', gradGold1: '#F6CF7E', gradGold2: '#E9A93B', tintGold: D.streakTint,
   arc1: D.accentFill, arc2: D.accentFill, arc3: D.ringEnd,
   steps: '#7FB8E6', stepsBar1: '#9CC8F2', stepsBar2: '#3A6FC4',

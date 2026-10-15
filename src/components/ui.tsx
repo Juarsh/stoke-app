@@ -105,7 +105,7 @@ export function Badge({ label, kind }: { label: string; kind: 'ai' | 'brand' | '
 
 export function Field(p: TextInputProps & { label?: string; big?: boolean }) {
   const t = useTheme(); const s = useStyles();
-  const base = p.big ? t.type.input : t.type.body;
+  const base = p.big ? { ...t.type.body, fontSize: 17, lineHeight: 24 } : t.type.body;
   const fam = hasDevanagari(p.value ?? p.defaultValue ?? '') ? devaFamily(base.fontFamily) : base.fontFamily;
   return (
     <View style={{ gap: 4 }}>
@@ -173,7 +173,7 @@ const useStyles = makeStyles((t) => ({
   chip: { height: t.sizes.chip, borderRadius: t.radius.chip, paddingHorizontal: t.space.sm, justifyContent: 'center' },
   badge: { borderRadius: t.radius.full, paddingHorizontal: t.space.xs, paddingVertical: 2 },
   field: { minHeight: t.sizes.touch, borderRadius: t.radius.field, borderWidth: 1, borderColor: t.c.cardLine, backgroundColor: t.c.card2, paddingHorizontal: t.space.md },
-  fieldBig: { minHeight: 110, paddingTop: t.space.md, borderColor: t.c.em, textAlignVertical: 'top' as const },
+  fieldBig: { minHeight: 56, paddingVertical: 14, borderWidth: 1.5, borderColor: t.c.em, backgroundColor: t.c.card, textAlignVertical: 'top' as const, outlineStyle: 'none' as never },
   seg: { flexDirection: 'row', backgroundColor: t.c.track, borderRadius: t.radius.full, padding: 3 },
   segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: t.radius.full },
   scrim: { flex: 1 },

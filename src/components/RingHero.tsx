@@ -17,7 +17,7 @@ export const RingHero = memo(function RingHero({ eaten, target, kcalLeft, protei
       accessibilityLabel={over ? `${fmt(-kcalLeft)} calories over target of ${fmt(target)}` : `${fmt(kcalLeft)} calories left of ${fmt(target)}, ${fmt(proteinLeft)} grams protein left`}>
       <Svg width={S} height={S} style={{ position: 'absolute' }}>
         <Defs>
-          <LinearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+          <LinearGradient id="ring" x1="1" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={t.c.arc1} /><Stop offset="1" stopColor={t.c.arc3} />
           </LinearGradient>
         </Defs>

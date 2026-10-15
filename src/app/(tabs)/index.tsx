@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FoodIcon, SLOT_ICON } from '@/components/FoodIcon';
 import { Glows } from '@/components/Gradient';
 import { Bar } from '@/components/HeroArc';
 import { Icon } from '@/components/Icon';
@@ -51,6 +52,8 @@ export default function Today() {
   const openSettings = useCallback(() => router.push('/settings'), [router]);
   const dietLabel = d.profile?.diet === 'veg' ? 'Veg' : d.profile?.diet === 'egg' ? 'Egg' : 'Non-veg';
   const protPct = d.proteinTarget ? d.tot.protein / d.proteinTarget : 0;
+  const reviewSlots = new Set<Slot>([...d.reviews.map((e) => e.slot), ...d.stale.map((f) => f.slot)]);
+  const reviewSlot = reviewSlots.size === 1 ? SLOT_LABEL[[...reviewSlots][0]] : undefined;
   const rows = useMemo(() => plateRows(d.entries, nameOf), [d.entries]);
   const stepsK = Math.round((d.profile?.stepsTarget ?? 8000) / 1000);
   return (
@@ -67,7 +70,7 @@ export default function Today() {
               <T v="label" tone="gold" numberOfLines={1}>🔥 {d.streak.current} {d.streak.current === 1 ? 'day' : 'days'}</T>
             </Pressable>
           </Row>
-          {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} /> : null}
+          {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} right={reviewSlot} /> : null}
           <RingHero eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} proteinLeft={d.proteinLeft} />
           <View style={s.pair}>
             <View style={{ flex: 1, gap: 6 }}>
@@ -94,6 +97,7 @@ export default function Today() {
               <Pressable key={r.slot} style={[s.plateRow, i > 0 && s.sep]} accessibilityRole="button"
                 accessibilityLabel={r.n ? `${SLOT_LABEL[r.slot]}: ${r.names}, ${r.kcal} calories` : `Add ${SLOT_LABEL[r.slot]}`}
                 onPress={() => router.push(r.n ? '/progress' : { pathname: '/log', params: { slot: r.slot as Slot } })}>
+                <FoodIcon name={SLOT_ICON[r.slot] ?? 'lunch'} size={24} />
                 <T v="bodyStrong" style={{ width: 84 }}>{SLOT_LABEL[r.slot]}</T>
                 {r.n ? (
                   <>

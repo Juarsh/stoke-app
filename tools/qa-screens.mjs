@@ -30,8 +30,7 @@ for (const theme of ['light', 'dark']) {
   await p.getByRole('button', { name: /estimating/ }).click(); await wait(p, 2000);
   await p.screenshot({ path: `${OUT}/today-review-${theme}.png` });
   if (theme === 'light') {
-    await p.getByLabel('What did you eat?').fill('२ रोटी, दाल और थोड़ा घी');
-    await wait(p, 1200);
+    await say('२ रोटी, दाल और थोड़ा घी'); await wait(p, 1200);
     await p.screenshot({ path: `${OUT}/log-hindi-${theme}.png`, fullPage: true });
   }
   if (theme === 'light') { await p.goto(BASE + '/remembered'); await wait(p, 1500); await p.screenshot({ path: `${OUT}/remembered-${theme}.png` }); }

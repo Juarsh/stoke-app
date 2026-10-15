@@ -146,7 +146,7 @@ export default function Log() {
             <T v="title">What did you eat?</T>
             <T v="caption" tone="muted" onPress={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} accessibilityRole="button" accessibilityLabel={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} style={{ padding: 12 }}>{`${SLOT_LABEL[slot]}${slotAuto ? ' · auto' : ''} ✎`}</T>
           </Row>
-          <Field big value={text} onChangeText={setText} multiline placeholder="e.g. 2 roti, dal, thoda ghee" accessibilityLabel="What did you eat?" autoCorrect={false} />
+          <Field big value={text} onChangeText={setText} multiline numberOfLines={1} placeholder="e.g. 2 roti, dal, thoda ghee" accessibilityLabel="What did you eat?" autoCorrect={false} />
           {allEst ? (
             <Row style={{ justifyContent: 'space-between' }}>
               <T tone="text2"><T tone="em">✦ </T>AI estimates · tap any to adjust</T>
@@ -167,7 +167,7 @@ export default function Log() {
           ))}
           {pendingUnmatched.length ? (
             <Group>
-              {pendingUnmatched.map((u) => <PendingRow key={u} label={u} sub="read from your text" state={offline.includes(u) ? 'offline' : 'estimating'} />)}
+              {pendingUnmatched.map((u) => <PendingRow key={u} tile label={u} sub="read from your text" state={offline.includes(u) ? 'offline' : 'estimating'} />)}
             </Group>
           ) : null}
           {nEstimating ? <T v="caption" tone="muted">Estimates usually take 1–2 seconds.</T> : nPending ? <T v="caption" tone="muted">{msg}</T> : null}
