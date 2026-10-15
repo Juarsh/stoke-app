@@ -175,7 +175,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		if _, isLearned := done[Normalize(it.Matched)]; isLearned {
 			continue
 		}
-		if _, ok := s.parser().Claim(it); ok || it.Source == parser.SourceGeneric || hasFlag(it.Flags, "leftover_nearby") {
+		if _, ok := s.parser().Claim(it); ok || it.Source == parser.SourceGeneric || hasFlag(it.Flags, "leftover_nearby") || hasFlag(it.Flags, "compound_name") {
 			continue
 		}
 		it.NeedsConfirmation = true
@@ -573,6 +573,9 @@ type ItemIn struct {
 	DishTableVersion *int     `json:"dish_table_version"`
 	CarbsG           *float64 `json:"carbs_g"`
 	FatG             *float64 `json:"fat_g"`
+	// KcalPerUnit (AI estimates): kcal for one qty of unit; kcal must equal
+	// kcal_per_unit x qty, otherwise the entry is saved corrected.
+	KcalPerUnit *float64 `json:"kcal_per_unit"`
 }
 
 // Tolerances for checking a client's numbers against the table.
@@ -624,7 +627,7 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 		c := in.ClientID
 		return &c
 	}()
-	if in.State != "" && in.State != "confirmed" && in.State != "needs_review" {
+	if in.State != "" && in.State != "confirmed" && in.State != "needs_review" { // corrected is server-set only
 		return bad(400, "state must be confirmed or needs_review")
 	}
 	if in.State == "needs_review" {
@@ -669,11 +672,13 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 			if in.DishTableVersion == nil {
 				return bad(400, "dish_table_version is required when sending numbers for a table item")
 			}
-			if in.Kcal != nil && !within(*in.Kcal, it.Kcal.Best, kcalTolAbs, kcalTolRel) {
-				return bad(422, fmt.Sprintf("kcal %.1f doesn't match table value %.1f for %s", *in.Kcal, it.Kcal.Best, it.DishID))
-			}
-			if in.ProteinG != nil && !within(*in.ProteinG, it.Protein.Best, protTolAbs, protTolRel) {
-				return bad(422, fmt.Sprintf("protein_g %.1f doesn't match table value %.1f for %s", *in.ProteinG, it.Protein.Best, it.DishID))
+			// numbers that don't match the dish in this unit (a plate's kcal
+			// sent with unit piece) are never saved: the server's own numbers
+			// are stored, state "corrected"
+			if (in.Kcal != nil && !within(*in.Kcal, it.Kcal.Best, kcalTolAbs, kcalTolRel)) ||
+				(in.ProteinG != nil && !within(*in.ProteinG, it.Protein.Best, protTolAbs, protTolRel)) {
+				e.State = "corrected"
+				return e, 0, nil
 			}
 			e.KcalBest = f(in.Kcal, e.KcalBest)
 			e.ProteinBest = f(in.ProteinG, e.ProteinBest)
@@ -703,6 +708,22 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	if name == "" || len(name) > 120 {
 		return bad(400, "each item needs dish_id or custom_name")
 	}
+	state := ""
+	if in.KcalPerUnit != nil {
+		if in.Source != "ai_estimate" {
+			return bad(400, "kcal_per_unit is only for ai_estimate items")
+		}
+		if *in.KcalPerUnit <= 0 || *in.KcalPerUnit > 3000 {
+			return bad(400, "kcal_per_unit must be > 0 and <= 3000")
+		}
+		want := math.Round(*in.KcalPerUnit * in.Qty)
+		if in.Kcal == nil {
+			in.Kcal = &want
+		} else if !within(*in.Kcal, want, kcalTolAbs, kcalTolRel) {
+			in.Kcal, state = &want, "corrected" // kcal doesn't match qty x kcal_per_unit
+			in.KcalLow, in.KcalHigh = nil, nil
+		}
+	}
 	if in.Kcal == nil || *in.Kcal < 0 || *in.Kcal > 5000 {
 		return bad(400, "this item needs kcal (0-5000)")
 	}
@@ -724,7 +745,7 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	k := *in.Kcal
 	return Entry{CustomName: name, Name: name, Qty: in.Qty, Unit: unit, KcalBest: k, KcalLow: f(in.KcalLow, k), KcalHigh: f(in.KcalHigh, k),
 		ProteinBest: pr, ProteinLow: f(in.ProteinLow, pr), ProteinHigh: f(in.ProteinHigh, pr), CarbsG: f(in.CarbsG, 0), FatG: f(in.FatG, 0),
-		Source: src, Confirmed: true, ClientID: cid, TableVer: in.DishTableVersion}, 0, nil
+		Source: src, Confirmed: true, ClientID: cid, TableVer: in.DishTableVersion, State: state}, 0, nil
 }
 
 // draft stores a needs_review item as sent: numbers are optional display
@@ -1249,7 +1270,7 @@ func (Contributor) Name() string { return "food" }
 
 func (Contributor) Contribute(ctx context.Context, q summary.Querier, uid int64, day time.Time, d *summary.Day) error {
 	var n int
-	err := q.QueryRow(ctx, `SELECT COALESCE(SUM(kcal_best) FILTER (WHERE state='confirmed'),0), COALESCE(SUM(protein_best) FILTER (WHERE state='confirmed'),0), COUNT(*) FROM food_entries
+	err := q.QueryRow(ctx, `SELECT COALESCE(SUM(kcal_best) FILTER (WHERE state<>'needs_review'),0), COALESCE(SUM(protein_best) FILTER (WHERE state<>'needs_review'),0), COUNT(*) FROM food_entries
 		WHERE user_id=$1 AND local_date=$2 AND deleted_at IS NULL`, uid, day).Scan(&d.KcalIn, &d.ProteinIn, &n)
 	d.Logged = d.Logged || n > 0 // any entry, including needs_review, counts for the streak
 	return err

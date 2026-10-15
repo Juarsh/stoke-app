@@ -97,7 +97,8 @@ type Rules struct {
 	} `json:"sanity"`
 	// PlausibleMax: the largest count that makes sense in each unit for one
 	// item ("8 plates momos" and "6 katori dal" exceed it -> unit_mismatch).
-	PlausibleMax map[string]float64 `json:"plausible_max"`
+	PlausibleMax   map[string]float64 `json:"plausible_max"`
+	NameQualifiers []string           `json:"name_qualifier_words"`
 }
 
 // Range is a low / best-guess / high triple.
@@ -138,8 +139,8 @@ type Item struct {
 	// the stated unit. Covers the counting-unit reading and the stated
 	// reading; the item stays out of the totals until the user picks one.
 	UnitOptions []UnitOption `json:"unit_options,omitempty"`
-	AIEstimate   bool          `json:"ai_estimate"`
-	AIName       string        `json:"ai_name,omitempty"`
+	AIEstimate  bool         `json:"ai_estimate"`
+	AIName      string       `json:"ai_name,omitempty"`
 	// SpanStart/SpanEnd: where this item came from in the user's original
 	// text, as UTF-16 offsets (JS string indices), end exclusive.
 	SpanStart int  `json:"span_start"`
@@ -1070,7 +1071,7 @@ func (p *Parser) finish(it *Item) {
 	forced := false
 	for _, f := range it.pens {
 		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
-			f == "token_reuse" || f == "adjacent_split" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count"
+			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -1913,12 +1914,33 @@ func (p *Parser) tokenRules(res *Result, toks []token) {
 			if i == j || spans[i].a < 0 || spans[j].a < 0 || group(i) == group(j) {
 				continue
 			}
-			if spans[j].a == spans[i].b+1 && !p.everydayPair(res.Items[i].DishID, res.Items[j].DishID) {
+			if spans[j].a == spans[i].b+1 && p.qualifierPair(res.Items[i], res.Items[j]) {
+				// reads like one dish name: the whole phrase goes to the AI
+				res.Items[i].pen("compound_name")
+				res.Items[j].pen("compound_name")
+			}
+			if spans[j].a == spans[i].b+1 && (!p.everydayPair(res.Items[i].DishID, res.Items[j].DishID) || p.qualifierPair(res.Items[i], res.Items[j])) {
 				res.Items[i].pen("adjacent_split")
 				res.Items[j].pen("adjacent_split")
 			}
 		}
 	}
+}
+
+// qualifierPair: "egg rice", "chicken pulao", "paneer roti" - the first
+// match is a bare ingredient word naming the next dish, not a side dish.
+// Listed dish pairs ("idli sambar") still split.
+func (p *Parser) qualifierPair(a, b Item) bool {
+	for _, pr := range p.r.EverydayPairs.DishPairs {
+		if (pr[0] == a.DishID && pr[1] == b.DishID) || (pr[0] == b.DishID && pr[1] == a.DishID) {
+			return false
+		}
+	}
+	w := strings.ToLower(strings.TrimSpace(a.Matched))
+	if _, ok := p.r.ProteinWords[w]; ok {
+		return true
+	}
+	return slices.Contains(p.r.NameQualifiers, w)
 }
 
 func (p *Parser) everydayPair(a, b string) bool {

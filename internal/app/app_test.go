@@ -566,8 +566,8 @@ func TestClientIDVersionAndNumbers(t *testing.T) {
 		item M
 		want int
 	}{
-		"kcal off":            {mod("kcal", 300.0), 422},
-		"protein off":         {mod("protein_g", 12.0), 422},
+		"kcal off":            {mod("kcal", 300.0), 201},
+		"protein off":         {mod("protein_g", 12.0), 201},
 		"old table version":   {mod("dish_table_version", 0), 409},
 		"numbers, no version": {mod("dish_table_version", nil), 400},
 		"range excludes best": {mod("kcal_high", 200.0), 422},
@@ -647,7 +647,7 @@ func TestOfflineSyncAcrossTableUpdate(t *testing.T) {
 		t.Errorf("v2 entry: %d %+v", c, o)
 	}
 	// v1 numbers claimed as v2: mismatch
-	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e3", ver1+1, roti1.Kcal), nil); c != 422 {
+	if c := call(t, srv2, "POST", "/v1/entries", "off", item("e3", ver1+1, roti1.Kcal), nil); c != 201 {
 		t.Errorf("v1 numbers labelled v2: %d", c)
 	}
 	// a version the server has never seen: 409, keep and retry
