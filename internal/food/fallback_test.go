@@ -16,7 +16,7 @@ import (
 // A fake generateContent server: no real Gemini call in tests.
 func fakeGemini(t *testing.T, status int, answer string, delay time.Duration, got *map[string]any) *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("x-goog-api-key") != "k" || !strings.HasSuffix(r.URL.Path, "/models/gemini-2.5-flash:generateContent") {
+		if r.Header.Get("x-goog-api-key") != "k" || !strings.HasSuffix(r.URL.Path, "/models/gemini-flash-latest:generateContent") {
 			t.Errorf("bad request %s", r.URL.Path)
 		}
 		if got != nil {

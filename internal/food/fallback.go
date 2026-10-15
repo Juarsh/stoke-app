@@ -44,7 +44,7 @@ func (NoFallback) EstimateMeal(context.Context, string, []Span, []parser.Item) (
 // caller turns into generic confirm cards.
 type Gemini struct {
 	APIKey  string
-	Model   string        // default gemini-2.5-flash
+	Model   string        // default gemini-flash-latest (2.5-flash is closed to new keys)
 	BaseURL string        // default https://generativelanguage.googleapis.com/v1beta (tests point it at a fake server)
 	Timeout time.Duration // default 8s
 	Client  *http.Client
@@ -95,7 +95,7 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 	}
 	model, base, to, cl := g.Model, g.BaseURL, g.Timeout, g.Client
 	if model == "" {
-		model = "gemini-2.5-flash"
+		model = "gemini-flash-latest"
 	}
 	if base == "" {
 		base = "https://generativelanguage.googleapis.com/v1beta"
@@ -127,6 +127,7 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 			"responseMimeType": "application/json",
 			"responseSchema":   geminiSchema,
 			"temperature":      0,
+			"thinkingConfig":   map[string]any{"thinkingBudget": 0}, // a lookup, not a puzzle: keeps the answer inside the 8s timeout
 		},
 	})
 	req, err := http.NewRequestWithContext(ctx, "POST", base+"/models/"+model+":generateContent", bytes.NewReader(body))
@@ -141,7 +142,15 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("gemini: status %d", resp.StatusCode)
+		var ge struct {
+			Error struct{ Status, Message string }
+		}
+		_ = json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&ge)
+		msg := ge.Error.Message
+		if len(msg) > 300 {
+			msg = msg[:300]
+		}
+		return nil, fmt.Errorf("gemini: status %d %s: %s", resp.StatusCode, ge.Error.Status, msg)
 	}
 	var gr struct {
 		Candidates []struct {

@@ -163,7 +163,7 @@ the per-minute limiter described in this section.**
   limiter runs inside each server process, so with several instances set it
   per instance.
 - `AI_MODE=gemini` makes one REST `generateContent` call
-  (`GEMINI_MODEL`, default gemini-2.5-flash) with a strict JSON
+  (`GEMINI_MODEL`, default gemini-flash-latest; thinking off) with a strict JSON
   `responseSchema` and an 8-second timeout. Errors, timeouts, bad JSON,
   invalid ranges, or spans that weren't asked about become generic confirm
   cards (`fallback: "error"`).
