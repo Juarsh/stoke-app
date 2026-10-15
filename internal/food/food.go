@@ -29,10 +29,13 @@ type Rebuilder interface {
 }
 
 type Service struct {
-	DB       *pgxpool.Pool
-	Parser   *parser.Parser
-	Fallback Fallback
-	Summary  Rebuilder
+	// CompoundToAI: compound_name phrases go to the AI (true) or stay as
+	// did_you_mean items to confirm with no AI call (false, default).
+	CompoundToAI bool
+	DB           *pgxpool.Pool
+	Parser       *parser.Parser
+	Fallback     Fallback
+	Summary      Rebuilder
 	// GlobalCap is the project-wide daily limit on AI calls (0 = no limit).
 	GlobalCap atomic.Int64
 	// Live is the current dish table (swapped by admin imports).
@@ -175,7 +178,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		if _, isLearned := done[Normalize(it.Matched)]; isLearned {
 			continue
 		}
-		if _, ok := s.parser().Claim(it); ok || it.Source == parser.SourceGeneric || hasFlag(it.Flags, "leftover_nearby") || hasFlag(it.Flags, "compound_name") {
+		if _, ok := s.parser().Claim(it); ok || it.Source == parser.SourceGeneric || hasFlag(it.Flags, "leftover_nearby") || (s.CompoundToAI && hasFlag(it.Flags, "compound_name")) {
 			continue
 		}
 		it.NeedsConfirmation = true
@@ -288,6 +291,21 @@ func finishResp(out ParseResponse) ParseResponse {
 	return out
 }
 
+// spanHasUnknown: the span holds an unmatched word outside the given items.
+func spanHasUnknown(sp Span, items []parser.Item, unmatched []string) bool {
+	for _, u := range unmatched {
+		for _, w := range strings.Fields(Normalize(u)) {
+			if isNumber(w) {
+				continue
+			}
+			if strings.Contains(" "+Normalize(sp.Text)+" ", " "+w+" ") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func isNumber(w string) bool {
 	_, err := strconv.ParseFloat(w, 64)
 	return err == nil
@@ -322,6 +340,22 @@ func (s *Service) fallbackResponse(claimed []parser.Item, open []Span, res parse
 	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "generic"}
 	out.Items = append(out.Items, claimed...)
 	for _, sp := range open {
+		// a compound phrase with no AI answer: show the table's reading of
+		// its words to confirm, not one blind placeholder
+		var parts []parser.Item
+		for _, it := range res.Items {
+			if hasFlag(it.Flags, "compound_name") && it.SpanStart >= sp.Start && it.SpanEnd <= sp.End {
+				it.NeedsConfirmation = true
+				if it.Source == parser.SourceTable {
+					it.Source = parser.SourceDidYouMean
+				}
+				parts = append(parts, it)
+			}
+		}
+		if len(parts) > 0 && !spanHasUnknown(sp, parts, res.Unmatched) {
+			out.Items = append(out.Items, parts...)
+			continue
+		}
 		cnt, key := splitCount(sp.Text)
 		it := scaleItem(s.parser().Unknown(key), cnt)
 		it.SpanStart, it.SpanEnd = sp.Start, sp.End
@@ -630,8 +664,22 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	if in.State != "" && in.State != "confirmed" && in.State != "needs_review" { // corrected is server-set only
 		return bad(400, "state must be confirmed or needs_review")
 	}
+	if in.KcalPerUnit != nil && in.Source != "ai_estimate" {
+		return bad(400, "kcal_per_unit is only for ai_estimate items")
+	}
 	if in.State == "needs_review" {
 		return s.draft(in, cid)
+	}
+	// a table dish in a unit it doesn't come in (poha plate sent as
+	// "piece"): never confirmed at the client's numbers; saved needs_review
+	// with the server's numbers for its default unit, flagged unit_mismatch
+	if in.DishID != "" && in.Source != "ai_estimate" && in.Source != "custom" && in.Source != "manual" &&
+		in.Unit != "" && !s.parser().ValidUnit(in.DishID, in.Unit) {
+		if _, ok := s.parser().Dish(in.DishID); ok {
+			d := in
+			d.Unit, d.Kcal, d.KcalLow, d.KcalHigh, d.ProteinG, d.ProteinLow, d.ProteinHigh, d.CarbsG, d.FatG = "", nil, nil, nil, nil, nil, nil, nil, nil
+			return s.draft(d, cid)
+		}
 	}
 	userTyped := in.Source == "custom" || in.Source == "manual"
 	if in.DishID != "" && in.Source != "ai_estimate" && !userTyped {

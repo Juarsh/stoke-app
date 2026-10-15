@@ -28,8 +28,7 @@ func TestCountingUnits(t *testing.T) {
 	for _, c := range []struct {
 		text  string
 		units []string
-	}{{"8 plates momos", []string{"piece", "plate"}}, {"6 katori dal", []string{"katori"}},
-		{"2 dal", []string{"katori"}}, {"1 plate idli", []string{"plate"}}} {
+	}{{"8 plates momos", []string{"piece", "plate"}}, {"6 katori dal", []string{"katori"}}} {
 		r := p.Parse(c.text)
 		it := r.Items[0]
 		if !hasF(it.Flags, "unit_mismatch") || !it.NeedsConfirmation || it.Source == SourceTable || len(it.UnitOptions) < 2 {

@@ -109,6 +109,7 @@ func New(c Config) (http.Handler, error) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, 200, map[string]any{"ok": true, "time": time.Now().UTC()})
 	})
+	mux.HandleFunc("GET /version", func(w http.ResponseWriter, r *http.Request) { httpx.JSON(w, 200, version()) })
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { httpx.Error(w, 404, "not found") })
 	return mux, nil
 }

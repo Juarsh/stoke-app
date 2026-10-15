@@ -1118,8 +1118,7 @@ func (p *Parser) plausibleCount(d *dishes.Dish, it *Item) {
 	max, ok := p.r.PlausibleMax[u]
 	// a counted dish served by the plate or katori ("1 plate idli"): how
 	// many pieces is that? ask
-	bowlOfCounted := d.Unit == "count" && d.PieceGrams == 0 && (u == "plate" || u == "katori" || u == "bowl")
-	if !bowlOfCounted && (!ok || it.Quantity <= max) {
+	if !ok || it.Quantity <= max {
 		return
 	}
 	p.unitOptions(d, it)
@@ -1392,6 +1391,9 @@ func (p *Parser) countBetween(res *Result, tgt int, toks []token, i int) bool {
 }
 
 func (p *Parser) unitGrams(d *dishes.Dish, unit string) float64 {
+	if g, ok := d.UnitGrams(unit); ok && unit != "" {
+		return g // the dish's own sourced weight for this unit
+	}
 	switch {
 	case unit == "" || unit == d.Unit || unit == "count":
 		return d.PortionGrams
@@ -1481,7 +1483,16 @@ func (p *Parser) expand(d *dishes.Dish, qty float64, unit, oil, matched string, 
 }
 
 // bowlDish: a dish served by the bowl, where a bare count does not fit.
-func (p *Parser) bowlDish(d *dishes.Dish) bool { return !p.unitFits(d, "", true) }
+func (p *Parser) bowlDish(d *dishes.Dish) bool { return !p.bareCountFits(d) }
+
+// bareCountFits: the old rule, a bare count only fits countable dishes; used
+// for egg bowls ("2 egg curry" counts eggs, not bowls).
+func (p *Parser) bareCountFits(d *dishes.Dish) bool {
+	if d.PieceGrams > 0 {
+		return true
+	}
+	return slices.Contains(p.r.BareCountUnits, d.Unit)
+}
 
 // eggBowl: a bowl dish where whole eggs sit in a gravy (rules egg_piece_bowls).
 func (p *Parser) eggBowl(d *dishes.Dish) bool {
@@ -1669,6 +1680,16 @@ var ErrUnknownDish = errors.New("unknown dish_id")
 var Units = map[string]bool{"count": true, "piece": true, "katori": true, "spoon": true, "plate": true, "glass": true, "gram": true}
 
 // Recompute builds an item from an edited chip (dish, quantity, unit, oil level).
+// ValidUnit reports whether a dish comes in this unit (its units list; an
+// empty unit means its own counting unit).
+func (p *Parser) ValidUnit(dishID, unit string) bool {
+	d := p.dishByID(dishID)
+	if d == nil {
+		return false
+	}
+	return p.unitFits(d, unit, false)
+}
+
 func (p *Parser) Recompute(dishID string, qty float64, unit, oil string) (Item, error) {
 	d := p.dishByID(dishID)
 	if d == nil {
@@ -1809,6 +1830,21 @@ func (p *Parser) everydayCombos(res *Result) {
 // unitFits: a typed unit must describe the dish's unit, and a bare count
 // ("2 egg curry") only fits countable dishes or ones with a per-piece size.
 func (p *Parser) unitFits(d *dishes.Dish, unit string, hasQty bool) bool {
+	if len(d.Units) > 0 {
+		// the dish's own unit list: a bare number is its counting unit
+		// ("2 dal" = 2 katori); a typed unit must be listed
+		switch unit {
+		case "":
+			return !hasQty || p.r.EggsPerPortion[d.ID] == 0 || p.bareCountFits(d)
+		case "g", "gram", "ml":
+			return true
+		case "piece", "count":
+			_, a := d.UnitGrams("piece")
+			return a || d.Unit == "count"
+		}
+		_, ok := d.UnitGrams(unit)
+		return ok
+	}
 	if unit == "" {
 		if !hasQty || d.PieceGrams > 0 {
 			return true
@@ -1914,7 +1950,9 @@ func (p *Parser) tokenRules(res *Result, toks []token) {
 			if i == j || spans[i].a < 0 || spans[j].a < 0 || group(i) == group(j) {
 				continue
 			}
-			if spans[j].a == spans[i].b+1 && p.qualifierPair(res.Items[i], res.Items[j]) {
+			// rule 2: two adjacent table matches (no separator, no quantity
+			// between) that aren't one everyday combo read as one dish name
+			if spans[j].a == spans[i].b+1 {
 				// reads like one dish name: the whole phrase goes to the AI
 				res.Items[i].pen("compound_name")
 				res.Items[j].pen("compound_name")

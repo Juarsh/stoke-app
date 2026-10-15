@@ -41,6 +41,26 @@ type Dish struct {
 	PieceGrams   float64  `json:"piece_grams,omitempty"`   // countable plate dishes: "8 momos" = 8 pieces
 	Parts        []Part   `json:"parts,omitempty"`         // combos: split into these when a portion is given
 	NeedsConfirm bool     `json:"needs_confirm,omitempty"` // generic placeholder rows: always ask the user
+	// Units: every unit this dish comes in, with its gram weight and where
+	// that weight comes from. A typed unit not listed is unit_mismatch.
+	Units []DishUnit `json:"units,omitempty"`
+}
+
+// DishUnit is one valid unit for a dish.
+type DishUnit struct {
+	Unit   string  `json:"unit"`
+	Grams  float64 `json:"grams"`
+	Source string  `json:"source"`
+}
+
+// UnitGrams returns the dish's own gram weight for a unit, if listed.
+func (d Dish) UnitGrams(unit string) (float64, bool) {
+	for _, u := range d.Units {
+		if u.Unit == unit {
+			return u.Grams, true
+		}
+	}
+	return 0, false
 }
 
 // Part is one component of a combo per one standard portion of the combo.

@@ -443,6 +443,13 @@ The AI is called only for a span holding a word nothing in the parse used (or a 
 and `unit_mismatch` items cover their own words: they come back as `did_you_mean` to confirm and
 the meal makes no AI call (`answer: "table"`, `fallback: "none"`).
 
+### Valid units per dish (supersedes the unit_mismatch triggers below)
+Every dish row has `units: [{unit, grams, source}]`, the units it comes in with the gram weight and
+where that weight comes from (`idli` plate = 2 idli = 80 g; `momos` plate = 6 pieces = 180 g,
+Hyprote). A bare number is the dish's counting unit and is valid (`2 dal` = 2 katori, `1 plate idli`
+= 80 g, both confirmed). `unit_mismatch` is only for a typed unit the dish doesn't list, or a count
+above `plausible_max` for that unit (`8 plates momos`, `6 katori dal`).
+
 ### Counting units and plausible counts
 - A bare number means the dish's counting unit: `piece` when the dish has `piece_grams` (momos:
   `8 momos` = 8 pieces, 400 kcal), otherwise the dish unit (`count` for idli, samosa, roti; `katori`
@@ -458,8 +465,12 @@ the meal makes no AI call (`answer: "table"`, `fallback: "none"`).
 - Items with `unit_options` are left out of `total` until the user picks one and saves it; the
   saved entry is recomputed by the server from the chosen qty and unit.
 
-### Compound names
-Two adjacent table matches with no separator or quantity between them, where the first is a bare
+### Compound names (rule 2, strict)
+Any two adjacent table matches with no separator or quantity between them that aren't one
+`everyday_combos` row (`roti sabzi`, `idli sambar`, `egg rice` alike) are flagged `compound_name` +
+`adjacent_split` and are never confident. By default they come back as `did_you_mean` items to confirm
+with no AI call (food.Service.CompoundToAI = false; true sends the phrase to the AI instead).
+Earlier text: two adjacent table matches where the first is a bare
 ingredient word (`protein_words` or `rules.json` `name_qualifier_words`: egg, chicken, paneer, aloo,
 ...), read as one dish name (`egg rice`, `chicken pulao`, `paneer roti`). Both get `compound_name`
 and `adjacent_split`, are never confident, and the whole phrase goes to the AI. Only
@@ -478,6 +489,22 @@ and `adjacent_split`, are never confident, and the whole phrase goes to the AI. 
 - AI estimates may send `kcal_per_unit` (> 0, <= 3000; 400 otherwise, and only with
   `source: "ai_estimate"`). `kcal` must equal `kcal_per_unit x qty` (within max(2 kcal, 2%));
   missing kcal is filled in, a mismatch is saved as `kcal_per_unit x qty` with `state: "corrected"`.
+
+- A table dish sent in a unit it doesn't come in (poha or dal with `unit: "piece"`) is never
+  confirmed at the client's numbers: saved `state: "needs_review"` with the server's numbers for its
+  own unit, out of totals until confirmed with a valid unit.
+- `kcal_per_unit` on any non-`ai_estimate` item (including table items): 400.
+
+### GET /version
+`{"commit": "<short sha>", "built_at": "<RFC3339>", "dirty": bool}`. Commit and time come from
+`-ldflags "-X github.com/akarsh/calorie-tracker/internal/app.Commit=... -X ...app.BuiltAt=..."`, else
+Go's embedded VCS info.
+
+### Portion changes (dish table version 2)
+| dish | old | new | source |
+|---|---|---|---|
+| samosa | 80 g, 260 kcal, 4 g protein | 75 g, 233 kcal, 3.9 g | USDA FDC FNDDS 2708730 (310 kcal/100 g, "quantity not specified" 75 g) |
+| masala_dosa | 160 g, 350 kcal, 7 g | 267 g, 491 kcal, 14.6 g | USDA FDC FNDDS 2709129 "Dosa, with filling" (184 kcal/100 g, "1 medium" 267 g) |
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | ""}`: every following AI call fails that way until mode `""` or
