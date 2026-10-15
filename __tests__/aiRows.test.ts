@@ -190,3 +190,16 @@ test('3f4f401: fallback "gave_up" alone (no ai_state) is failed with generic cop
   expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', custom_items: [] } as never)).toBe('failed');
   expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', fallback_reason: 'gave_up', ai_state: 'failed', custom_items: [] } as never)).toBe('failed');
 });
+
+describe('bad_request is final like gave_up', () => {
+  test('failed (with and without ai_state), generic copy', () => {
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'error', fallback_reason: 'bad_request', ai_state: 'failed', custom_items: [] } as never)).toBe('failed');
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'error', fallback_reason: 'bad_request', custom_items: [] } as never)).toBe('failed');
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'bad_request', custom_items: [] } as never)).toBe('failed');
+    expect(failedCopy({ reason: 'bad_request' })).toBe('Couldn’t estimate this. Add the calories yourself.');
+  });
+  test.each(['daily_limit', 'user_limit', 'error', 'gave_up', 'bad_request'])('%s fallback_reason is failed', (r) =>
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'busy', fallback_reason: r, custom_items: [] } as never)).toBe('failed'));
+  test.each(['rate_limited', 'unavailable', 'timeout'])('%s stays estimating', (r) =>
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'busy', fallback_reason: r, custom_items: [] } as never)).toBe('estimating'));
+});

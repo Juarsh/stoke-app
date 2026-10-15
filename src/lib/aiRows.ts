@@ -8,7 +8,7 @@ import type { PendingFood } from './syncQueue';
 
 export type AiStatus = 'estimating' | 'failed' | 'ready';
 /** The server's ai_state (API.md @ a72964e) decides the row. A pending job poll (ParsePending) is still estimating.
- * Only daily_limit / user_limit / error / gave_up end as failed; rate_limited / unavailable / timeout stay estimating (the server requeues). */
+ * Only daily_limit / user_limit / error / gave_up / bad_request end as failed; rate_limited / unavailable / timeout stay estimating (the server requeues). */
 export function aiStatus(r: ParseResponse | unknown): AiStatus {
   if (r instanceof ParsePending) return 'estimating';
   if (r instanceof Error || !r || typeof r !== 'object') return 'failed';
@@ -18,8 +18,8 @@ export function aiStatus(r: ParseResponse | unknown): AiStatus {
   if (p.ai_state === 'answered') return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
   // answers from a server without ai_state (mock / offline): the old fallback mapping
   if (['rate_limited', 'unavailable', 'timeout'].includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
-  if (['gave_up', 'user_limit'].includes(p.fallback_reason ?? '')) return 'failed';
-  if (['error', 'busy', 'gave_up', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
+  if (['gave_up', 'bad_request', 'user_limit', 'daily_limit', 'error'].includes(p.fallback_reason ?? '')) return 'failed';
+  if (['error', 'busy', 'gave_up', 'bad_request', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
   return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
 }
 
