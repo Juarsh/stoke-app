@@ -40,7 +40,7 @@ const light = {
   danger: L.delete, track: 'rgba(20,60,45,0.10)',
   onCoachFill: 'rgba(42,11,4,0.08)', check: '#111A16', onCheck: '#FFFFFF', freeze: '#1E6AA1',
   /** review card text/icon, always with ⚠ */
-  warn: L.warn,
+  warn: L.warn, warnTint: '#FBF0D3', warnTintLine: '#EBD9A6',
   scrim: 'rgba(8,11,10,0.45)', popBg: '#1A201D', popText: '#F1F4F2', shadow: '#0E1110', glowBtn: L.accentGlow,
   tile: [['#F6CF7E', '#E07A2E'], ['#7FE3C0', '#13A07A'], ['#F4A3A3', '#C9485B'], ['#9CC8F2', '#3A6FC4'], ['#D9C2F5', '#7A55C2']] as string[][],
   shareBg1: '#FBF8F1', shareBg2: '#F1EADB',
@@ -62,7 +62,7 @@ const dark: Palette & { goldOnGrad: string } = {
   ai: '#C9D2CD', aiBg: '#1F2522',
   danger: D.delete, track: 'rgba(255,255,255,0.08)',
   onCoachFill: 'rgba(255,255,255,0.12)', check: '#F1F4F2', onCheck: '#080B0A', freeze: '#7FB8E6',
-  warn: D.warn,
+  warn: D.warn, warnTint: '#2A2312', warnTintLine: '#4A3D1C',
   scrim: 'rgba(0,0,0,0.6)', popBg: '#202824', popText: '#F1F4F2', shadow: '#000000', glowBtn: D.accentGlow,
   tile: light.tile,
   shareBg1: '#121715', shareBg2: '#0B0E0D',

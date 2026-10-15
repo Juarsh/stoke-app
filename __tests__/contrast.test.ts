@@ -16,7 +16,7 @@ export const ratio = (a: RGBA, b: RGBA) => { const [x, y] = [lum(a), lum(b)].sor
 type P = (typeof palette)['light'];
 type K = keyof P;
 // Every text colour on every surface it could sit on (drawn today or not): screen, cards, tints, tiles, AI chip, tab bar.
-const SURFACES: K[] = ['bg', 'card', 'card2', 'tint', 'tintGold', 'coach1', 'tileBg', 'aiBg', 'nav', 'navSolid'];
+const SURFACES: K[] = ['bg', 'card', 'card2', 'tint', 'tintGold', 'coach1', 'tileBg', 'aiBg', 'nav', 'navSolid', 'warnTint'];
 const TEXT: K[] = ['text', 'text2', 'muted', 'em', 'emChip', 'accentText', 'gold', 'onCoach', 'ai', 'danger', 'delete', 'warn', 'steps', 'freeze', 'over'];
 // "on-fill" colours only ever sit on their own fill
 const ON_FILL: [K, K][] = [['onGrad', 'accentFill'], ['onAccent', 'accentFill'], ['onCheck', 'check'], ['popText', 'popBg']];

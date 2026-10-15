@@ -5,7 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
-import { DecisionCard, Group, ItemRow } from '@/components/LogRows';
+import { DecisionCard, Group, ItemRow, OpenRow } from '@/components/LogRows';
+import { kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
@@ -92,28 +93,32 @@ export default function Log() {
     } finally { setBusy(false); }
   }
 
-  // Confirmation is the primary action, not a blocker: Add confirms every CHECK/AI item.
-  const unsure = drafts.filter((d) => !d.ok).length;
-  const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // the only disabled state (missing data)
-  const { kcal: total, protein } = draftTotals(drafts.map((d) => d.it), customs);
+  // Confirm batch (design-notes v3.2 Oct 15): only confirmed rows, plain confident rows and server-marked one_tap_ok rows are
+  // added/counted. Unit mismatches, AI estimates, estimate_unverified and other choices stay open and out of every total.
+  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })));
+  const kindByKey = new Map(drafts.map((d) => [d.key, kindOf(d.it as ServerItem, d.ok)] as const));
+  const customMissing = customs.some((c) => !(Number(c.kcal) > 0)); // missing data blocks Add
+  const { kcal: total, protein } = draftTotals(bp.add.map((r) => r.it), customs);
   // Offline Pending = '— kcal', not counted. Estimating = shimmer; Add stays enabled and sends them to items to review.
   const nEstimating = pendingUnmatched.filter((u) => !offline.includes(u)).length;
   const nPending = pendingUnmatched.length - nEstimating;
-  const sum = logSummary({ kcal: total, protein, items: drafts.length + customs.filter((c) => Number(c.kcal) > 0).length, estimating: nEstimating, pending: nPending,
-    toConfirm: unsure, estimates: drafts.filter((d) => d.it.ai_estimate).length, needsKcal: customs.filter((c) => !(Number(c.kcal) > 0)).length });
+  const nOpen = bp.open.length;
+  const sum0 = logSummary({ kcal: total, protein, items: bp.add.length + customs.filter((c) => Number(c.kcal) > 0).length, estimating: nEstimating, pending: nPending,
+    toConfirm: 0, estimates: 0, needsKcal: customs.filter((c) => !(Number(c.kcal) > 0)).length });
+  const sum = nOpen ? { ...sum0, total: bp.total, button: bp.button, disabled: bp.add.length + customs.length + pendingUnmatched.length === 0, soFar: false } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
   const canAdd = any && !sum.disabled && !customMissing;
-  const allEst = sum.allEstimates;
   const addLabel = sum.button;
-  // dashed decision cards only in mixed lists, for items needing a real choice
-  const plainDrafts = drafts.filter((d) => allEst || d.ok || !d.it.needs_confirmation);
-  const decisionDrafts = drafts.filter((d) => !plainDrafts.includes(d));
+  const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
+  const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
+  const decisionDrafts = drafts.filter((d) => kindByKey.get(d.key) === 'choice');
 
   function add() {
     const date = localDate();
     // uncertain or corrected readings carry their span, so the server remembers them (Remembered foods)
     const learn = (d: Draft) => (!d.ok || d.corrected || d.it.source !== 'table') && !d.it.remembered && !d.it.learned;
-    const es: FoodEntry[] = drafts.map((d) => entryFromItem(d.it, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION, remember: learn(d) }));
+    const adding = drafts.filter((d) => bp.add.some((r) => r.key === d.key));
+    const es: FoodEntry[] = adding.map((d) => entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION, remember: learn(d) }));
     // offline ones wait as Pending; estimating ones go straight to items to review (at: 0), keyed by their stable id
     if (pendingUnmatched.length) st.addPending(pendingUnmatched.map((span) => {
       const id = idFor(span); handedOff.current.add(id);
@@ -127,8 +132,14 @@ export default function Log() {
     }
     st.addEntries(es);
     // remember every reading the user confirmed or corrected (table items with a known dish only)
-    st.remember(drafts.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
+    st.remember(adding.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
       .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
+    if (nOpen) { // open rows stay on screen with their own controls; the rest is saved
+      for (const d of adding) remove(d);
+      setCustoms([]);
+      setMsg(bp.note);
+      return;
+    }
     setText('');
     router.navigate('/');
   }
@@ -146,18 +157,19 @@ export default function Log() {
             <T v="caption" tone="muted" onPress={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} accessibilityRole="button" accessibilityLabel={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} style={{ padding: 12 }}>{`${SLOT_LABEL[slot]}${slotAuto ? ' · auto' : ''} ✎`}</T>
           </Row>
           <Field big value={text} onChangeText={setText} multiline numberOfLines={1} placeholder="e.g. 2 roti, dal, thoda ghee" accessibilityLabel="What did you eat?" autoCorrect={false} />
-          {allEst ? (
-            <Row style={{ justifyContent: 'space-between' }}>
-              <T tone="text2"><T tone="em">✦ </T>AI estimates · tap any to adjust</T>
-              <T tone="muted" accessibilityRole="button" accessibilityLabel="How estimates work" onPress={() => setMsg('Estimates come from AI when a dish isn’t in our table. Tap one to change the amount or numbers.')}>ⓘ</T>
-            </Row>
-          ) : null}
-          {/* plain rows (confident / remembered / all-estimates) in one group; pending + estimating rows in a second group */}
-          {plainDrafts.length ? (
+          {listDrafts.length ? (
             <Group>
-              {plainDrafts.map((d) => (
-                <ItemRow key={d.key} it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'} chevron={allEst}
-                  onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+              {listDrafts.map((d) => (
+                <ItemRow key={d.key} it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'}
+                  tableMatch={kindByKey.get(d.key) === 'batch'} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+              ))}
+            </Group>
+          ) : null}
+          {openDrafts.length ? (
+            <Group>
+              {openDrafts.map((d) => (
+                <OpenRow key={d.key} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
+                  onConfirm={(n) => { setItem(d, n); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
               ))}
             </Group>
           ) : null}
@@ -189,6 +201,7 @@ export default function Log() {
               <T v="number">{sum.kcalText} <T v="caption" tone="muted">{sum.soFar ? 'kcal so far' : `kcal · ${sum.protein} g`}</T></T>
             </Row>
             <Button title={addLabel} disabled={!canAdd} onPress={add} accessibilityLabel={addLabel} />
+            {nOpen && bp.add.length ? <T v="caption" tone="muted" style={{ textAlign: 'center' }}>{bp.note}</T> : null}
           </View>
         ) : null}
       </SafeAreaView>

@@ -36,6 +36,12 @@ for (const theme of ['light', 'dark']) {
   await shot(p, `log-all-estimates-${theme}`);
   await say('2 chapatii dal, 8 plate momos, paneer lababdar, quinoa bowl'); await wait(p, 5500);
   await shot(p, `log-ai-check-${theme}`, { fullPage: true });
+  // confirm batch + inline estimates (design-notes v3.2 Oct 15); one_tap_ok only ever comes from the server
+  for (const [txt, name] of [['2 roti, dal, bhindi, thukpa', 'log-confirm-batch'], ['bhel puri, thukpa', 'log-confirm-none'], ['thukpa', 'log-ai-estimate-row'],
+    ['8 plates momos, 6 katori dal', 'log-unit-mismatch'], ['bhel puri', 'log-bhel-unverified']]) {
+    await say(txt); await wait(p, 5500);
+    await shot(p, `${name}-${theme}`);
+  }
   // Add while estimating -> confident items saved, estimating ones go to items to review
   await say('2 roti, granola'); await wait(p, 1400);
   await p.getByRole('button', { name: /estimating/ }).click(); await wait(p, 2000);

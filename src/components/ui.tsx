@@ -67,8 +67,8 @@ export function Card({ style, tone = 'card', dashed, outline, children, ...p }: 
 export function Button({ title, kind = 'primary', disabled, style, ...p }: PressableProps & { title: string; kind?: 'primary' | 'soft' | 'danger' | 'ghost' | 'onCoach' }) {
   const t = useTheme(); const s = useStyles();
   const grad = kind === 'primary' && !disabled;
-  const bg = disabled ? t.c.track : grad ? t.c.accentFill : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
-  const fg: Tone = disabled ? 'muted' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : 'emChip';
+  const bg = disabled ? t.c.card2 : grad ? t.c.accentFill : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
+  const fg: Tone = disabled ? 'text2' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : 'emChip';
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
       style={(st) => [s.btn, { backgroundColor: bg }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, st.pressed && { opacity: 0.85 }, style as object]}>

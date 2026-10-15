@@ -9,6 +9,7 @@ import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
+import { pickUnit } from '../lib/confirmBatch';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { Badge, Row, Segmented, T } from './ui';
@@ -28,8 +29,8 @@ export function Group({ children }: { children: ReactNode }) {
   return <View style={s.group}>{kids.map((c, i) => <View key={i} style={i > 0 ? s.sep : undefined}>{c}</View>)}</View>;
 }
 
-export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, onEdit, onRemove }: {
-  it: Item; state: RowState; chevron?: boolean; sub?: string; onEdit: (n: Item) => void; onRemove: () => void;
+export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, tableMatch, onEdit, onRemove }: {
+  it: Item; state: RowState; chevron?: boolean; sub?: string; tableMatch?: boolean; onEdit: (n: Item) => void; onRemove: () => void;
 }) {
   const s = useStyles(); const t = useTheme();
   const [sheet, setSheet] = useState(false);
@@ -49,6 +50,7 @@ export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, onEdit, 
             {extra ? ` · ${extra}` : ''}
           </T>
         ) : <T v="caption" tone="muted">{[portion, extra].filter(Boolean).join(' · ')}</T>}
+        {tableMatch ? <T v="caption" tone="text2">✓ Table match</T> : null}
       </View>
       <T v="number">{it.kcal.best.toLocaleString('en-IN')}</T>
       {chevron ? <Icon name="chevron" color={t.c.muted} size={18} /> : null}
@@ -96,4 +98,70 @@ const useStyles = makeStyles((t) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 10 },
   dotted: { textDecorationLine: 'underline', textDecorationStyle: 'dotted', fontWeight: '500' },
   decision: { borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.text2, paddingHorizontal: t.space.cardH, paddingBottom: t.space.cardV, gap: 8 },
+}));
+
+const plural = (u: string) => (u === 'katori' ? 'katori' : `${u}s`);
+/** Open row (not counted until the user decides): inline AI estimate, estimate_unverified, or unit mismatch.
+ * All numbers come from the API item: kcal.best/low/high and unit_options. */
+export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
+  it: Item; kind: 'estimate' | 'unverified' | 'unit'; onConfirm: (n: Item) => void; onEdit: (n: Item) => void; onRemove: () => void;
+}) {
+  const s = { ...useStyles(), ...useOpenStyles() }; const t = useTheme();
+  const [sheet, setSheet] = useState(false);
+  const portion = portionLabel(it.quantity, it.unit);
+  const n = (x: number) => Math.round(x).toLocaleString('en-IN');
+  const opts = it.unit_options ?? [];
+  const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
+  const sub = kind === 'estimate' ? `${portion} · usually ${n(it.kcal.low)}–${n(it.kcal.high)}` : kind === 'unverified' ? `${portion} · sources vary` : portion;
+  const right = kind === 'unit' ? '—' : kind === 'unverified' ? `~${n(it.kcal.best)}` : n(it.kcal.best);
+  return (
+    <View style={s.open}>
+      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
+        <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Row style={{ gap: 6, flexWrap: 'wrap' }}>
+            <T v="bodyStrong">{cap(it.name)}</T>
+            {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">⚠ Check unit</T></View> : <Badge kind="ai" label="Estimate" />}
+          </Row>
+          <T v="caption" tone="muted">{sub}</T>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}><T v="number">{right}</T><T v="caption" tone="muted">not counted</T></View>
+      </View>
+      <View style={s.openBody}>
+        {kind === 'unverified' ? (
+          <View style={s.warnNote}><T v="bodyStrong" tone="warn">Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {it.unit}. Check it matches your {it.unit}.</T></View>
+        ) : null}
+        {kind === 'unit' ? (
+          <>
+            <T tone="text2">{sameUnit ? `${portionLabel(it.quantity, it.unit)} is a lot. Which did you mean?` : `Did you mean ${opts.map((o) => plural(o.unit)).join(' or ')}?`}</T>
+            <Row style={{ gap: 8 }}>
+              {opts.map((o) => (
+                <Pressable key={`${o.qty}|${o.unit}`} onPress={() => onConfirm(pickUnit(it, o))} style={s.optBtn} accessibilityRole="button"
+                  accessibilityLabel={`${portionLabel(o.qty, o.unit)}, ${n(o.kcal)} calories`}>
+                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{portionLabel(o.qty, o.unit)} · {n(o.kcal)} kcal</T>
+                </Pressable>
+              ))}
+            </Row>
+          </>
+        ) : (
+          <Row style={{ gap: 8 }}>
+            <Pressable onPress={() => onConfirm({ ...it, needs_confirmation: false })} style={[s.optBtn, { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill }]} accessibilityRole="button" accessibilityLabel={`Looks right, add ${cap(it.name)}`}>
+              <T v="bodyStrong" tone="onAccent">Looks right</T>
+            </Pressable>
+            <Pressable onPress={() => setSheet(true)} style={s.optBtn} accessibilityRole="button" accessibilityLabel={`Change portion of ${cap(it.name)}`}>
+              <T v="bodyStrong">Change portion</T>
+            </Pressable>
+          </Row>
+        )}
+      </View>
+      <EditSheet visible={sheet} it={it} onClose={() => setSheet(false)} onSave={(x) => { setSheet(false); onEdit(x); }} onDelete={() => { setSheet(false); onRemove(); }} />
+    </View>
+  );
+}
+const useOpenStyles = makeStyles((t) => ({
+  open: { paddingBottom: t.space.cardV },
+  openBody: { paddingLeft: 52, gap: 8 },
+  optBtn: { flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1.5, borderColor: t.c.cardLine, backgroundColor: t.c.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 6 },
+  warnChip: { backgroundColor: t.c.warnTint, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  warnNote: { backgroundColor: t.c.warnTint, borderWidth: 1, borderColor: t.c.warnTintLine, borderRadius: 12, padding: 12 },
 }));
