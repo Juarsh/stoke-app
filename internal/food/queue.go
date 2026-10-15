@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -31,15 +32,25 @@ type Job struct {
 	Requeues  int
 	NotBefore time.Time // the next attempt waits until then
 	LastBusy  string    // fallback_reason of the last busy attempt
+	FirstTry  time.Time // start of the first AI attempt: the give-up window counts from here
+	Finished  time.Time // when the job became done: expiry counts from here
 }
 
 // Requeue policy: a busy job is tried again after RequeueDelays[n] (the
-// last delay repeats), at most MaxRequeues times; then it ends as error.
-// With the defaults: 6 requeues over about 15 minutes after the first try.
-var (
-	RequeueDelays = []time.Duration{30 * time.Second, time.Minute, 2 * time.Minute, 3 * time.Minute, 4 * time.Minute, 5 * time.Minute}
-	MaxRequeues   = 6
-)
+// last delay repeats) until the give-up window (AI_REQUEUE_MAX_MINUTES,
+// default 30 min from the first try) runs out; then it ends as failed with
+// fallback_reason gave_up. The last try is scheduled so that it starts no
+// later than window - call timeout, i.e. it finishes inside the window.
+var RequeueDelays = []time.Duration{30 * time.Second, time.Minute, 2 * time.Minute, 3 * time.Minute, 4 * time.Minute, 5 * time.Minute}
+
+// DefaultRequeueMax is the default give-up window (AI_REQUEUE_MAX_MINUTES).
+const DefaultRequeueMax = 30 * time.Minute
+
+// DefaultCallTimeout bounds one AI job attempt (retries included).
+const DefaultCallTimeout = 30 * time.Second
+
+// DoneTTL: a finished job can be polled this long after it finished.
+const DoneTTL = time.Hour
 
 func requeueDelay(n int) time.Duration {
 	if n < 0 {
@@ -65,7 +76,11 @@ type Queue struct {
 	interval time.Duration
 	// run makes the AI call; requeue=true means busy: try again later.
 	run func(context.Context, *Job) (res ParseResponse, requeue bool)
-	ttl time.Duration
+	// gaveUp builds the failed (gave_up) result when the window runs out.
+	gaveUp      func(*Job) ParseResponse
+	ttl         time.Duration
+	requeueMax  time.Duration // give-up window from the first try
+	callTimeout time.Duration
 }
 
 // NewQueue: perMinute calls a minute (<=0 means no spacing), at most max waiting.
@@ -74,7 +89,36 @@ func NewQueue(perMinute, max int) *Queue {
 	if perMinute > 0 {
 		iv = time.Minute / time.Duration(perMinute)
 	}
-	return &Queue{jobs: map[string]*Job{}, max: max, wake: make(chan struct{}, 1), interval: iv, ttl: time.Hour}
+	return &Queue{jobs: map[string]*Job{}, max: max, wake: make(chan struct{}, 1), interval: iv, ttl: DoneTTL,
+		requeueMax: DefaultRequeueMax, callTimeout: DefaultCallTimeout}
+}
+
+// SetRequeueMax sets the give-up window (<=0 keeps the default). Call before Start.
+func (q *Queue) SetRequeueMax(d time.Duration) {
+	if d > 0 {
+		q.requeueMax = d
+	}
+}
+
+// SetCallTimeout sets the per-attempt timeout (<=0 keeps the default). Call before Start.
+func (q *Queue) SetCallTimeout(d time.Duration) {
+	if d > 0 {
+		q.callTimeout = d
+	}
+}
+
+// nextTry: when a busy job should be tried again, or ok=false to give up.
+// The try must start by FirstTry + window - callTimeout so it ends in the window.
+func (q *Queue) nextTry(j *Job, now time.Time) (time.Time, bool) {
+	last := j.FirstTry.Add(q.requeueMax - q.callTimeout)
+	if !now.Before(last) {
+		return time.Time{}, false
+	}
+	at := now.Add(requeueDelay(j.Requeues))
+	if at.After(last) {
+		at = last
+	}
+	return at, true
 }
 
 func (q *Queue) poke() {
@@ -147,17 +191,31 @@ func (q *Queue) Run(ctx context.Context) {
 			}
 		}
 		last = time.Now()
-		cctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		q.mu.Lock()
+		if j.FirstTry.IsZero() {
+			j.FirstTry = last
+		}
+		q.mu.Unlock()
+		cctx, cancel := context.WithTimeout(ctx, q.callTimeout)
 		res, requeue := q.run(cctx, j)
 		cancel()
+		now := time.Now()
+		var at time.Time
+		if requeue {
+			var ok bool
+			if at, ok = q.nextTry(j, now); !ok {
+				log.Printf("ai busy, gave up: job=%s reason=%s requeues=%d after=%s", j.ID, res.FallbackReason, j.Requeues, now.Sub(j.FirstTry).Round(time.Second))
+				res, requeue = q.gaveUp(j), false
+			}
+		}
 		q.mu.Lock()
 		if requeue {
-			j.NotBefore = time.Now().Add(requeueDelay(j.Requeues))
+			j.NotBefore = at
 			j.Requeues++
 			j.LastBusy = res.FallbackReason
 			q.waiting = append(q.waiting, j) // stays pending: no new cap use
 		} else {
-			j.Result, j.Status = res, "done"
+			j.Result, j.Status, j.Finished = res, "done", now
 			j.Hint = nil
 		}
 		q.mu.Unlock()
@@ -180,7 +238,9 @@ func (q *Queue) Pending() int { q.mu.Lock(); defer q.mu.Unlock(); return len(q.w
 
 func (q *Queue) gc() {
 	for id, j := range q.jobs {
-		if j.Status == "done" && time.Since(j.Created) > q.ttl {
+		// pending jobs are never dropped (they end within the give-up window);
+		// done jobs stay pollable for ttl after they FINISHED, not after creation.
+		if j.Status == "done" && time.Since(j.Finished) > q.ttl {
 			delete(q.jobs, id)
 		}
 	}
@@ -189,6 +249,9 @@ func (q *Queue) gc() {
 // Start wires the queue to the service and starts the worker.
 func (s *Service) Start(ctx context.Context, q *Queue) {
 	q.run = s.runJob
+	q.gaveUp = func(j *Job) ParseResponse {
+		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "gave_up", "gave_up")
+	}
 	s.Queue = q
 	go q.Run(ctx)
 }
@@ -196,7 +259,7 @@ func (s *Service) Start(ctx context.Context, q *Queue) {
 func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 	j, ok := s.Queue.Get(httpx.UserID(r), r.PathValue("id"))
 	if !ok {
-		httpx.Error(w, 404, "no such job (jobs expire after an hour)")
+		httpx.Error(w, 404, "no such job (jobs expire an hour after they finish)")
 		return
 	}
 	links := s.jobEntries(r.Context(), j.UserID, j.ID)

@@ -56,7 +56,8 @@ func main() {
 	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap(),
 		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"), GeminiRPM: intEnv("GEMINI_RPM", 10),
 		UserAICap: int64(intEnv("AI_USER_DAILY_CAP", 3)), QuotaResetTZ: os.Getenv("AI_QUOTA_RESET_TZ"),
-		AdminToken: adminToken()})
+		AIRequeueMax: time.Duration(intEnv("AI_REQUEUE_MAX_MINUTES", 30)) * time.Minute,
+		AdminToken:   adminToken()})
 	if err != nil {
 		log.Fatal(err)
 	}

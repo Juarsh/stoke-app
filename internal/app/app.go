@@ -40,8 +40,11 @@ type Config struct {
 	// AIPerMinute is the queue drain rate: AI calls per minute (default 8; <0 = no spacing).
 	AIPerMinute int
 	// AIQueueMax: waiting AI jobs before parse answers fallback "busy" (default 500).
-	AIQueueMax  int
-	GeminiModel string
+	AIQueueMax int
+	// AIRequeueMax: how long a busy AI job keeps being requeued, from its
+	// first try, before it ends as gave_up (AI_REQUEUE_MAX_MINUTES, default 30 min).
+	AIRequeueMax time.Duration
+	GeminiModel  string
 	// GeminiRPM spaces Gemini HTTP attempts, retries included (GEMINI_RPM, default 10).
 	GeminiRPM int
 	// AdminToken enables /admin/* (Bearer token); empty = routes 404.
@@ -116,7 +119,9 @@ func New(c Config) (http.Handler, error) {
 	if c.AIQueueMax <= 0 {
 		c.AIQueueMax = 500
 	}
-	fs.Start(context.Background(), food.NewQueue(c.AIPerMinute, c.AIQueueMax))
+	q := food.NewQueue(c.AIPerMinute, c.AIQueueMax)
+	q.SetRequeueMax(c.AIRequeueMax)
+	fs.Start(context.Background(), q)
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{

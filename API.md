@@ -435,7 +435,7 @@ Invariant (tested): no confident table item's span overlaps another item's.
 ## Hard-gate rules (current; replace earlier notes where they conflict)
 
 ### AI failure keeps the table's answer
-When the AI isn't used or fails (`fallback` = error, busy, timeout (reported as error), cap_reached,
+When the AI isn't used or fails (`fallback` = error, busy, gave_up, cap_reached,
 global_cap_reached, not_configured, or `use_ai:false`), confident table matches stay `source: "table"`,
 `needs_confirmation: false`, no flags. Only the unclaimed spans become `generic` placeholders to
 confirm (with `custom_items`). Example: `2 roti aur 1 plate zorbu` -> roti (table) + placeholder for
@@ -525,7 +525,7 @@ Go's embedded VCS info.
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | "busy" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
 `/test/ai/calls/reset`. `error` ends the job as failed (`fallback: "error"`). `busy` and `timeout` keep it
-pending (requeued) until the mode is cleared or the requeue maximum is hit. `daily_limit` ends it as failed
+pending (requeued) until the mode is cleared or `AI_REQUEUE_MAX_MINUTES` runs out (`gave_up`). `daily_limit` ends it as failed
 (`fallback: "daily_limit"`). Confident table items survive.
 
 ### AI quota, retries and fallback_reason
@@ -535,6 +535,7 @@ Settings (all env vars):
 |---|---|---|
 | `AI_DAILY_CAP` | 20 | Project-wide AI meals per quota day (Gemini free tier: 20 requests/day/model, quotaId `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). 0 = unlimited. `AI_GLOBAL_DAILY_CAP` is still read as the old name. |
 | `AI_USER_DAILY_CAP` | 3 | AI meals per user per quota day, so one user can't use up the day. Below 0 = no per-user limit. |
+| `AI_REQUEUE_MAX_MINUTES` | 30 | How long a busy Gemini job (`rate_limited` / `unavailable` / `timeout`) keeps being requeued, from its first try, before it ends as `gave_up`. |
 | `AI_QUOTA_RESET_TZ` | `America/Los_Angeles` | The caps reset at midnight in this zone, when Google resets its daily quota (12:30 PM IST in PDT, 1:30 PM IST in PST). The `ai_usage` / `ai_global_usage` `local_date` is the date in this zone. |
 | `GEMINI_RPM` | 10 | Global limiter: Gemini HTTP attempts (retries included) are spaced to at most this many a minute across the process; queued jobs wait for a slot instead of bursting. A slot that can't come before the job's deadline is not taken (`rate_limited`). |
 | `AI_PER_MINUTE` | 8 | The job queue's drain rate (unchanged). |
@@ -561,13 +562,15 @@ counted. A meal rejected because our own queue is full (`AI_QUEUE_MAX`) gives it
 (`fallback_reason` `rate_limited`, `unavailable` or `timeout`: a 429 or 503, the limiter having no slot in
 time, or the call timing out), the job is NOT answered with generic kcal. It stays `status: "pending"`,
 `ai_state: "estimating"`, and goes back into the queue after a delay. The late answer fills the same job id.
-The delays are 30 s, 1 min, 2 min, 3 min, 4 min, then 5 min (the last repeats), and a job is requeued at most
-**6 times** (about 15 minutes after the first try). A requeued job still respects `GEMINI_RPM` and
-`AI_PER_MINUTE`, and does not use the caps again. While it waits, the job poll adds `requeues`,
-`busy_reason` (the last busy reason) and `next_attempt_at` (RFC 3339). When the 6 requeues are used up the
-job ends as failed with `fallback: "error"`, `fallback_reason: "error"`.
+The delays are 30 s, 1 min, 2 min, 3 min, 4 min, then 5 min (the last repeats every 5 min). A job is
+requeued until **`AI_REQUEUE_MAX_MINUTES`** (default **30**) after its first try; the last try is scheduled
+so that it finishes inside that window. A requeued job still respects `GEMINI_RPM` and `AI_PER_MINUTE`, and
+does not use the caps again. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
+reason) and `next_attempt_at` (RFC 3339). When the window runs out the job ends as failed with
+`fallback: "gave_up"`, `fallback_reason: "gave_up"`. A finished job stays pollable for an hour after it
+finishes (so a job that used the full window is still there).
 
-**Failed means the user types the calories.** Only `daily_limit`, `user_limit` and `error` end a meal as
+**Failed means the user types the calories.** Only `daily_limit`, `user_limit`, `error` and `gave_up` end a meal as
 failed: `ai_state: "failed"`, `status: "done"`, `answer: "none"`. Confident table items stay in `items` as
 they are. Each open span is listed in `failed_spans` (`{span_start, span_end, text}`), `unmatched` and
 `custom_items` (`needs_input: true`) with **no kcal at all** - there is no generic estimate. The row is the
@@ -581,12 +584,13 @@ failed row; the user types the calories.
 | `daily_limit` | `failed` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at` |
 | `rate_limited` | `estimating` | 429 still failing after the retries, or our limiter had no slot in time: the job is requeued (`busy_reason` on the poll) | |
 | `unavailable` | `estimating` | 503 still failing after the retries: the job is requeued | |
-| `timeout` | `estimating` | the call timed out: the job is requeued | |
-| `error` | `failed` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers, the requeue maximum, or our own queue being full (`fallback: "error"`, or `"busy"` when the queue is full) | |
+| `timeout` | `estimating` | the call timed out: the job is requeued. `timeout` only ever means busy, still estimating | |
+| `gave_up` | `failed` | the `AI_REQUEUE_MAX_MINUTES` window ran out while Gemini was still busy (`fallback: "gave_up"`) | |
+| `error` | `failed` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers, or our own queue being full (`fallback: "error"`, or `"busy"` when the queue is full) | |
 
 `ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`). Messages: user_limit "You've used today's {n} AI
 estimates. Add the calories yourself.", daily_limit "AI estimates are used up for now. Add the calories yourself.",
-error "Couldn't estimate this. Add the calories yourself."
+error / gave_up "Couldn't estimate this. Add the calories yourself."
 
 **Logging.** Each failed attempt logs `model`, `attempt=n/3`, `http_status`, Google's `error.status` and `error.code`
 (e.g. `RESOURCE_EXHAUSTED` 429), the kind, `latency_ms` and the retry wait; the job result logs the fallback and

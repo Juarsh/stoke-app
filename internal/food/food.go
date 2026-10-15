@@ -76,9 +76,10 @@ type ParseResponse struct {
 	Total             Total         `json:"total"`
 	UsedAI            bool          `json:"used_ai"`
 	NeedsConfirmation bool          `json:"needs_confirmation"` // some item must be confirmed before saving
-	Fallback          string        `json:"fallback"`           // none, used, not_configured, cap_reached, global_cap_reached, daily_limit, busy, error
+	Fallback          string        `json:"fallback"`           // none, used, not_configured, cap_reached, global_cap_reached, daily_limit, busy, error, gave_up
 	// FallbackReason: why there is no AI answer, machine-readable: user_limit,
-	// daily_limit, rate_limited, unavailable, timeout, error.
+	// daily_limit, error, gave_up (ai_state failed); rate_limited, unavailable,
+	// timeout only ever mean busy, still estimating (on the job poll as busy_reason).
 	FallbackReason string `json:"fallback_reason,omitempty"`
 	// AIResetsAt (with user_limit / daily_limit): when the caps reset (RFC 3339).
 	AIResetsAt string `json:"ai_resets_at,omitempty"`
@@ -455,7 +456,7 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 // runJob is the queue worker's AI call for one meal. requeue=true: Gemini
 // was still busy (rate_limited / unavailable / timeout) after its retries;
 // the job stays pending (estimating) and goes back into the queue, without
-// using the caps again. After MaxRequeues busy tries it ends as error.
+// using the caps again. The queue ends it as gave_up when its window runs out.
 func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Spans, j.Hint)
 	for i := range items {
@@ -473,14 +474,8 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 			return s.failedResponse(j.Claimed, j.Spans, j.Slot, "daily_limit", "daily_limit"), false
 		}
 		if reason == "rate_limited" || reason == "unavailable" || reason == "timeout" {
-			if j.Requeues < MaxRequeues {
-				log.Printf("ai busy, requeued: job=%s reason=%s requeues=%d detail=%q", j.ID, reason, j.Requeues+1, aiFailDetail(err))
-				return ParseResponse{FallbackReason: reason}, true
-			}
-			log.Printf("ai busy, giving up after %d requeues: job=%s reason=%s", j.Requeues, j.ID, reason)
-			out := s.failedResponse(j.Claimed, j.Spans, j.Slot, "error", "error")
-			out.Message = "Couldn't estimate this. Add the calories yourself."
-			return out, false
+			log.Printf("ai busy, requeue: job=%s reason=%s requeues=%d detail=%q", j.ID, reason, j.Requeues, aiFailDetail(err))
+			return ParseResponse{FallbackReason: reason}, true
 		}
 		log.Printf("ai failed error: job=%s reason=%s detail=%q", j.ID, reason, aiFailDetail(err))
 		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "error", "error"), false
@@ -489,7 +484,7 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot), false
 }
 
-// failedResponse: no AI answer is coming (daily_limit, user_limit, error).
+// failedResponse: no AI answer is coming (daily_limit, user_limit, error, gave_up).
 // The confident table items stand; each open span is listed in
 // failed_spans / unmatched / custom_items with NO kcal: the user types it.
 func (s *Service) failedResponse(claimed []parser.Item, open []Span, slot, fb, reason string) ParseResponse {

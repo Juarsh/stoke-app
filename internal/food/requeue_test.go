@@ -29,12 +29,17 @@ func (f *seqFallback) EstimateMeal(ctx context.Context, text string, spans []Spa
 }
 
 func fastRequeue(t *testing.T) {
-	d, m := RequeueDelays, MaxRequeues
+	d := RequeueDelays
 	RequeueDelays = []time.Duration{20 * time.Millisecond, 40 * time.Millisecond}
-	t.Cleanup(func() { RequeueDelays, MaxRequeues = d, m })
+	t.Cleanup(func() { RequeueDelays = d })
 }
 
 func requeueSvc(t *testing.T, modes ...string) (*Service, *Stub, *Queue) {
+	return requeueSvcWin(t, 0, modes...)
+}
+
+// requeueSvcWin: window>0 sets the give-up window (call timeout window/10).
+func requeueSvcWin(t *testing.T, window time.Duration, modes ...string) (*Service, *Stub, *Queue) {
 	p, err := parser.New(dishes.MustLoad())
 	if err != nil {
 		t.Fatal(err)
@@ -42,6 +47,10 @@ func requeueSvc(t *testing.T, modes ...string) (*Service, *Stub, *Queue) {
 	stub := &Stub{}
 	s := &Service{Parser: p, Fallback: &seqFallback{stub: stub, modes: modes}, Quota: &Quota{}}
 	q := NewQueue(0, 10)
+	if window > 0 {
+		q.SetRequeueMax(window)
+		q.SetCallTimeout(window / 10)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	s.Start(ctx, q)
@@ -90,16 +99,100 @@ func TestBusyThenLateAnswerFillsSameJob(t *testing.T) {
 	}
 }
 
-func TestBusyGivesUpAsErrorAfterMaxRequeues(t *testing.T) {
+// Always busy: the job keeps estimating until the window runs out, then
+// ends as failed with gave_up (never error, never timeout), and every try
+// starts by FirstTry + window - call timeout.
+func TestBusyGivesUpAfterWindow(t *testing.T) {
 	fastRequeue(t)
-	MaxRequeues = 2
-	_, stub, q := requeueSvc(t, "busy", "busy", "busy", "busy")
-	j := addJob(t, q)
-	r := waitDone(t, q, j.ID).Result
-	if stub.Calls() != 3 {
-		t.Errorf("calls %d, want 1 + 2 requeues", stub.Calls())
+	const window = 200 * time.Millisecond
+	modes := make([]string, 100)
+	for i := range modes {
+		modes[i] = "busy"
+		if i%2 == 1 {
+			modes[i] = "timeout"
+		}
 	}
-	assertFailed(t, r, "error")
+	_, stub, q := requeueSvcWin(t, window, modes...)
+	j := addJob(t, q)
+	done := waitDone(t, q, j.ID)
+	assertFailed(t, done.Result, "gave_up")
+	if done.Result.Fallback != "gave_up" || done.Result.Message != "Couldn't estimate this. Add the calories yourself." {
+		t.Errorf("gave_up fallback/message: %q %q", done.Result.Fallback, done.Result.Message)
+	}
+	el := done.Finished.Sub(done.FirstTry)
+	if el < window-window/10-20*time.Millisecond || el > window+30*time.Millisecond {
+		t.Errorf("gave up after %s, want about the %s window", el, window)
+	}
+	// 20ms, 40ms, 40ms... until 180ms: a handful of tries, not a fixed count
+	if c := stub.Calls(); c < 4 || c > 8 || done.Requeues != c-1 {
+		t.Errorf("calls=%d requeues=%d", c, done.Requeues)
+	}
+}
+
+// The setting is respected: a longer window allows more tries.
+func TestRequeueWindowSetting(t *testing.T) {
+	fastRequeue(t)
+	busy := func(n int) []string {
+		m := make([]string, n)
+		for i := range m {
+			m[i] = "busy"
+		}
+		return m
+	}
+	_, s1, q1 := requeueSvcWin(t, 100*time.Millisecond, busy(100)...)
+	d1 := waitDone(t, q1, addJob(t, q1).ID)
+	_, s2, q2 := requeueSvcWin(t, 400*time.Millisecond, busy(100)...)
+	d2 := waitDone(t, q2, addJob(t, q2).ID)
+	assertFailed(t, d1.Result, "gave_up")
+	assertFailed(t, d2.Result, "gave_up")
+	if s2.Calls() <= s1.Calls() || d2.Finished.Sub(d2.FirstTry) < 300*time.Millisecond {
+		t.Errorf("window not respected: short calls=%d long calls=%d long elapsed=%s", s1.Calls(), s2.Calls(), d2.Finished.Sub(d2.FirstTry))
+	}
+}
+
+// The last try is clamped to start by FirstTry + window - call timeout.
+func TestNextTryFitsWindow(t *testing.T) {
+	q := NewQueue(0, 1)
+	t0 := time.Date(2026, 10, 15, 0, 0, 0, 0, time.UTC)
+	j := &Job{FirstTry: t0}
+	var tries []time.Time
+	now := t0
+	for {
+		at, ok := q.nextTry(j, now)
+		if !ok {
+			break
+		}
+		if !at.After(now) || at.After(t0.Add(DefaultRequeueMax-DefaultCallTimeout)) {
+			t.Fatalf("try at %s outside window", at.Sub(t0))
+		}
+		tries = append(tries, at)
+		j.Requeues++
+		now = at.Add(DefaultCallTimeout) // worst case: each try uses its whole timeout
+	}
+	if len(tries) == 0 || tries[0].Sub(t0) != 30*time.Second {
+		t.Fatalf("first requeue should wait 30s: %v", tries)
+	}
+	if last := tries[len(tries)-1].Add(DefaultCallTimeout); last.After(t0.Add(DefaultRequeueMax)) {
+		t.Errorf("last try ends at %s, after the 30 min window", last.Sub(t0))
+	}
+}
+
+// Expiry counts from when a job finished, so a job that gave up after the
+// full window is still pollable for the whole TTL.
+func TestDoneJobExpiryFromFinish(t *testing.T) {
+	q := NewQueue(0, 10)
+	old := time.Now().Add(-2 * time.Hour)
+	q.jobs["a"] = &Job{ID: "a", UserID: 1, Status: "done", Created: old, Finished: time.Now().Add(-5 * time.Minute)}
+	q.jobs["b"] = &Job{ID: "b", UserID: 1, Status: "done", Created: old, Finished: old}
+	q.jobs["c"] = &Job{ID: "c", UserID: 1, Status: "pending", Created: old}
+	q.mu.Lock()
+	q.gc()
+	q.mu.Unlock()
+	for id, want := range map[string]bool{"a": true, "b": false, "c": true} {
+		if _, ok := q.Get(1, id); ok != want {
+			t.Errorf("job %s kept=%v want %v", id, ok, want)
+		}
+	}
 }
 
 func TestFailedStatesHaveNoKcal(t *testing.T) {
