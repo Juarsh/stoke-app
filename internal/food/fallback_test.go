@@ -130,13 +130,14 @@ func TestPlaceAI(t *testing.T) {
 		return i, i + len(w), true
 	}
 	ai := []parser.Item{
-		{Name: "pakora", AIName: "pakora", SpanStart: 8, SpanEnd: 20},   // valid offsets
-		{Name: "kombucha", AIName: "kombucha"},                          // no offsets, found by name
-		{Name: "roti", AIName: "roti", SpanStart: 2, SpanEnd: 6},        // overlaps table item -> dropped
-		{Name: "mystery", AIName: "mystery", SpanStart: 0, SpanEnd: 33}, // whole text: invalid, not found -> did_you_mean
+		{Name: "pakora", AIName: "pakora", SpanStart: 8, SpanEnd: 20},           // valid offsets
+		{Name: "kombucha drink", AIName: "kombucha drink", Matched: "kombucha"}, // span_text only
+		{Name: "roti", AIName: "roti", SpanStart: 2, SpanEnd: 6},                // overlaps table item -> dropped
+		{Name: "mystery", AIName: "mystery", SpanStart: 0, SpanEnd: 33},         // whole text: invalid, not found -> did_you_mean
+		{Name: "kombucha", AIName: "kombucha"},                                  // no position: never placed by name
 	}
 	out := placeAI(text, ai, spans, claimed, loc)
-	if len(out) != 3 {
+	if len(out) != 4 || out[3].Source != parser.SourceDidYouMean {
 		t.Fatalf("placed %d: %+v", len(out), out)
 	}
 	if out[0].Matched != "zorbo pakora" || out[1].SpanStart != 25 || out[1].Matched != "kombucha" {

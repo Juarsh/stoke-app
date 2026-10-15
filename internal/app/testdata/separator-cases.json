@@ -1,0 +1,264 @@
+{
+ "kind": "separator",
+ "version": 1,
+ "shareable": true,
+ "note": "Shareable with Coder (not a holdout). Invented unknown words. confirmed = item for known_dish has source table and needs_confirmation false; unconfirmed = needs_confirmation true (or not table).",
+ "cases": [
+  {
+   "id": "S-roti-aur",
+   "input": "2 roti aur 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "separator aur"
+  },
+  {
+   "id": "S-roti-and",
+   "input": "2 roti and 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "separator and"
+  },
+  {
+   "id": "S-roti-with",
+   "input": "2 roti with 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "separator with"
+  },
+  {
+   "id": "S-roti-comma",
+   "input": "2 roti, 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "separator comma"
+  },
+  {
+   "id": "S-roti-hindi_aur",
+   "input": "2 roti और 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "separator hindi_aur"
+  },
+  {
+   "id": "S-roti-nosep-qty",
+   "input": "2 roti 1 plate zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "confirmed",
+   "rule": "no separator, both quantified"
+  },
+  {
+   "id": "S-roti-glued-after",
+   "input": "roti zorbali",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "unconfirmed",
+   "rule": "known dish glued before unknown word"
+  },
+  {
+   "id": "S-roti-glued-before",
+   "input": "zorbali roti",
+   "known_dish": "roti",
+   "known_text": "roti",
+   "expect": "unconfirmed",
+   "rule": "unknown word glued before known dish"
+  },
+  {
+   "id": "S-dal-aur",
+   "input": "1 katori dal aur 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "separator aur"
+  },
+  {
+   "id": "S-dal-and",
+   "input": "1 katori dal and 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "separator and"
+  },
+  {
+   "id": "S-dal-with",
+   "input": "1 katori dal with 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "separator with"
+  },
+  {
+   "id": "S-dal-comma",
+   "input": "1 katori dal, 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "separator comma"
+  },
+  {
+   "id": "S-dal-hindi_aur",
+   "input": "1 katori dal और 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "separator hindi_aur"
+  },
+  {
+   "id": "S-dal-nosep-qty",
+   "input": "1 katori dal 1 plate kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "confirmed",
+   "rule": "no separator, both quantified"
+  },
+  {
+   "id": "S-dal-glued-after",
+   "input": "dal kelmuti",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "unconfirmed",
+   "rule": "known dish glued before unknown word"
+  },
+  {
+   "id": "S-dal-glued-before",
+   "input": "kelmuti dal",
+   "known_dish": "dal",
+   "known_text": "dal",
+   "expect": "unconfirmed",
+   "rule": "unknown word glued before known dish"
+  },
+  {
+   "id": "S-poha-aur",
+   "input": "1 plate poha aur 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "separator aur"
+  },
+  {
+   "id": "S-poha-and",
+   "input": "1 plate poha and 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "separator and"
+  },
+  {
+   "id": "S-poha-with",
+   "input": "1 plate poha with 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "separator with"
+  },
+  {
+   "id": "S-poha-comma",
+   "input": "1 plate poha, 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "separator comma"
+  },
+  {
+   "id": "S-poha-hindi_aur",
+   "input": "1 plate poha और 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "separator hindi_aur"
+  },
+  {
+   "id": "S-poha-nosep-qty",
+   "input": "1 plate poha 1 plate vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "confirmed",
+   "rule": "no separator, both quantified"
+  },
+  {
+   "id": "S-poha-glued-after",
+   "input": "poha vashpra",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "unconfirmed",
+   "rule": "known dish glued before unknown word"
+  },
+  {
+   "id": "S-poha-glued-before",
+   "input": "vashpra poha",
+   "known_dish": "poha",
+   "known_text": "poha",
+   "expect": "unconfirmed",
+   "rule": "unknown word glued before known dish"
+  },
+  {
+   "id": "S-idli-aur",
+   "input": "3 idli aur 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "separator aur"
+  },
+  {
+   "id": "S-idli-and",
+   "input": "3 idli and 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "separator and"
+  },
+  {
+   "id": "S-idli-with",
+   "input": "3 idli with 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "separator with"
+  },
+  {
+   "id": "S-idli-comma",
+   "input": "3 idli, 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "separator comma"
+  },
+  {
+   "id": "S-idli-hindi_aur",
+   "input": "3 idli और 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "separator hindi_aur"
+  },
+  {
+   "id": "S-idli-nosep-qty",
+   "input": "3 idli 1 plate tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "confirmed",
+   "rule": "no separator, both quantified"
+  },
+  {
+   "id": "S-idli-glued-after",
+   "input": "idli tirnolu",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "unconfirmed",
+   "rule": "known dish glued before unknown word"
+  },
+  {
+   "id": "S-idli-glued-before",
+   "input": "tirnolu idli",
+   "known_dish": "idli",
+   "known_text": "idli",
+   "expect": "unconfirmed",
+   "rule": "unknown word glued before known dish"
+  }
+ ]
+}

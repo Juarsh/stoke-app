@@ -165,33 +165,9 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 			claimed = append(claimed, c)
 		}
 	}
-	// a table word glued to unknown words ("kuttu cheela") may be one
-	// unknown dish: give the whole phrase to the AI
-	t16 := u16(text)
-	for changed := true; changed; {
-		changed = false
-		for _, sp := range unclaimed(text, claimed, s.parser().Noise) {
-			for i := len(items); i < len(claimed); i++ {
-				c := claimed[i]
-				gap := ""
-				if c.SpanEnd <= sp.Start {
-					gap = sub16(t16, c.SpanEnd, sp.Start)
-				} else if sp.End <= c.SpanStart {
-					gap = sub16(t16, sp.End, c.SpanStart)
-				} else {
-					continue
-				}
-				if strings.TrimSpace(gap) == "" {
-					claimed = append(claimed[:i], claimed[i+1:]...)
-					changed = true
-					break
-				}
-			}
-			if changed {
-				break
-			}
-		}
-	}
+	// (a table word glued to unknown words, "kuttu cheela", is already
+	// unconfirmed by the parser's adjacency rule, so it isn't claimed and the
+	// whole phrase reaches the AI as one span)
 	spans := unclaimed(text, claimed, s.parser().Noise)
 	// a remembered food can also cover an unclaimed span
 	var open []Span
@@ -216,7 +192,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	key := spanKey(text, claimed)
 	if useAI {
 		if cached, ok := s.cacheGet(ctx, key); ok {
-			return s.aiResponse(claimed, cached, "cache", slot), nil
+			return s.aiResponse(claimed, cached, hint, "cache", slot), nil
 		}
 	}
 	generic := func(fb, msg string) (ParseResponse, *Job) {
@@ -305,7 +281,7 @@ func (s *Service) genericResponse(res parser.Result, slot string) ParseResponse 
 // aiResponse combines the claimed table items with the placed AI items.
 // AI items keep the user's own words as matched_text (their span); the
 // AI's dish name is in ai_name.
-func (s *Service) aiResponse(claimed, ai []parser.Item, fb, slot string) ParseResponse {
+func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) ParseResponse {
 	out := ParseResponse{Unmatched: []string{}, CustomItems: []CustomItem{}, Slot: slot, Status: "done", Answer: "ai", Fallback: fb, UsedAI: true}
 	out.Items = append(out.Items, claimed...)
 	for _, it := range ai {
@@ -315,6 +291,11 @@ func (s *Service) aiResponse(claimed, ai []parser.Item, fb, slot string) ParseRe
 		it.AIEstimate, it.DataSource = true, "ai"
 		it.NeedsConfirmation = true
 		it.SourceNote = "AI estimate (Gemini) - confirm before saving"
+		for _, h := range hint { // the AI read a phrase that glued a known dish to unknown words
+			if overlaps(it.SpanStart, it.SpanEnd, h.SpanStart, h.SpanEnd) && hasFlag(h.Flags, "leftover_nearby") {
+				it.Flags = appendFlag(it.Flags, "leftover_nearby")
+			}
+		}
 		out.Items = append(out.Items, it)
 	}
 	sortBySpan(out.Items)
@@ -337,7 +318,7 @@ func (s *Service) runJob(ctx context.Context, j *Job) ParseResponse {
 		return finishResp(out)
 	}
 	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
-	return s.aiResponse(j.Claimed, placed, "used", j.Slot)
+	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot)
 }
 
 // reserveAI counts one call against the per-user and project-wide daily
@@ -1244,4 +1225,20 @@ func orPtr(a, b *string) *string {
 		return a
 	}
 	return b
+}
+
+func hasFlag(fs []string, f string) bool {
+	for _, x := range fs {
+		if x == f {
+			return true
+		}
+	}
+	return false
+}
+
+func appendFlag(fs []string, f string) []string {
+	if hasFlag(fs, f) {
+		return fs
+	}
+	return append(fs, f)
 }

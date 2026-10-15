@@ -10,10 +10,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"slices"
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf16"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -176,6 +178,10 @@ func TestParseShape(t *testing.T) {
 type parseOut struct {
 	Items []struct {
 		Name              string
+		DishID            string `json:"dish_id"`
+		SpanStart         int    `json:"span_start"`
+		SpanEnd           int    `json:"span_end"`
+		Flags             []string
 		AIEstimate        bool `json:"ai_estimate"`
 		Source            string
 		Learned           bool
@@ -1249,7 +1255,8 @@ func TestNextAnswerReachesGuard(t *testing.T) {
 	call(t, srv, "POST", "/test/ai/next-answer", "", M{"items": []M{
 		{"name": "overlapper", "quantity": 1, "unit": "count", "span_start": 0, "span_end": 10, "kcal": kc}, // overlaps roti
 		{"name": "nowhere", "quantity": 1, "unit": "count", "kcal": kc},                                     // no position, words not in text
-		{"name": "zanthu", "quantity": 1, "unit": "count", "kcal": kc},                                      // no position, words in text
+		{"name": "zanthu", "quantity": 1, "unit": "count", "kcal": kc},                                      // no position: never placed by name
+		{"name": "zanthu stew", "span_text": "zanthu", "quantity": 1, "unit": "count", "kcal": kc},          // span_text places it
 	}}, nil)
 	items := get("g1", text)
 	var roti, unplaced, placed *it
@@ -1259,8 +1266,12 @@ func TestNextAnswerReachesGuard(t *testing.T) {
 			t.Errorf("overlapping AI answer must be dropped: %+v", items)
 		case "nowhere":
 			unplaced = &items[i]
-		case "zanthu":
+		case "zanthu stew":
 			placed = &items[i]
+		case "zanthu":
+			if items[i].Source != "did_you_mean" || !slices.Contains(items[i].Flags, "ai_unplaced") {
+				t.Errorf("an item with no position must not be placed by its name: %+v", items[i])
+			}
 		}
 		if items[i].Source == "table" {
 			roti = &items[i]
@@ -1273,6 +1284,48 @@ func TestNextAnswerReachesGuard(t *testing.T) {
 		t.Errorf("missing position must be flagged ai_unplaced, not corrected by the stub: %+v", items)
 	}
 	if placed == nil || placed.Source != "ai_estimate" || text[placed.SpanStart:placed.SpanEnd] != "zanthu" {
-		t.Errorf("missing position with findable words is placed by the guard: %+v", items)
+		t.Errorf("span_text must place the item: %+v", items)
 	}
+}
+
+// Tester's shareable separator cases (testdata/separator-cases.json).
+func TestSeparatorCases(t *testing.T) {
+	srv, _ := setup(t, &fakeAI{})
+	var f struct {
+		Cases []struct {
+			ID, Input, Expect, Rule string
+			KnownDish               string `json:"known_dish"`
+			KnownText               string `json:"known_text"`
+		}
+	}
+	b, err := os.ReadFile("testdata/separator-cases.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = json.Unmarshal(b, &f)
+	pass := 0
+	for i, c := range f.Cases {
+		_, r := parseAI(t, srv, fmt.Sprintf("sep%d", i), c.Input)
+		confirmed, flagged := false, false
+		t16 := utf16.Encode([]rune(c.Input))
+		for _, it := range r.Items {
+			if it.DishID == c.KnownDish && it.Source == "table" && !it.NeedsConfirmation {
+				confirmed = true
+			}
+			if it.SpanStart < it.SpanEnd && it.SpanEnd <= len(t16) &&
+				strings.Contains(string(utf16.Decode(t16[it.SpanStart:it.SpanEnd])), c.KnownText) && slices.Contains(it.Flags, "leftover_nearby") {
+				flagged = true
+			}
+		}
+		ok := confirmed == (c.Expect == "confirmed")
+		if c.Expect == "unconfirmed" && !flagged {
+			ok = false // must be unconfirmed for the right reason
+		}
+		if ok {
+			pass++
+		} else {
+			t.Errorf("%s %q (%s): want %s, got %+v", c.ID, c.Input, c.Rule, c.Expect, r.Items)
+		}
+	}
+	t.Logf("separator cases: %d/%d", pass, len(f.Cases))
 }

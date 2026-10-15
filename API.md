@@ -406,5 +406,20 @@ optional `parse_job_id` (alias `job_id`) and `client_item_id`.
 - `adjacent_split`: adjacent dishes must form an everyday pair or combo.
 - `unit_mismatch`: a count or unit must fit the dish's unit ("2 egg curry",
   "1 glass roti").
+- `leftover_nearby`: an unclaimed word sits directly next to the dish
+  ("ragi roti", "roti zorbo", "zorbo roti"); the whole phrase is unsure and the
+  AI item for that phrase carries the flag too. A separator between them
+  (`aur`, `and`, `with`, `,`, `और`, `के साथ`) or a new quantity starting the
+  unknown part ("2 roti 1 plate zorbo") keeps the dish confirmed. Fillers,
+  units and modifiers are skipped when looking for the neighbour.
+- `fractional_combo`: a fractional portion (half, aadha, 1/2, quarter, dedh) of
+  an everyday combo; every part is scaled, and the user confirms.
+- `egg_count`: an egg count on an egg-in-gravy bowl dish ("egg curry 3 eggs",
+  "3 ande ki curry"): one bowl (eggs_per_portion eggs) plus the extra eggs as
+  boiled-egg pieces, each part with its own span.
+
+Claims first: confident table items are claimed and only unclaimed spans go
+to the AI. AI items are placed only by `span_start`/`span_end` or `span_text`;
+an item with no position is never placed by its name (`ai_unplaced`).
 
 Invariant (tested): no confident table item's span overlaps another item's.

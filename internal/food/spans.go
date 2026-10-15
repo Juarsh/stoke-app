@@ -74,7 +74,8 @@ func overlaps(a0, a1, b0, b1 int) bool { return a0 < b1 && b0 < a1 }
 // placeAI validates AI items against the allowed spans: an item must lie
 // inside one span (its span_text is searched for there first); items that
 // overlap a claimed table item are dropped; items with no valid position
-// become did-you-mean on the span that best fits.
+// become did-you-mean on the first open span (flag ai_unplaced): items with
+// neither offsets nor span_text are never placed by name.
 func placeAI(text string, items []parser.Item, spans []Span, claimed []parser.Item, locate func(string, string) (int, int, bool)) []parser.Item {
 	var out []parser.Item
 	for _, it := range items {
@@ -99,7 +100,8 @@ func placeAI(text string, items []parser.Item, spans []Span, claimed []parser.It
 		// 2) otherwise find its words inside one allowed span
 		if !ok {
 			for _, sp := range spans {
-				for _, w := range []string{it.Matched, it.AIName, it.Name} {
+				// only the AI's own span_text places it; never guess from the name
+				for _, w := range []string{it.Matched} {
 					if w == "" {
 						continue
 					}

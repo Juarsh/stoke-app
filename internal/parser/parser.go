@@ -10,6 +10,7 @@ import (
 	"errors"
 	"math"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -59,6 +60,7 @@ type Rules struct {
 	StrictStatedQty bool `json:"strict_require_stated_quantity"`
 	// EverydayCombos: combo dish id -> its components at default portions ("_doc" ignored).
 	EverydayCombos map[string]json.RawMessage `json:"everyday_combos"`
+	ClaimSeps      []string                   `json:"claim_separators"`
 	EverydayPairs  struct {
 		CategoryPairs [][2]string `json:"category_pairs"`
 		DishPairs     [][2]string `json:"dish_pairs"`
@@ -71,6 +73,8 @@ type Rules struct {
 	Connectors      []string                   `json:"connectors"`
 	EggWords        []string                   `json:"egg_words"`
 	EggsPerPortion  map[string]float64         `json:"eggs_per_portion"`
+	EggPieceDish    string                     `json:"egg_piece_dish"`
+	EggPieceBowls   []string                   `json:"egg_piece_bowls"`
 	FuzzyMinSim     float64                    `json:"fuzzy_min_similarity"`
 	WrapForms       []string                   `json:"wrap_forms"`
 	StyleWords      []string                   `json:"style_words"`
@@ -141,8 +145,9 @@ type Item struct {
 	stated   bool // kept after finish for TableOnly
 	everyday bool // expanded from an everyday combo (allowed in TableOnly)
 	generic  bool
-	clause   int  // comma-separated part of the text
-	joined   bool // linked to the previous item by "with"/"aur"
+	clause   int     // comma-separated part of the text
+	joined   bool    // linked to the previous item by "with"/"aur"
+	eggExtra float64 // egg pieces beyond one bowl, added by eggPieces
 	pens     []string
 }
 
@@ -199,6 +204,7 @@ type Parser struct {
 	modifier   map[string]bool
 	stuffing   map[string]bool
 	connector  map[string]bool
+	sep        map[string]bool
 	eggWord    map[string]bool
 	style      map[string]bool
 	stop       map[string]bool
@@ -243,6 +249,7 @@ func New(ds []dishes.Dish) (*Parser, error) {
 	}
 	p.small, p.oilNoun, p.oilSuf, p.fat, p.genitive = set(p.r.SmallWords), set(p.r.OilNouns), set(p.r.OilSuffixes), set(p.r.FatDishes), set(p.r.GenitiveWords)
 	p.formWord, p.modifier, p.stuffing, p.connector, p.eggWord = set(p.r.FormWords), set(p.r.ModifierWords), set(p.r.StuffingWords), set(p.r.Connectors), set(p.r.EggWords)
+	p.sep = set(p.r.ClaimSeps)
 	p.style, p.stop, p.noFuzzyCat = set(p.r.StyleWords), set(p.r.Stopwords), set(p.r.FuzzyNeverCats)
 	p.filler = set(append(append([]string{}, p.r.Fillers...), p.r.BrandWords...))
 	pre := make([]string, len(p.r.MultPrefixes))
@@ -607,8 +614,13 @@ func (p *Parser) Parse(text string) Result {
 						if pd.hasQty {
 							eggs = pd.qty * nz(pd.factor)
 						}
-						pd = pending{qty: eggs / p.r.EggsPerPortion[ed.ID], hasQty: true, oil: pd.oil}
-						its := p.build(ed, pd, strings.Join(wordsOf(toks[i:j+1]), " "), false)
+						var its []Item
+						if p.eggBowl(ed) {
+							its = p.eggCurry(ed, eggs, pd.oil, strings.Join(wordsOf(toks[i:j+1]), " "), false)
+						} else {
+							pd = pending{qty: eggs / p.r.EggsPerPortion[ed.ID], hasQty: true, oil: pd.oil}
+							its = p.build(ed, pd, strings.Join(wordsOf(toks[i:j+1]), " "), false)
+						}
 						push(its)
 						pd = pending{}
 						i = j
@@ -651,7 +663,16 @@ func (p *Parser) Parse(text string) Result {
 		if t.isN {
 			// "omelette 2 egg ka": egg count for the egg dish before it
 			if li := last(); li != nil && !li.explicit && p.r.EggsPerPortion[li.DishID] > 0 && i+1 < len(toks) && p.eggWord[toks[i+1].w] {
-				*li = p.rescale(li, t.num/p.r.EggsPerPortion[li.DishID], li.Unit)
+				if d := p.dishByID(li.DishID); d != nil && p.eggBowl(d) {
+					its := p.eggCurry(d, t.num, li.OilLevel, li.Matched, li.Fuzzy)
+					for k := range its {
+						its[k].clause, its[k].joined = li.clause, li.joined
+					}
+					res.Items = append(res.Items[:len(res.Items)-1], its...)
+					li = &res.Items[len(res.Items)-1]
+				} else {
+					*li = p.rescale(li, t.num/p.r.EggsPerPortion[li.DishID], li.Unit)
+				}
 				li.explicit = true
 				i++
 				for i+1 < len(toks) && (p.genitive[toks[i+1].w] || p.oilSuf[toks[i+1].w]) {
@@ -771,8 +792,6 @@ func (p *Parser) Parse(text string) Result {
 			if li := last(); li != nil && !li.explicit && i > 0 && !toks[i-1].sep && li.Matched == toks[i-1].word() && p.isProteinWord(li.Matched) {
 				unk = append(unk, li.Matched)
 				res.Items = res.Items[:len(res.Items)-1]
-			} else if li != nil && li.clause == clause {
-				li.pen("leftover_nearby")
 			}
 		}
 		unk = append(unk, w)
@@ -782,6 +801,7 @@ func (p *Parser) Parse(text string) Result {
 		res.Leftover++ // a number nothing used
 	}
 	p.everydayCombos(&res)
+	p.eggPieces(&res)
 	p.tokenRules(&res, toks)
 	present := map[string]bool{}
 	for _, it := range res.Items {
@@ -807,6 +827,7 @@ func (p *Parser) Parse(text string) Result {
 		p.finish(it)
 	}
 	p.assignSpans(&res, text)
+	p.adjacency(&res, text)
 	return res
 }
 
@@ -842,6 +863,13 @@ func (p *Parser) applyForm(li *Item, form string) (Item, bool) {
 		q, u := 1.0, ""
 		if li.explicit && (li.Unit == "count" || li.Unit == "piece") {
 			q = li.Quantity
+		}
+		if li.explicit && li.DishID == p.r.EggPieceDish && p.eggBowl(nd) {
+			// "3 ande ki curry": the count is eggs, not bowls
+			per := p.r.EggsPerPortion[nd.ID]
+			q = math.Min(1, round(li.Quantity/per, 2))
+			it.eggExtra = li.Quantity - per
+			it.pen("egg_count")
 		}
 		return p.compute(nd, it, q, u), true
 	}
@@ -1015,7 +1043,7 @@ func (p *Parser) finish(it *Item) {
 	forced := false
 	for _, f := range it.pens {
 		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
-			f == "token_reuse" || f == "adjacent_split" || f == "unit_mismatch"
+			f == "token_reuse" || f == "adjacent_split" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -1206,11 +1234,23 @@ func (p *Parser) applyTrailing(res *Result, k int, qty float64, unit string) {
 		res.Items = append(res.Items[:k], append(parts, res.Items[k+1:]...)...)
 		return
 	}
+	if unit == "" && p.eggBowl(d) && p.hasEggWord(it.Matched) {
+		its := p.eggCurry(d, qty, it.OilLevel, it.Matched, it.Fuzzy) // "3 ande ki curry"
+		for i := range its {
+			its[i].clause = it.clause
+		}
+		res.Items = append(res.Items[:k], append(its, res.Items[k+1:]...)...)
+		return
+	}
 	if unit == "" && d.PieceGrams > 0 {
 		unit = "piece"
 	}
+	fits := p.fat[d.ID] || p.unitFits(d, unit, true)
 	*it = p.rescale(it, qty, unit)
 	it.explicit = true
+	if !fits {
+		it.pen("unit_mismatch") // a count that doesn't fit a bowl dish: ask
+	}
 }
 
 func (p *Parser) unitFor(w string) (string, float64) {
@@ -1290,6 +1330,9 @@ func (p *Parser) build(d *dishes.Dish, pd pending, matched string, fuzzy bool) [
 	if pd.hasQty {
 		qty = pd.qty * nz(pd.factor)
 	}
+	if pd.hasQty && pd.unit == "" && p.eggBowl(d) && p.hasEggWord(matched) {
+		return p.eggCurry(d, qty, pd.oil, matched, fuzzy) // "3 ande ki curry": the count is eggs, not bowls
+	}
 	unit := pd.unit
 	if pd.small && !pd.hasQty && !p.fat[d.ID] {
 		qty = 0.5 // "thoda rice"
@@ -1354,6 +1397,71 @@ func (p *Parser) expand(d *dishes.Dish, qty float64, unit, oil, matched string, 
 			it = p.withOil(&it, o)
 		}
 		out = append(out, it)
+	}
+	return out
+}
+
+// bowlDish: a dish served by the bowl, where a bare count does not fit.
+func (p *Parser) bowlDish(d *dishes.Dish) bool { return !p.unitFits(d, "", true) }
+
+// eggBowl: a bowl dish where whole eggs sit in a gravy (rules egg_piece_bowls).
+func (p *Parser) eggBowl(d *dishes.Dish) bool {
+	return p.r.EggsPerPortion[d.ID] > 0 && p.bowlDish(d) && slices.Contains(p.r.EggPieceBowls, d.ID)
+}
+
+// eggPieces adds the boiled-egg pieces stashed by applyForm.
+func (p *Parser) eggPieces(res *Result) {
+	var out []Item
+	for _, it := range res.Items {
+		extra := it.eggExtra
+		it.eggExtra = 0
+		if extra <= 0 {
+			out = append(out, it)
+			continue
+		}
+		e := p.dishByID(p.r.EggPieceDish)
+		it.FromCombo, it.everyday = it.DishID, true
+		out = append(out, it)
+		if e != nil {
+			b := p.build(e, pending{qty: extra, hasQty: true}, it.Matched, it.Fuzzy)
+			for k := range b {
+				b[k].FromCombo, b[k].everyday, b[k].clause, b[k].joined = it.DishID, true, it.clause, it.joined
+				b[k].pen("egg_count")
+			}
+			out = append(out, b...)
+		}
+	}
+	res.Items = out
+}
+
+func (p *Parser) hasEggWord(matched string) bool {
+	for _, w := range strings.Fields(matched) {
+		if p.eggWord[w] {
+			return true
+		}
+	}
+	return false
+}
+
+// eggCurry: an egg count on a bowl dish ("egg curry 3 eggs"). One bowl holds
+// eggs_per_portion eggs; extra eggs are added as boiled-egg pieces. Both parts
+// are flagged egg_count so the user confirms.
+func (p *Parser) eggCurry(d *dishes.Dish, eggs float64, oil, matched string, fuzzy bool) []Item {
+	per := p.r.EggsPerPortion[d.ID]
+	q := 1.0
+	if eggs < per {
+		q = round(eggs/per, 2)
+	}
+	out := p.build(d, pending{qty: q, hasQty: true, unit: d.Unit, oil: oil}, matched, fuzzy)
+	if extra := eggs - per; extra > 0 {
+		if e := p.dishByID(p.r.EggPieceDish); e != nil {
+			out = append(out, p.build(e, pending{qty: extra, hasQty: true}, matched, fuzzy)...)
+		}
+	}
+	for k := range out {
+		out[k].FromCombo, out[k].everyday = d.ID, true // one phrase, two parts: each gets its own span
+		out[k].pen("egg_count")
+		out[k].explicit = true
 	}
 	return out
 }
@@ -1593,6 +1701,9 @@ func (p *Parser) everydayCombos(res *Result) {
 				q *= p.r.DefaultFatSpoon
 			}
 			c = p.compute(cd, c, round(q*n, 2), "")
+			if n < 1 || n != math.Floor(n) {
+				c.pen("fractional_combo") // "half plate chole bhature": every part scales, the user checks it
+			}
 			if cd.OilSensitive {
 				c = p.withOil(&c, "normal")
 			}
@@ -1651,7 +1762,7 @@ func (p *Parser) tokenRules(res *Result, toks []token) {
 	spans := make([]span, len(res.Items))
 	group := func(i int) string { // everyday combo parts share their words
 		it := res.Items[i]
-		if it.everyday {
+		if it.FromCombo != "" {
 			return it.FromCombo + "|" + it.Matched
 		}
 		return strconv.Itoa(i)
@@ -1820,8 +1931,8 @@ func (p *Parser) assignSpans(res *Result, text string) {
 		it := &res.Items[i]
 		// everyday combo group
 		n := 1
-		if it.everyday {
-			for i+n < len(res.Items) && res.Items[i+n].everyday && res.Items[i+n].FromCombo == it.FromCombo && res.Items[i+n].Matched == it.Matched {
+		if it.FromCombo != "" {
+			for i+n < len(res.Items) && res.Items[i+n].FromCombo == it.FromCombo && res.Items[i+n].Matched == it.Matched {
 				n++
 			}
 		}
@@ -1840,9 +1951,19 @@ func (p *Parser) assignSpans(res *Result, text string) {
 			used[x] = true
 		}
 		cursor = b + 1
-		if n > 1 && b-a+1 == n {
+		if n > 1 && b-a+1 >= n {
+			// each combo part gets its own word(s): one each, the last takes the rest
 			for k := 0; k < n; k++ {
-				res.Items[i+k].SpanStart, res.Items[i+k].SpanEnd = ws[a+k].s, ws[a+k].e
+				x, y := a+k, a+k
+				if k == n-1 {
+					y = b
+				}
+				res.Items[i+k].SpanStart, res.Items[i+k].SpanEnd = ws[x].s, ws[y].e
+				var m []string
+				for z := x; z <= y; z++ {
+					m = append(m, ws[z].norm...)
+				}
+				res.Items[i+k].Matched = strings.Join(m, " ")
 			}
 		} else {
 			for k := 0; k < n; k++ {
@@ -1897,4 +2018,122 @@ func (p *Parser) Claim(it Item) (Item, bool) {
 	one.Confidence = 1
 	one.pens = nil
 	return one, true
+}
+
+// adjacency: a table match is confident only if it covers the whole noun
+// phrase. Walking outward from the item over noise words (units, fillers,
+// stopwords, style/oil words, genitives), the first real word decides:
+//   - a separator (aur, and, with, saath, a comma) or a number (the next
+//     part's own quantity, or this item's) -> confirmed on that side;
+//   - another item's word -> confirmed;
+//   - an unclaimed food-like word -> part of the same phrase: the item is
+//     unconfirmed (leftover_nearby) and the phrase goes to the AI as one item.
+func (p *Parser) adjacency(res *Result, text string) {
+	ws := p.origWords(text)
+	t16 := utf16.Encode([]rune(text))
+	claimedBy := make([]int, len(ws))
+	for k := range claimedBy {
+		claimedBy[k] = -1
+	}
+	for i, it := range res.Items {
+		for k, w := range ws {
+			if w.s >= it.SpanStart && w.e <= it.SpanEnd && it.SpanEnd-it.SpanStart < len(t16) {
+				claimedBy[k] = i
+			}
+		}
+	}
+	gapHasComma := func(a, b int) bool { // between UTF-16 offsets
+		if a < 0 || b > len(t16) || a >= b {
+			return false
+		}
+		g := string(utf16.Decode(t16[a:b]))
+		return strings.ContainsAny(g, ",;\n")
+	}
+	side := func(i, from, step int) bool { // true = an unclaimed real word joins this item
+		prevEdge := -1
+		if step > 0 {
+			prevEdge = res.Items[i].SpanEnd
+		} else {
+			prevEdge = res.Items[i].SpanStart
+		}
+		for k := from; k >= 0 && k < len(ws); k += step {
+			w := ws[k]
+			if step > 0 && gapHasComma(prevEdge, w.s) || step < 0 && gapHasComma(w.e, prevEdge) {
+				return false
+			}
+			if step > 0 {
+				prevEdge = w.e
+			} else {
+				prevEdge = w.s
+			}
+			if claimedBy[k] >= 0 {
+				return false
+			}
+			kind := ""
+			for _, n := range w.norm {
+				switch {
+				case p.sep[n]:
+					kind = "sep"
+				case isNum(n) || p.r.Numbers[n] > 0:
+					if kind == "" {
+						kind = "num"
+					}
+				case p.noiseWord(n):
+				default:
+					if kind == "" {
+						kind = "word"
+					}
+				}
+			}
+			switch kind {
+			case "sep", "num":
+				return false
+			case "word":
+				return true
+			}
+		}
+		return false
+	}
+	for i := range res.Items {
+		it := &res.Items[i]
+		if it.SpanEnd-it.SpanStart >= len(t16) || it.Source != SourceTable && it.Source != SourceDidYouMean {
+			continue
+		}
+		first, last := -1, -1
+		for k, w := range ws {
+			if claimedBy[k] == i {
+				if first < 0 {
+					first = k
+				}
+				last = k
+				_ = w
+			}
+		}
+		if first < 0 {
+			continue
+		}
+		if side(i, last+1, 1) || side(i, first-1, -1) {
+			it.Flags = appendOnce(it.Flags, "leftover_nearby")
+			it.NeedsConfirmation = true
+			it.Source = SourceDidYouMean
+			if it.Confidence > 0.5 {
+				it.Confidence = 0.5
+			}
+		}
+	}
+}
+
+func appendOnce(fs []string, f string) []string {
+	for _, x := range fs {
+		if x == f {
+			return fs
+		}
+	}
+	return append(fs, f)
+}
+
+// noiseWord: words that never make a dish phrase on their own.
+func (p *Parser) noiseWord(w string) bool {
+	return p.filler[w] || p.connector[w] || p.stop[w] || p.unitOf[w] != "" || p.oilOf[w] != "" || p.small[w] ||
+		p.genitive[w] || p.oilSuf[w] || p.style[w] || len([]rune(w)) < 3
 }

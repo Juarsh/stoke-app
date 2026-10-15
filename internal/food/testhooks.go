@@ -22,12 +22,23 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 	})
 	mux.HandleFunc("POST /test/ai/next-answer", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
-			Items []parser.Item `json:"items"`
+			Items []struct {
+				parser.Item
+				SpanText *string `json:"span_text"` // same as the Gemini contract
+			} `json:"items"`
 		}
 		if !httpx.Decode(w, r, &in) {
 			return
 		}
-		stub.SetNext(in.Items)
+		items := make([]parser.Item, 0, len(in.Items))
+		for _, x := range in.Items {
+			it := x.Item
+			if x.SpanText != nil {
+				it.Matched = *x.SpanText
+			}
+			items = append(items, it)
+		}
+		stub.SetNext(items)
 		httpx.JSON(w, 200, map[string]any{"ok": true})
 	})
 	mux.HandleFunc("POST /test/ai/daily-cap", func(w http.ResponseWriter, r *http.Request) {

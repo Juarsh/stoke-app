@@ -42,3 +42,9 @@ Weekly cache review: `go run ./cmd/aicache-export > top.csv`
 Tests: `go test ./...`. The integration tests create a throwaway database
 named `ct_run_<random>` and drop it when they finish. `TEST_PG_ADMIN_URL`
 must point at a role that has CREATEDB.
+
+## Database setup
+
+Run `scripts/setup-db.sh` before every test run. It is safe to rerun: it
+installs/starts Postgres if missing, creates the `calorie` role (CREATEDB) and
+the `calorie` and `calorie_test` databases, and runs the migrations on both.
