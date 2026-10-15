@@ -2042,6 +2042,14 @@ func (p *Parser) adjacency(res *Result, text string) {
 			}
 		}
 	}
+	// only words nothing used count as unknown: modifiers the parser consumed
+	// ("zyada ghee wale", "normal oil") are not unknown words
+	unknown := map[string]bool{}
+	for _, u := range res.Unmatched {
+		for _, f := range strings.Fields(p.normalize(u)) {
+			unknown[f] = true
+		}
+	}
 	gapHasComma := func(a, b int) bool { // between UTF-16 offsets
 		if a < 0 || b > len(t16) || a >= b {
 			return false
@@ -2078,7 +2086,7 @@ func (p *Parser) adjacency(res *Result, text string) {
 					if kind == "" {
 						kind = "num"
 					}
-				case p.noiseWord(n):
+				case p.noiseWord(n) || !unknown[n]:
 				default:
 					if kind == "" {
 						kind = "word"
