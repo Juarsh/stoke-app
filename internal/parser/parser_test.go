@@ -265,10 +265,8 @@ func TestConfirmationRate(t *testing.T) {
 	}
 	rate = float64(flagged) / float64(items)
 	t.Logf("everyday meals: %d items, %d need confirmation (%.1f%%)", items, flagged, 100*rate)
-	// strict rule 2 (no separator -> confirm) costs confirmations on
-	// separator-less everyday meals; reported, with a 45% ceiling
-	if rate > 0.45 {
-		t.Errorf("everyday confirmation rate %.1f%% over the 45%% ceiling", 100*rate)
+	if rate > 0.20 {
+		t.Errorf("everyday confirmation rate %.1f%% over the 20%% ceiling", 100*rate)
 	}
 }
 
@@ -353,11 +351,15 @@ func TestTokenInvariantAndOverconfidence(t *testing.T) {
 			}
 		}
 	}
-	// rule 2 (strict): adjacent dishes with no separator are never two
-	// confident items, even everyday pairs; with a separator they are
+	// rule 2: adjacent dishes are confident only as a listed everyday pair
 	for _, s := range []string{"roti sabzi", "idli sambar", "chai biscuit", "2 roti dal"} {
+		if !p.TableOnly(p.Parse(s)) {
+			t.Errorf("%q: listed everyday pair should be a table answer", s)
+		}
+	}
+	for _, s := range []string{"sabzi biscuit", "dal chai", "chicken rice", "poha sambar"} {
 		if p.TableOnly(p.Parse(s)) {
-			t.Errorf("%q: adjacent dishes answered confidently", s)
+			t.Errorf("%q: unlisted pair answered confidently", s)
 		}
 	}
 	for _, s := range []string{"roti, sabzi", "idli aur sambar", "chai with biscuit", "2 roti, 1 katori dal"} {

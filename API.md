@@ -465,9 +465,11 @@ above `plausible_max` for that unit (`8 plates momos`, `6 katori dal`).
 - Items with `unit_options` are left out of `total` until the user picks one and saves it; the
   saved entry is recomputed by the server from the chosen qty and unit.
 
-### Compound names (rule 2, strict)
+### Compound names (rule 2)
 Any two adjacent table matches with no separator or quantity between them that aren't one
-`everyday_combos` row (`roti sabzi`, `idli sambar`, `egg rice` alike) are flagged `compound_name` +
+`everyday_combos` row and aren't a listed pair of whole dish names in `rules.json`
+`everyday_pairs.dish_pairs` (the frozen list: roti sabzi, idli sambar, chai biscuit, poha chai,
+bread omelette, ...; either order; category pairs are gone) are flagged `compound_name` +
 `adjacent_split` and are never confident. By default they come back as `did_you_mean` items to confirm
 with no AI call (food.Service.CompoundToAI = false; true sends the phrase to the AI instead).
 Earlier text: two adjacent table matches where the first is a bare
@@ -504,6 +506,8 @@ Go's embedded VCS info.
 | dish | old | new | source |
 |---|---|---|---|
 | samosa | 80 g, 260 kcal, 4 g protein | 75 g, 233 kcal, 3.9 g | USDA FDC FNDDS 2708730 (310 kcal/100 g, "quantity not specified" 75 g) |
+| pani_puri (plate) | 150 g (25 g/piece), 250 kcal, 5 g | 120 g (6 x 20 g), 185 kcal, 4.4 g | DietGhar recipe calc https://www.dietghar.com/foods/pani-puri ; Haldiram label 6 puri = 180 kcal |
+| dhokla (piece) | 30 g, 50 kcal, 2 g | 30 g, 80 kcal, 3.4 g | Clearcals recipe https://clearcals.com/recipes/dhokla/ |
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | ""}`: every following AI call fails that way until mode `""` or

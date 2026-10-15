@@ -807,93 +807,91 @@
   ]
  },
  "everyday_pairs": {
-  "_doc": "Adjacent dishes typed with no separator ('roti sabzi') only stay as separate table items if their categories form an everyday pair here (or the phrase is an everyday combo). Anything else could be one unknown dish and goes to the AI as a whole phrase.",
-  "category_pairs": [
-   [
-    "bread",
-    "main"
-   ],
-   [
-    "bread",
-    "dal"
-   ],
-   [
-    "bread",
-    "protein"
-   ],
-   [
-    "bread",
-    "condiment"
-   ],
-   [
-    "bread",
-    "drink"
-   ],
-   [
-    "rice",
-    "dal"
-   ],
-   [
-    "rice",
-    "main"
-   ],
-   [
-    "rice",
-    "protein"
-   ],
-   [
-    "dal",
-    "main"
-   ],
-   [
-    "main",
-    "protein"
-   ],
-   [
-    "breakfast",
-    "drink"
-   ],
-   [
-    "breakfast",
-    "condiment"
-   ],
-   [
-    "breakfast",
-    "sweet"
-   ],
-   [
-    "breakfast",
-    "protein"
-   ],
-   [
-    "snack",
-    "drink"
-   ],
-   [
-    "snack",
-    "condiment"
-   ],
-   [
-    "main",
-    "main"
-   ]
-  ],
+  "_doc": "FROZEN LIST (CEO/Product Engineer approved 2026-10-15). Two whole table dishes typed next to each other with no separator or quantity between them stay two separate confident table items only if they are listed here (either order) or form one everyday_combos row; anything else is compound_name (rule 2). Built only from common Indian meal pairings, never from holdout or gold failures. Each part keeps its own table row and source. Pairs with a quantity or joining word between them follow the separator rules instead.",
   "dish_pairs": [
+   [
+    "roti",
+    "sabzi"
+   ],
+   [
+    "roti",
+    "dal"
+   ],
+   [
+    "roti",
+    "aloo_sabzi"
+   ],
+   [
+    "roti",
+    "bhindi"
+   ],
+   [
+    "roti",
+    "aloo_gobi"
+   ],
+   [
+    "paratha",
+    "dahi"
+   ],
+   [
+    "aloo_paratha",
+    "dahi"
+   ],
+   [
+    "paratha",
+    "pickle"
+   ],
+   [
+    "aloo_paratha",
+    "pickle"
+   ],
+   [
+    "paratha",
+    "chai"
+   ],
+   [
+    "aloo_paratha",
+    "chai"
+   ],
+   [
+    "puri",
+    "sabzi"
+   ],
+   [
+    "puri",
+    "aloo_sabzi"
+   ],
    [
     "idli",
     "sambar"
+   ],
+   [
+    "idli",
+    "chutney"
    ],
    [
     "dosa",
     "sambar"
    ],
    [
+    "dosa",
+    "chutney"
+   ],
+   [
     "masala_dosa",
     "sambar"
    ],
    [
+    "masala_dosa",
+    "chutney"
+   ],
+   [
     "vada",
     "sambar"
+   ],
+   [
+    "vada",
+    "chutney"
    ],
    [
     "uttapam",
@@ -902,6 +900,62 @@
    [
     "pongal",
     "sambar"
+   ],
+   [
+    "poha",
+    "chai"
+   ],
+   [
+    "upma",
+    "chai"
+   ],
+   [
+    "chai",
+    "biscuit"
+   ],
+   [
+    "chai",
+    "rusk"
+   ],
+   [
+    "chai",
+    "samosa"
+   ],
+   [
+    "chai",
+    "pakora"
+   ],
+   [
+    "bread",
+    "omelette"
+   ],
+   [
+    "cornflakes",
+    "milk"
+   ],
+   [
+    "naan",
+    "dal_makhani"
+   ],
+   [
+    "naan",
+    "butter_chicken"
+   ],
+   [
+    "rice",
+    "fish_curry"
+   ],
+   [
+    "rice",
+    "chicken_curry"
+   ],
+   [
+    "khichdi",
+    "papad"
+   ],
+   [
+    "khichdi",
+    "dahi"
    ]
   ]
  },

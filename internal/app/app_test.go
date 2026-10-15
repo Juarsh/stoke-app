@@ -170,8 +170,8 @@ func TestParseShape(t *testing.T) {
 	// "2 roti dal sabzi" has no separators (rule 2: confirm, never two
 	// confident items); a separated table match stays claimed - see
 	// TestFallbackKeepsClaimedItems
-	if !r.Items[0].NeedsConfirmation {
-		t.Errorf("adjacent roti confident: %+v", r.Items[0])
+	if r.Items[0].NeedsConfirmation || !r.Items[2].NeedsConfirmation { // roti+dal listed pair; dal+sabzi not
+		t.Errorf("rule 2: %+v", r.Items)
 	}
 	var r2 struct {
 		Items []struct {

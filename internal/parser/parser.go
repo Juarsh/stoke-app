@@ -1952,8 +1952,9 @@ func (p *Parser) tokenRules(res *Result, toks []token) {
 			}
 			// rule 2: two adjacent table matches (no separator, no quantity
 			// between) that aren't one everyday combo read as one dish name
-			if spans[j].a == spans[i].b+1 {
-				// reads like one dish name: the whole phrase goes to the AI
+			if spans[j].a == spans[i].b+1 && (!p.everydayPair(res.Items[i].DishID, res.Items[j].DishID) || p.qualifierPair(res.Items[i], res.Items[j])) {
+				// not a listed everyday pair of whole dish names ("chicken
+				// rice" is not chicken curry + rice): reads like one dish name
 				res.Items[i].pen("compound_name")
 				res.Items[j].pen("compound_name")
 			}
@@ -1967,13 +1968,8 @@ func (p *Parser) tokenRules(res *Result, toks []token) {
 
 // qualifierPair: "egg rice", "chicken pulao", "paneer roti" - the first
 // match is a bare ingredient word naming the next dish, not a side dish.
-// Listed dish pairs ("idli sambar") still split.
+// Never a whole dish name, so never an everyday pair.
 func (p *Parser) qualifierPair(a, b Item) bool {
-	for _, pr := range p.r.EverydayPairs.DishPairs {
-		if (pr[0] == a.DishID && pr[1] == b.DishID) || (pr[0] == b.DishID && pr[1] == a.DishID) {
-			return false
-		}
-	}
 	w := strings.ToLower(strings.TrimSpace(a.Matched))
 	if _, ok := p.r.ProteinWords[w]; ok {
 		return true
