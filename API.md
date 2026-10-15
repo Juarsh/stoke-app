@@ -504,7 +504,6 @@ Go's embedded VCS info.
 | dish | old | new | source |
 |---|---|---|---|
 | samosa | 80 g, 260 kcal, 4 g protein | 75 g, 233 kcal, 3.9 g | USDA FDC FNDDS 2708730 (310 kcal/100 g, "quantity not specified" 75 g) |
-| masala_dosa | 160 g, 350 kcal, 7 g | 267 g, 491 kcal, 14.6 g | USDA FDC FNDDS 2709129 "Dosa, with filling" (184 kcal/100 g, "1 medium" 267 g) |
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | ""}`: every following AI call fails that way until mode `""` or
