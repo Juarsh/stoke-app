@@ -15,27 +15,22 @@ export const ratio = (a: RGBA, b: RGBA) => { const [x, y] = [lum(a), lum(b)].sor
 
 type P = (typeof palette)['light'];
 type K = keyof P;
-const PLAIN: K[] = ['bg', 'card', 'card2'];
-// text token -> backgrounds it is drawn on (from the components; see ui.tsx tones)
-const USES: [K, K[]][] = [
-  ['text', [...PLAIN, 'tint', 'tintGold', 'coach1']], ['text2', [...PLAIN, 'tint', 'coach1']], ['muted', PLAIN],
-  ['em', [...PLAIN, 'tint', 'coach1']], ['emChip', [...PLAIN, 'tint']], ['accentText', [...PLAIN, 'tint']],
-  ['gold', [...PLAIN, 'tintGold']], ['accentText', ['coach1', 'coach2', 'coach3']], ['onCoach', ['coach1', 'coach2', 'coach3']],
-  ['ai', ['aiBg', ...PLAIN]], ['danger', PLAIN], ['delete', PLAIN], ['warn', PLAIN], ['steps', PLAIN], ['freeze', PLAIN],
-  ['onGrad', ['accentFill']], ['onAccent', ['accentFill']], ['onCheck', ['check']], ['popText', ['popBg']],
-];
+// Every text colour on every surface it could sit on (drawn today or not): screen, cards, tints, tiles, AI chip, tab bar.
+const SURFACES: K[] = ['bg', 'card', 'card2', 'tint', 'tintGold', 'coach1', 'tileBg', 'aiBg', 'nav', 'navSolid'];
+const TEXT: K[] = ['text', 'text2', 'muted', 'em', 'emChip', 'accentText', 'gold', 'onCoach', 'ai', 'danger', 'delete', 'warn', 'steps', 'freeze', 'over'];
+// "on-fill" colours only ever sit on their own fill
+const ON_FILL: [K, K][] = [['onGrad', 'accentFill'], ['onAccent', 'accentFill'], ['onCheck', 'check'], ['popText', 'popBg']];
 
 for (const theme of ['light', 'dark'] as const) {
   const p = palette[theme] as P;
   const base = parse(p.bg as string);
+  // translucent surfaces composite over the screen bg (nav over bg too)
   const solid = (k: K) => over(parse(p[k] as string), base);
-  const rows = USES.flatMap(([fg, bgs]) => bgs.map((bg) => [fg, bg] as const));
-  // light 'over' is only drawn on cards (off-card it falls back to text2); dark 'over' is drawn anywhere
-  if (theme === 'dark') rows.push(...(['coach1', 'coach2', 'coach3'] as K[]).map((bg) => ['goldOnGrad', bg] as const));
-  rows.push(...(theme === 'light' ? (['card', 'card2'] as K[]) : PLAIN).map((bg) => ['over', bg] as const));
+  const text = [...TEXT, ...(theme === 'dark' ? (['goldOnGrad'] as K[]) : [])];
+  const rows: (readonly [K, K])[] = [...text.flatMap((fg) => SURFACES.map((bg) => [fg, bg] as const)), ...ON_FILL];
   test.each(rows)(`${theme}: %s on %s >= 4.5:1`, (fg, bg) => {
     const r = ratio(over(parse(p[fg] as string), solid(bg)), solid(bg));
-    expect({ fg, bg, ok: r >= 4.5, r: Math.round(r * 100) / 100 }).toMatchObject({ ok: true });
+    expect({ fg, bg, r: Math.round(r * 100) / 100, ok: r >= 4.5 }).toMatchObject({ ok: true });
   });
 }
 test('goldOnGrad is dark-only (#F8DA9C); light uses accentText #A8361F on #FFE3DC', () => {
