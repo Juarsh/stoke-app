@@ -67,6 +67,8 @@ export interface Item {
   /** the AI's own dish name (matched_text stays the user's text) */
   ai_name?: string;
   alternatives?: Alternative[]; ai_estimate: boolean;
+  /** Go OneTapOK: confident table item with nothing to choose (save with one tap). */
+  one_tap_ok?: boolean;
   /** set with unit_mismatch: counting-unit reading, stated reading (and one portion) */
   unit_options?: UnitOption[];
   /** from the user's remembered readings (server parse) */
@@ -255,6 +257,12 @@ export class Parser {
   }
 
   parse(text: string): ParseResult {
+    const res = this.parseInner(text);
+    res.items = res.items.map((it) => ({ ...it, one_tap_ok: oneTap(it) }));
+    return res;
+  }
+
+  private parseInner(text: string): ParseResult {
     const toks = this.tokenize(text);
     const items: It[] = [];
     const unmatched: string[] = [];
@@ -1153,7 +1161,7 @@ export class Parser {
     delete (it as It).pens;
     if (d.needs_confirm) it = { ...it, source: 'generic', needs_confirmation: true };
     if (d.estimate_unverified) it = { ...it, needs_confirmation: true, flags: [...(it.flags ?? []), 'estimate_unverified'] };
-    return it;
+    return { ...it, one_tap_ok: oneTap(it) };
   }
 
   /** Mirror of Go Unknown: placeholder for unrecognised text. Never 0 kcal; always needs confirmation. */
@@ -1232,4 +1240,14 @@ function locate(ws: { norm: string[] }[], matched: string[], from: number, used:
     if (k === matched.length) return [a, b];
   }
   return null;
+}
+
+/** Go oneTapBlockers: flags that mean the user has a choice to make. */
+const ONE_TAP_BLOCKERS = new Set(['unit_mismatch', 'estimate_unverified', 'compound_name', 'adjacent_split', 'fuzzy', 'generic',
+  'combo_or_split', 'leftover_in_meal', 'leftover_nearby', 'token_reuse', 'fractional_combo', 'egg_count', 'needs_review']);
+
+/** Go OneTap: true only for a confident table item with no flag that needs a choice. */
+export function oneTap(it: Item): boolean {
+  if (it.source !== 'table' || it.needs_confirmation || it.ai_estimate || (it.unit_options?.length ?? 0) > 0) return false;
+  return !(it.flags ?? []).some((f) => ONE_TAP_BLOCKERS.has(f));
 }

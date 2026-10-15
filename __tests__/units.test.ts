@@ -62,3 +62,15 @@ describe('estimate_unverified dishes are never confident (Go estimate_unverified
     expect(it.needs_confirmation).toBe(true);
   });
 });
+
+describe('one_tap_ok (Go TestOneTapOK)', () => {
+  test.each([['2 roti', 'roti', true], ['1 katori dal', 'dal', true], ['8 plates momos', 'momos', false],
+    ['1 plate bhel puri', 'bhel_puri', false], ['2 rotti', 'roti', false]] as [string, string, boolean][])('%s', (text, dish, want) => {
+    const it = parser.parse(text).items.find((x) => x.dish_id === dish)!;
+    expect(it.one_tap_ok).toBe(want);
+    if (it.one_tap_ok) { expect(it.needs_confirmation).toBe(false); expect(it.source).toBe('table'); }
+  });
+  test('compound names are never one-tap', () => {
+    for (const it of parser.parse('chicken rice').items) expect(it.one_tap_ok).toBe(false);
+  });
+});
