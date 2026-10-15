@@ -37,6 +37,10 @@ export interface Rules {
   everyday_pairs?: { category_pairs?: [string, string][]; dish_pairs?: [string, string][] };
   bare_count_units?: string[];
   unit_fits?: Record<string, unknown>;
+  claim_separators?: string[];
+  egg_piece_dish?: string;
+  egg_piece_bowls?: string[];
+  table_only_ok_flags?: string[];
 }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
@@ -62,7 +66,7 @@ export type ItemSource = 'table' | 'did_you_mean' | 'generic' | 'ai_estimate';
 /** leftover: words/numbers the parser could not use (incl. short/stopword leftovers that never become placeholders). */
 export interface ParseResult { items: Item[]; unmatched: string[]; leftover: number }
 
-type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[]; everyday?: boolean };
+type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[]; everyday?: boolean; eggExtra?: number };
 /** Go Item.pen: add a confidence deduction once (copy-on-write). */
 const pen = (it: It, f: string) => { if (!it.pens?.includes(f)) it.pens = [...(it.pens ?? []), f]; };
 interface Token { w: string; num: number; isN: boolean; sep: boolean; mult: number }
@@ -104,7 +108,7 @@ export class Parser {
   private devDigit = new Map<string, string>();
   private small: Set<string>; private oilNoun: Set<string>; private oilSuf: Set<string>;
   private filler: Set<string>; private fat: Set<string>; private genitive: Set<string>;
-  private formWord: Set<string>; private modifier: Set<string>; private stuffing: Set<string>; private connector: Set<string>; private eggWord: Set<string>;
+  private formWord: Set<string>; private modifier: Set<string>; private stuffing: Set<string>; private connector: Set<string>; private eggWord: Set<string>; private sep: Set<string>;
   private style: Set<string>; private stop: Set<string>; private noFuzzyCat: Set<string>;
   private reMult: RegExp;
 
@@ -126,7 +130,7 @@ export class Parser {
     this.small = new Set(r.small_words); this.oilNoun = new Set(r.oil_nouns); this.oilSuf = new Set(r.oil_suffixes);
     this.fat = new Set(r.fat_dishes); this.genitive = new Set(r.genitive_words);
     this.formWord = new Set(r.form_words); this.modifier = new Set(r.modifier_words); this.stuffing = new Set(r.stuffing_words);
-    this.connector = new Set(r.connectors); this.eggWord = new Set(r.egg_words);
+    this.connector = new Set(r.connectors); this.eggWord = new Set(r.egg_words); this.sep = new Set(r.claim_separators ?? []);
     this.style = new Set(r.style_words); this.stop = new Set(r.stopwords); this.noFuzzyCat = new Set(r.fuzzy_never_to_categories);
     this.filler = new Set([...r.fillers, ...r.brand_words]);
     const pre = r.multiplier_prefixes.map(escapeRe).join('|');
@@ -325,8 +329,12 @@ export class Parser {
               flushUnk();
               let eggs = 1;
               if (pd.hasQty) eggs = pd.qty * (pd.factor === 0 ? 1 : pd.factor);
-              pd = { ...emptyPending(), qty: eggs / this.r.eggs_per_portion[ed.id], hasQty: true, oil: pd.oil };
-              push(this.build(ed, pd, wordsOf(toks.slice(i, j + 1), (x) => this.word(x)).join(' '), false));
+              const em = wordsOf(toks.slice(i, j + 1), (x) => this.word(x)).join(' ');
+              if (this.eggBowl(ed)) push(this.eggCurry(ed, eggs, pd.oil, em, false));
+              else {
+                pd = { ...emptyPending(), qty: eggs / this.r.eggs_per_portion[ed.id], hasQty: true, oil: pd.oil };
+                push(this.build(ed, pd, em, false));
+              }
               pd = emptyPending();
               i = j;
               continue;
@@ -355,7 +363,12 @@ export class Parser {
       if (t.isN) {
         const li = last();
         if (li && !li.explicit && (this.r.eggs_per_portion[li.dish_id] ?? 0) > 0 && i + 1 < toks.length && this.eggWord.has(toks[i + 1].w)) {
-          setLast({ ...this.rescale(li, t.num / this.r.eggs_per_portion[li.dish_id], li.unit), explicit: true });
+          const ld = this.dishById(li.dish_id);
+          if (ld && this.eggBowl(ld)) {
+            const its = this.eggCurry(ld, t.num, li.oil_level, li.matched_text, li.fuzzy);
+            for (const x of its) { x.clause = li.clause; x.joined = li.joined; x.explicit = true; }
+            items.splice(items.length - 1, 1, ...its);
+          } else setLast({ ...this.rescale(li, t.num / this.r.eggs_per_portion[li.dish_id], li.unit), explicit: true });
           i++;
           while (i + 1 < toks.length && (this.genitive.has(toks[i + 1].w) || this.oilSuf.has(toks[i + 1].w))) i++;
           continue;
@@ -433,7 +446,7 @@ export class Parser {
         if (li && !li.explicit && i > 0 && !toks[i - 1].sep && li.matched_text === this.word(toks[i - 1]) && this.isProteinWord(li.matched_text)) {
           unk.push(li.matched_text);
           items.pop();
-        } else if (li && li.clause === clause) pen(li, 'leftover_nearby');
+        }
       }
       unk.push(w);
     }
@@ -441,6 +454,8 @@ export class Parser {
     if (pd.hasQty) leftover++; // a number nothing used
     const ev = this.everydayCombos(items);
     items.splice(0, items.length, ...ev);
+    const eg = this.eggPieces(items);
+    items.splice(0, items.length, ...eg);
     this.tokenRules(items, toks);
     const present = new Set(items.map((x) => x.dish_id));
     for (const it of items) {
@@ -452,6 +467,7 @@ export class Parser {
     }
     this.assignSpans(items, text); // before finish strips the internal `everyday` marker (Go keeps it)
     const out: Item[] = items.map((x) => this.finish(x));
+    this.adjacency(out, unmatched, text);
     return { items: out, unmatched, leftover };
   }
 
@@ -461,7 +477,14 @@ export class Parser {
     const mk = (nd: Dish, generic: boolean): It => {
       const it: It = { ...blank(), dish_id: nd.id, name: nd.name, matched_text: li.matched_text + ' ' + form, data_source: nd.source, source_note: nd.source_note,
         generic, clause: li.clause, joined: li.joined, explicit: li.explicit, fuzzy: li.fuzzy };
-      const q = li.explicit && (li.unit === 'count' || li.unit === 'piece') ? li.quantity : 1;
+      let q = li.explicit && (li.unit === 'count' || li.unit === 'piece') ? li.quantity : 1;
+      if (li.explicit && li.dish_id === this.r.egg_piece_dish && this.eggBowl(nd)) {
+        // "3 ande ki curry": the count is eggs, not bowls
+        const per = this.r.eggs_per_portion[nd.id];
+        q = Math.min(1, round(li.quantity / per, 2));
+        it.eggExtra = li.quantity - per;
+        pen(it, 'egg_count');
+      }
       return this.compute(nd, it, q, '');
     };
     for (const name of [d.name, ...(d.aliases ?? [])]) {
@@ -568,10 +591,10 @@ export class Parser {
     if (pens.length) it.flags = [...pens];
     // leftovers, splits and combos always need a look, whatever the score
     const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby' ||
-      f === 'token_reuse' || f === 'adjacent_split' || f === 'unit_mismatch');
+      f === 'token_reuse' || f === 'adjacent_split' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
-    const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, ...base } = it;
+    const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, eggExtra: _x, ...base } = it;
     return base;
   }
 
@@ -684,8 +707,16 @@ export class Parser {
       items.splice(k, 1, ...parts);
       return;
     }
+    if (unit === '' && this.eggBowl(d) && this.hasEggWord(it.matched_text)) {
+      const its = this.eggCurry(d, qty, it.oil_level, it.matched_text, it.fuzzy); // "3 ande ki curry"
+      for (const x of its) x.clause = it.clause;
+      items.splice(k, 1, ...its);
+      return;
+    }
     if (unit === '' && (d.piece_grams ?? 0) > 0) unit = 'piece';
+    const fits = this.fat.has(d.id) || this.unitFits(d, unit, true);
     items[k] = { ...this.rescale(it, qty, unit), explicit: true };
+    if (!fits) pen(items[k], 'unit_mismatch'); // a count that doesn't fit a bowl dish: ask
   }
 
   /** a table row that is exactly these parts ("rajma" + "rice" -> rajma chawal) */
@@ -717,6 +748,7 @@ export class Parser {
           from_combo: d.id, everyday: true, clause: it.clause, joined: it.joined };
         if (this.fat.has(cd.id)) q *= this.r.default_fat_spoons;
         c = this.compute(cd, c, round(q * n, 2), '');
+        if (n < 1 || n !== Math.floor(n)) pen(c, 'fractional_combo'); // "half plate chole bhature": every part scales, the user checks it
         if (cd.oil_sensitive) c = this.withOil(c, 'normal');
         out.push(c);
       }
@@ -740,7 +772,7 @@ export class Parser {
     const words = toks.map((t) => (!t.sep && !t.isN ? t.w : ''));
     const used = new Array<number>(toks.length).fill(0);
     const spans: [number, number][] = items.map(() => [-1, -1]);
-    const group = (i: number) => (items[i].everyday ? `${items[i].from_combo}|${items[i].matched_text}` : String(i));
+    const group = (i: number) => (items[i].from_combo ? `${items[i].from_combo}|${items[i].matched_text}` : String(i));
     const claimed = new Map<string, [number, number]>();
     let cursor = 0;
     for (let i = 0; i < items.length; i++) {
@@ -805,17 +837,21 @@ export class Parser {
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       let n = 1;
-      if (it.everyday) while (i + n < items.length && items[i + n].everyday && items[i + n].from_combo === it.from_combo && items[i + n].matched_text === it.matched_text) n++;
+      if (it.from_combo) while (i + n < items.length && items[i + n].from_combo === it.from_combo && items[i + n].matched_text === it.matched_text) n++;
       let r = locate(ws, fields(it.matched_text), cursor, used);
       if (!r) r = locate(ws, fields(it.matched_text), 0, used);
       if (!r) { for (let k = 0; k < n; k++) { items[i + k].span_start = 0; items[i + k].span_end = whole; } i += n - 1; continue; }
       const [a, b] = r;
       for (let x = a; x <= b; x++) used[x] = true;
       cursor = b + 1;
-      for (let k = 0; k < n; k++) {
-        const one = n > 1 && b - a + 1 === n;
-        items[i + k].span_start = one ? ws[a + k].s : ws[a].s; items[i + k].span_end = one ? ws[a + k].e : ws[b].e;
-      }
+      if (n > 1 && b - a + 1 >= n) {
+        // each combo part gets its own word(s): one each, the last takes the rest
+        for (let k = 0; k < n; k++) {
+          const x = a + k, y = k === n - 1 ? b : a + k;
+          items[i + k].span_start = ws[x].s; items[i + k].span_end = ws[y].e;
+          items[i + k].matched_text = ws.slice(x, y + 1).flatMap((w) => w.norm).join(' ');
+        }
+      } else for (let k = 0; k < n; k++) { items[i + k].span_start = ws[a].s; items[i + k].span_end = ws[b].e; }
       i += n - 1;
     }
   }
@@ -840,7 +876,7 @@ export class Parser {
       const d = this.dishById(it.dish_id);
       if (!d || (d.parts?.length ?? 0) > 0 || d.needs_confirm) return false;
       const everyday = !!it.from_combo && has(this.r.everyday_combos ?? {}, it.from_combo); // Go: it.everyday
-      return !(it.source !== 'table' || it.needs_confirmation || it.fuzzy || (it.from_combo && !everyday) || (it.flags?.length ?? 0) > 0 || it.unit === '' ||
+      return !(it.source !== 'table' || it.needs_confirmation || it.fuzzy || (it.from_combo && !everyday) || (it.flags ?? []).some((f) => !(this.r.table_only_ok_flags ?? []).includes(f)) || it.unit === '' ||
         (this.r.strict_require_stated_quantity && it.default_portion));
     });
   }
@@ -886,6 +922,7 @@ export class Parser {
   private build(d: Dish, pd: Pending, matched: string, fuzzy: boolean): It[] {
     let qty = 1;
     if (pd.hasQty) qty = pd.qty * (pd.factor === 0 ? 1 : pd.factor);
+    if (pd.hasQty && pd.unit === '' && this.eggBowl(d) && this.hasEggWord(matched)) return this.eggCurry(d, qty, pd.oil, matched, fuzzy); // the count is eggs
     let unit = pd.unit;
     if (pd.small && !pd.hasQty && !this.fat.has(d.id)) qty = 0.5;
     if (this.fat.has(d.id) && !pd.hasQty) {
@@ -904,6 +941,87 @@ export class Parser {
     if (capped) { pen(it, 'capped'); it.needs_confirmation = true; }
     if (d.oil_sensitive) it = this.withOil(it, (oil || 'normal') as OilLevel);
     return [it];
+  }
+
+  /** A bowl dish where a bare count does not fit. */
+  private bowlDish(d: Dish): boolean { return !this.unitFits(d, '', true); }
+  /** A bowl dish where whole eggs sit in a gravy (rules egg_piece_bowls). */
+  private eggBowl(d: Dish): boolean { return (this.r.eggs_per_portion[d.id] ?? 0) > 0 && this.bowlDish(d) && (this.r.egg_piece_bowls ?? []).includes(d.id); }
+  private hasEggWord(m: string): boolean { return fields(m).some((w) => this.eggWord.has(w)); }
+
+  /** Egg count on an egg-in-gravy bowl: one bowl (eggs_per_portion eggs) + extra eggs as egg pieces, all flagged egg_count. */
+  private eggCurry(d: Dish, eggs: number, oil: string, matched: string, fuzzy: boolean): It[] {
+    const per = this.r.eggs_per_portion[d.id];
+    const q = eggs < per ? round(eggs / per, 2) : 1;
+    const out = this.build(d, { ...emptyPending(), qty: q, hasQty: true, unit: d.unit, oil }, matched, fuzzy);
+    const e = this.dishById(this.r.egg_piece_dish ?? '');
+    if (eggs - per > 0 && e) out.push(...this.build(e, { ...emptyPending(), qty: eggs - per, hasQty: true }, matched, fuzzy));
+    for (const x of out) { x.from_combo = d.id; x.everyday = true; pen(x, 'egg_count'); x.explicit = true; }
+    return out;
+  }
+
+  /** Adds the egg pieces stashed by applyForm ("3 ande ki curry"). */
+  private eggPieces(items: It[]): It[] {
+    const out: It[] = [];
+    for (const it of items) {
+      const extra = it.eggExtra ?? 0;
+      delete it.eggExtra;
+      if (extra <= 0) { out.push(it); continue; }
+      it.from_combo = it.dish_id; it.everyday = true;
+      out.push(it);
+      const e = this.dishById(this.r.egg_piece_dish ?? '');
+      if (e) for (const b of this.build(e, { ...emptyPending(), qty: extra, hasQty: true }, it.matched_text, it.fuzzy)) {
+        b.from_combo = it.dish_id; b.everyday = true; b.clause = it.clause; b.joined = it.joined; pen(b, 'egg_count'); out.push(b);
+      }
+    }
+    return out;
+  }
+
+  private noiseWord(w: string): boolean {
+    return this.filler.has(w) || this.connector.has(w) || this.stop.has(w) || (this.unitOf.get(w) ?? '') !== '' || (this.oilOf.get(w) ?? '') !== '' ||
+      this.small.has(w) || this.genitive.has(w) || this.oilSuf.has(w) || this.style.has(w) || runes(w).length < 3;
+  }
+
+  /** Go adjacency: an unknown word directly next to a table item (no separator, comma or new quantity in between)
+   * makes the item unsure: leftover_nearby, did_you_mean, confidence capped at 0.5. */
+  private adjacency(items: Item[], unmatched: string[], text: string) {
+    const ws = this.origWords(text);
+    const len16 = text.length;
+    const unknown = new Set(unmatched.flatMap((u) => fields(this.normalize(u))));
+    const claimedBy = ws.map(() => -1);
+    items.forEach((it, i) => ws.forEach((w, k) => {
+      if (w.s >= it.span_start && w.e <= it.span_end && it.span_end - it.span_start < len16) claimedBy[k] = i;
+    }));
+    const gapHasComma = (a: number, b: number) => a >= 0 && b <= len16 && a < b && /[,;\n]/.test(text.slice(a, b));
+    const side = (i: number, from: number, step: number): boolean => {
+      let edge = step > 0 ? items[i].span_end : items[i].span_start;
+      for (let k = from; k >= 0 && k < ws.length; k += step) {
+        const w = ws[k];
+        if (step > 0 ? gapHasComma(edge, w.s) : gapHasComma(w.e, edge)) return false;
+        edge = step > 0 ? w.e : w.s;
+        if (claimedBy[k] >= 0) return false;
+        let kind = '';
+        for (const n of w.norm) {
+          if (this.sep.has(n)) kind = 'sep';
+          else if (goParseFloat(n) !== null || (this.r.numbers[n] ?? 0) > 0) { if (kind === '') kind = 'num'; }
+          else if (this.noiseWord(n) || !unknown.has(n)) { /* skip */ }
+          else if (kind === '') kind = 'word';
+        }
+        if (kind === 'sep' || kind === 'num') return false;
+        if (kind === 'word') return true;
+      }
+      return false;
+    };
+    items.forEach((it, i) => {
+      if (it.span_end - it.span_start >= len16 || (it.source !== 'table' && it.source !== 'did_you_mean')) return;
+      const mine = claimedBy.map((c, k) => (c === i ? k : -1)).filter((k) => k >= 0);
+      if (!mine.length) return;
+      if (side(i, mine[mine.length - 1] + 1, 1) || side(i, mine[0] - 1, -1)) {
+        if (!(it.flags ?? []).includes('leftover_nearby')) it.flags = [...(it.flags ?? []), 'leftover_nearby'];
+        it.needs_confirmation = true; it.source = 'did_you_mean';
+        if ((it.confidence ?? 1) > 0.5) it.confidence = 0.5;
+      }
+    });
   }
 
   private expand(d: Dish, qty: number, unit: string, oil: string, matched: string, fuzzy: boolean): It[] {

@@ -187,7 +187,7 @@
     {
      "dish_id": "rajma",
      "name": "rajma",
-     "matched_text": "rajma chawal",
+     "matched_text": "rajma",
      "quantity": 0.43,
      "unit": "katori",
      "grams": 65,
@@ -210,21 +210,20 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0,
+     "confidence": 0.6,
      "flags": [
-      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
      "span_start": 10,
-     "span_end": 22,
+     "span_end": 15,
      "learned": false,
      "default_portion": false
     },
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "rajma chawal",
+     "matched_text": "chawal",
      "quantity": 0.43,
      "unit": "katori",
      "grams": 65,
@@ -247,13 +246,12 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0,
+     "confidence": 0.6,
      "flags": [
-      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
-     "span_start": 0,
+     "span_start": 16,
      "span_end": 22,
      "learned": false,
      "default_portion": false
@@ -869,7 +867,7 @@
     {
      "dish_id": "chole",
      "name": "chole",
-     "matched_text": "chole bhature",
+     "matched_text": "chole",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -902,7 +900,7 @@
     {
      "dish_id": "bhatura",
      "name": "bhatura",
-     "matched_text": "chole bhature",
+     "matched_text": "bhature",
      "quantity": 2,
      "unit": "count",
      "grams": 160,
@@ -1672,7 +1670,7 @@
     {
      "dish_id": "chole",
      "name": "chole",
-     "matched_text": "chhole chawal",
+     "matched_text": "chhole",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -1705,7 +1703,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "chhole chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -1871,7 +1869,7 @@
     {
      "dish_id": "dal",
      "name": "dal",
-     "matched_text": "dal chawal",
+     "matched_text": "dal",
      "quantity": 2,
      "unit": "katori",
      "grams": 300,
@@ -1907,7 +1905,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "dal chawal",
+     "matched_text": "chawal",
      "quantity": 2,
      "unit": "katori",
      "grams": 300,
@@ -3053,7 +3051,7 @@
     {
      "dish_id": "kadhi",
      "name": "kadhi",
-     "matched_text": "kadhi chawal",
+     "matched_text": "kadhi",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -3086,7 +3084,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "kadhi chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -3128,7 +3126,7 @@
     {
      "dish_id": "kadhi",
      "name": "kadhi",
-     "matched_text": "kadhi chawal",
+     "matched_text": "kadhi",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -3161,7 +3159,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "kadhi chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -3311,11 +3309,11 @@
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.1,
+     "confidence": 0.5,
      "flags": [
-      "leftover_nearby",
       "trailing_qty",
-      "leftover_in_meal"
+      "leftover_in_meal",
+      "leftover_nearby"
      ],
      "ai_estimate": false,
      "span_start": 0,
@@ -4388,9 +4386,8 @@
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.2,
+     "confidence": 0.6,
      "flags": [
-      "leftover_nearby",
       "leftover_in_meal"
      ],
      "ai_estimate": false,
@@ -4829,9 +4826,8 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "needs_confirmation": true,
-     "confidence": 0.2,
+     "confidence": 0.6,
      "flags": [
-      "leftover_nearby",
       "leftover_in_meal"
      ],
      "ai_estimate": false,
@@ -4927,7 +4923,7 @@
     {
      "dish_id": "chole",
      "name": "chole",
-     "matched_text": "chole bhature",
+     "matched_text": "chole",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -4960,7 +4956,7 @@
     {
      "dish_id": "bhatura",
      "name": "bhatura",
-     "matched_text": "chole bhature",
+     "matched_text": "bhature",
      "quantity": 2,
      "unit": "count",
      "grams": 160,
@@ -5235,7 +5231,7 @@
     {
      "dish_id": "rajma",
      "name": "rajma",
-     "matched_text": "rajma chawal",
+     "matched_text": "rajma",
      "quantity": 0.43,
      "unit": "katori",
      "grams": 65,
@@ -5258,21 +5254,20 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0,
+     "confidence": 0.6,
      "flags": [
-      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
      "span_start": 41,
-     "span_end": 53,
+     "span_end": 46,
      "learned": false,
      "default_portion": false
     },
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "rajma chawal",
+     "matched_text": "chawal",
      "quantity": 0.43,
      "unit": "katori",
      "grams": 65,
@@ -5295,13 +5290,12 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0,
+     "confidence": 0.6,
      "flags": [
-      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
-     "span_start": 0,
+     "span_start": 47,
      "span_end": 53,
      "learned": false,
      "default_portion": false
@@ -5754,13 +5748,14 @@
      },
      "carbs_g": 16.4,
      "fat_g": 22,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 0.9,
+     "needs_confirmation": true,
+     "confidence": 0,
      "flags": [
+      "unit_mismatch",
       "trailing_qty"
      ],
      "ai_estimate": false,
@@ -6313,7 +6308,7 @@
     {
      "dish_id": "chole",
      "name": "chole",
-     "matched_text": "chole bhature",
+     "matched_text": "chole",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -6346,7 +6341,7 @@
     {
      "dish_id": "bhatura",
      "name": "bhatura",
-     "matched_text": "chole bhature",
+     "matched_text": "bhature",
      "quantity": 2,
      "unit": "count",
      "grams": 160,
@@ -8151,7 +8146,7 @@
     {
      "dish_id": "rajma",
      "name": "rajma",
-     "matched_text": "rajma chawal",
+     "matched_text": "rajma",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -8184,7 +8179,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "rajma chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -8299,7 +8294,7 @@
     {
      "dish_id": "dal",
      "name": "dal",
-     "matched_text": "dal chawal",
+     "matched_text": "dal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -8332,7 +8327,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "dal chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -8871,7 +8866,7 @@
     {
      "dish_id": "chole",
      "name": "chole",
-     "matched_text": "chole bhature",
+     "matched_text": "chole",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -8904,7 +8899,7 @@
     {
      "dish_id": "bhatura",
      "name": "bhatura",
-     "matched_text": "chole bhature",
+     "matched_text": "bhature",
      "quantity": 2,
      "unit": "count",
      "grams": 160,
@@ -10127,7 +10122,7 @@
     {
      "dish_id": "kadhi",
      "name": "kadhi",
-     "matched_text": "kadhi chawal",
+     "matched_text": "kadhi",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -10160,7 +10155,7 @@
     {
      "dish_id": "rice",
      "name": "rice",
-     "matched_text": "kadhi chawal",
+     "matched_text": "chawal",
      "quantity": 1,
      "unit": "katori",
      "grams": 150,
@@ -10667,7 +10662,7 @@
     {
      "dish_id": "bread",
      "name": "bread",
-     "matched_text": "bread butter",
+     "matched_text": "bread",
      "quantity": 1,
      "unit": "count",
      "grams": 25,
@@ -10700,7 +10695,7 @@
     {
      "dish_id": "butter",
      "name": "butter",
-     "matched_text": "bread butter",
+     "matched_text": "butter",
      "quantity": 1,
      "unit": "spoon",
      "grams": 5,
