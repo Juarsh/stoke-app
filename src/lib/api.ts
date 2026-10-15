@@ -45,6 +45,14 @@ export function createApi(getToken: () => string | null) {
           if (config.mockAiDelay) await new Promise((res) => setTimeout(res, config.mockAiDelay));
           // QA only: a span containing 'zanthu' simulates a final busy queue -> failed row
           if (/zanthu/i.test(text)) return { ...r, items: r.items.filter((i) => i.dish_id !== ''), used_ai: false, fallback: 'busy', custom_items: [] };
+          // QA only: failed reasons with/without a reset time (qa.sh screenshots); ai_state "failed", no kcal
+          const qa = /qauserlimit(nt)?|qadaily(nt)?/i.exec(text)?.[0].toLowerCase();
+          if (qa) {
+            const base = { ...r, items: r.items.filter((i) => i.dish_id !== ''), used_ai: false, ai_state: 'failed' as const, custom_items: r.unmatched.map((u) => ({ custom_name: u, needs_input: true })) };
+            const at = qa.endsWith('nt') ? {} : { ai_resets_at: '2026-10-16T00:00:00-07:00' };
+            return qa.startsWith('qauser') ? { ...base, fallback: 'cap_reached', fallback_reason: 'user_limit', user_daily_limit: 3, ...at }
+              : { ...base, fallback: 'daily_limit', fallback_reason: 'daily_limit', ...at };
+          }
           // QA only (EXPO_PUBLIC_MOCK_AI=1): fake an AI estimate so the purple AI card can be reviewed without Gemini
           const ai = r.items.filter((i) => i.dish_id === '').map((i) => ({ ...i, source: 'ai_estimate' as const, ai_estimate: true, data_source: 'ai', source_note: 'AI estimate (mock) - confirm before saving' }));
           return { ...r, items: [...r.items.filter((i) => i.dish_id !== ''), ...ai], used_ai: true, fallback: 'used', custom_items: [] };

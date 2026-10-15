@@ -44,7 +44,8 @@ export function plan(rows: Row[], estimating = 0, waiting = 0) {
   let button: string, total: string, note = '', disabled = false;
   if (m === 0 && !estimating) { button = `Add ${n(kcal)} kcal`; total = 'Total'; }
   else if (open.length === 0 && waiting && add.length) { // only failed rows wait: keep "Add", never hide them
-    button = [`Add ${n(kcal)} kcal`, est, still].filter(Boolean).join(' · '); total = ['Total', est, still].filter(Boolean).join(' · ');
+    button = [`Confirm ${add.length}`, est, still].filter(Boolean).join(' · '); // frame log-estimate-failed
+    total = ['Total', est, still].filter(Boolean).join(' · ');
   }
   else if (add.length === 0) {
     button = m ? 'Choose for each item to add it' : `Add 0 kcal · ${est}`;

@@ -19,7 +19,7 @@ export function aiStatus(r: ParseResponse | unknown): AiStatus {
   // answers from a server without ai_state (mock / offline): the old fallback mapping
   if (['rate_limited', 'unavailable', 'timeout'].includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
   if (['gave_up', 'user_limit'].includes(p.fallback_reason ?? '')) return 'failed';
-  if (['error', 'busy', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
+  if (['error', 'busy', 'gave_up', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
   return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
 }
 

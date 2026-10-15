@@ -23,7 +23,8 @@ import { config } from '@/lib/config';
 import { DISH_TABLE_VERSION, Item } from '@/parser';
 import { makeStyles } from '@/theme';
 
-const AI_CAP = 20;
+/** per-user AI estimates a day (CEO: 3 for the closed test; matches the server's AI_USER_DAILY_CAP default) */
+const AI_CAP = 3;
 type Draft = { key: string; it: AnyItem & LoggedItem; ok: boolean; corrected?: boolean };
 type Custom = FailedRow; // failed AI estimate (retry failed / busy / cap): the user's own kcal
 
@@ -77,7 +78,7 @@ export default function Log() {
   async function estimateUnknown(spans: string[]) {
     const myGen = gen.current;
     const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number; resetsAt?: string } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
-    if (aiUsedToday >= AI_CAP) return toCustom(spans, '', { reason: 'user_limit' });
+    if (aiUsedToday >= AI_CAP && !config.mockAi) return toCustom(spans, '', { reason: 'user_limit', userDailyLimit: AI_CAP });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
     setEstimating((e) => [...e, ...spans]); setBusy(true);

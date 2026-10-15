@@ -3,7 +3,7 @@ import { Item, parser, totals } from '../parser';
 import type { Slot } from './domain';
 import { slotFor } from './domain';
 
-export type Fallback = 'none' | 'cache' | 'used' | 'not_configured' | 'cap_reached' | 'global_cap_reached' | 'daily_limit' | 'busy' | 'rate_limited' | 'error';
+export type Fallback = 'none' | 'cache' | 'used' | 'not_configured' | 'cap_reached' | 'global_cap_reached' | 'daily_limit' | 'busy' | 'rate_limited' | 'error' | 'gave_up';
 export interface ParseTotal { kcal: number; kcal_low: number; kcal_high: number; protein_g: number; protein_low: number; protein_high: number; carbs_g: number; fat_g: number }
 /** Mirrors food.ParseResponse in the Go backend. */
 export interface ParseResponse {

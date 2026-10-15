@@ -87,7 +87,8 @@ test('a failed row with no kcal shows in the batch label and never hides', () =>
   const f = [{ key: 'z', id: 'z', name: 'zanthu', kcal: '', protein: '', added: false }];
   expect(failedWaiting(f)).toBe(1);
   const p = plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting(f));
-  expect(p.button).toBe(`Add ${roti.kcal.best} kcal · 1 still needs a choice`);
+  expect(p.button).toBe('Confirm 1 · 1 still needs a choice'); // frame log-estimate-failed
+  expect(p.later).toBe(`Add ${roti.kcal.best} kcal · 1 to review later`);
   expect(plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting([{ ...f[0], kcal: '200', added: true }])).button).toBe(`Add ${roti.kcal.best} kcal`);
 });
 
@@ -175,4 +176,17 @@ describe('gave_up (busy > 30 min) is final', () => {
   });
   test.each(['rate_limited', 'unavailable', 'timeout'])('%s is never failed without ai_state', (r) =>
     expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'error', fallback_reason: r, custom_items: [] } as never)).toBe('estimating'));
+});
+
+test('estimate-failed frame: "Confirm 2 · 1 still needs a choice" + outline "Add {kcal} kcal · 1 to review later"', () => {
+  const roti = parser.parse('2 roti').items[0], dal = parser.parse('dal').items[0];
+  const p = plan([{ key: 'r', it: roti, confirmed: true }, { key: 'd', it: dal, confirmed: true }], 0, 1);
+  expect(p.button).toBe('Confirm 2 · 1 still needs a choice');
+  expect(p.later).toBe(`Add ${roti.kcal.best + dal.kcal.best} kcal · 1 to review later`);
+});
+test('app-side user_limit keeps the number in the copy', () =>
+  expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3 })).toBe('You’ve used today’s 3 AI estimates. Add the calories yourself.'));
+test('3f4f401: fallback "gave_up" alone (no ai_state) is failed with generic copy', () => {
+  expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', custom_items: [] } as never)).toBe('failed');
+  expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', fallback_reason: 'gave_up', ai_state: 'failed', custom_items: [] } as never)).toBe('failed');
 });
