@@ -706,7 +706,10 @@
   "missing_side": -0.15,
   "generic": -0.6,
   "sanity": -0.3,
-  "capped": -0.3
+  "capped": -0.3,
+  "token_reuse": -1,
+  "adjacent_split": -1,
+  "unit_mismatch": -1
  },
  "fuzzy_never_to_categories": [
   "fruit"
@@ -792,6 +795,173 @@
    {
     "dish_id": "butter"
    }
+  ]
+ },
+ "everyday_pairs": {
+  "_doc": "Adjacent dishes typed with no separator ('roti sabzi') only stay as separate table items if their categories form an everyday pair here (or the phrase is an everyday combo). Anything else could be one unknown dish and goes to the AI as a whole phrase.",
+  "category_pairs": [
+   [
+    "bread",
+    "main"
+   ],
+   [
+    "bread",
+    "dal"
+   ],
+   [
+    "bread",
+    "protein"
+   ],
+   [
+    "bread",
+    "condiment"
+   ],
+   [
+    "bread",
+    "drink"
+   ],
+   [
+    "rice",
+    "dal"
+   ],
+   [
+    "rice",
+    "main"
+   ],
+   [
+    "rice",
+    "protein"
+   ],
+   [
+    "dal",
+    "main"
+   ],
+   [
+    "main",
+    "protein"
+   ],
+   [
+    "breakfast",
+    "drink"
+   ],
+   [
+    "breakfast",
+    "condiment"
+   ],
+   [
+    "breakfast",
+    "sweet"
+   ],
+   [
+    "breakfast",
+    "protein"
+   ],
+   [
+    "snack",
+    "drink"
+   ],
+   [
+    "snack",
+    "condiment"
+   ],
+   [
+    "main",
+    "main"
+   ]
+  ],
+  "dish_pairs": [
+   [
+    "idli",
+    "sambar"
+   ],
+   [
+    "dosa",
+    "sambar"
+   ],
+   [
+    "masala_dosa",
+    "sambar"
+   ],
+   [
+    "vada",
+    "sambar"
+   ],
+   [
+    "uttapam",
+    "sambar"
+   ],
+   [
+    "pongal",
+    "sambar"
+   ]
+  ]
+ },
+ "bare_count_units": [
+  "count",
+  "piece",
+  "glass",
+  "cup",
+  "slice",
+  "plate",
+  "packet",
+  "scoop",
+  "bowl"
+ ],
+ "unit_fits": {
+  "_doc": "typed unit -> dish units it can describe",
+  "katori": [
+   "katori",
+   "bowl",
+   "plate",
+   "cup",
+   "glass"
+  ],
+  "bowl": [
+   "katori",
+   "bowl",
+   "plate",
+   "cup"
+  ],
+  "plate": [
+   "plate",
+   "katori",
+   "bowl",
+   "count",
+   "piece"
+  ],
+  "cup": [
+   "cup",
+   "glass",
+   "katori",
+   "bowl"
+  ],
+  "glass": [
+   "glass",
+   "cup"
+  ],
+  "spoon": [
+   "spoon",
+   "katori"
+  ],
+  "piece": [
+   "count",
+   "piece",
+   "plate"
+  ],
+  "slice": [
+   "count",
+   "slice",
+   "piece",
+   "plate"
+  ],
+  "packet": [
+   "packet",
+   "count",
+   "piece"
+  ],
+  "scoop": [
+   "scoop",
+   "spoon"
   ]
  }
 }

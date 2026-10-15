@@ -1,37 +1,44 @@
+// v3.2 Today (frame 3): greeting + streak chip, review card, ring hero, protein/steps rows, Fill card, Today's plate rows.
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { FlatList, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CoachCard } from '@/components/CoachCard';
-import { FoodTile } from '@/components/FoodTile';
 import { Glows } from '@/components/Gradient';
-import { Bar, HeroArc } from '@/components/HeroArc';
-import { Badge, Card, Row, T } from '@/components/ui';
+import { Bar } from '@/components/HeroArc';
+import { Icon } from '@/components/Icon';
+import { PendingRow } from '@/components/PendingRow';
+import { ReviewLink } from '@/components/ReviewLink';
+import { RingHero } from '@/components/RingHero';
+import { Card, Row, T } from '@/components/ui';
+import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
-import type { FoodEntry } from '@/lib/domain';
-import { localDate } from '@/lib/domain';
+import { FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
 import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
-import { ReviewLink } from '@/components/ReviewLink';
-import { PendingRow } from '@/components/PendingRow';
 import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
-const PlateTile = memo(function PlateTile({ e }: { e: FoodEntry }) {
-  const s = useStyles();
-  const name = e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item';
+const nameOf = (e: FoodEntry) => e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item';
+
+const FillCard = memo(function FillCard({ kcal, protein, picks, diet }: { kcal: number; protein: number; picks: Suggestion[]; diet: string }) {
+  const s = useStyles(); const t = useTheme(); const router = useRouter();
+  if (kcal <= 0 || !picks.length) return null;
   return (
-    <Card style={s.tile}>
-      <FoodTile seed={e.dish_id ?? e.custom_name} category={parser.dishById(e.dish_id ?? '')?.category} />
-      <T v="bodyStrong" numberOfLines={1}>{name}</T>
-      <T v="caption" tone="muted">{SLOT_LABEL[e.slot].slice(0, 1)} · {e.kcal.best}</T>
-    </Card>
+    <View style={s.fill}>
+      <Row style={{ gap: 8 }}><Icon name="coach" color={t.c.em} size={16} /><T v="headline">Fill {Math.round(kcal).toLocaleString('en-IN')} kcal · {Math.round(protein)} g protein</T></Row>
+      <T v="caption" tone="text2">{diet} picks from our dish table · estimates</T>
+      {picks.map((p) => (
+        <Pressable key={p.label} style={s.fillRow} onPress={() => router.push({ pathname: '/log', params: { prefill: p.label } })}
+          accessibilityRole="button" accessibilityLabel={`Log ${p.label}, ${p.kcal} calories`}>
+          <T style={{ flex: 1 }}>{p.label} <T v="caption" tone="muted">· {p.kcal} kcal</T></T>
+          <T v="bodyStrong" tone="em">+ Log</T>
+        </Pressable>
+      ))}
+    </View>
   );
 });
-const renderTile = ({ item }: { item: FoodEntry }) => <PlateTile e={item} />;
-const keyOf = (e: FoodEntry) => e.id;
 
 export default function Today() {
   const t = useTheme(); const s = useStyles(); const st = useStore(); const d = useDay(); const router = useRouter();
@@ -44,56 +51,72 @@ export default function Today() {
   const openSettings = useCallback(() => router.push('/settings'), [router]);
   const dietLabel = d.profile?.diet === 'veg' ? 'Veg' : d.profile?.diet === 'egg' ? 'Egg' : 'Non-veg';
   const protPct = d.proteinTarget ? d.tot.protein / d.proteinTarget : 0;
+  const rows = useMemo(() => plateRows(d.entries, nameOf), [d.entries]);
+  const stepsK = Math.round((d.profile?.stepsTarget ?? 8000) / 1000);
   return (
     <View style={{ flex: 1 }}>
       <Glows />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={s.list} removeClippedSubviews>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <View><T v="caption" tone="muted">{dateLabel}</T><T v="title">Namaste{first ? `, ${first}` : ''}</T></View>
-            <Row>
-              <Badge kind="gold" label={`🔥 ${d.streak.current}`} />
-              <Pressable onPress={openSettings} accessibilityLabel="Open settings" style={s.avatar} hitSlop={8}>
-                <T v="bodyStrong" tone="emChip">{(first || '?').slice(0, 1).toUpperCase()}</T>
-              </Pressable>
-            </Row>
+        <ScrollView contentContainerStyle={s.list}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View style={{ flex: 1 }}>
+              <T v="caption" tone="muted">{dateLabel}</T>
+              <T v="title" numberOfLines={1}>{greeting()}{first ? `, ${first}` : ''}</T>
+            </View>
+            <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel={`${d.streak.current}-day streak. Open settings`} style={s.streak} hitSlop={8}>
+              <T v="label" tone="gold" numberOfLines={1}>🔥 {d.streak.current} {d.streak.current === 1 ? 'day' : 'days'}</T>
+            </Pressable>
           </Row>
           {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} /> : null}
-          <HeroArc eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} />
+          <RingHero eaten={d.tot.kcal} target={d.kcalTarget} kcalLeft={d.kcalLeft} proteinLeft={d.proteinLeft} />
           <View style={s.pair}>
-            <Card style={s.half}>
-              <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Protein</T><T v="number">{Math.round(d.proteinLeft)} g left</T></Row>
-              <Bar pct={protPct} from={t.c.accentFill} />
-            </Card>
+            <View style={{ flex: 1, gap: 6 }}>
+              <T v="caption" tone="muted">Protein</T>
+              <Bar pct={protPct} from={t.c.em} />
+            </View>
             {flags.steps ? (
-              <Card style={s.half}>
-                <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Steps</T><T v="number">{d.steps.toLocaleString('en-IN')}</T></Row>
-                <Bar pct={d.steps / (d.profile?.stepsTarget ?? 8000)} from={t.c.emTintLine} />
-                <T v="caption" tone="muted">≈{d.burn} kcal · {d.profile?.addStepKcal ? 'in budget' : 'not in budget'}</T>
-              </Card>
+              <View style={{ flex: 1, gap: 6 }}>
+                <Row style={{ justifyContent: 'space-between' }}><T v="caption" tone="muted">Steps</T><T v="caption" tone="muted">{d.steps.toLocaleString('en-IN')} / {stepsK}k</T></Row>
+                <Bar pct={d.steps / (d.profile?.stepsTarget ?? 8000)} from={t.c.accentFill} />
+                <T v="micro" tone="muted">≈{d.burn} kcal · {d.profile?.addStepKcal ? 'in budget' : 'not in budget'}</T>
+              </View>
             ) : null}
           </View>
-          <CoachCard kcalLeft={d.kcalLeft} proteinLeft={d.proteinLeft} picks={d.picks} dietLabel={dietLabel} />
+          <FillCard kcal={d.kcalLeft} protein={d.proteinLeft} picks={d.picks} diet={dietLabel} />
           <Row style={{ justifyContent: 'space-between', marginTop: 4 }}>
-            <T v="headline">Today’s plate</T>
-            {d.streak.freezeJustUsed ? <T v="caption" tone="freeze">❄ Freeze saved your {d.streak.current}-day streak</T>
+            <T v="bodyStrong">Today’s plate</T>
+            {d.streak.freezeJustUsed ? <T v="caption" tone="muted">❄ Freeze saved your streak</T>
               : d.streak.current === 0 && d.loggedDates.size > 0 ? <T v="caption" tone="muted">Streak paused. Start again today.</T> : null}
           </Row>
-          {d.pending.map((f) => <PendingRow key={f.id} label={f.span} state={d.offline ? 'offline' : 'estimating'} />)}
+          {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
+          <View>
+            {rows.map((r, i) => (
+              <Pressable key={r.slot} style={[s.plateRow, i > 0 && s.sep]} accessibilityRole="button"
+                accessibilityLabel={r.n ? `${SLOT_LABEL[r.slot]}: ${r.names}, ${r.kcal} calories` : `Add ${SLOT_LABEL[r.slot]}`}
+                onPress={() => router.push(r.n ? '/progress' : { pathname: '/log', params: { slot: r.slot as Slot } })}>
+                <T v="bodyStrong" style={{ width: 84 }}>{SLOT_LABEL[r.slot]}</T>
+                {r.n ? (
+                  <>
+                    <T tone="muted" numberOfLines={1} style={{ flex: 1 }}>{r.names}</T>
+                    <T v="number">{r.kcal.toLocaleString('en-IN')}</T>
+                    <Icon name="chevron" color={t.c.muted} size={18} />
+                  </>
+                ) : <T v="bodyStrong" tone="em" style={{ flex: 1 }}>+ add</T>}
+              </Pressable>
+            ))}
+          </View>
           {d.entries.length || d.pending.length || d.reviewCount ? null : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
-          {d.entries.length ? (
-            <FlatList horizontal data={d.entries} keyExtractor={keyOf} renderItem={renderTile} showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 10 }} initialNumToRender={4} windowSize={3} removeClippedSubviews />
-          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>
   );
 }
 const useStyles = makeStyles((t) => ({
-  list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl * 2, gap: t.space.gap },
-  avatar: { width: 36, height: 36, borderRadius: t.radius.full, backgroundColor: t.c.tint, alignItems: 'center', justifyContent: 'center' },
-  pair: { flexDirection: 'row', gap: t.space.gap },
-  half: { flex: 1 },
-  tile: { width: 120, gap: 6 },
+  list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl * 2, gap: t.space.md },
+  streak: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: t.radius.full, backgroundColor: t.c.tintGold, minHeight: 32, justifyContent: 'center' },
+  pair: { flexDirection: 'row', gap: t.space.lg },
+  fill: { backgroundColor: t.c.accentTint, borderRadius: t.radius.card, padding: t.space.cardH, gap: 4, borderWidth: 1, borderColor: t.c.emTintLine },
+  fillRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderTopWidth: 1, borderTopColor: t.c.emTintLine, gap: 8 },
+  plateRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, gap: 10 },
+  sep: { borderTopWidth: 1, borderTopColor: t.c.line },
 }));

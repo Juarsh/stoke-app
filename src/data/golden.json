@@ -30,6 +30,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -60,6 +62,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -90,6 +94,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     },
@@ -120,6 +126,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 27,
      "learned": false,
      "default_portion": true
     }
@@ -162,6 +170,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     }
@@ -200,11 +210,14 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
+      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 22,
      "learned": false,
      "default_portion": false
     },
@@ -234,11 +247,14 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
+      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 22,
      "learned": false,
      "default_portion": false
     }
@@ -278,6 +294,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     },
@@ -308,6 +326,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 24,
      "learned": false,
      "default_portion": true
     }
@@ -347,6 +367,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 3,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     },
@@ -377,6 +399,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 19,
      "learned": false,
      "default_portion": false
     }
@@ -416,6 +440,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     },
@@ -446,6 +472,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -485,6 +513,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 12,
+     "span_end": 18,
      "learned": false,
      "default_portion": false
     },
@@ -515,6 +545,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 19,
+     "span_end": 22,
      "learned": false,
      "default_portion": true
     }
@@ -554,6 +586,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 12,
+     "span_end": 19,
      "learned": false,
      "default_portion": false
     }
@@ -593,6 +627,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -616,13 +652,18 @@
      },
      "carbs_g": 14.2,
      "fat_g": 3.7,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -646,13 +687,18 @@
      },
      "carbs_g": 2.9,
      "fat_g": 0.7,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 29,
      "learned": false,
      "default_portion": true
     }
@@ -692,6 +738,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 11,
      "learned": false,
      "default_portion": true
     }
@@ -731,6 +779,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -770,6 +820,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 20,
      "learned": false,
      "default_portion": true
     },
@@ -800,6 +852,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 34,
      "learned": false,
      "default_portion": false
     }
@@ -840,6 +894,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -871,6 +927,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -910,6 +968,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     },
@@ -940,6 +1000,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -970,6 +1032,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 28,
      "learned": false,
      "default_portion": true
     }
@@ -1009,6 +1073,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     },
@@ -1039,6 +1105,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 20,
+     "span_end": 24,
      "learned": false,
      "default_portion": true
     },
@@ -1069,6 +1137,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 29,
+     "span_end": 35,
      "learned": false,
      "default_portion": true
     }
@@ -1108,6 +1178,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -1147,6 +1219,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 19,
      "learned": false,
      "default_portion": false
     }
@@ -1186,6 +1260,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     },
@@ -1216,6 +1292,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 14,
      "learned": false,
      "default_portion": true
     }
@@ -1258,6 +1336,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": false
     }
@@ -1297,6 +1377,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -1327,6 +1409,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 27,
      "learned": false,
      "default_portion": false
     }
@@ -1366,6 +1450,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     },
@@ -1396,6 +1482,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 25,
      "learned": false,
      "default_portion": true
     }
@@ -1438,6 +1526,8 @@
       "leftover_in_meal"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     }
@@ -1479,6 +1569,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -1518,6 +1610,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 20,
      "learned": false,
      "default_portion": false
     }
@@ -1561,6 +1655,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 19,
      "learned": false,
      "default_portion": true
     }
@@ -1601,6 +1697,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": true
     },
@@ -1632,6 +1730,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -1674,6 +1774,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 10,
      "learned": false,
      "default_portion": false
     }
@@ -1706,13 +1808,18 @@
      },
      "carbs_g": 41.1,
      "fat_g": 13.3,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -1736,16 +1843,19 @@
      },
      "carbs_g": 35.4,
      "fat_g": 15,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 0.9,
+     "needs_confirmation": true,
+     "confidence": 0,
      "flags": [
-      "trailing_qty"
+      "trailing_qty",
+      "adjacent_split"
      ],
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 10,
      "learned": false,
      "default_portion": false
     }
@@ -1778,14 +1888,19 @@
      },
      "carbs_g": 36.4,
      "fat_g": 10,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
      "from_combo": "dal_chawal",
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     },
@@ -1809,14 +1924,19 @@
      },
      "carbs_g": 81.8,
      "fat_g": 3.4,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
      "from_combo": "dal_chawal",
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 4,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -1840,13 +1960,18 @@
      },
      "carbs_g": 0,
      "fat_g": 5,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -1889,6 +2014,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": false
     },
@@ -1919,6 +2046,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -1958,6 +2087,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -2009,6 +2140,8 @@
       }
      ],
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -2048,6 +2181,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 3,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -2087,6 +2222,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 11,
      "learned": false,
      "default_portion": false
     },
@@ -2117,6 +2254,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 24,
+     "span_end": 29,
      "learned": false,
      "default_portion": false
     }
@@ -2159,6 +2298,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -2198,6 +2339,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -2228,6 +2371,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -2267,6 +2412,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     },
@@ -2297,6 +2444,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -2336,6 +2485,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     },
@@ -2366,6 +2517,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 15,
+     "span_end": 19,
      "learned": false,
      "default_portion": false
     }
@@ -2405,6 +2558,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     }
@@ -2444,6 +2599,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 3,
+     "span_end": 11,
      "learned": false,
      "default_portion": false
     }
@@ -2486,6 +2643,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     }
@@ -2525,6 +2684,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -2568,6 +2729,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -2610,6 +2773,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -2649,6 +2814,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 10,
      "learned": false,
      "default_portion": false
     },
@@ -2682,6 +2849,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -2721,6 +2890,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": true
     },
@@ -2751,6 +2922,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -2790,6 +2963,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     },
@@ -2820,6 +2995,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 21,
+     "span_end": 25,
      "learned": false,
      "default_portion": true
     }
@@ -2859,6 +3036,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 24,
      "learned": false,
      "default_portion": false
     }
@@ -2899,6 +3078,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -2930,6 +3111,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 20,
      "learned": false,
      "default_portion": true
     }
@@ -2970,6 +3153,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -3001,6 +3186,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     }
@@ -3040,6 +3227,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 15,
      "learned": false,
      "default_portion": false
     }
@@ -3083,6 +3272,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": false
     }
@@ -3127,6 +3318,8 @@
       "leftover_in_meal"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": false
     }
@@ -3168,6 +3361,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -3207,6 +3402,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     },
@@ -3237,6 +3434,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 19,
+     "span_end": 23,
      "learned": false,
      "default_portion": true
     }
@@ -3276,6 +3475,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     }
@@ -3315,6 +3516,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -3354,6 +3557,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -3393,6 +3598,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -3432,6 +3639,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -3462,6 +3671,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -3504,6 +3715,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -3547,6 +3760,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     }
@@ -3589,6 +3804,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -3632,6 +3849,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": false
     }
@@ -3675,6 +3894,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     }
@@ -3717,6 +3938,8 @@
       "variant"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -3759,6 +3982,8 @@
       "variant"
      ],
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -3802,6 +4027,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -3841,6 +4068,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     },
@@ -3871,6 +4100,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 12,
+     "span_end": 22,
      "learned": false,
      "default_portion": true
     }
@@ -3910,6 +4141,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 21,
      "learned": false,
      "default_portion": false
     }
@@ -3949,6 +4182,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     }
@@ -3988,6 +4223,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 10,
      "learned": false,
      "default_portion": false
     }
@@ -4027,6 +4264,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 4,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
@@ -4069,6 +4308,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -4108,6 +4349,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
@@ -4151,6 +4394,8 @@
       "leftover_in_meal"
      ],
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     }
@@ -4196,6 +4441,8 @@
       "count_between"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": false
     },
@@ -4226,6 +4473,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -4265,6 +4514,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 20,
      "learned": false,
      "default_portion": false
     }
@@ -4304,6 +4555,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     },
@@ -4334,6 +4587,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 19,
+     "span_end": 25,
      "learned": false,
      "default_portion": false
     }
@@ -4376,6 +4631,8 @@
       "combo_or_split"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": false
     },
@@ -4410,6 +4667,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 19,
      "learned": false,
      "default_portion": false
     }
@@ -4449,6 +4708,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     }
@@ -4488,6 +4749,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     }
@@ -4527,6 +4790,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 16,
+     "span_end": 19,
      "learned": false,
      "default_portion": true
     }
@@ -4570,6 +4835,8 @@
       "leftover_in_meal"
      ],
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     }
@@ -4611,6 +4878,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -4641,6 +4910,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -4681,6 +4952,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -4712,6 +4985,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 21,
      "learned": false,
      "default_portion": true
     },
@@ -4742,6 +5017,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 28,
+     "span_end": 31,
      "learned": false,
      "default_portion": true
     }
@@ -4781,6 +5058,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 4,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     },
@@ -4811,6 +5090,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -4850,6 +5131,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -4880,6 +5163,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -4910,6 +5195,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     },
@@ -4940,6 +5227,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 27,
      "learned": false,
      "default_portion": true
     },
@@ -4969,11 +5258,14 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
+      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
+     "span_start": 41,
+     "span_end": 53,
      "learned": false,
      "default_portion": false
     },
@@ -5003,11 +5295,14 @@
      "fuzzy": false,
      "from_combo": "rajma_chawal",
      "needs_confirmation": true,
-     "confidence": 0.6,
+     "confidence": 0,
      "flags": [
+      "token_reuse",
       "combo_or_split"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 53,
      "learned": false,
      "default_portion": false
     }
@@ -5047,6 +5342,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     }
@@ -5086,6 +5383,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 15,
      "learned": false,
      "default_portion": false
     }
@@ -5125,6 +5424,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -5167,6 +5468,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": false
     }
@@ -5206,6 +5509,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": false
     }
@@ -5245,6 +5550,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 18,
      "learned": false,
      "default_portion": false
     }
@@ -5295,6 +5602,8 @@
       }
      ],
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 11,
      "learned": false,
      "default_portion": false
     }
@@ -5334,6 +5643,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     },
@@ -5364,6 +5675,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 19,
+     "span_end": 25,
      "learned": false,
      "default_portion": false
     }
@@ -5407,6 +5720,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -5449,6 +5764,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 11,
      "learned": false,
      "default_portion": false
     }
@@ -5488,6 +5805,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -5530,6 +5849,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": false
     }
@@ -5578,13 +5899,18 @@
      },
      "carbs_g": 29.3,
      "fat_g": 23.3,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 19,
      "learned": false,
      "default_portion": true
     },
@@ -5608,16 +5934,19 @@
      },
      "carbs_g": 0,
      "fat_g": 4,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 0.9,
+     "needs_confirmation": true,
+     "confidence": 0,
      "flags": [
-      "style_ignored"
+      "style_ignored",
+      "adjacent_split"
      ],
      "ai_estimate": false,
+     "span_start": 20,
+     "span_end": 33,
      "learned": false,
      "default_portion": true
     }
@@ -5650,13 +5979,18 @@
      },
      "carbs_g": 0,
      "fat_g": 4.9,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 16,
      "learned": false,
      "default_portion": false
     },
@@ -5680,13 +6014,18 @@
      },
      "carbs_g": 13.3,
      "fat_g": 7.2,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0,
+     "flags": [
+      "adjacent_split"
+     ],
      "ai_estimate": false,
+     "span_start": 17,
+     "span_end": 22,
      "learned": false,
      "default_portion": true
     }
@@ -5726,6 +6065,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 4,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     }
@@ -5765,6 +6106,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     },
@@ -5795,6 +6138,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     },
@@ -5825,6 +6170,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -5864,6 +6211,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     }
@@ -5903,6 +6252,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -5945,6 +6296,8 @@
       "variant"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -5985,6 +6338,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -6016,6 +6371,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 21,
      "learned": false,
      "default_portion": true
     }
@@ -6055,6 +6412,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     }
@@ -6094,6 +6453,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 3,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -6144,6 +6505,8 @@
       }
      ],
      "ai_estimate": false,
+     "span_start": 3,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     }
@@ -6194,6 +6557,8 @@
       }
      ],
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 20,
      "learned": false,
      "default_portion": false
     }
@@ -6233,6 +6598,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -6263,6 +6630,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     }
@@ -6302,6 +6671,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -6344,6 +6715,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 14,
      "learned": false,
      "default_portion": true
     }
@@ -6383,6 +6756,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -6425,6 +6800,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     },
@@ -6455,6 +6832,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 13,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }
@@ -6505,6 +6884,8 @@
       }
      ],
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -6544,6 +6925,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     }
@@ -6583,6 +6966,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -6625,6 +7010,8 @@
       "style_ignored"
      ],
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 21,
      "learned": false,
      "default_portion": true
     }
@@ -6664,6 +7051,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 11,
      "learned": false,
      "default_portion": false
     }
@@ -6703,6 +7092,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 11,
      "learned": false,
      "default_portion": true
     }
@@ -6745,6 +7136,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     }
@@ -6787,6 +7180,8 @@
       "generic"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -6826,6 +7221,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -6868,6 +7265,8 @@
       "style_ignored"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 20,
      "learned": false,
      "default_portion": true
     }
@@ -6911,6 +7310,8 @@
       "trailing_qty"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -6954,6 +7355,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -6996,6 +7399,8 @@
       "variant"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -7038,6 +7443,8 @@
       "variant"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -7077,6 +7484,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -7116,6 +7525,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 21,
      "learned": false,
      "default_portion": false
     }
@@ -7155,6 +7566,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     }
@@ -7198,6 +7611,8 @@
       "count_between"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": false
     },
@@ -7228,6 +7643,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -7270,6 +7687,8 @@
       "fuzzy"
      ],
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": true
     }
@@ -7309,6 +7728,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     },
@@ -7339,6 +7760,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 12,
+     "span_end": 22,
      "learned": false,
      "default_portion": true
     }
@@ -7378,6 +7801,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -7417,6 +7842,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -7456,6 +7883,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -7486,6 +7915,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -7516,6 +7947,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -7555,6 +7988,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     },
@@ -7585,6 +8020,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -7624,6 +8061,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -7654,6 +8093,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -7693,6 +8134,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 11,
      "learned": false,
      "default_portion": true
     }
@@ -7733,6 +8176,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -7764,6 +8209,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 20,
      "learned": false,
      "default_portion": true
     }
@@ -7803,6 +8250,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -7833,6 +8282,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 16,
      "learned": false,
      "default_portion": true
     }
@@ -7873,6 +8324,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 3,
      "learned": false,
      "default_portion": true
     },
@@ -7904,6 +8357,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 4,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     }
@@ -7943,6 +8398,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     },
@@ -7973,6 +8430,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 15,
+     "span_end": 19,
      "learned": false,
      "default_portion": true
     }
@@ -8012,6 +8471,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -8051,6 +8512,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     },
@@ -8081,6 +8544,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 5,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     }
@@ -8120,6 +8585,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     },
@@ -8150,6 +8617,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 15,
+     "span_end": 20,
      "learned": false,
      "default_portion": false
     }
@@ -8189,6 +8658,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": true
     },
@@ -8219,6 +8690,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 16,
      "learned": false,
      "default_portion": false
     }
@@ -8258,6 +8731,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 8,
+     "span_end": 12,
      "learned": false,
      "default_portion": false
     }
@@ -8297,6 +8772,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": true
     }
@@ -8336,6 +8813,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -8375,6 +8854,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     }
@@ -8415,6 +8896,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -8446,6 +8929,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -8485,6 +8970,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 20,
      "learned": false,
      "default_portion": true
     },
@@ -8515,6 +9002,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 23,
+     "span_end": 27,
      "learned": false,
      "default_portion": false
     }
@@ -8554,6 +9043,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -8593,6 +9084,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     },
@@ -8623,6 +9116,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -8662,6 +9157,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -8701,6 +9198,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
@@ -8740,6 +9239,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 8,
      "learned": false,
      "default_portion": false
     }
@@ -8779,6 +9280,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 8,
      "learned": false,
      "default_portion": true
     }
@@ -8818,6 +9321,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
@@ -8857,6 +9362,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
@@ -8896,6 +9403,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -8926,6 +9435,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -8965,6 +9476,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     }
@@ -9004,6 +9517,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 9,
+     "span_end": 13,
      "learned": false,
      "default_portion": false
     }
@@ -9043,6 +9558,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -9082,6 +9599,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     }
@@ -9121,6 +9640,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 4,
      "learned": false,
      "default_portion": true
     },
@@ -9151,6 +9672,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 14,
      "learned": false,
      "default_portion": true
     }
@@ -9190,6 +9713,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -9220,6 +9745,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -9259,6 +9786,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 13,
      "learned": false,
      "default_portion": true
     },
@@ -9289,6 +9818,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -9328,6 +9859,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     },
@@ -9358,6 +9891,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 12,
+     "span_end": 16,
      "learned": false,
      "default_portion": false
     }
@@ -9397,6 +9932,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -9427,6 +9964,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 15,
      "learned": false,
      "default_portion": true
     }
@@ -9466,6 +10005,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -9496,6 +10037,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 14,
      "learned": false,
      "default_portion": true
     }
@@ -9535,6 +10078,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 11,
      "learned": false,
      "default_portion": true
     },
@@ -9565,6 +10110,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 14,
+     "span_end": 18,
      "learned": false,
      "default_portion": false
     }
@@ -9605,6 +10152,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -9636,6 +10185,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     }
@@ -9675,6 +10226,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 10,
      "learned": false,
      "default_portion": true
     },
@@ -9705,6 +10258,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 11,
+     "span_end": 18,
      "learned": false,
      "default_portion": true
     }
@@ -9744,6 +10299,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -9783,6 +10340,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -9822,6 +10381,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 9,
      "learned": false,
      "default_portion": false
     },
@@ -9852,6 +10413,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 22,
      "learned": false,
      "default_portion": true
     }
@@ -9891,6 +10454,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     },
@@ -9921,6 +10486,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 10,
+     "span_end": 14,
      "learned": false,
      "default_portion": false
     }
@@ -9960,6 +10527,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 7,
      "learned": false,
      "default_portion": true
     }
@@ -9999,6 +10568,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 7,
      "learned": false,
      "default_portion": false
     }
@@ -10038,6 +10609,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     }
@@ -10077,6 +10650,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 6,
      "learned": false,
      "default_portion": true
     }
@@ -10117,6 +10692,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 0,
+     "span_end": 5,
      "learned": false,
      "default_portion": true
     },
@@ -10148,6 +10725,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 6,
+     "span_end": 12,
      "learned": false,
      "default_portion": true
     }
@@ -10187,6 +10766,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 2,
+     "span_end": 6,
      "learned": false,
      "default_portion": false
     },
@@ -10217,6 +10798,8 @@
      "needs_confirmation": false,
      "confidence": 1,
      "ai_estimate": false,
+     "span_start": 7,
+     "span_end": 17,
      "learned": false,
      "default_portion": true
     }

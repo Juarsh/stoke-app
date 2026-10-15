@@ -95,6 +95,7 @@ const g = (w: W) => fonts.grotesk[w];
 const i = (w: W) => fonts.inter[w];
 export const typeScale = {
   hero: { fontSize: 88, lineHeight: 92, letterSpacing: -2.6, fontFamily: g(700) },
+  ring: { fontSize: 60, lineHeight: 64, letterSpacing: -1.8, fontFamily: g(700) },
   displayXl: { fontSize: 72, lineHeight: 74, letterSpacing: -2.2, fontFamily: g(700) },
   display: { fontSize: 52, lineHeight: 56, letterSpacing: -1.6, fontFamily: g(700) },
   displayM: { fontSize: 34, lineHeight: 38, letterSpacing: -1, fontFamily: g(700) },
@@ -127,4 +128,4 @@ export const elevation = (dark: boolean, c: { shadow: string; glowBtn: string })
   e3: dark ? {} : { elevation: 8, shadowColor: c.shadow, shadowOpacity: 0.16, shadowRadius: 30, shadowOffset: { width: 0, height: 16 } },
   glow: { elevation: 6, shadowColor: c.glowBtn, shadowOpacity: 1, shadowRadius: 12, shadowOffset: { width: 0, height: 10 } },
 });
-export const sizes = { ring: 96, ringStroke: 9, arc: 250, arcStroke: 14, chip: 32, touch: 48, nav: 62, tile: 44 } as const;
+export const sizes = { hero: 236, heroStroke: 18, ring: 96, ringStroke: 9, arc: 250, arcStroke: 14, chip: 32, touch: 48, nav: 62, tile: 44 } as const;

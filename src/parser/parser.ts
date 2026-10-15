@@ -34,6 +34,9 @@ export interface Rules {
   strict_require_stated_quantity?: boolean;
   /** combo dish id -> parts at default portions ("_doc" ignored) */
   everyday_combos?: Record<string, unknown>;
+  everyday_pairs?: { category_pairs?: [string, string][]; dish_pairs?: [string, string][] };
+  bare_count_units?: string[];
+  unit_fits?: Record<string, unknown>;
 }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
@@ -47,6 +50,10 @@ export interface Item {
   confidence?: number; flags?: string[];
   /** no count or unit typed: the dish's standard portion was used ('Read as: 1 katori · Change'). */
   default_portion: boolean;
+  /** UTF-16 offsets (JS string indices) of the user's text this item came from; end exclusive. */
+  span_start: number; span_end: number;
+  /** the AI's own dish name (matched_text stays the user's text) */
+  ai_name?: string;
   alternatives?: Alternative[]; ai_estimate: boolean;
   /** from the user's remembered readings (server parse) */
   learned?: boolean;
@@ -434,6 +441,7 @@ export class Parser {
     if (pd.hasQty) leftover++; // a number nothing used
     const ev = this.everydayCombos(items);
     items.splice(0, items.length, ...ev);
+    this.tokenRules(items, toks);
     const present = new Set(items.map((x) => x.dish_id));
     for (const it of items) {
       it.default_portion = !it.explicit; // a count/unit was in the text?
@@ -442,6 +450,7 @@ export class Parser {
       const sides = this.r.typical_sides[it.dish_id];
       if (sides && !sides.some((sd) => present.has(sd))) pen(it, 'missing_side');
     }
+    this.assignSpans(items, text); // before finish strips the internal `everyday` marker (Go keeps it)
     const out: Item[] = items.map((x) => this.finish(x));
     return { items: out, unmatched, leftover };
   }
@@ -558,7 +567,8 @@ export class Parser {
     const pens = it.pens ?? [];
     if (pens.length) it.flags = [...pens];
     // leftovers, splits and combos always need a look, whatever the score
-    const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby');
+    const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby' ||
+      f === 'token_reuse' || f === 'adjacent_split' || f === 'unit_mismatch');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
     const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, ...base } = it;
@@ -714,6 +724,137 @@ export class Parser {
     return out;
   }
 
+  /** A typed unit must describe the dish's unit; a bare count only fits countable dishes or ones with a piece size. */
+  private unitFits(d: Dish, unit: string, hasQty: boolean): boolean {
+    if (unit === '') return !hasQty || (d.piece_grams ?? 0) > 0 || (this.r.bare_count_units ?? []).includes(d.unit);
+    if (unit === d.unit || unit === 'g' || unit === 'gram' || unit === 'ml') return true;
+    const uf = this.r.unit_fits ?? {};
+    if (!has(uf, unit)) return true; // unit words without a rule are left alone
+    const fits = uf[unit];
+    return Array.isArray(fits) && fits.includes(d.unit);
+  }
+
+  /** Go tokenRules: (1) each token feeds at most one item (token_reuse); (2) dishes typed next to each other stay separate
+   * table items only if they form an everyday pair (adjacent_split). */
+  private tokenRules(items: It[], toks: Token[]) {
+    const words = toks.map((t) => (!t.sep && !t.isN ? t.w : ''));
+    const used = new Array<number>(toks.length).fill(0);
+    const spans: [number, number][] = items.map(() => [-1, -1]);
+    const group = (i: number) => (items[i].everyday ? `${items[i].from_combo}|${items[i].matched_text}` : String(i));
+    const claimed = new Map<string, [number, number]>();
+    let cursor = 0;
+    for (let i = 0; i < items.length; i++) {
+      const g = group(i);
+      const prevSpan = claimed.get(g);
+      if (prevSpan) { spans[i] = prevSpan; continue; }
+      const ws = fields(items[i].matched_text);
+      if (!ws.length) continue;
+      const find = (from: number, free: boolean) => {
+        for (let st = from; st + ws.length <= words.length; st++) {
+          if (ws.every((w, k) => words[st + k] === w && !(free && used[st + k] !== 0))) return st;
+        }
+        return -1;
+      };
+      let at = find(cursor, true);
+      if (at < 0) at = find(0, true);
+      if (at < 0) {
+        const prev = find(0, false);
+        if (prev >= 0) { pen(items[i], 'token_reuse'); pen(items[used[prev] - 1], 'token_reuse'); }
+        continue;
+      }
+      for (let k = 0; k < ws.length; k++) used[at + k] = i + 1;
+      spans[i] = [at, at + ws.length - 1];
+      claimed.set(g, spans[i]);
+      cursor = at + ws.length;
+    }
+    for (let i = 0; i < items.length; i++) for (let j = 0; j < items.length; j++) {
+      if (i === j || spans[i][0] < 0 || spans[j][0] < 0 || group(i) === group(j)) continue;
+      if (spans[j][0] === spans[i][1] + 1 && !this.everydayPair(items[i].dish_id, items[j].dish_id)) { pen(items[i], 'adjacent_split'); pen(items[j], 'adjacent_split'); }
+    }
+  }
+
+  private everydayPair(a: string, b: string): boolean {
+    const ep = this.r.everyday_pairs ?? {};
+    if ((ep.dish_pairs ?? []).some(([x, y]) => (x === a && y === b) || (x === b && y === a))) return true;
+    const da = this.dishById(a), db = this.dishById(b);
+    if (!da || !db) return false;
+    return (ep.category_pairs ?? []).some(([x, y]) => (x === da.category && y === db.category) || (x === db.category && y === da.category));
+  }
+
+  /** Words of the original text (letters, digits, marks; '.' inside a word) with normalized forms and UTF-16 offsets. */
+  private origWords(text: string): { norm: string[]; s: number; e: number }[] {
+    const out: { norm: string[]; s: number; e: number }[] = [];
+    let start = -1;
+    const flush = (end: number) => { if (start < 0) return; out.push({ norm: fields(this.normalize(text.slice(start, end))), s: start, e: end }); start = -1; };
+    let pos = 0;
+    for (const ch of text) { // by code point; pos is the UTF-16 index
+      const inWord = /[\p{L}\p{Nd}\p{Mn}\p{Mc}]/u.test(ch) || (ch === '.' && start >= 0);
+      if (inWord && start < 0) start = pos;
+      else if (!inWord) flush(pos);
+      pos += ch.length;
+    }
+    flush(pos);
+    return out;
+  }
+
+  private assignSpans(items: It[], text: string) {
+    const ws = this.origWords(text);
+    const whole = text.length;
+    const used = new Array<boolean>(ws.length).fill(false);
+    let cursor = 0;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      let n = 1;
+      if (it.everyday) while (i + n < items.length && items[i + n].everyday && items[i + n].from_combo === it.from_combo && items[i + n].matched_text === it.matched_text) n++;
+      let r = locate(ws, fields(it.matched_text), cursor, used);
+      if (!r) r = locate(ws, fields(it.matched_text), 0, used);
+      if (!r) { for (let k = 0; k < n; k++) { items[i + k].span_start = 0; items[i + k].span_end = whole; } i += n - 1; continue; }
+      const [a, b] = r;
+      for (let x = a; x <= b; x++) used[x] = true;
+      cursor = b + 1;
+      for (let k = 0; k < n; k++) {
+        const one = n > 1 && b - a + 1 === n;
+        items[i + k].span_start = one ? ws[a + k].s : ws[a].s; items[i + k].span_end = one ? ws[a + k].e : ws[b].e;
+      }
+      i += n - 1;
+    }
+  }
+
+  /** Go Locate: UTF-16 span of `words` in text, or the whole text. */
+  locateWords(text: string, words: string): [number, number, boolean] {
+    const ws = this.origWords(text);
+    const r = locate(ws, fields(this.normalize(words)), 0, null);
+    return r ? [ws[r[0]].s, ws[r[1]].e, true] : [0, text.length, false];
+  }
+
+  /** Go Noise: no food words (only numbers, units, fillers, connectors, stopwords, oil words, genitives…). */
+  noise(text: string): boolean {
+    return fields(this.normalize(text)).every((w) => w === ',' || w === '.' || goParseFloat(w) !== null || this.filler.has(w) || this.connector.has(w) || this.stop.has(w) ||
+      (this.unitOf.get(w) ?? '') !== '' || (this.oilOf.get(w) ?? '') !== '' || this.small.has(w) || this.genitive.has(w) || this.oilSuf.has(w) || this.style.has(w) || runes(w).length < 2);
+  }
+
+  /** Go TableOnly: the table may answer the meal alone. */
+  tableOnly(r: ParseResult): boolean {
+    if (r.items.length === 0 || r.unmatched.length > 0) return false;
+    return r.items.every((it) => {
+      const d = this.dishById(it.dish_id);
+      if (!d || (d.parts?.length ?? 0) > 0 || d.needs_confirm) return false;
+      const everyday = !!it.from_combo && has(this.r.everyday_combos ?? {}, it.from_combo); // Go: it.everyday
+      return !(it.source !== 'table' || it.needs_confirmation || it.fuzzy || (it.from_combo && !everyday) || (it.flags?.length ?? 0) > 0 || it.unit === '' ||
+        (this.r.strict_require_stated_quantity && it.default_portion));
+    });
+  }
+
+  /** Go Claim: an item held back only because the meal had other unknown words stands as a confident table item. */
+  claim(it: Item): Item | null {
+    if ((it.flags ?? []).some((f) => f !== 'leftover_in_meal')) return null;
+    if (it.fuzzy || it.source === 'generic' || it.source === 'ai_estimate') return null;
+    const { flags: _f, ...one0 } = it;
+    const one: Item = { ...one0, source: 'table', needs_confirmation: false };
+    if (!this.tableOnly({ items: [one], unmatched: [], leftover: 0 })) return null;
+    return { ...one, confidence: 1 };
+  }
+
   private unitFor(w: string): [string, number] {
     const u = this.unitOf.get(w);
     if (u === undefined) return ['', 0];
@@ -759,6 +900,7 @@ export class Parser {
     if ((d.piece_grams ?? 0) > 0 && pd.hasQty && (unit === '' || unit === 'count')) unit = 'piece';
     let it: It = { ...blank(), dish_id: d.id, name: d.name, matched_text: matched, data_source: d.source, source_note: d.source_note, fuzzy, explicit: pd.hasQty || pd.unit !== '' };
     it = this.compute(d, it, qty, unit);
+    if (!this.fat.has(d.id) && !this.unitFits(d, pd.unit, pd.hasQty)) pen(it, 'unit_mismatch'); // "2 egg curry", "1 glass roti": ask, never guess
     if (capped) { pen(it, 'capped'); it.needs_confirmation = true; }
     if (d.oil_sensitive) it = this.withOil(it, (oil || 'normal') as OilLevel);
     return [it];
@@ -861,7 +1003,7 @@ export const UNITS = ['count', 'piece', 'katori', 'spoon', 'plate', 'glass', 'gr
 const blank = (): Item => ({
   dish_id: '', name: '', matched_text: '', quantity: 0, unit: '', grams: 0, oil_level: '',
   kcal: { low: 0, best: 0, high: 0 }, protein_g: { low: 0, best: 0, high: 0 }, carbs_g: 0, fat_g: 0,
-  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false, learned: false, default_portion: false,
+  source: 'table', data_source: '', source_note: '', fuzzy: false, from_combo: undefined, needs_confirmation: false, alternatives: undefined, ai_estimate: false, learned: false, default_portion: false, span_start: 0, span_end: 0,
 });
 
 function wordsOf(ts: Token[], word: (t: Token) => string): string[] {
@@ -894,4 +1036,20 @@ export function totals(items: Pick<Item, 'kcal' | 'protein_g'>[]): [Range, Range
     p.low += it.protein_g.low; p.best += it.protein_g.best; p.high += it.protein_g.high;
   }
   return [k, { low: round(p.low, 1), best: round(p.best, 1), high: round(p.high, 1) }];
+}
+
+/** Go locate: words of `matched` in order from word `from`, skipping used words, allowing up to two filler words between. */
+function locate(ws: { norm: string[] }[], matched: string[], from: number, used: boolean[] | null): [number, number] | null {
+  if (!matched.length) return null;
+  for (let start = from; start < ws.length; start++) {
+    let k = 0, a = -1, b = -1;
+    for (let i = start; i < ws.length && k < matched.length; i++) {
+      if (used && used[i]) { if (a >= 0) break; continue; }
+      let hit = false;
+      for (const n of ws[i].norm) if (k < matched.length && n === matched[k]) { k++; hit = true; }
+      if (hit) { if (a < 0) a = i; b = i; } else if (a >= 0 && i - b > 2) break;
+    }
+    if (k === matched.length) return [a, b];
+  }
+  return null;
 }

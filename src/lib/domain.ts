@@ -146,3 +146,17 @@ export function mergeEntries(old: FoodEntry[], add: FoodEntry[]): FoodEntry[] {
   const out = old.map((e) => by.get(e.id) ?? e);
   return [...out, ...add.filter((e) => !old.some((o) => o.id === e.id))];
 }
+
+/** Plain-English, time-based greeting (v3.2 copy). */
+export function greeting(now = new Date()): string {
+  const h = Number(now.toLocaleString('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }));
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+/** Today's plate: one row per slot (names + kcal), in meal order. */
+export function plateRows(entries: FoodEntry[], nameOf: (e: FoodEntry) => string) {
+  const order: Slot[] = ['breakfast', 'lunch', 'snacks', 'dinner'];
+  return order.map((slot) => {
+    const es = entries.filter((e) => e.slot === slot && counted(e));
+    return { slot, names: es.map(nameOf).join(', '), kcal: Math.round(es.reduce((a, e) => a + e.kcal.best, 0)), n: es.length };
+  });
+}

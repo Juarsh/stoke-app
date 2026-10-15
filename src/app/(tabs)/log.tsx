@@ -4,7 +4,8 @@ import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
-import { ItemCard, SlotCycle } from '@/components/ItemEditor';
+import { SlotCycle } from '@/components/ItemEditor';
+import { DecisionCard, Group, ItemRow } from '@/components/LogRows';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
@@ -25,9 +26,9 @@ type Custom = { key: string; name: string; kcal: string; protein: string };
 
 export default function Log() {
   const st = useStore(); const router = useRouter(); const s = useStyles();
-  const { prefill } = useLocalSearchParams<{ prefill?: string }>();
+  const { prefill, slot: slotParam } = useLocalSearchParams<{ prefill?: string; slot?: Slot }>();
   const [text, setText] = useState('');
-  const [slot, setSlot] = useState<Slot>(slotFor(new Date()));
+  const [slot, setSlot] = useState<Slot>(slotParam ?? slotFor(new Date()));
   const [slotAuto, setSlotAuto] = useState(true);
   const [edits, setEdits] = useState<Record<string, Item | null>>({});
   const [okd, setOkd] = useState<Record<string, boolean>>({});
@@ -105,6 +106,9 @@ export default function Log() {
   const canAdd = any && !sum.disabled && !customMissing;
   const allEst = sum.allEstimates;
   const addLabel = sum.button;
+  // dashed decision cards only in mixed lists, for items needing a real choice
+  const plainDrafts = drafts.filter((d) => allEst || d.ok || !d.it.needs_confirmation);
+  const decisionDrafts = drafts.filter((d) => !plainDrafts.includes(d));
 
   function add() {
     const date = localDate();
@@ -139,37 +143,32 @@ export default function Log() {
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
           <Row style={{ justifyContent: 'space-between' }}>
-            <T v="title">Kya khaya?</T>
-            <Chip kind="primary" label={`${SLOT_LABEL[slot]}${slotAuto ? ' · auto' : ''} ✎`} onPress={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} a11y={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} />
+            <T v="title">What did you eat?</T>
+            <T v="caption" tone="muted" onPress={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} accessibilityRole="button" accessibilityLabel={`Meal slot ${SLOT_LABEL[slot]}, double-tap to change`} style={{ padding: 12 }}>{`${SLOT_LABEL[slot]}${slotAuto ? ' · auto' : ''} ✎`}</T>
           </Row>
-          <Field big value={text} onChangeText={setText} multiline placeholder="2 roti dal sabzi thoda ghee" accessibilityLabel="What did you eat?" autoCorrect={false} />
-          {parsed.items.length || parsed.unmatched.length ? (
-            <Row style={{ flexWrap: 'wrap', gap: 6 }}>
-              {parsed.items.map((it, i) => <Chip key={i} label={`${portionLabel(it.quantity, it.unit)} ${it.name}`} faded={i > 2} />)}
-              {parsed.unmatched.map((u) => <Chip key={u} kind="neutral" label={`${u}…`} faded />)}
-            </Row>
-          ) : null}
+          <Field big value={text} onChangeText={setText} multiline placeholder="e.g. 2 roti, dal, thoda ghee" accessibilityLabel="What did you eat?" autoCorrect={false} />
           {allEst ? (
             <Row style={{ justifyContent: 'space-between' }}>
               <T tone="text2"><T tone="em">✦ </T>AI estimates · tap any to adjust</T>
               <T tone="muted" accessibilityRole="button" accessibilityLabel="How estimates work" onPress={() => setMsg('Estimates come from AI when a dish isn’t in our table. Tap one to change the amount or numbers.')}>ⓘ</T>
             </Row>
           ) : null}
-          {drafts.map((d) => {
-            const k = itemKind(d.it);
-            if (!d.ok && k !== 'ai_estimate') {
-              return <ConfirmCard key={d.key} it={d.it} onResolve={(x) => { setItem(d, x); confirm(d); }} onRemove={() => remove(d)} />;
-            }
-            // (AI items stay unconfirmed until Add; their card offers Change)
-            return (
-              <ItemCard key={d.key} it={d.it} slot={slot} confirmed={d.ok} plain={allEst} remembered={!!d.it.remembered} onEdit={(n) => setItem(d, n)} onConfirm={() => confirm(d)} onRemove={() => remove(d)}
-                onSlot={() => { setSlot(SlotCycle(slot)); setSlotAuto(false); }} />
-            );
-          })}
+          {/* plain rows (confident / remembered / all-estimates) in one group; pending + estimating rows in a second group */}
+          {plainDrafts.length ? (
+            <Group>
+              {plainDrafts.map((d) => (
+                <ItemRow key={d.key} it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'} chevron={allEst}
+                  onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+              ))}
+            </Group>
+          ) : null}
+          {decisionDrafts.map((d) => (
+            <DecisionCard key={d.key} it={d.it} onPick={(x) => { setItem(d, x); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+          ))}
           {pendingUnmatched.length ? (
-            <Card>
+            <Group>
               {pendingUnmatched.map((u) => <PendingRow key={u} label={u} sub="read from your text" state={offline.includes(u) ? 'offline' : 'estimating'} />)}
-            </Card>
+            </Group>
           ) : null}
           {nEstimating ? <T v="caption" tone="muted">Estimates usually take 1–2 seconds.</T> : nPending ? <T v="caption" tone="muted">{msg}</T> : null}
           {customs.map((c) => (
@@ -183,7 +182,6 @@ export default function Log() {
               </Row>
             </Card>
           ))}
-          <T v="caption" tone="muted">Numbers are best guesses; tap a number for the range and where it comes from.</T>
         </ScrollView>
         {any ? (
           <View style={s.dock}>
@@ -200,6 +198,6 @@ export default function Log() {
 }
 const useStyles = makeStyles((t) => ({
   pad: { padding: t.space.screen, gap: t.space.gap, paddingBottom: t.sizes.nav + 140 },
-  dock: { position: 'absolute', left: t.space.md, right: t.space.md, bottom: t.sizes.nav + 28, gap: 8 },
+  dock: { position: 'absolute', left: 0, right: 0, bottom: t.sizes.nav + 16, gap: 8, paddingHorizontal: t.space.md, paddingTop: 10, paddingBottom: 12, backgroundColor: t.c.bg, borderTopWidth: 1, borderTopColor: t.c.line },
   pill: { paddingVertical: 10, borderRadius: t.radius.full },
 }));
