@@ -8533,9 +8533,7 @@
  {
   "id": "puttu",
   "name": "puttu",
-  "aliases": [
-   "puttu kadala"
-  ],
+  "aliases": [],
   "unit": "katori",
   "portion_grams": 150,
   "kcal": 240,
@@ -8551,7 +8549,7 @@
   "diet": "veg",
   "category": "breakfast",
   "brand": "",
-  "version": 1,
+  "version": 2,
   "needs_verification": false,
   "carbs_g": 48.9,
   "fat_g": 2.7,
@@ -8561,6 +8559,54 @@
     "unit": "katori",
     "grams": 150,
     "source": "default portion (estimate): Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured"
+   },
+   {
+    "unit": "plate",
+    "grams": 300,
+    "source": "generic plate size (rules.json units: 300 g)"
+   },
+   {
+    "unit": "spoon",
+    "grams": 5,
+    "source": "generic spoon size (rules.json units: 5 g)"
+   }
+  ]
+ },
+ {
+  "id": "kadala_curry",
+  "name": "kadala curry",
+  "aliases": [
+   "kadala",
+   "kadala kari",
+   "kala chana curry",
+   "black chickpea curry",
+   "kondakadalai curry"
+  ],
+  "unit": "katori",
+  "portion_grams": 150.0,
+  "kcal": 226.0,
+  "kcal_low": 181.0,
+  "kcal_high": 271.0,
+  "protein_g": 7.0,
+  "protein_low": 5.6,
+  "protein_high": 8.4,
+  "oil_sensitive": true,
+  "source": "estimate",
+  "source_note": "published recipe: Tarla Dalal Kadala Curry (Kerala, for puttu/appam/dosa), 1 serving 150 g = 226 kcal / 7.0 g protein / 25.3 g carbs / 10.8 g fat https://www.tarladalal.com/calories-for-kadala-curry-kerala-curry-for-appam-puttu-and-dosa-32912",
+  "is_estimate": true,
+  "diet": "veg",
+  "category": "dal",
+  "brand": "",
+  "version": 1,
+  "needs_verification": false,
+  "carbs_g": 25.3,
+  "fat_g": 10.8,
+  "macro_note": "from the cited Tarla Dalal published recipe (150 g serving)",
+  "units": [
+   {
+    "unit": "katori",
+    "grams": 150.0,
+    "source": "default portion: published recipe: Tarla Dalal Kadala Curry (Kerala, for puttu/appam/dosa), 1 serving 150 g = 226 kcal / 7.0 g protein / 25.3 g carbs / 10.8 g fat https://www.tarladalal.com/calories-for-kadala-curry-kerala-curry-for-appam-puttu-and-dosa-32912"
    },
    {
     "unit": "plate",
@@ -10340,30 +10386,35 @@
    "cheetos"
   ],
   "unit": "count",
-  "portion_grams": 50,
-  "kcal": 270,
-  "kcal_low": 243,
-  "kcal_high": 297,
-  "protein_g": 3,
-  "protein_low": 2.7,
-  "protein_high": 3.3,
+  "portion_grams": 28.0,
+  "kcal": 156.0,
+  "kcal_low": 140.0,
+  "kcal_high": 172.0,
+  "protein_g": 1.8,
+  "protein_low": 1.6,
+  "protein_high": 2.0,
   "oil_sensitive": false,
   "source": "open_food_facts",
-  "source_note": "NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); varies by brand",
+  "source_note": "PepsiCo Kurkure Masala Munch brand label (India): 558 kcal + 6.4 g protein per 100 g (FoodDB barcode 8901491361026 https://nutrifoodindex.com/product/masala-munch-8901491361026); default packet 28 g = 156 kcal / 1.8 g protein (PepsiCo US FDC serving also 28 g ≈ 160 kcal https://tools.myfooddata.com/nutrition-facts/1309037/wt1)",
   "is_estimate": false,
   "diet": "veg",
   "category": "snack",
-  "brand": "",
-  "version": 1,
+  "brand": "Kurkure (PepsiCo)",
+  "version": 2,
   "needs_verification": true,
-  "carbs_g": 27.4,
-  "fat_g": 16.5,
-  "macro_note": "estimate: fat from a typical fat share of kcal for this kind of dish; carbs = remaining kcal / 4",
+  "carbs_g": 15.5,
+  "fat_g": 9.7,
+  "macro_note": "scaled from brand label per 100 g to 28 g packet",
   "units": [
    {
     "unit": "count",
-    "grams": 50,
-    "source": "default portion (open_food_facts): NEEDS VERIFICATION: typical pack-label values for this category (Open Food Facts, ODbL); v"
+    "grams": 28.0,
+    "source": "1 packet = 28 g: PepsiCo Kurkure Masala Munch brand label 558 kcal/100 g → 156 kcal/packet https://nutrifoodindex.com/product/masala-munch-8901491361026"
+   },
+   {
+    "unit": "packet",
+    "grams": 28.0,
+    "source": "1 packet = 28 g: PepsiCo Kurkure Masala Munch brand label 558 kcal/100 g → 156 kcal/packet https://nutrifoodindex.com/product/masala-munch-8901491361026"
    },
    {
     "unit": "plate",

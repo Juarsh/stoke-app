@@ -644,12 +644,15 @@ func (p *Parser) parse(text string) Result {
 				// "soya chaap roll", "paneer tikka wrap": the form changes the dish
 				if g, ok := p.applyForm(li, t.w); ok {
 					res.Items[len(res.Items)-1] = g
-				} else {
-					li.Matched += " " + t.w // "chicken tikka masala": same dish, word kept in matched_text
+					continue
 				}
+				// Form word did not change the dish: unmatched leftover so
+				// leftover_in_meal forces confirmation. Do not rematch it as
+				// another dish and do not silently absorb it into matched_text.
+				unk = append(unk, t.w)
 				continue
 			}
-		}
+				}
 		if !t.isN || t.w == "" {
 			if d, n, fz := p.matchDish(toks, i); d != nil {
 				matched := make([]string, n)

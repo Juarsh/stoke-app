@@ -131,7 +131,8 @@ Each parse item has `confidence` (0-1) and `flags` explaining deductions
 `combo_or_split`, `variant`, `generic`, `sanity`, `capped`, `count_between`,
 `style_ignored`). Below `rules.json > confidence.threshold` the item gets
 `source=did_you_mean` and `needs_confirmation=true`. A meal with leftover
-unknown words, or that used a split/combo rule, flags every affected item.
+unknown words (`leftover_in_meal`), or that used a split/combo rule, flags every
+affected item — never a confident one-tap save while unmatched words remain.
 
 "X with Y, 1 bowl" = one serving in total: the combo row if the table has one
 (e.g. rajma chawal), otherwise one serving split by the parts' calorie share.
@@ -414,6 +415,11 @@ optional `parse_job_id` (alias `job_id`) and `client_item_id`.
 - `adjacent_split`: adjacent dishes must form an everyday pair or combo.
 - `unit_mismatch`: a count or unit must fit the dish's unit ("2 egg curry",
   "1 glass roti").
+- `leftover_in_meal`: the meal has unmatched leftover words the parser could
+  not use. Every item is flagged, `needs_confirmation=true`, and
+  `one_tap_ok=false` — a missing side can never save as a confident complete
+  meal. Unused form words that do not change the dish ("dal curry") also land
+  here instead of being silently absorbed.
 - `leftover_nearby`: an unclaimed word sits directly next to the dish
   ("ragi roti", "roti zorbo", "zorbo roti"); the whole phrase is unsure and the
   AI item for that phrase carries the flag too. A separator between them
