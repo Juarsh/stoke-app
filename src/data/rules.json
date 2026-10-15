@@ -537,9 +537,13 @@
  ],
  "egg_piece_dish": "boiled_egg",
  "_table_only_ok_flags_doc": "informational flags that do not stop a confident table-only answer",
- "table_only_ok_flags": ["trailing_qty"],
+ "table_only_ok_flags": [
+  "trailing_qty"
+ ],
  "_egg_piece_bowls_doc": "bowl dishes where an egg count means whole eggs in gravy: one bowl holds eggs_per_portion eggs, extra eggs are added as egg_piece_dish pieces, all flagged egg_count",
- "egg_piece_bowls": ["egg_curry"],
+ "egg_piece_bowls": [
+  "egg_curry"
+ ],
  "eggs_per_portion": {
   "omelette": 1,
   "egg_bhurji": 2,
@@ -979,5 +983,27 @@
   "+",
   "or"
  ],
- "_claim_separators_doc": "A known dish is confirmed on a side where a separator (or a comma, or a number starting the next part) comes before any unknown word. Hindi और / के साथ transliterate to aur / ke saath."
+ "_claim_separators_doc": "A known dish is confirmed on a side where a separator (or a comma, or a number starting the next part) comes before any unknown word. Hindi और / के साथ transliterate to aur / ke saath.",
+ "_plausible_max_doc": "Largest count that makes sense for one item in each unit. Above it the item is flagged unit_mismatch with unit_options and left out of totals until confirmed. A bare number means the dish's counting unit: piece when piece_grams is set (momos), else the dish unit (count for idli/samosa/roti, katori for dal/sabzi).",
+ "plausible_max": {
+  "plate": 3,
+  "thali": 3,
+  "katori": 4,
+  "bowl": 4,
+  "glass": 4,
+  "cup": 5,
+  "piece": 15,
+  "count": 12,
+  "slice": 8
+ },
+ "_name_qualifier_words_doc": "A table match on one of these words (or a protein_words word) directly before another dish, with no separator or quantity between, reads like one dish name ('egg rice', 'chicken pulao', 'paneer roti'): never two confident items, whatever everyday_pairs says. Only everyday_combos and dish_pairs split.",
+ "name_qualifier_words": [
+  "aloo",
+  "gobi",
+  "palak",
+  "methi",
+  "mushroom",
+  "matar",
+  "keema"
+ ]
 }

@@ -41,9 +41,15 @@ export interface Rules {
   egg_piece_dish?: string;
   egg_piece_bowls?: string[];
   table_only_ok_flags?: string[];
+  /** largest sensible count per unit; above it: unit_mismatch + unit_options */
+  plausible_max?: Record<string, number>;
+  /** ingredient words that make "X dish" read as one dish name (compound_name) */
+  name_qualifier_words?: string[];
 }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
+/** One reading of a unit_mismatch item; the item is out of the totals until the user picks one. */
+export interface UnitOption { qty: number; unit: string; kcal: number }
 export interface Item {
   dish_id: string; name: string; matched_text: string; quantity: number; unit: Unit; grams: number;
   oil_level: OilLevel; kcal: Range; protein_g: Range; carbs_g: number; fat_g: number;
@@ -59,6 +65,8 @@ export interface Item {
   /** the AI's own dish name (matched_text stays the user's text) */
   ai_name?: string;
   alternatives?: Alternative[]; ai_estimate: boolean;
+  /** set with unit_mismatch: counting-unit reading, stated reading (and one portion) */
+  unit_options?: UnitOption[];
   /** from the user's remembered readings (server parse) */
   learned?: boolean;
 }
@@ -587,19 +595,49 @@ export class Parser {
     let c = 1;
     for (const f of it.pens ?? []) c += has(conf, f) ? conf[f] : conf.leftover_in_meal;
     it.confidence = Math.max(0, round(c, 2));
+    if (d && !it.unit_options?.length && (it.pens ?? []).includes('unit_mismatch') && !it.from_combo) Object.assign(it, this.unitOptions(d, it)); // every unit_mismatch offers its readings
     const pens = it.pens ?? [];
     if (pens.length) it.flags = [...pens];
     // leftovers, splits and combos always need a look, whatever the score
     const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby' ||
-      f === 'token_reuse' || f === 'adjacent_split' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count');
+      f === 'token_reuse' || f === 'adjacent_split' || f === 'compound_name' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
     const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, eggExtra: _x, ...base } = it;
     return base;
   }
 
-  private sanity<T extends It>(it: T): T {
-    const d = this.dishById(it.dish_id);
+  /** Go plausibleCount: a typed count above plausible_max for its unit, or a counted dish by the plate/katori, is unit_mismatch. */
+  private plausibleCount<T extends It>(d: Dish | undefined | null, it: T): T {
+    if (!d || it.quantity <= 0 || it.from_combo) return it;
+    const u = it.unit === 'count' && (d.piece_grams ?? 0) > 0 ? 'piece' : it.unit;
+    const max = this.r.plausible_max?.[u];
+    const bowlOfCounted = d.unit === 'count' && !((d.piece_grams ?? 0) > 0) && (u === 'plate' || u === 'katori' || u === 'bowl');
+    if (!bowlOfCounted && (max === undefined || it.quantity <= max)) return it;
+    return this.unitOptions(d, it);
+  }
+
+  /** Go unitOptions: flag unit_mismatch; offer the counting-unit reading, the stated reading and one portion. */
+  private unitOptions<T extends It>(d: Dish, it: T): T {
+    const u = it.unit === 'count' && (d.piece_grams ?? 0) > 0 ? 'piece' : it.unit;
+    pen(it, 'unit_mismatch');
+    const opts: UnitOption[] = [];
+    const add = (q: number, unit: string) => {
+      const c = this.compute(d, { ...blank(), oil_level: it.oil_level }, q, unit);
+      if (!opts.some((o) => o.qty === q && o.unit === c.unit)) opts.push({ qty: q, unit: c.unit, kcal: c.kcal.best });
+    };
+    const cu = countingUnit(d);
+    if (cu !== u) add(it.quantity, cu);
+    add(it.quantity, it.unit);
+    if (cu === u || d.unit !== u) add(1, d.unit);
+    it.needs_confirmation = true;
+    it.unit_options = opts;
+    return it;
+  }
+
+  private sanity<T extends It>(it0: T): T {
+    const d = this.dishById(it0.dish_id);
+    const it = this.plausibleCount(d, it0);
     let mult = this.r.sanity.max_portion_multiple;
     if (d && (d.unit === 'count' || it.unit === 'piece')) mult = this.r.sanity.max_count_multiple; // 4-6 rotis is normal
     if (!d || (it.kcal.best <= this.r.sanity.max_item_kcal && it.grams <= mult * d.portion_grams)) return it;
@@ -801,8 +839,18 @@ export class Parser {
     }
     for (let i = 0; i < items.length; i++) for (let j = 0; j < items.length; j++) {
       if (i === j || spans[i][0] < 0 || spans[j][0] < 0 || group(i) === group(j)) continue;
-      if (spans[j][0] === spans[i][1] + 1 && !this.everydayPair(items[i].dish_id, items[j].dish_id)) { pen(items[i], 'adjacent_split'); pen(items[j], 'adjacent_split'); }
+      const adj = spans[j][0] === spans[i][1] + 1, q = adj && this.qualifierPair(items[i], items[j]);
+      if (q) { pen(items[i], 'compound_name'); pen(items[j], 'compound_name'); } // reads like one dish name: whole phrase to the AI
+      if (adj && (q || !this.everydayPair(items[i].dish_id, items[j].dish_id))) { pen(items[i], 'adjacent_split'); pen(items[j], 'adjacent_split'); }
     }
+  }
+
+  /** Go qualifierPair: "egg rice", "chicken pulao" - a bare ingredient word naming the next dish. Listed dish pairs still split. */
+  private qualifierPair(a: It, b: It): boolean {
+    const dp = this.r.everyday_pairs?.dish_pairs ?? [];
+    if (dp.some(([x, y]) => (x === a.dish_id && y === b.dish_id) || (x === b.dish_id && y === a.dish_id))) return false;
+    const w = a.matched_text.trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(this.r.protein_words, w) || (this.r.name_qualifier_words ?? []).includes(w);
   }
 
   private everydayPair(a: string, b: string): boolean {
@@ -902,8 +950,8 @@ export class Parser {
   private trailing(toks: Token[], i: number): boolean {
     let j = i + 1;
     if (j < toks.length && !toks[j].sep && this.unitFor(toks[j].w)[0] !== '') j++;
-    while (j < toks.length && !toks[j].sep && this.filler.has(toks[j].w)) j++;
-    return j >= toks.length || toks[j].sep;
+    while (j < toks.length && !toks[j].sep && this.filler.has(toks[j].w) && !this.sep.has(toks[j].w)) j++;
+    return j >= toks.length || toks[j].sep || this.sep.has(toks[j].w); // "poha 1 plate aur chai": the plate is poha's
   }
 
   private countBetween(items: It[], tgt: number, toks: Token[], i: number): boolean {
@@ -1147,9 +1195,15 @@ export function lev(as: string, bs: string, max: number): number {
   return prev[b.length];
 }
 
-export function totals(items: Pick<Item, 'kcal' | 'protein_g'>[]): [Range, Range] {
+/** The unit a bare number means: pieces for countable plate dishes (piece_grams), else the dish unit. */
+export function countingUnit(d: Pick<Dish, 'unit' | 'piece_grams'>): string {
+  return (d.piece_grams ?? 0) > 0 ? 'piece' : d.unit;
+}
+
+export function totals(items: (Pick<Item, 'kcal' | 'protein_g'> & { unit_options?: UnitOption[] })[]): [Range, Range] {
   const k = { low: 0, best: 0, high: 0 }, p = { low: 0, best: 0, high: 0 };
   for (const it of items) {
+    if (it.unit_options?.length) continue; // unit_mismatch: out of the totals until confirmed
     k.low += it.kcal.low; k.best += it.kcal.best; k.high += it.kcal.high;
     p.low += it.protein_g.low; p.best += it.protein_g.best; p.high += it.protein_g.high;
   }
