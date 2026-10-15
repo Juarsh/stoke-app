@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -53,6 +54,44 @@ type Gemini struct {
 	Limiter *Limiter
 	// Backoff is the first retry's base delay (default 1s; tests set it small).
 	Backoff time.Duration
+	// Thinking is GEMINI_THINKING_BUDGET: "" = per-model default (see
+	// ThinkingBudget), "omit" = never send thinkingConfig, or a number sent
+	// as thinkingConfig.thinkingBudget.
+	Thinking string
+}
+
+// ThinkingBudget returns the thinkingConfig.thinkingBudget to send for this
+// model, or ok=false to leave thinkingConfig out of the request entirely.
+// Default: Flash-Lite models reject thinkingBudget (HTTP 400
+// INVALID_ARGUMENT on gemini-3.5-flash-lite), so they get none; every other
+// model (gemini-flash-latest) gets 0, a lookup not a puzzle, which keeps the
+// answer inside the 8 s timeout. GEMINI_THINKING_BUDGET overrides it.
+func ThinkingBudget(model, override string) (int, bool) {
+	switch o := strings.TrimSpace(strings.ToLower(override)); o {
+	case "":
+	case "omit", "none", "off":
+		return 0, false
+	default:
+		if n, err := strconv.Atoi(o); err == nil {
+			return n, true
+		}
+		return 0, false // invalid values are rejected at startup; be safe here
+	}
+	if strings.Contains(strings.ToLower(model), "flash-lite") {
+		return 0, false
+	}
+	return 0, true
+}
+
+// ValidThinking reports whether a GEMINI_THINKING_BUDGET value is usable.
+func ValidThinking(v string) bool {
+	switch o := strings.TrimSpace(strings.ToLower(v)); o {
+	case "", "omit", "none", "off":
+		return true
+	default:
+		_, err := strconv.Atoi(o)
+		return err == nil
+	}
 }
 
 var geminiItem = map[string]any{
@@ -124,14 +163,17 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 	hj, _ := json.Marshal(hs)
 	mt, _ := json.Marshal(text)
 	sj, _ := json.Marshal(spans)
+	gen := map[string]any{
+		"responseMimeType": "application/json",
+		"responseSchema":   geminiSchema,
+		"temperature":      0,
+	}
+	if tb, ok := ThinkingBudget(model, g.Thinking); ok {
+		gen["thinkingConfig"] = map[string]any{"thinkingBudget": tb}
+	}
 	body, _ := json.Marshal(map[string]any{
-		"contents": []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": geminiPrompt + "Meal: " + string(mt) + "\nSPANS (UTF-16 offsets, end exclusive): " + string(sj) + "\nHint: " + string(hj)}}}},
-		"generationConfig": map[string]any{
-			"responseMimeType": "application/json",
-			"responseSchema":   geminiSchema,
-			"temperature":      0,
-			"thinkingConfig":   map[string]any{"thinkingBudget": 0}, // a lookup, not a puzzle: keeps the answer inside the 8s timeout
-		},
+		"contents":         []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": geminiPrompt + "Meal: " + string(mt) + "\nSPANS (UTF-16 offsets, end exclusive): " + string(sj) + "\nHint: " + string(hj)}}}},
+		"generationConfig": gen,
 	})
 	bo := g.Backoff
 	if bo == 0 {
@@ -158,6 +200,7 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 		r, err := cl.Do(req)
 		lat := time.Since(t0)
 		if err != nil {
+			countSend(ctx, 0)
 			cancel()
 			kind := "network"
 			if errors.Is(err, context.DeadlineExceeded) || errors.Is(actx.Err(), context.DeadlineExceeded) {
@@ -167,6 +210,7 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 			e := fail(0, "", 0, kind, lat)
 			return nil, fmt.Errorf("%w: %w", e, context.DeadlineExceeded) // keep timeout detectable
 		}
+		countSend(ctx, r.StatusCode)
 		if r.StatusCode == 200 {
 			resp = r
 			defer cancel()
@@ -204,6 +248,13 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 			// daily quota: retrying can't help until Google's reset
 			e.DailyQuota, e.QuotaID = true, qid
 			logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "daily_quota", lat, 0)
+			return nil, e
+		}
+		if r.StatusCode == 400 {
+			// our request was bad (e.g. thinkingConfig the model rejects):
+			// never retried, never marks Google's daily quota exhausted
+			e.Kind = "bad_request"
+			logAttempt(model, attempt, r.StatusCode, ge.Error.Status, ge.Error.Code, "bad_request", lat, 0)
 			return nil, e
 		}
 		if !retryable(r.StatusCode) || attempt > MaxRetries {
@@ -282,7 +333,7 @@ type Stub struct {
 	mu    sync.Mutex
 	calls int
 	next  *[]parser.Item
-	fail  string // "error" | "timeout" | "busy" | "" : every call fails this way until cleared
+	fail  string // "error" | "timeout" | "busy" | "unavailable" | "daily_limit" | "" : every call fails this way until cleared
 }
 
 // SetFail makes every following call fail ("error", "timeout") until "" is set.
@@ -300,11 +351,27 @@ func (s *Stub) SetNext(items []parser.Item) {
 // span, positioned on it (name = the span's own words, so unknown dish words
 // are never dropped). A next-answer override is returned exactly as set, so
 // rule-breaking answers (overlapping or missing positions) reach the guard.
-func (s *Stub) EstimateMeal(_ context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
+func (s *Stub) EstimateMeal(ctx context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls++
+	// one stub call is one HTTP send for cap counting: busy and daily_limit
+	// are 429s (rejected before running, not counted); everything else counts
 	switch s.fail {
+	case "busy", "daily_limit":
+		countSend(ctx, 429)
+	case "unavailable":
+		countSend(ctx, 503)
+	case "timeout":
+		countSend(ctx, 0)
+	case "error":
+		countSend(ctx, 500)
+	default:
+		countSend(ctx, 200)
+	}
+	switch s.fail {
+	case "unavailable": // a 503 (Gemini overloaded): reached Gemini, busy
+		return nil, &AIError{HTTPStatus: 503, GoogleStatus: "UNAVAILABLE", GoogleCode: 503, Model: "stub", Attempts: 1, Kind: "http"}
 	case "error":
 		return nil, errors.New("stub: forced error")
 	case "timeout":

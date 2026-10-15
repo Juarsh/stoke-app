@@ -1,10 +1,13 @@
 package food
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 )
@@ -27,6 +30,8 @@ type Quota struct {
 	// UserCap is the per-user daily cap (0 = no per-user limit).
 	UserCap atomic.Int64
 	// exhaustedUntil: unix seconds; Google said the daily quota is used up.
+	// Persisted in ai_google_exhausted (keyed by Pacific quota day) so a
+	// restart does not clear it until the next PerDay 429 / day roll.
 	exhaustedUntil atomic.Int64
 }
 
@@ -53,10 +58,48 @@ func (q *Quota) NextReset(now time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day()+1, 0, 0, 0, 0, q.loc())
 }
 
-// MarkExhausted stops Gemini calls until the next reset.
+// MarkExhausted stops Gemini calls until the next reset (in memory only).
 func (q *Quota) MarkExhausted(now time.Time) {
 	if q != nil {
 		q.exhaustedUntil.Store(q.NextReset(now).Unix())
+	}
+}
+
+// ClearExhausted drops the in-memory exhausted mark (tests / day roll).
+func (q *Quota) ClearExhausted() {
+	if q != nil {
+		q.exhaustedUntil.Store(0)
+	}
+}
+
+// PersistExhausted writes the exhausted mark for the current Pacific quota day.
+func (q *Quota) PersistExhausted(ctx context.Context, db *pgxpool.Pool, now time.Time) {
+	if q == nil || db == nil {
+		return
+	}
+	until := q.NextReset(now)
+	q.exhaustedUntil.Store(until.Unix())
+	day := q.Day(now)
+	_, _ = db.Exec(ctx, `INSERT INTO ai_google_exhausted(quota_day, exhausted_until) VALUES ($1,$2)
+		ON CONFLICT (quota_day) DO UPDATE SET exhausted_until=EXCLUDED.exhausted_until`, day, until)
+	_, _ = db.Exec(ctx, `DELETE FROM ai_google_exhausted WHERE quota_day < $1`, day)
+}
+
+// LoadExhausted restores the mark for today's Pacific quota day from the DB.
+// Past days are dropped. Call once at process start.
+func (q *Quota) LoadExhausted(ctx context.Context, db *pgxpool.Pool, now time.Time) {
+	if q == nil || db == nil {
+		return
+	}
+	day := q.Day(now)
+	_, _ = db.Exec(ctx, `DELETE FROM ai_google_exhausted WHERE quota_day < $1 OR exhausted_until <= $2`, day, now)
+	var until time.Time
+	err := db.QueryRow(ctx, `SELECT exhausted_until FROM ai_google_exhausted WHERE quota_day=$1`, day).Scan(&until)
+	if err != nil {
+		return
+	}
+	if now.Before(until) {
+		q.exhaustedUntil.Store(until.Unix())
 	}
 }
 

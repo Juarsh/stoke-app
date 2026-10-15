@@ -47,6 +47,9 @@ type Config struct {
 	GeminiModel  string
 	// GeminiRPM spaces Gemini HTTP attempts, retries included (GEMINI_RPM, default 10).
 	GeminiRPM int
+	// GeminiThinking is GEMINI_THINKING_BUDGET: "" = per-model default,
+	// "omit" = never send thinkingConfig, or a non-negative integer.
+	GeminiThinking string
 	// AdminToken enables /admin/* (Bearer token); empty = routes 404.
 	AdminToken string
 	// Dishes overrides the embedded table (tests simulate table updates).
@@ -77,7 +80,7 @@ func New(c Config) (http.Handler, error) {
 			if rpm == 0 {
 				rpm = 10
 			}
-			c.Fallback = food.Gemini{APIKey: c.GeminiKey, Model: c.GeminiModel, Limiter: food.NewLimiter(rpm)}
+			c.Fallback = food.Gemini{APIKey: c.GeminiKey, Model: c.GeminiModel, Limiter: food.NewLimiter(rpm), Thinking: c.GeminiThinking}
 		default:
 			c.Fallback = food.NoFallback{}
 		}
@@ -107,6 +110,7 @@ func New(c Config) (http.Handler, error) {
 		return nil, fmt.Errorf("AI_QUOTA_RESET_TZ %q: %w", tz, err)
 	}
 	fs.Quota = &food.Quota{Reset: loc}
+	fs.Quota.LoadExhausted(context.Background(), c.DB, time.Now())
 	switch {
 	case c.UserAICap == 0:
 		fs.Quota.UserCap.Store(food.DefaultUserDailyCap)

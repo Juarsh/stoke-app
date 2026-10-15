@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -151,4 +152,24 @@ func retryDelay(h http.Header, retryInfo string, retry int, base time.Duration) 
 func logAttempt(model string, attempt, status int, gstatus string, gcode int, kind string, lat time.Duration, retryIn time.Duration) {
 	log.Printf("gemini attempt failed: model=%s attempt=%d/%d http_status=%d google_status=%q google_code=%d kind=%s latency_ms=%d retry_in_ms=%d",
 		model, attempt, MaxRetries+1, status, gstatus, gcode, kind, lat.Milliseconds(), retryIn.Milliseconds())
+}
+
+// sendCount counts the HTTP sends of one AI attempt that reached Gemini and
+// may have run: every send that got a response other than 429, or got no
+// response at all (a timeout may still have run on Google's side). A 429
+// means Google rejected it before running it, so it is not counted. A send
+// our limiter refused (no slot before the deadline) never happened.
+type sendCount struct{ n atomic.Int32 }
+
+type sendCountKey struct{}
+
+func withSendCount(ctx context.Context, c *sendCount) context.Context {
+	return context.WithValue(ctx, sendCountKey{}, c)
+}
+
+// countSend records one send with its HTTP status (0 = no response).
+func countSend(ctx context.Context, status int) {
+	if c, _ := ctx.Value(sendCountKey{}).(*sendCount); c != nil && status != 429 {
+		c.n.Add(1)
+	}
 }

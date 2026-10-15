@@ -53,9 +53,14 @@ func main() {
 		}
 		v = auth.NewGoogleVerifier(ids)
 	}
+	thinking := os.Getenv("GEMINI_THINKING_BUDGET")
+	if !foodValidThinking(thinking) {
+		log.Fatalf("GEMINI_THINKING_BUDGET must be empty, omit, or a non-negative integer (got %q)", thinking)
+	}
 	h, err := app.New(app.Config{DB: pool, Verifier: v, AIMode: os.Getenv("AI_MODE"), GeminiKey: os.Getenv("GEMINI_API_KEY"), GlobalAICap: globalCap(),
 		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"), GeminiRPM: intEnv("GEMINI_RPM", 10),
-		UserAICap: int64(intEnv("AI_USER_DAILY_CAP", 3)), QuotaResetTZ: os.Getenv("AI_QUOTA_RESET_TZ"),
+		GeminiThinking: thinking,
+		UserAICap:      int64(intEnv("AI_USER_DAILY_CAP", 3)), QuotaResetTZ: os.Getenv("AI_QUOTA_RESET_TZ"),
 		AIRequeueMax: time.Duration(intEnv("AI_REQUEUE_MAX_MINUTES", 30)) * time.Minute,
 		AdminToken:   adminToken()})
 	if err != nil {
@@ -107,6 +112,16 @@ func checkStubGuard(aiMode, appEnv string) error {
 }
 
 // ADMIN_TOKEN enables /admin/*; it must be long enough to be a real secret.
+func foodValidThinking(v string) bool {
+	switch o := strings.TrimSpace(strings.ToLower(v)); o {
+	case "", "omit", "none", "off":
+		return true
+	default:
+		_, err := strconv.Atoi(o)
+		return err == nil
+	}
+}
+
 func adminToken() string {
 	t := os.Getenv("ADMIN_TOKEN")
 	if t != "" && len(t) < 24 {

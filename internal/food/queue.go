@@ -213,7 +213,7 @@ func (q *Queue) Run(ctx context.Context) {
 			j.NotBefore = at
 			j.Requeues++
 			j.LastBusy = res.FallbackReason
-			q.waiting = append(q.waiting, j) // stays pending: no new cap use
+			q.waiting = append(q.waiting, j) // stays pending; the next try is charged only if it reaches Gemini
 		} else {
 			j.Result, j.Status, j.Finished = res, "done", now
 			j.Hint = nil

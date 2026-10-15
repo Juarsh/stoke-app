@@ -162,3 +162,86 @@ func TestQuotaDayAndReset(t *testing.T) {
 	_ = la
 }
 func jnum(n int) string { b, _ := json.Marshal(n); return string(b) }
+
+func TestThinkingBudgetPerModel(t *testing.T) {
+	cases := []struct {
+		model, override string
+		want            int
+		ok              bool
+	}{
+		{"gemini-flash-latest", "", 0, true},
+		{"gemini-3.5-flash-lite", "", 0, false},
+		{"models/gemini-2.5-flash-lite", "", 0, false},
+		{"gemini-flash-latest", "omit", 0, false},
+		{"gemini-3.5-flash-lite", "0", 0, true},
+		{"gemini-flash-latest", "128", 128, true},
+		{"gemini-3.5-flash-lite", "omit", 0, false},
+	}
+	for _, tc := range cases {
+		got, ok := ThinkingBudget(tc.model, tc.override)
+		if ok != tc.ok || (ok && got != tc.want) {
+			t.Errorf("%s/%q: got %d,%v want %d,%v", tc.model, tc.override, got, ok, tc.want, tc.ok)
+		}
+	}
+}
+
+// Flash-Lite must not send thinkingConfig (it 400s); flash-latest sends budget 0.
+func TestThinkingConfigInRequest(t *testing.T) {
+	for _, tc := range []struct {
+		model, thinking string
+		wantCfg         bool
+		budget          float64
+	}{
+		{"gemini-flash-latest", "", true, 0},
+		{"gemini-3.5-flash-lite", "", false, 0},
+		{"gemini-3.5-flash-lite", "0", true, 0},
+		{"gemini-flash-latest", "omit", false, 0},
+		{"gemini-flash-latest", "64", true, 64},
+	} {
+		var got map[string]any
+		var hits atomic.Int32
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hits.Add(1)
+			_ = json.NewDecoder(r.Body).Decode(&got)
+			w.WriteHeader(200)
+			b, _ := json.Marshal(map[string]any{"candidates": []any{map[string]any{"content": map[string]any{"parts": []any{map[string]any{"text": okAnswer}}}}}})
+			w.Write(b)
+		}))
+		t.Cleanup(srv.Close)
+		g := Gemini{APIKey: "k", BaseURL: srv.URL, Model: tc.model, Thinking: tc.thinking}
+		if _, err := g.EstimateMeal(context.Background(), "quinoa", sp, nil); err != nil {
+			t.Fatalf("%s/%q: %v", tc.model, tc.thinking, err)
+		}
+		gc := got["generationConfig"].(map[string]any)
+		_, has := gc["thinkingConfig"]
+		if has != tc.wantCfg {
+			t.Errorf("%s/%q: thinkingConfig present=%v want %v (%v)", tc.model, tc.thinking, has, tc.wantCfg, gc)
+		}
+		if has {
+			tb, _ := gc["thinkingConfig"].(map[string]any)["thinkingBudget"].(float64)
+			if tb != tc.budget {
+				t.Errorf("%s/%q: budget %v want %v", tc.model, tc.thinking, tb, tc.budget)
+			}
+		}
+		if hits.Load() != 1 {
+			t.Errorf("hits %d", hits.Load())
+		}
+	}
+}
+
+// A 400 (bad request, e.g. thinkingConfig the model rejects) is not retried
+// and is never a daily-quota mark.
+func TestBadRequestNotRetriedOrExhausting(t *testing.T) {
+	var hits atomic.Int32
+	srv := scripted(t, []step{{400, nil, gerr(400, "INVALID_ARGUMENT", "")}}, &hits)
+	g := Gemini{APIKey: "k", BaseURL: srv.URL, Model: "gemini-3.5-flash-lite", Backoff: time.Millisecond}
+	_, err := g.EstimateMeal(context.Background(), "quinoa", sp, nil)
+	var ae *AIError
+	if !errors.As(err, &ae) || ae.Code() != "error" || ae.DailyQuota || ae.Kind != "bad_request" || hits.Load() != 1 {
+		t.Fatalf("want bad_request/error once, got %#v hits=%d", ae, hits.Load())
+	}
+	q := &Quota{}
+	if ex, _ := q.Exhausted(time.Now()); ex {
+		t.Error("400 must not mark daily quota exhausted")
+	}
+}

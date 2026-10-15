@@ -164,9 +164,10 @@ the per-minute limiter described in this section.**
   The limiter runs inside each server process, so with several instances set it
   per instance.
 - `AI_MODE=gemini` makes one REST `generateContent` call
-  (`GEMINI_MODEL`, default gemini-flash-latest; thinking off) with a strict JSON
-  `responseSchema` and an 8-second timeout. Bad JSON, invalid ranges or spans
-  that weren't asked about end the job as `error`. A busy provider
+  (`GEMINI_MODEL`, default gemini-flash-latest) with a strict JSON
+  `responseSchema` and an 8-second timeout. `thinkingConfig` is per model (see
+  `GEMINI_THINKING_BUDGET` below). Bad JSON, invalid ranges or spans that
+  weren't asked about end the job as `error`. A busy provider
   (rate_limited / unavailable / timeout) requeues the job instead (see below).
 - `fallback` values: none | cache | used | not_configured | cap_reached | global_cap_reached | daily_limit | busy | rate_limited | error (see `fallback_reason`).
 - Weekly review: `go run ./cmd/aicache-export -days 7 -limit 50 > top.csv`
@@ -523,10 +524,11 @@ Go's embedded VCS info.
 | dhokla (piece) | 30 g, 50 kcal, 2 g | 30 g, 80 kcal, 3.4 g | Clearcals recipe https://clearcals.com/recipes/dhokla/ |
 
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
-`{"mode": "error" | "timeout" | "busy" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
-`/test/ai/calls/reset`. `error` ends the job as failed (`fallback: "error"`). `busy` and `timeout` keep it
-pending (requeued) until the mode is cleared or `AI_REQUEUE_MAX_MINUTES` runs out (`gave_up`). `daily_limit` ends it as failed
-(`fallback: "daily_limit"`). Confident table items survive.
+`{"mode": "error" | "timeout" | "busy" | "unavailable" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
+`/test/ai/calls/reset`. `error` ends the job as failed (`fallback: "error"`). `busy`, `unavailable` and `timeout` keep it
+pending (requeued) until the mode is cleared or `AI_REQUEUE_MAX_MINUTES` runs out (`gave_up`). `busy` is a 429 (not
+charged on a later attempt); `unavailable` is a 503 (charged when it reaches Gemini on a later attempt).
+`daily_limit` ends it as failed (`fallback: "daily_limit"`). Confident table items survive.
 
 ### AI quota, retries and fallback_reason
 Settings (all env vars):
@@ -538,25 +540,36 @@ Settings (all env vars):
 | `AI_REQUEUE_MAX_MINUTES` | 30 | How long a busy Gemini job (`rate_limited` / `unavailable` / `timeout`) keeps being requeued, from its first try, before it ends as `gave_up`. |
 | `AI_QUOTA_RESET_TZ` | `America/Los_Angeles` | The caps reset at midnight in this zone, when Google resets its daily quota (12:30 PM IST in PDT, 1:30 PM IST in PST). The `ai_usage` / `ai_global_usage` `local_date` is the date in this zone. |
 | `GEMINI_RPM` | 10 | Global limiter: Gemini HTTP attempts (retries included) are spaced to at most this many a minute across the process; queued jobs wait for a slot instead of bursting. A slot that can't come before the job's deadline is not taken (`rate_limited`). |
+| `GEMINI_MODEL` | `gemini-flash-latest` | The generateContent model. |
+| `GEMINI_THINKING_BUDGET` | _(per model)_ | Controls `generationConfig.thinkingConfig`. Empty = model default: `thinkingBudget: 0` for `gemini-flash-latest` (a lookup, so the answer stays inside the 8s timeout); omitted entirely for Flash-Lite models (`*flash-lite*`), which reject `thinkingBudget` with HTTP 400 `INVALID_ARGUMENT`. `omit` (or `none` / `off`) never sends `thinkingConfig`. A non-negative integer sends that `thinkingBudget` for any model. |
 | `AI_PER_MINUTE` | 8 | The job queue's drain rate (unchanged). |
 
 **Retries.** On HTTP 429 or 503 the client retries at most 2 times (3 HTTP attempts per meal). The wait is
 `Retry-After` (seconds or HTTP date) if present, else the `google.rpc.RetryInfo` `retryDelay`, else
 exponential backoff with jitter (1 s, then 2 s base; a random 50-100% of it). A retry that wouldn't
 finish inside the job's time limit (30 s) is not made. Each attempt has an 8 s timeout, capped by the job's deadline.
-Other statuses (400, 403, 500 ...) and timeouts are not retried.
+Other statuses (400, 403, 500 ...) and timeouts are not retried. A 400 means
+our request was bad (for example a `thinkingConfig` the model rejects): it is
+logged as `bad_request`, ends the meal as `error`, and never marks Google's
+daily quota exhausted.
 
 **Daily quota.** A 429 whose `QuotaFailure` names a per-day quota (`quotaId` contains `PerDay`) is never retried:
 the project is marked exhausted until the next reset (`AI_QUOTA_RESET_TZ` midnight). Until then the server makes
 no Gemini calls: parses answer at once as a failed meal (`ai_state: "failed"`, `fallback: "daily_limit"`,
-`fallback_reason: "daily_limit"`, `ai_resets_at`; no generic kcal). The flag is in memory (a restart forgets it;
-the next call's 429 sets it again).
+`fallback_reason: "daily_limit"`, `ai_resets_at`; no generic kcal). The mark is stored in Postgres
+(`ai_google_exhausted`, keyed by the Pacific quota day) so a process restart keeps it; it clears when the
+quota day rolls (or when `exhausted_until` is past).
 
-**How attempts are counted.** One meal reserves ONE unit of the per-user and project caps before it is queued,
-whatever happens next: retries of that meal are not counted again, and requeueing a busy meal is not counted
-again either. A meal that ends as failed (error, daily_limit) still counts once (Google may have counted it).
-Meals answered from the cache, the table, or rejected before reserving (`daily_limit` already known) are not
-counted. A meal rejected because our own queue is full (`AI_QUEUE_MAX`) gives its reserved unit back.
+**How attempts are counted.** One meal reserves ONE unit of the per-user and project caps (`AI_USER_DAILY_CAP`,
+`AI_DAILY_CAP`) before it is queued: that covers the first attempt, even if Gemini answers 429. HTTP retries
+inside one attempt are not counted again. Each **later** attempt (a busy requeue) that fires and reaches
+Gemini is charged one more unit against both caps: any HTTP response except 429, or no response (timeout),
+counts as reaching Gemini. A 429 means Google rejected the request before running it, so that send is not
+charged. An attempt that never sends (no `GEMINI_RPM` slot before the deadline, etc.) is not charged. When
+`AI_DAILY_CAP` is already used up, a later attempt is not made and the meal ends as `daily_limit`. A meal that
+ends as failed (error, daily_limit, gave_up) keeps whatever was already charged. Meals answered from the cache,
+the table, or rejected before reserving (`daily_limit` already known) are not counted. A meal rejected because
+our own queue is full (`AI_QUEUE_MAX`) gives its reserved unit back.
 
 **Busy means requeue, not a fallback number.** When Gemini is still busy after the retries
 (`fallback_reason` `rate_limited`, `unavailable` or `timeout`: a 429 or 503, the limiter having no slot in
@@ -564,8 +577,9 @@ time, or the call timing out), the job is NOT answered with generic kcal. It sta
 `ai_state: "estimating"`, and goes back into the queue after a delay. The late answer fills the same job id.
 The delays are 30 s, 1 min, 2 min, 3 min, 4 min, then 5 min (the last repeats every 5 min). A job is
 requeued until **`AI_REQUEUE_MAX_MINUTES`** (default **30**) after its first try; the last try is scheduled
-so that it finishes inside that window. A requeued job still respects `GEMINI_RPM` and `AI_PER_MINUTE`, and
-does not use the caps again. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
+so that it finishes inside that window. A requeued job still respects `GEMINI_RPM` and `AI_PER_MINUTE`.
+A later attempt that reaches Gemini is charged against the caps (see above); a 429 or a send that never
+leaves is not. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
 reason) and `next_attempt_at` (RFC 3339). When the window runs out the job ends as failed with
 `fallback: "gave_up"`, `fallback_reason: "gave_up"`. A finished job stays pollable for an hour after it
 finishes (so a job that used the full window is still there).

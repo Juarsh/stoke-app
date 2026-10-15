@@ -455,10 +455,27 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 
 // runJob is the queue worker's AI call for one meal. requeue=true: Gemini
 // was still busy (rate_limited / unavailable / timeout) after its retries;
-// the job stays pending (estimating) and goes back into the queue, without
-// using the caps again. The queue ends it as gave_up when its window runs out.
+// the job stays pending (estimating) and goes back into the queue. The queue
+// ends it as gave_up when its window runs out.
+//
+// Cap counting: the meal reserved one unit of AI_USER_DAILY_CAP /
+// AI_DAILY_CAP when it was queued (that covers the first attempt, even if
+// Gemini answered 429). Each later attempt that fires and reaches Gemini
+// (any HTTP response but 429, or no response / timeout) is charged one more
+// unit. A 429 means Google rejected the request before running it, so it is
+// not charged. An attempt that never sends (no limiter slot, deadline)
+// charges nothing. A later attempt is not made when AI_DAILY_CAP is already
+// used up (the meal ends as daily_limit).
 func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
-	items, err := s.Fallback.EstimateMeal(ctx, j.Text, j.Spans, j.Hint)
+	if j.Requeues > 0 && s.globalCapFull(ctx) {
+		log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, "AI_DAILY_CAP used up before a requeued attempt")
+		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "global_cap_reached", "daily_limit"), false
+	}
+	sc := &sendCount{}
+	items, err := s.Fallback.EstimateMeal(withSendCount(ctx, sc), j.Text, j.Spans, j.Hint)
+	if j.Requeues > 0 && sc.n.Load() > 0 {
+		s.chargeAI(ctx, j.UserID) // one more unit for this later attempt
+	}
 	for i := range items {
 		if items[i].AIName == "" {
 			items[i].AIName = items[i].Name
@@ -469,7 +486,7 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 		reason := aiFailReason(err, items)
 		var ae *AIError
 		if errors.As(err, &ae) && ae.DailyQuota {
-			s.Quota.MarkExhausted(httpx.Now())
+			s.Quota.PersistExhausted(ctx, s.DB, httpx.Now())
 			log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, aiFailDetail(err))
 			return s.failedResponse(j.Claimed, j.Spans, j.Slot, "daily_limit", "daily_limit"), false
 		}
@@ -1515,6 +1532,32 @@ func appendFlag(fs []string, f string) []string {
 		return fs
 	}
 	return append(fs, f)
+}
+
+// chargeAI counts one more Gemini send of an already-queued meal against
+// the per-user and project-wide counters. The send already happened, so it
+// is counted even past the cap (the counter must not think there are calls
+// left after Google's real limit has run out).
+func (s *Service) chargeAI(ctx context.Context, userID int64) {
+	if s.DB == nil {
+		return
+	}
+	today := s.Quota.Day(httpx.Now())
+	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
+		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1`, userID, today)
+	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
+		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1`, today)
+}
+
+// globalCapFull: AI_DAILY_CAP is set and already used up today.
+func (s *Service) globalCapFull(ctx context.Context) bool {
+	gc := s.GlobalCap.Load()
+	if gc <= 0 || s.DB == nil {
+		return false
+	}
+	var used int64
+	_ = s.DB.QueryRow(ctx, `SELECT COALESCE((SELECT calls FROM ai_global_usage WHERE local_date=$1),0)`, s.Quota.Day(httpx.Now())).Scan(&used)
+	return used >= gc
 }
 
 // releaseAI gives back a call reserved by reserveAI that was never made.

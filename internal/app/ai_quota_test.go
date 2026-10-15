@@ -1,10 +1,11 @@
 package app
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/akarsh/calorie-tracker/internal/food"
-	"time"
 )
 
 type quotaOut struct {
@@ -20,7 +21,8 @@ type quotaOut struct {
 
 // Still busy (rate_limited / timeout) after the client's retries: the job
 // stays pending with ai_state estimating and goes back into the queue; the
-// late answer fills the SAME job. Counted once against the caps.
+// late answer fills the SAME job. The queue reservation covers the first
+// attempt; the late answer that reaches Gemini is charged one more unit.
 func TestAIBusyRequeuedThenLateAnswer(t *testing.T) {
 	d := food.RequeueDelays
 	food.RequeueDelays = []time.Duration{150 * time.Millisecond}
@@ -59,8 +61,8 @@ func TestAIBusyRequeuedThenLateAnswer(t *testing.T) {
 		}
 	}
 	var q quotaOut
-	if c := admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q); c != 200 || q.Used != 1 || q.Remaining == nil || *q.Remaining != 19 {
-		t.Errorf("requeue counted twice: %d %+v", c, q)
+	if c := admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q); c != 200 || q.Used != 2 || q.Remaining == nil || *q.Remaining != 18 {
+		t.Errorf("want used=2 (queue + late answer that reached Gemini): %d %+v", c, q)
 	}
 	if n := aiCalls(t, srv); n != 2 {
 		t.Errorf("stub calls %d, want 2 (busy + late answer)", n)
@@ -140,5 +142,73 @@ func TestOneTapOK(t *testing.T) {
 		if it.AIEstimate && it.OneTapOK {
 			t.Errorf("ai estimate one-tap: %+v", it)
 		}
+	}
+}
+
+// Google's daily-quota exhausted mark is stored in the DB (keyed by the
+// Pacific quota day), so a process restart keeps it until the next reset.
+func TestAIExhaustedSurvivesRestart(t *testing.T) {
+	srv, pool := setupCfg(t, &fakeAI{}, func(c *Config) { c.AdminToken, c.GlobalAICap = testAdmin, 20 })
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "daily_limit"}, nil)
+	_, r := parseAI(t, srv, "ex1", "1 plate zorbu")
+	if r.FallbackReason != "daily_limit" {
+		t.Fatalf("daily: %+v", r)
+	}
+	var q quotaOut
+	admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q)
+	if !q.Exhausted {
+		t.Fatalf("not marked: %+v", q)
+	}
+	// simulate a restart: a new Quota loads from the same DB
+	loc := mustLoc(t, "America/Los_Angeles")
+	fresh := &food.Quota{Reset: loc}
+	fresh.LoadExhausted(context.Background(), pool, time.Now())
+	if ex, until := fresh.Exhausted(time.Now()); !ex || until.IsZero() {
+		t.Errorf("exhausted mark lost after restart: ex=%v until=%v", ex, until)
+	}
+	// after the reset time the mark is gone
+	if ex, _ := fresh.Exhausted(time.Now().Add(25 * time.Hour)); ex {
+		t.Error("still exhausted a day later")
+	}
+}
+
+// A later attempt that only gets 429s (busy) is NOT charged; an unavailable
+// (503) requeue attempt that reaches Gemini IS charged.
+func TestAIRequeueChargesNon429Only(t *testing.T) {
+	d := food.RequeueDelays
+	food.RequeueDelays = []time.Duration{30 * time.Millisecond}
+	t.Cleanup(func() { food.RequeueDelays = d })
+	srv, _ := setupCfg(t, &fakeAI{}, func(c *Config) { c.AdminToken, c.GlobalAICap = testAdmin, 20 })
+	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "busy"}, nil)
+	var p parseOut
+	if c := call(t, srv, "POST", "/v1/parse", "rq1", M{"text": "2 plate zorbu"}, &p); c != 202 {
+		t.Fatalf("parse: %d", c)
+	}
+	// wait for one requeue of busy, then clear so the next try succeeds
+	for i := 0; i < 100; i++ {
+		var j parseOut
+		call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "rq1", nil, &j)
+		if j.Requeues >= 1 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	var q quotaOut
+	admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q)
+	if q.Used != 1 {
+		t.Errorf("busy requeues must not charge: used=%d", q.Used)
+	}
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": ""}, nil)
+	for i := 0; i < 200; i++ {
+		var j parseOut
+		if c := call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "rq1", nil, &j); c == 200 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	admin(t, srv, "GET", "/admin/ai-quota", testAdmin, nil, &q)
+	if q.Used != 2 {
+		t.Errorf("late answer must charge one more: used=%d", q.Used)
 	}
 }
