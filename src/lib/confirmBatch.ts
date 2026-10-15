@@ -59,7 +59,10 @@ export function plan(rows: Row[], estimating = 0, waiting = 0) {
       note = `Adds ${n(kcal)} kcal. ${names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more` : names.join(' and ')} ${m === 1 ? 'stays' : 'stay'} open.`;
     }
   }
-  return { add, open, kcal, protein, button, total, note, disabled };
+  // secondary outline button: save what's confirmed, send every open item (incl. estimating + empty failed rows) to review
+  const nLater = m + estimating;
+  const later = nLater ? `${add.length ? `Add ${n(kcal)} kcal` : 'Save'} · ${nLater} to review later` : '';
+  return { add, open, kcal, protein, button, total, note, disabled, later };
 }
 
 /** Item the user picked from the server's unit_options: recomputed for that unit, no longer a mismatch, confirmed. */

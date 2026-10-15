@@ -10,7 +10,7 @@ export interface ParseResponse {
   items: Item[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; needs_confirmation: boolean; fallback: Fallback;
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
   /** why there is no AI answer: user_limit, daily_limit, rate_limited, unavailable, timeout, error */
-  fallback_reason?: string; user_daily_limit?: number;
+  fallback_reason?: string; user_daily_limit?: number; ai_resets_at?: string;
 }
 /** Mirrors food.ItemIn per API.md "App contract" (backend ea9dd85). Table items carry the
  * confirmed numbers + dish_table_version; the server checks them and never recalculates. */

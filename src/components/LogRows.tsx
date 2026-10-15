@@ -169,7 +169,7 @@ const useOpenStyles = makeStyles((t) => ({
 
 /** Failed AI estimate (retry failed / busy / daily limit): CUSTOM chip, "—", "not counted", the user's own kcal + Add.
  * Counts only once a kcal value is added; never part of the batch. */
-export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean; reason?: string; userDailyLimit?: number }; onKcal: (v: string) => void; onAdd: () => void }) {
+export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean; reason?: string; userDailyLimit?: number; resetsAt?: string }; onKcal: (v: string) => void; onAdd: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles(), ...useFailedStyles() }; const t = useTheme();
   const k = Number(row.kcal);
   return (

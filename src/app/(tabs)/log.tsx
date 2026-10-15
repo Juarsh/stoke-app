@@ -70,20 +70,29 @@ export default function Log() {
   }, [unkKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setEstimating([]); setOffline([]); }, [text]);
 
-  async function estimateUnknown(spans: string[]) {
-    const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
+  async function estimateUnknown(spans: string[], tries = 0) {
+    const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number; resetsAt?: string } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
     if (aiUsedToday >= AI_CAP) return toCustom(spans, '', { reason: 'user_limit' });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
+    const retry = async () => { // same rows, same ids; a later answer fills them
+      try { land(await st.api.parse(spans.join(', '), true)); } catch { /* stays Estimating; Add / leaving hands it to review */ }
+      tries++;
+    };
     setEstimating((e) => [...e, ...spans]); setBusy(true);
     // one handler for the first answer and for a late one (polled 202 job): fills the SAME row by stable id
     const land = (r: Awaited<ReturnType<typeof st.api.parse>>) => {
       const got = r.items.filter((x) => x.ai_estimate);
-      const failed = aiStatus(r) === 'failed';
+      const status = aiStatus(r);
+      if (status === 'estimating' && !(r instanceof ParsePending)) { // retryable (rate_limited / unavailable / timeout): re-queue, stay Estimating
+        if (tries < 5) setTimeout(() => { void retry(); }, 5000 * (tries + 1));
+        return;
+      }
+      const failed = status === 'failed';
       spans.forEach((u, k) => {
         const its = failed ? [] : splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
-        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason, userDailyLimit: r.user_daily_limit }); return; }
+        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason, userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
         setCustoms((cs) => {
           const l = lateAnswer(cs.find((c) => c.key === u), its);
           if (l.drop) return cs; // the user's own kcal wins
@@ -129,13 +138,13 @@ export default function Log() {
   const sum = nOpen || openFailed || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
-  const canAdd = any;
+  const canAdd = any && !(bp.disabled && bp.later); // confirm-none: primary disabled, 'Save · N to review later' is the way out
   const addLabel = sum.button;
   const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
   const decisionDrafts = drafts.filter((d) => kindByKey.get(d.key) === 'choice');
 
-  function add() {
+  function add(leave = false) {
     const date = localDate();
     // uncertain or corrected readings carry their span, so the server remembers them (Remembered foods)
     const learn = (d: Draft) => (!d.ok || d.corrected || d.it.source !== 'table') && !d.it.remembered && !d.it.learned;
@@ -156,7 +165,7 @@ export default function Log() {
     // remember every reading the user confirmed or corrected (table items with a known dish only)
     st.remember(adding.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
       .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
-    if ((nOpen || openFailed) && adding.length + addedCustoms.length > 0) { // open rows stay on screen with their own controls; the rest is saved
+    if (!leave && (nOpen || openFailed) && adding.length + addedCustoms.length > 0) { // open rows stay on screen with their own controls; the rest is saved
       for (const d of adding) remove(d);
       setCustoms((cs) => cs.filter((c) => !failedCounts(c)));
       setMsg(bp.note);
@@ -235,7 +244,8 @@ export default function Log() {
               <T v="caption" tone="muted">{sum.total}</T>
               <T v="number">{sum.kcalText} <T v="caption" tone="muted">{sum.soFar ? 'kcal so far' : `kcal · ${sum.protein} g`}</T></T>
             </Row>
-            <Button title={addLabel} disabled={!canAdd} onPress={add} accessibilityLabel={addLabel} />
+            <Button title={addLabel} disabled={!canAdd} onPress={() => add()} accessibilityLabel={addLabel} />
+            {bp.later ? <Button kind="outline" title={bp.later} onPress={() => add(true)} accessibilityLabel={bp.later} /> : null}
             {nOpen && bp.add.length ? <T v="caption" tone="muted" style={{ textAlign: 'center' }}>{bp.note}</T> : null}
           </View>
         ) : null}

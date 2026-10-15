@@ -8,20 +8,31 @@ import type { PendingFood } from './syncQueue';
 
 export type AiStatus = 'estimating' | 'failed' | 'ready';
 /** A pending job is still estimating; a fallback error / busy / cap (or an answer with no items) is failed. */
+export const RETRYABLE = ['rate_limited', 'unavailable', 'timeout'];
 export function aiStatus(r: ParseResponse | unknown): AiStatus {
   if (r instanceof ParsePending) return 'estimating';
   if (r instanceof Error || !r || typeof r !== 'object') return 'failed';
   const p = r as ParseResponse;
-  if (['error', 'busy', 'cap_reached', 'global_cap_reached', 'daily_limit', 'rate_limited', 'not_configured'].includes(p.fallback)) return 'failed';
+  // retryable reasons keep the row Estimating (re-queued, waiting for a late answer); only final ones fail it
+  if (RETRYABLE.includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
+  if (['error', 'busy', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
   return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
 }
 
 /** Failed row: the user's own kcal. Counted only after they press Add on it. */
-export type FailedRow = { key: string; id: string; name: string; kcal: string; protein: string; added: boolean; reason?: string; userDailyLimit?: number };
+export type FailedRow = { key: string; id: string; name: string; kcal: string; protein: string; added: boolean; reason?: string; userDailyLimit?: number; resetsAt?: string };
 /** Failed-row copy by the server's fallback_reason (user_daily_limit from the server; left out when missing). */
-export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit'>): string {
-  if (f.reason === 'user_limit') return `You’ve used today’s ${f.userDailyLimit ? `${f.userDailyLimit} ` : ''}AI estimates. Add the calories yourself, or try again tomorrow.`;
-  if (f.reason === 'daily_limit') return 'AI estimates are used up for today. Add the calories yourself.';
+/** ai_resets_at (RFC 3339) in the user's local time, e.g. "12:30 PM"; '' when missing or unreadable. */
+export function resetTime(iso?: string): string {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d.getTime())) return '';
+  const h = d.getHours(), m = d.getMinutes();
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit' | 'resetsAt'>): string {
+  const time = resetTime(f.resetsAt);
+  if (f.reason === 'user_limit') return `You’ve used today’s ${f.userDailyLimit ? `${f.userDailyLimit} ` : ''}AI estimates. Add the calories yourself${time ? `, or try again after ${time}` : ''}.`;
+  if (f.reason === 'daily_limit') return time ? `AI estimates are used up until ${time}. Add the calories yourself.` : 'AI estimates are used up for now. Add the calories yourself.';
   return 'Couldn’t estimate this. Add the calories yourself.';
 }
 /** failed rows still waiting for the user's kcal (they count as "still needs a choice") */

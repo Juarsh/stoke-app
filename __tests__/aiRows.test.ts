@@ -66,13 +66,21 @@ test('closing Log also keeps estimating spans (pending) and unfilled failed rows
 });
 
 import { failedCopy, failedWaiting } from '../src/lib/aiRows';
+import { resetTime } from '../src/lib/aiRows';
 describe('failed-row copy by fallback_reason', () => {
-  test('user_limit with the server number', () => expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3 }))
-    .toBe('You’ve used today’s 3 AI estimates. Add the calories yourself, or try again tomorrow.'));
-  test('user_limit without the number', () => expect(failedCopy({ reason: 'user_limit' }))
-    .toBe('You’ve used today’s AI estimates. Add the calories yourself, or try again tomorrow.'));
-  test('daily_limit', () => expect(failedCopy({ reason: 'daily_limit' })).toBe('AI estimates are used up for today. Add the calories yourself.'));
-  test.each([undefined, 'rate_limited', 'timeout', 'error'])('%s -> generic', (r) => expect(failedCopy({ reason: r })).toBe('Couldn’t estimate this. Add the calories yourself.'));
+  const at = '2026-10-15T07:00:00Z'; const time = resetTime(at);
+  test('reset time is local h:mm AM/PM', () => expect(time).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/));
+  test('user_limit with number and reset time', () => expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3, resetsAt: at }))
+    .toBe(`You’ve used today’s 3 AI estimates. Add the calories yourself, or try again after ${time}.`));
+  test('user_limit without reset time / number', () => expect(failedCopy({ reason: 'user_limit' }))
+    .toBe('You’ve used today’s AI estimates. Add the calories yourself.'));
+  test('daily_limit with time', () => expect(failedCopy({ reason: 'daily_limit', resetsAt: at })).toBe(`AI estimates are used up until ${time}. Add the calories yourself.`));
+  test('daily_limit without time', () => expect(failedCopy({ reason: 'daily_limit' })).toBe('AI estimates are used up for now. Add the calories yourself.'));
+  test.each([undefined, 'error'])('%s -> generic', (r) => expect(failedCopy({ reason: r })).toBe('Couldn’t estimate this. Add the calories yourself.'));
+  test.each(['rate_limited', 'unavailable', 'timeout'])('%s keeps the row Estimating', (r) =>
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'busy', fallback_reason: r, custom_items: [] } as never)).toBe('estimating'));
+  test.each(['user_limit', 'daily_limit', 'error'])('%s fails the row', (r) =>
+    expect(aiStatus({ items: [], unmatched: ['x'], fallback: r === 'user_limit' ? 'cap_reached' : r, fallback_reason: r, custom_items: [] } as never)).toBe('failed'));
 });
 test('a failed row with no kcal shows in the batch label and never hides', () => {
   const roti = parser.parse('2 roti').items[0];
@@ -81,4 +89,14 @@ test('a failed row with no kcal shows in the batch label and never hides', () =>
   const p = plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting(f));
   expect(p.button).toBe(`Add ${roti.kcal.best} kcal · 1 still needs a choice`);
   expect(plan([{ key: 'r', it: roti, confirmed: false }], 0, failedWaiting([{ ...f[0], kcal: '200', added: true }])).button).toBe(`Add ${roti.kcal.best} kcal`);
+});
+
+test('secondary "to review later" counts every open item', () => {
+  const roti = parser.parse('2 roti').items[0];
+  const momos = { ...parser.parse('8 plates momos').items[0], one_tap_ok: false, flags: ['unit_mismatch'], needs_confirmation: true };
+  const p = plan([{ key: 'r', it: roti, confirmed: false }, { key: 'm', it: momos, confirmed: false }], 1, 1);
+  expect(p.later).toBe(`Add ${roti.kcal.best} kcal · 3 to review later`);
+  const none = plan([{ key: 'm', it: momos, confirmed: false }], 1, 1);
+  expect(none.later).toBe('Save · 3 to review later');
+  expect(plan([{ key: 'r', it: roti, confirmed: false }]).later).toBe('');
 });
