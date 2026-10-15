@@ -324,8 +324,10 @@ export class Parser {
         const l2 = last();
         if (l2 && l2.clause === clause && unk.length === 0 && !l2.from_combo) {
           const g = this.applyForm(l2, t.w);
-          if (g) setLast(g);
-          else l2.matched_text += ' ' + t.w;
+          if (g) { setLast(g); continue; }
+          // Form word did not change the dish: unmatched leftover so
+          // leftover_in_meal forces confirmation. Do not rematch as another dish.
+          unk.push(t.w);
           continue;
         }
       }

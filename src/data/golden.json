@@ -3687,7 +3687,7 @@
     {
      "dish_id": "soya_chaap",
      "name": "soya chaap",
-     "matched_text": "soy chaap tikka",
+     "matched_text": "soy chaap",
      "quantity": 1,
      "unit": "plate",
      "grams": 200,
@@ -3704,22 +3704,28 @@
      },
      "carbs_g": 28.2,
      "fat_g": 19,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: typical home/restaurant recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0.5,
+     "flags": [
+      "leftover_in_meal",
+      "leftover_nearby"
+     ],
      "ai_estimate": false,
-     "one_tap_ok": true,
+     "one_tap_ok": false,
      "span_start": 0,
-     "span_end": 15,
+     "span_end": 9,
      "learned": false,
      "default_portion": true
     }
    ],
-   "unmatched": [],
-   "leftover": 0
+   "unmatched": [
+    "tikka"
+   ],
+   "leftover": 1
   }
  },
  {
