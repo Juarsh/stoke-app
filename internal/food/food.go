@@ -1608,7 +1608,7 @@ func (s *Service) chargeAI(ctx context.Context, userID int64) {
 		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1`, today)
 }
 
-// logAICall stores one row per AI attempt in ai_calls (user id, timestamp,
+// logAICall stores one row per AI attempt in ai_calls (user id, meal id = job id, timestamp,
 // model, outcome, HTTP sends that reached Gemini). Best effort: a failed
 // insert never changes the meal's answer.
 func (s *Service) logAICall(ctx context.Context, j *Job, sends int, outcome string) {
@@ -1619,8 +1619,8 @@ func (s *Service) logAICall(ctx context.Context, j *Job, sends int, outcome stri
 	if m, ok := s.Fallback.(interface{ ModelName() string }); ok {
 		model = m.ModelName()
 	}
-	if _, err := s.DB.Exec(ctx, `INSERT INTO ai_calls(user_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,$5,$6)`,
-		j.UserID, httpx.Now(), model, outcome, sends, j.Requeues); err != nil {
+	if _, err := s.DB.Exec(ctx, `INSERT INTO ai_calls(user_id,meal_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+		j.UserID, j.ID, httpx.Now(), model, outcome, sends, j.Requeues); err != nil {
 		log.Printf("ai_calls insert failed: job=%s err=%v", j.ID, err)
 	}
 }

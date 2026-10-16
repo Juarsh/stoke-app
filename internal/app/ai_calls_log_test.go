@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+
+	"github.com/akarsh/calorie-tracker/internal/food"
 	"testing"
 	"time"
 )
@@ -57,5 +59,50 @@ func TestAICallsLogged(t *testing.T) {
 		if x.at.Before(before) || x.at.After(time.Now().Add(time.Minute)) {
 			t.Errorf("timestamp: %+v", x)
 		}
+	}
+}
+
+// A meal requeued several times (Gemini busy) logs one row per attempt, all
+// with the same meal_id, so it counts as one distinct meal.
+func TestAICallsRequeueSameMeal(t *testing.T) {
+	d := food.RequeueDelays
+	food.RequeueDelays = []time.Duration{20 * time.Millisecond}
+	t.Cleanup(func() { food.RequeueDelays = d })
+	srv, pool := setupCfg(t, &fakeAI{}, func(c *Config) { c.AdminToken, c.GlobalAICap = testAdmin, 20 })
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "busy"}, nil)
+	var p parseOut
+	if c := call(t, srv, "POST", "/v1/parse", "rqlog", M{"text": "2 plate zorbu"}, &p); c != 202 {
+		t.Fatalf("parse: %d", c)
+	}
+	for i := 0; i < 400; i++ {
+		var j parseOut
+		call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "rqlog", nil, &j)
+		if j.Requeues >= 2 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": ""}, nil)
+	for i := 0; i < 400; i++ {
+		var j parseOut
+		if c := call(t, srv, "GET", "/v1/parse/jobs/"+p.JobID, "rqlog", nil, &j); c == 200 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	ctx := context.Background()
+	var rows, meals, used int
+	var meal string
+	for i := 0; i < 100; i++ {
+		if err := pool.QueryRow(ctx, `SELECT count(*), count(DISTINCT meal_id), count(*) FILTER (WHERE outcome='used'), max(meal_id) FROM ai_calls`).Scan(&rows, &meals, &used, &meal); err != nil {
+			t.Fatal(err)
+		}
+		if used == 1 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if rows < 3 || meals != 1 || used != 1 || meal != p.JobID {
+		t.Fatalf("rows=%d distinct meals=%d used=%d meal=%q job=%q", rows, meals, used, meal, p.JobID)
 	}
 }
