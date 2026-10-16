@@ -597,9 +597,9 @@
      "grams": 150,
      "oil_level": "normal",
      "kcal": {
-      "low": 206,
+      "low": 150,
       "best": 275,
-      "high": 344
+      "high": 388
      },
      "protein_g": {
       "low": 9.4,
@@ -608,18 +608,47 @@
      },
      "carbs_g": 32.2,
      "fat_g": 10.7,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "estimate",
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "variant_choice"
+     ],
      "ai_estimate": false,
-     "one_tap_ok": true,
+     "one_tap_ok": false,
      "span_start": 12,
      "span_end": 19,
      "learned": false,
-     "default_portion": false
+     "default_portion": false,
+     "variant_options": [
+      {
+       "dish_id": "veg_biryani",
+       "name": "veg biryani",
+       "kcal": 200,
+       "protein_g": 4.5
+      },
+      {
+       "dish_id": "chicken_biryani",
+       "name": "chicken biryani",
+       "kcal": 275,
+       "protein_g": 12.5
+      },
+      {
+       "dish_id": "mutton_biryani",
+       "name": "mutton biryani",
+       "kcal": 310,
+       "protein_g": 13
+      },
+      {
+       "dish_id": "egg_biryani",
+       "name": "egg biryani",
+       "kcal": 240,
+       "protein_g": 8
+      }
+     ]
     }
    ],
    "unmatched": [],
@@ -2767,14 +2796,17 @@
      },
      "carbs_g": 20.5,
      "fat_g": 0.9,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "vague_quantity"
+     ],
      "ai_estimate": false,
-     "one_tap_ok": true,
+     "one_tap_ok": false,
      "span_start": 13,
      "span_end": 17,
      "learned": false,
@@ -2844,7 +2876,7 @@
      "grams": 300,
      "oil_level": "normal",
      "kcal": {
-      "low": 465,
+      "low": 300,
       "best": 620,
       "high": 775
      },
@@ -2860,8 +2892,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "confidence": 0.65,
+     "confidence": 0.25,
      "flags": [
+      "variant_choice",
       "fuzzy"
      ],
      "ai_estimate": false,
@@ -2869,7 +2902,33 @@
      "span_start": 0,
      "span_end": 13,
      "learned": false,
-     "default_portion": true
+     "default_portion": true,
+     "variant_options": [
+      {
+       "dish_id": "veg_biryani",
+       "name": "veg biryani",
+       "kcal": 400,
+       "protein_g": 9
+      },
+      {
+       "dish_id": "chicken_biryani",
+       "name": "chicken biryani",
+       "kcal": 550,
+       "protein_g": 25
+      },
+      {
+       "dish_id": "mutton_biryani",
+       "name": "mutton biryani",
+       "kcal": 620,
+       "protein_g": 26
+      },
+      {
+       "dish_id": "egg_biryani",
+       "name": "egg biryani",
+       "kcal": 480,
+       "protein_g": 16
+      }
+     ]
     }
    ],
    "unmatched": [],
@@ -5502,14 +5561,17 @@
      },
      "carbs_g": 20.5,
      "fat_g": 0.9,
-     "source": "table",
+     "source": "did_you_mean",
      "data_source": "usda_fdc",
      "source_note": "NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to portion; confirm against the FDC entry before launch",
      "fuzzy": false,
-     "needs_confirmation": false,
-     "confidence": 1,
+     "needs_confirmation": true,
+     "confidence": 0.6,
+     "flags": [
+      "vague_quantity"
+     ],
      "ai_estimate": false,
-     "one_tap_ok": true,
+     "one_tap_ok": false,
      "span_start": 6,
      "span_end": 10,
      "learned": false,
@@ -6924,9 +6986,9 @@
      "grams": 300,
      "oil_level": "normal",
      "kcal": {
-      "low": 412,
+      "low": 300,
       "best": 550,
-      "high": 688
+      "high": 775
      },
      "protein_g": {
       "low": 18.8,
@@ -6940,8 +7002,9 @@
      "source_note": "Our estimate: home-style recipe (ingredient grams + oil), not lab-measured",
      "fuzzy": true,
      "needs_confirmation": true,
-     "confidence": 0.65,
+     "confidence": 0.25,
      "flags": [
+      "variant_choice",
       "fuzzy"
      ],
      "ai_estimate": false,
@@ -6949,7 +7012,33 @@
      "span_start": 0,
      "span_end": 14,
      "learned": false,
-     "default_portion": true
+     "default_portion": true,
+     "variant_options": [
+      {
+       "dish_id": "veg_biryani",
+       "name": "veg biryani",
+       "kcal": 400,
+       "protein_g": 9
+      },
+      {
+       "dish_id": "chicken_biryani",
+       "name": "chicken biryani",
+       "kcal": 550,
+       "protein_g": 25
+      },
+      {
+       "dish_id": "mutton_biryani",
+       "name": "mutton biryani",
+       "kcal": 620,
+       "protein_g": 26
+      },
+      {
+       "dish_id": "egg_biryani",
+       "name": "egg biryani",
+       "kcal": 480,
+       "protein_g": 16
+      }
+     ]
     }
    ],
    "unmatched": [],

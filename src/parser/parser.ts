@@ -47,7 +47,10 @@ export interface Rules {
   plausible_max?: Record<string, number>;
   /** ingredient words that make "X dish" read as one dish name (compound_name) */
   name_qualifier_words?: string[];
+  /** Go 519964a/f1fa437: when-words stripped before matching; vague amounts force confirm; ambiguous base dishes offer variants */
+  temporal_words?: string[]; vague_quantity_words?: string[]; variant_spread?: number; brand_only_words?: string[];
 }
+export interface VariantOption { dish_id: string; name: string; kcal: number; protein_g: number }
 export interface Range { low: number; best: number; high: number }
 export interface Alternative { quantity: number; unit: string; kcal: number; label: string }
 /** One reading of a unit_mismatch item; the item is out of the totals until the user picks one. */
@@ -67,6 +70,8 @@ export interface Item {
   /** the AI's own dish name (matched_text stays the user's text) */
   ai_name?: string;
   alternatives?: Alternative[]; ai_estimate: boolean;
+  /** with flag variant_choice: every table variant at the applied portion; the user must pick */
+  variant_options?: VariantOption[];
   /** Go OneTapOK: confident table item with nothing to choose (save with one tap). */
   one_tap_ok?: boolean;
   /** set with unit_mismatch: counting-unit reading, stated reading (and one portion) */
@@ -123,6 +128,7 @@ export class Parser {
   private formWord: Set<string>; private modifier: Set<string>; private stuffing: Set<string>; private connector: Set<string>; private eggWord: Set<string>; private sep: Set<string>;
   private style: Set<string>; private stop: Set<string>; private noFuzzyCat: Set<string>;
   private reMult: RegExp;
+  private vague = new Set<string>(); private temporal: string[] = []; private variants = new Map<string, Dish[]>();
 
   constructor(private table: Dish[], private r: Rules) {
     for (const d of table) {
@@ -147,6 +153,9 @@ export class Parser {
     this.filler = new Set([...r.fillers, ...r.brand_words]);
     const pre = r.multiplier_prefixes.map(escapeRe).join('|');
     this.reMult = new RegExp(`(?:^|\\s)(?:${pre})\\s*(\\d+(?:\\.\\d+)?)(?:\\s|$)|(?:^|\\s)(\\d+(?:\\.\\d+)?)\\s*(?:x|×)(?:\\s|$)`, 'g');
+    this.vague = new Set(r.vague_quantity_words ?? []);
+    this.temporal = [...(r.temporal_words ?? [])].sort((a, b) => fields(b).length - fields(a).length); // stable, longest first
+    this.buildVariants();
   }
 
   dishById(id: string): Dish | undefined { return this.byID.get(id); }
@@ -171,6 +180,7 @@ export class Parser {
     s = s.replace(reNumUnit, '$1 $2');
     s = ' ' + fields(s).join(' ') + ' ';
     for (const suf of this.r.half_suffixes) s = s.replaceAll(' ' + suf + ' ', ' +0.5 ');
+    for (const tw of this.temporal) while (s.includes(' ' + tw + ' ')) s = s.replaceAll(' ' + tw + ' ', ' ');
     return s;
   }
 
@@ -477,6 +487,9 @@ export class Parser {
     const eg = this.eggPieces(items);
     items.splice(0, items.length, ...eg);
     this.tokenRules(items, toks);
+    const vague = this.vagueQty(toks);
+    const brandLeft = this.brandLeftover(text, items);
+    if (brandLeft) leftover += brandLeft;
     const present = new Set(items.map((x) => x.dish_id));
     for (const it of items) {
       it.default_portion = !it.explicit; // a count/unit was in the text?
@@ -484,6 +497,9 @@ export class Parser {
       if (leftover > 0 || unmatched.length > 0) pen(it, 'leftover_in_meal');
       const sides = this.r.typical_sides[it.dish_id];
       if (sides && !sides.some((sd) => present.has(sd))) pen(it, 'missing_side');
+      if (brandLeft) pen(it, 'brand_unmatched');
+      if (vague && !this.fat.has(it.dish_id)) pen(it, 'vague_quantity');
+      this.variantChoice(it);
     }
     this.assignSpans(items, text); // before finish strips the internal `everyday` marker (Go keeps it)
     const out: Item[] = items.map((x) => this.finish(x));
@@ -613,11 +629,81 @@ export class Parser {
     if (pens.length) it.flags = [...pens];
     // leftovers, splits and combos always need a look, whatever the score
     const forced = pens.some((f) => f === 'leftover_in_meal' || f === 'combo_or_split' || f === 'leftover_nearby' ||
-      f === 'token_reuse' || f === 'adjacent_split' || f === 'compound_name' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count' || f === 'estimate_unverified');
+      f === 'token_reuse' || f === 'adjacent_split' || f === 'compound_name' || f === 'unit_mismatch' || f === 'fractional_combo' || f === 'egg_count' || f === 'estimate_unverified' ||
+      f === 'variant_choice' || f === 'brand_unmatched' || f === 'vague_quantity');
     if (it.confidence < conf.threshold || forced) { it.needs_confirmation = true; if (it.source === 'table') it.source = 'did_you_mean'; }
     it.needs_confirmation = it.source !== 'table' || it.needs_confirmation;
     const { explicit: _e, generic: _g, clause: _c, joined: _j, pens: _p, everyday: _v, eggExtra: _x, ...base } = it;
     return base;
+  }
+
+  /** Go vagueQty: an amount word ("thoda", "zyada") that isn't about oil. */
+  private vagueQty(toks: Token[]): boolean {
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i];
+      if (t.sep || t.isN || !this.vague.has(t.w)) continue;
+      if (i + 1 < toks.length && (this.oilNoun.has(toks[i + 1].w) || this.oilSuf.has(toks[i + 1].w))) continue;
+      if (i > 0 && (this.oilNoun.has(toks[i - 1].w) || this.oilSuf.has(toks[i - 1].w))) continue;
+      return true;
+    }
+    return false;
+  }
+
+  /** Go buildVariants: base terms ("biryani") that reach one variant by alias while several rows end with the term. */
+  private buildVariants() {
+    for (const d of this.table) {
+      const nw = fields(d.name);
+      for (const a of d.aliases ?? []) {
+        const aw = fields(a);
+        if (aw.length >= nw.length || nw.slice(nw.length - aw.length).join(' ') !== a) continue;
+        if (this.table.some((x) => x.name === a)) continue; // a row is the default for this word
+        const sib = this.table.filter((o) => (' ' + o.name).endsWith(' ' + a) && o.unit === d.unit);
+        if (sib.length >= 2) this.variants.set(a, sib);
+      }
+    }
+  }
+
+  /** Go variantChoice: the text named only a base dish; variants differing by > variant_spread are offered, never guessed. */
+  private variantChoice(it: It) {
+    const d = this.dishById(it.dish_id);
+    if (!d || it.from_combo) return;
+    const mw = fields(it.matched_text);
+    for (const [term, sib] of this.variants) {
+      if (!sib.includes(d)) continue;
+      const tw = fields(term);
+      if (mw.length < tw.length || mw.slice(mw.length - tw.length).join(' ') !== term) continue;
+      let named = false;
+      for (const w of mw.slice(0, mw.length - tw.length)) for (const o of sib) {
+        named = named || fields(o.name).includes(w);
+        for (const a of o.aliases ?? []) named = named || (a !== term && fields(a).includes(w));
+      }
+      if (named) return;
+      const opts: VariantOption[] = []; let lo = Infinity, hi = 0, klo = Infinity, khi = 0;
+      for (const o of sib) {
+        const v = this.compute(o, blank(), it.quantity, it.unit);
+        opts.push({ dish_id: o.id, name: o.name, kcal: v.kcal.best, protein_g: v.protein_g.best });
+        lo = Math.min(lo, v.kcal.best); hi = Math.max(hi, v.kcal.best); klo = Math.min(klo, v.kcal.low); khi = Math.max(khi, v.kcal.high);
+      }
+      if (lo <= 0 || (hi - lo) / lo <= (this.r.variant_spread ?? 0)) return;
+      it.variant_options = opts; it.kcal = { ...it.kcal, low: klo, high: khi };
+      pen(it, 'variant_choice');
+      return;
+    }
+  }
+
+  /** Go brandLeftover: a brand word no item's branded row carries counts as leftover (returns how many). */
+  private brandLeftover(text: string, items: It[]): number {
+    const bk = (x: string) => x.toLowerCase().replaceAll("'", '').replaceAll(' ', '').replace(/s$/, '');
+    let norm = ' ' + fields(this.transliterate(text).toLowerCase()).join(' ') + ' ';
+    norm = ' ' + fields(norm.replace(reClean, ' ')).join(' ') + ' ';
+    let left = 0;
+    for (const b of [...this.r.brand_words, ...(this.r.brand_only_words ?? [])]) {
+      if (this.dish.has(b) || !norm.includes(' ' + b + ' ')) continue;
+      const k = bk(b);
+      const ok = items.some((it) => { const d = this.dishById(it.dish_id); return !!d && !!d.brand && (bk(d.brand).includes(k) || bk(d.name).includes(k) || (d.aliases ?? []).some((a) => bk(a).includes(k))); });
+      if (!ok) left++;
+    }
+    return left;
   }
 
   /** Go plausibleCount: a typed count above plausible_max for its unit, or a counted dish by the plate/katori, is unit_mismatch. */
@@ -1245,7 +1331,7 @@ function locate(ws: { norm: string[] }[], matched: string[], from: number, used:
 }
 
 /** Go oneTapBlockers: flags that mean the user has a choice to make. */
-const ONE_TAP_BLOCKERS = new Set(['unit_mismatch', 'estimate_unverified', 'compound_name', 'adjacent_split', 'fuzzy', 'generic',
+const ONE_TAP_BLOCKERS = new Set(['unit_mismatch', 'variant_choice', 'brand_unmatched', 'vague_quantity', 'estimate_unverified', 'compound_name', 'adjacent_split', 'fuzzy', 'generic',
   'combo_or_split', 'leftover_in_meal', 'leftover_nearby', 'token_reuse', 'fractional_combo', 'egg_count', 'needs_review']);
 
 /** Go OneTap: true only for a confident table item with no flag that needs a choice. */
