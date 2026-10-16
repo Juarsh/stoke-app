@@ -11,6 +11,7 @@ import (
 	"math"
 	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -99,6 +100,15 @@ type Rules struct {
 	// item ("8 plates momos" and "6 katori dal" exceed it -> unit_mismatch).
 	PlausibleMax   map[string]float64 `json:"plausible_max"`
 	NameQualifiers []string           `json:"name_qualifier_words"`
+	// TemporalWords ("kal ka", "bacha hua", "aaj") say when, not what: they
+	// are stripped before matching and never count as leftover.
+	TemporalWords []string `json:"temporal_words"`
+	// VagueQtyWords ("thoda", "zyada") are an amount we can't map yet: when
+	// not about oil they force confirmation.
+	VagueQtyWords []string `json:"vague_quantity_words"`
+	// VariantSpread: a bare base word ("biryani") whose table variants differ
+	// by more than this share of kcal is never guessed.
+	VariantSpread float64 `json:"variant_spread"`
 }
 
 // Range is a low / best-guess / high triple.
@@ -154,6 +164,10 @@ type Item struct {
 	// DefaultPortion: no count or unit was typed, so the dish's standard
 	// portion was used ("Read as: 1 katori · Change").
 	DefaultPortion bool `json:"default_portion"`
+	// VariantOptions: set with variant_choice when the text names only a base
+	// dish ("biryani") whose variants differ a lot; the user must pick one.
+	// Kcal is at the applied portion.
+	VariantOptions []VariantOption `json:"variant_options,omitempty"`
 
 	explicit bool // quantity/unit came from the text
 	stated   bool // kept after finish for TableOnly
@@ -188,6 +202,14 @@ type Alternative struct {
 	Unit     string  `json:"unit"`
 	Kcal     float64 `json:"kcal"`
 	Label    string  `json:"label"`
+}
+
+// VariantOption is one table variant of an ambiguous base dish.
+type VariantOption struct {
+	DishID   string  `json:"dish_id"`
+	Name     string  `json:"name"`
+	Kcal     float64 `json:"kcal"`
+	ProteinG float64 `json:"protein_g"`
 }
 
 // UnitOption is one reading of an item whose count doesn't fit its unit.
@@ -241,6 +263,10 @@ type Parser struct {
 	noFuzzyCat map[string]bool
 	devDigit   map[rune]rune
 	reMult     *regexp.Regexp
+	vague      map[string]bool
+	// variants: base term -> the table dishes whose names end with it, for
+	// terms that resolve to one of them by alias only (no row named the term).
+	variants map[string][]*dishes.Dish
 }
 
 // New builds a parser from the embedded rules and the given dish table.
@@ -287,6 +313,12 @@ func New(ds []dishes.Dish) (*Parser, error) {
 		pre[i] = regexp.QuoteMeta(m)
 	}
 	p.reMult = regexp.MustCompile(`(?:^|\s)(?:` + strings.Join(pre, "|") + `)\s*(\d+(?:\.\d+)?)(?:\s|$)|(?:^|\s)(\d+(?:\.\d+)?)\s*(?:x|×)(?:\s|$)`)
+	p.vague = set(p.r.VagueQtyWords)
+	p.r.TemporalWords = append([]string(nil), p.r.TemporalWords...)
+	sort.SliceStable(p.r.TemporalWords, func(a, b int) bool {
+		return len(strings.Fields(p.r.TemporalWords[a])) > len(strings.Fields(p.r.TemporalWords[b]))
+	})
+	p.buildVariants()
 	return p, nil
 }
 
@@ -361,6 +393,11 @@ func (p *Parser) normalize(s string) string {
 	s = " " + strings.Join(strings.Fields(s), " ") + " "
 	for _, suf := range p.r.HalfSuffixes {
 		s = strings.ReplaceAll(s, " "+suf+" ", " +0.5 ")
+	}
+	for _, tw := range p.r.TemporalWords { // longest first (sorted in New)
+		for strings.Contains(s, " "+tw+" ") {
+			s = strings.ReplaceAll(s, " "+tw+" ", " ")
+		}
 	}
 	return s
 }
@@ -533,7 +570,7 @@ func (p *Parser) Parse(text string) Result {
 // oneTapBlockers: flags that mean the user has a choice to make.
 var oneTapBlockers = map[string]bool{"unit_mismatch": true, "estimate_unverified": true, "compound_name": true,
 	"adjacent_split": true, "fuzzy": true, "generic": true, "combo_or_split": true, "leftover_in_meal": true,
-	"leftover_nearby": true, "token_reuse": true, "fractional_combo": true, "egg_count": true, "needs_review": true}
+	"leftover_nearby": true, "variant_choice": true, "vague_quantity": true, "token_reuse": true, "fractional_combo": true, "egg_count": true, "needs_review": true}
 
 // OneTap reports whether it can be saved with one tap.
 func OneTap(it Item) bool {
@@ -652,7 +689,7 @@ func (p *Parser) parse(text string) Result {
 				unk = append(unk, t.w)
 				continue
 			}
-				}
+		}
 		if !t.isN || t.w == "" {
 			if d, n, fz := p.matchDish(toks, i); d != nil {
 				matched := make([]string, n)
@@ -867,6 +904,7 @@ func (p *Parser) parse(text string) Result {
 	p.everydayCombos(&res)
 	p.eggPieces(&res)
 	p.tokenRules(&res, toks)
+	vague := p.vagueQty(toks)
 	present := map[string]bool{}
 	for _, it := range res.Items {
 		present[it.DishID] = true
@@ -888,6 +926,10 @@ func (p *Parser) parse(text string) Result {
 				it.pen("missing_side")
 			}
 		}
+		if vague && !p.fat[it.DishID] {
+			it.pen("vague_quantity")
+		}
+		p.variantChoice(it)
 		p.finish(it)
 	}
 	p.assignSpans(&res, text)
@@ -1113,7 +1155,8 @@ func (p *Parser) finish(it *Item) {
 	forced := false
 	for _, f := range it.pens {
 		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
-			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count" || f == "estimate_unverified"
+			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count" || f == "estimate_unverified" ||
+			f == "variant_choice" || f == "vague_quantity"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -2340,4 +2383,119 @@ func appendOnce(fs []string, f string) []string {
 func (p *Parser) noiseWord(w string) bool {
 	return p.filler[w] || p.connector[w] || p.stop[w] || p.unitOf[w] != "" || p.oilOf[w] != "" || p.small[w] ||
 		p.genitive[w] || p.oilSuf[w] || p.style[w] || len([]rune(w)) < 3
+}
+
+// vagueQty: an amount word ("thoda", "zyada") that isn't about oil.
+func (p *Parser) vagueQty(toks []token) bool {
+	for i, t := range toks {
+		if t.sep || t.isN || !p.vague[t.w] {
+			continue
+		}
+		if i+1 < len(toks) && (p.oilNoun[toks[i+1].w] || p.oilSuf[toks[i+1].w]) {
+			continue // "zyada tel", "kam oily": an oil level, already mapped
+		}
+		if i > 0 && (p.oilNoun[toks[i-1].w] || p.oilSuf[toks[i-1].w]) {
+			continue // "tel kam"
+		}
+		return true
+	}
+	return false
+}
+
+// buildVariants finds base terms like "biryani" that map to one variant by
+// alias while several table rows end with that word.
+func (p *Parser) buildVariants() {
+	p.variants = map[string][]*dishes.Dish{}
+	for i := range p.table {
+		d := &p.table[i]
+		nw := strings.Fields(d.Name)
+		for _, a := range d.Aliases {
+			aw := strings.Fields(a)
+			if len(aw) >= len(nw) || strings.Join(nw[len(nw)-len(aw):], " ") != a {
+				continue
+			}
+			if _, named := p.byName(a); named {
+				continue // a row is the default for this word
+			}
+			var sib []*dishes.Dish
+			for j := range p.table {
+				o := &p.table[j]
+				if strings.HasSuffix(" "+o.Name, " "+a) && o.Unit == d.Unit {
+					sib = append(sib, o)
+				}
+			}
+			if len(sib) >= 2 {
+				p.variants[a] = sib
+			}
+		}
+	}
+}
+
+func (p *Parser) byName(n string) (*dishes.Dish, bool) {
+	for i := range p.table {
+		if p.table[i].Name == n {
+			return &p.table[i], true
+		}
+	}
+	return nil, false
+}
+
+// Variants lists the ambiguous base terms and their variant ids.
+func (p *Parser) Variants() map[string][]string {
+	out := map[string][]string{}
+	for t, ds := range p.variants {
+		for _, d := range ds {
+			out[t] = append(out[t], d.ID)
+		}
+	}
+	return out
+}
+
+// variantChoice: the text named only a base dish ("aadha plate biryani");
+// if its variants differ by more than variant_spread at this portion, offer
+// them all, widen the range to cover them and force a choice.
+func (p *Parser) variantChoice(it *Item) {
+	d := p.dishByID(it.DishID)
+	if d == nil || it.FromCombo != "" {
+		return
+	}
+	mw := strings.Fields(it.Matched)
+	for term, sib := range p.variants {
+		if !slices.Contains(sib, d) {
+			continue
+		}
+		tw := strings.Fields(term)
+		if len(mw) < len(tw) || strings.Join(mw[len(mw)-len(tw):], " ") != term {
+			continue
+		}
+		// any word naming the variant ("chicken", "veg") means it was chosen
+		named := false
+		for _, w := range mw[:len(mw)-len(tw)] {
+			for _, o := range sib {
+				named = named || slices.Contains(strings.Fields(o.Name), w)
+				for _, a := range o.Aliases {
+					named = named || (a != term && slices.Contains(strings.Fields(a), w))
+				}
+			}
+		}
+		if named {
+			return
+		}
+		var opts []VariantOption
+		lo, hi := math.Inf(1), 0.0
+		klo, khi := math.Inf(1), 0.0
+		for _, o := range sib {
+			v := p.compute(o, Item{}, it.Quantity, it.Unit)
+			opts = append(opts, VariantOption{DishID: o.ID, Name: o.Name, Kcal: v.Kcal.Best, ProteinG: v.Protein.Best})
+			lo, hi = math.Min(lo, v.Kcal.Best), math.Max(hi, v.Kcal.Best)
+			klo, khi = math.Min(klo, v.Kcal.Low), math.Max(khi, v.Kcal.High)
+		}
+		if lo <= 0 || (hi-lo)/lo <= p.r.VariantSpread {
+			return
+		}
+		it.VariantOptions = opts
+		it.Kcal.Low, it.Kcal.High = klo, khi
+		it.pen("variant_choice")
+		return
+	}
 }

@@ -628,3 +628,10 @@ reason. The API key, the prompt/request body and the answer text are never logge
 leftover_*, token_reuse, fractional_combo, egg_count, needs_review). Everything else is `false`: AI estimates,
 did_you_mean, generic placeholders, anything with `needs_confirmation`. Harmless flags (e.g. `trailing_qty`) don't
 block it. Items listed under a text save's `needs_confirmation` are always `false`.
+
+### Variant choice, time words, vague amounts (dish table v3)
+- A bare base dish whose table variants differ by more than `variant_spread` (15%) kcal at the applied portion, with no row named by that word (today: `biryani` → veg/chicken/mutton/egg; `chilla` → besan/moong), is never guessed: the item carries flag `variant_choice`, `needs_confirmation: true`, `one_tap_ok: false`, and `variant_options: [{dish_id, name, kcal, protein_g}]` at the parsed portion. `kcal.low/high` span all variants.
+- `aadha` / `adha` / `half` = 0.5 of the counting unit.
+- Time words (`temporal_words`: kal ka, bacha hua, aaj ka, …) are stripped before matching and never count as leftover.
+- Vague amounts (`vague_quantity_words`: thoda, zyada, bahut, kam, …) not about oil add flag `vague_quantity` and force confirmation.
+- When the AI cap is hit, a table dish next to unknown words ("roti zorbali") stays as an item to confirm; only the unknown words go to `failed_spans` / `custom_items`.

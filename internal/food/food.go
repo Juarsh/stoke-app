@@ -262,8 +262,36 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 	if _, ok := s.Fallback.(NoFallback); ok || s.Fallback == nil {
 		return generic("not_configured", "")
 	}
+	// No AI answer (cap hit): a table dish glued to unknown words
+	// ("roti zorbali") stays resolved, to confirm; only the unknown words
+	// need the user's input.
+	failClaimed := append([]parser.Item(nil), claimed...)
+	for _, it := range res.Items {
+		if it.DishID == "" || it.Source == parser.SourceGeneric || !hasFlag(it.Flags, "leftover_nearby") {
+			continue
+		}
+		if _, isLearned := done[Normalize(it.Matched)]; isLearned {
+			continue
+		}
+		it.NeedsConfirmation, it.OneTapOK = true, false
+		if it.Source == parser.SourceTable {
+			it.Source = parser.SourceDidYouMean
+		}
+		failClaimed = append(failClaimed, it)
+	}
+	var failOpen []Span
+	if len(failClaimed) == len(claimed) {
+		failOpen = open
+	} else {
+		for _, sp := range unclaimed(text, failClaimed, s.parser().Noise) {
+			if foodLike(sp.Text) && hasUnknown(sp, unknownWords, nil, failClaimed) {
+				failOpen = append(failOpen, sp)
+			}
+		}
+		sortBySpan(failClaimed)
+	}
 	failed := func(fb, reason string) (ParseResponse, *Job) {
-		return s.failedResponse(claimed, open, slot, fb, reason), nil
+		return s.failedResponse(failClaimed, failOpen, slot, fb, reason), nil
 	}
 	if ex, _ := s.Quota.Exhausted(httpx.Now()); ex {
 		// Google's daily quota is used up: no call (and no retry) until its reset

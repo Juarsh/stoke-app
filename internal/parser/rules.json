@@ -1060,5 +1060,42 @@
   "mushroom",
   "matar",
   "keema"
- ]
+ ],
+ "temporal_words": [
+  "kal ka",
+  "kal ki",
+  "kal ke",
+  "kal wala",
+  "kal wali",
+  "kal wale",
+  "kal raat ka",
+  "kal raat ki",
+  "bacha hua",
+  "bachi hui",
+  "bache hue",
+  "bacha",
+  "bachi",
+  "aaj ka",
+  "aaj ki",
+  "aaj ke",
+  "aaj",
+  "kal",
+  "leftover"
+ ],
+ "vague_quantity_words": [
+  "thoda",
+  "thodi",
+  "thode",
+  "thodasa",
+  "zyada",
+  "jyada",
+  "zyaada",
+  "jada",
+  "bahut",
+  "kam",
+  "little",
+  "lot",
+  "lots"
+ ],
+ "variant_spread": 0.15
 }
