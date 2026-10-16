@@ -2569,3 +2569,45 @@ func (p *Parser) Choices(text, dishID string) ([]VariantOption, bool) {
 	}
 	return opts, vague
 }
+
+// VariantGroup: when dishID belongs to a no-default variant group whose kcal
+// differ by more than variant_spread (biryani, chilla), the options at
+// qty/unit; nil otherwise. The save endpoint keys on this, not on text.
+func (p *Parser) VariantGroup(dishID string, qty float64, unit string) []VariantOption {
+	d := p.dishByID(dishID)
+	if d == nil {
+		return nil
+	}
+	if qty <= 0 {
+		qty = 1
+	}
+	if unit == "" || !p.ValidUnit(dishID, unit) {
+		unit = d.Unit
+	}
+	terms := make([]string, 0, len(p.variants))
+	for t := range p.variants {
+		terms = append(terms, t)
+	}
+	sort.Strings(terms)
+	for _, t := range terms {
+		sib := p.variants[t]
+		if !slices.Contains(sib, d) {
+			continue
+		}
+		var opts []VariantOption
+		lo, hi := math.Inf(1), 0.0
+		for _, o := range sib {
+			u := unit
+			if !p.ValidUnit(o.ID, u) {
+				u = o.Unit
+			}
+			v := p.compute(o, Item{}, qty, u)
+			opts = append(opts, VariantOption{DishID: o.ID, Name: o.Name, Kcal: v.Kcal.Best, ProteinG: v.Protein.Best})
+			lo, hi = math.Min(lo, v.Kcal.Best), math.Max(hi, v.Kcal.Best)
+		}
+		if lo > 0 && (hi-lo)/lo > p.r.VariantSpread {
+			return opts
+		}
+	}
+	return nil
+}

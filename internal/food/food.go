@@ -1112,7 +1112,8 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 				toConfirm = append(toConfirm, it)
 				continue
 			}
-			items = append(items, ItemIn{DishID: it.DishID, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel, Source: it.Source})
+			// a variant the text named ("veg biryani") counts as the user's pick
+			items = append(items, ItemIn{DishID: it.DishID, Qty: it.Quantity, Unit: it.Unit, OilLevel: it.OilLevel, Source: it.Source, VariantDishID: it.DishID})
 		}
 		unmatched = p.Unmatched
 	}
@@ -1301,6 +1302,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		ParseJobID   *string `json:"parse_job_id"`
 		JobID        *string `json:"job_id"`
 		ClientItemID *string `json:"client_item_id"`
+		// Same checks as POST: variant_dish_id for variant-group dishes,
+		// confirmed=true when the (new) span has a vague amount.
+		VariantDishID *string `json:"variant_dish_id"`
+		Confirmed     *bool   `json:"confirmed"`
 	}
 	if !httpx.Decode(w, r, &in) {
 		return
@@ -1387,6 +1392,18 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	if it.DishID != "" && it.Source != "custom" {
 		it.Kcal, it.ProteinG = nil, nil // edited dish chips are recomputed from the current table
+	}
+	chk := it
+	chk.Confirmed = in.Confirmed != nil && *in.Confirmed
+	if in.VariantDishID != nil {
+		chk.VariantDishID = *in.VariantDishID
+	}
+	if in.Span != nil {
+		chk.Span = *in.Span
+	}
+	if body := s.choiceCheck("", chk, 0); body != nil {
+		httpx.JSON(w, 422, body)
+		return
 	}
 	ne, code, err := s.resolve(r.Context(), it)
 	if uv, ok := err.(*unknownVersion); ok {
@@ -1613,34 +1630,22 @@ func (s *Service) choiceCheck(text string, it ItemIn, i int) map[string]any {
 	if it.DishID == "" || it.Source == "ai_estimate" || it.Source == "custom" || it.Source == "manual" || it.State == "needs_review" {
 		return nil
 	}
-	var opts []parser.VariantOption
-	vague := false
-	for _, t := range []string{it.Span, text} {
-		o, v := s.parser().Choices(t, it.DishID)
-		if len(o) > 0 && len(opts) == 0 {
-			opts = o
-		}
-		vague = vague || v
-	}
-	if len(opts) > 0 {
-		ok := it.VariantDishID == it.DishID
-		if ok {
-			ok = false
-			for _, o := range opts {
-				ok = ok || o.DishID == it.VariantDishID
-			}
+	// variant: keyed on the dish itself, whatever span/text says (or omits)
+	if opts := s.parser().VariantGroup(it.DishID, it.Qty, it.Unit); len(opts) > 0 {
+		ok := false
+		for _, o := range opts {
+			ok = ok || (o.DishID == it.VariantDishID && it.VariantDishID == it.DishID)
 		}
 		if !ok {
-			// options at the portion being saved
-			for k, o := range opts {
-				if v, err := s.parser().Recompute(o.DishID, it.Qty, it.Unit, it.OilLevel); err == nil {
-					opts[k].Kcal, opts[k].ProteinG = v.Kcal.Best, v.Protein.Best
-				}
-			}
 			return map[string]any{"error": map[string]any{"code": "variant_required", "item": i, "dish_id": it.DishID,
 				"message":         "Pick which one this was. Send the chosen variant as dish_id and variant_dish_id.",
 				"variant_options": opts}}
 		}
+	}
+	vague := false
+	for _, t := range []string{it.Span, text} {
+		_, v := s.parser().Choices(t, it.DishID)
+		vague = vague || v
 	}
 	if vague && !it.Confirmed {
 		return map[string]any{"error": map[string]any{"code": "quantity_required", "reason": "vague_quantity", "item": i, "dish_id": it.DishID,

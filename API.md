@@ -650,3 +650,8 @@ A brand (`brand_words` + `brand_only_words` in rules.json: amul, britannia, good
 
 ### Failed queued meals
 A meal that was queued and ends failed (gave_up, daily_limit, error, bad_request) keeps table dishes next to unknown words as items to confirm; only unknown words go to `failed_spans` / `custom_items`, same as the first-send cap path.
+
+### variant_dish_id is required for variant-group dishes (POST and PATCH)
+The check keys on the dish itself, not on span/text. For any dish in a no-default variant group whose kcal differ >15% (today: veg_biryani, chicken_biryani, mutton_biryani, egg_biryani, besan_chilla, moong_chilla; see `variant_options` on parse), every save must send `variant_dish_id` equal to `dish_id`, also for a one-tap save of an explicitly named "veg biryani", with no span/text, or as did_you_mean/confirmed. Otherwise 422 `variant_required` with `variant_options` at the sent qty/unit.
+- `PATCH /v1/entries/{id}` runs the same checks on the resulting entry: body accepts `variant_dish_id` and `confirmed`. Any edit of an entry whose (new or existing) dish is in a variant group, including qty-only edits, must send `variant_dish_id`; a new `span` with a vague amount needs `confirmed: true` (else `quantity_required`).
+- Text-only saves (`{"text": "veg biryani"}`) treat a variant named in the text as the pick; a bare "biryani" comes back in `needs_confirmation`.
