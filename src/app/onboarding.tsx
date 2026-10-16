@@ -12,7 +12,7 @@ import { makeStyles, useTheme } from '@/theme';
 type Act = 'light' | 'moderate' | 'active';
 const ACT_HELP: Record<Act, string> = { light: 'Low: mostly sitting, little exercise', moderate: 'Some: walk daily or gym 2–3 times a week', active: 'Active: hard exercise or a physical job most days' };
 
-function Choice<V extends string>({ value, options, onChange, label }: { value: V; options: { value: V; label: string }[]; onChange: (v: V) => void; label: string }) {
+function Choice<V extends string>({ value, options, onChange, label, small }: { value: V; options: { value: V; label: string }[]; onChange: (v: V) => void; label: string; small?: boolean }) {
   const t = useTheme(); const s = useStyles();
   return (
     <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel={label}>
@@ -21,7 +21,7 @@ function Choice<V extends string>({ value, options, onChange, label }: { value: 
         return (
           <Pressable key={o.value} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={o.label}
             style={[s.chip, on ? { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill } : { backgroundColor: t.c.card, borderColor: t.c.cardLine }]}>
-            <T v="bodyStrong" style={{ color: on ? t.c.onAccent : t.c.text }} numberOfLines={1}>{o.label}</T>
+            <T v="bodyStrong" style={[{ color: on ? t.c.onAccent : t.c.text }, small && { fontSize: 15, lineHeight: 18, textAlign: "center" }]} numberOfLines={small ? 2 : 1}>{o.label}</T>
           </Pressable>
         );
       })}
@@ -85,7 +85,8 @@ export default function Onboarding() {
       {top}
       <T v="title" style={{ fontSize: 26, lineHeight: 32 }}>About you</T>
       <NumField label="Age" unit="yrs" value={age} onChange={setAge} />
-      <Choice label="Sex" value={sex} onChange={setSex} options={[{ value: 'm', label: 'Male' }, { value: 'f', label: 'Female' }, { value: 'x', label: 'Prefer not' }]} />
+      <T v="bodyStrong">Sex</T>
+      <Choice label="Sex" small value={sex} onChange={setSex} options={[{ value: 'm', label: 'Male' }, { value: 'f', label: 'Female' }, { value: 'x', label: 'Prefer not to say' }]} />
       <T v="caption" tone="muted">Only used to work out your target. Stays on this phone.</T>
       <Row style={{ gap: 8 }}>
         <View style={{ flex: 1 }}><NumField label="Height" unit="cm" value={h} onChange={setH} /></View>
