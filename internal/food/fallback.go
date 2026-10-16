@@ -153,7 +153,7 @@ func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hin
 		base = "https://generativelanguage.googleapis.com/v1beta"
 	}
 	if to == 0 {
-		to = 8 * time.Second
+		to = 20 * time.Second
 	}
 	if cl == nil {
 		cl = http.DefaultClient
