@@ -505,6 +505,8 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	if j.Requeues > 0 && sc.n.Load() > 0 {
 		s.chargeAI(ctx, j.UserID) // one more unit for this later attempt
 	}
+	outcome := "used"
+	defer func() { s.logAICall(ctx, j, int(sc.n.Load()), outcome) }()
 	for i := range items {
 		if items[i].AIName == "" {
 			items[i].AIName = items[i].Name
@@ -517,13 +519,16 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 		if errors.As(err, &ae) && ae.DailyQuota {
 			s.Quota.PersistExhausted(ctx, s.DB, httpx.Now())
 			log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, aiFailDetail(err))
+			outcome = "daily_limit"
 			return s.failedResponse(fc, fs, j.Slot, "daily_limit", "daily_limit"), false
 		}
 		if reason == "rate_limited" || reason == "unavailable" || reason == "timeout" {
 			log.Printf("ai busy, requeue: job=%s reason=%s requeues=%d detail=%q", j.ID, reason, j.Requeues, aiFailDetail(err))
+			outcome = "requeue:" + reason
 			return ParseResponse{FallbackReason: reason}, true
 		}
 		log.Printf("ai failed error: job=%s reason=%s detail=%q", j.ID, reason, aiFailDetail(err))
+		outcome = "error:" + reason
 		return s.failedResponse(fc, fs, j.Slot, "error", "error"), false
 	}
 	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
@@ -1601,6 +1606,23 @@ func (s *Service) chargeAI(ctx context.Context, userID int64) {
 		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1`, userID, today)
 	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
 		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1`, today)
+}
+
+// logAICall stores one row per AI attempt in ai_calls (user id, timestamp,
+// model, outcome, HTTP sends that reached Gemini). Best effort: a failed
+// insert never changes the meal's answer.
+func (s *Service) logAICall(ctx context.Context, j *Job, sends int, outcome string) {
+	if s.DB == nil {
+		return
+	}
+	model := ""
+	if m, ok := s.Fallback.(interface{ ModelName() string }); ok {
+		model = m.ModelName()
+	}
+	if _, err := s.DB.Exec(ctx, `INSERT INTO ai_calls(user_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,$5,$6)`,
+		j.UserID, httpx.Now(), model, outcome, sends, j.Requeues); err != nil {
+		log.Printf("ai_calls insert failed: job=%s err=%v", j.ID, err)
+	}
 }
 
 // globalCapFull: AI_DAILY_CAP is set and already used up today.

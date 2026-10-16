@@ -133,6 +133,14 @@ they are not separate foods. A dictionary parser's guess is included as a HINT O
 miss foods, or split them badly. Answer only with JSON matching the schema.
 `
 
+// ModelName: the Gemini model this client calls (for ai_calls).
+func (g Gemini) ModelName() string {
+	if g.Model == "" {
+		return "gemini-flash-latest"
+	}
+	return g.Model
+}
+
 func (g Gemini) EstimateMeal(ctx context.Context, text string, spans []Span, hint []parser.Item) ([]parser.Item, error) {
 	if g.APIKey == "" {
 		return nil, ErrNotConfigured
@@ -351,6 +359,9 @@ func (s *Stub) SetNext(items []parser.Item) {
 // span, positioned on it (name = the span's own words, so unknown dish words
 // are never dropped). A next-answer override is returned exactly as set, so
 // rule-breaking answers (overlapping or missing positions) reach the guard.
+// ModelName: "stub" (for ai_calls).
+func (s *Stub) ModelName() string { return "stub" }
+
 func (s *Stub) EstimateMeal(ctx context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
