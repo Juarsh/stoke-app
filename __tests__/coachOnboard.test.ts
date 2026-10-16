@@ -106,8 +106,9 @@ describe('sex stays on this phone', () => {
   });
   test('store sends serverProfile; sync queue only carries entries; no analytics or log calls exist', () => {
     const src = (f: string) => fs.readFileSync(path.join(__dirname, '../src', f), 'utf8');
-    expect(src('lib/store.tsx')).toMatch(/putProfile\(serverProfile\(profile\)\)/);
-    expect(src('lib/syncQueue.ts')).not.toMatch(/profile|sex/i);
+    expect(src('lib/store.tsx')).toMatch(/kind: 'profile', id: 'profile', payload: profilePayload\(profile\)/);
+    expect(src('lib/store.tsx')).not.toMatch(/putProfile\(profile\)/);
+    expect(src('lib/syncQueue.ts')).not.toMatch(/sex/i);
     const walk = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? (e.name === 'data' ? [] : walk(path.join(d, e.name))) : [path.join(d, e.name)]);
     for (const f of walk(path.join(__dirname, '../src')).filter((f) => /\.tsx?$/.test(f))) {
       const s = fs.readFileSync(f, 'utf8');

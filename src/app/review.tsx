@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { ItemCard } from '@/components/ItemEditor';
+import { OpenRow } from '@/components/LogRows';
+import { rejectCopy } from '@/lib/confirmBatch';
 import { PendingRow } from '@/components/PendingRow';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
 import { toReview } from '@/lib/domain';
@@ -16,14 +18,29 @@ export default function Review() {
   const { date } = useLocalSearchParams<{ date?: string }>();
   const rows = st.entries.filter((e) => toReview(e) && (!date || e.local_date === date));
   const waiting = pendingFor(st.queue, date).filter((f) => isStale(f));
+  // rows the server refused never join the bulk confirm: each needs its own fix
+  const bulk = rows.filter((e) => !e.reject_code);
   const mode = reviewHeader(rows.map((e) => e.review_item!));
-  const kcal = rows.reduce((a, e) => a + e.review_item!.kcal.best, 0).toLocaleString('en-IN');
+  const kcal = bulk.reduce((a, e) => a + e.review_item!.kcal.best, 0).toLocaleString('en-IN');
   return (
     <Screen title="To review" right={<Button kind="ghost" title="Done" onPress={() => router.back()} />}>
       {rows.length === 0 && waiting.length === 0 ? <T tone="muted">All checked.</T> : null}
       {mode.allEstimates ? <T tone="text2">AI estimates · tap any to adjust</T> : null}
       {rows.map((e) => {
         const it = e.review_item!;
+        if (e.reject_code) {
+          const chips = (e.reject_code === 'variant_required' && (it.flags ?? []).includes('variant_choice') && !!(it as { variant_options?: unknown[] }).variant_options?.length)
+            || e.reject_code === 'quantity_required';
+          return (
+            <Card key={e.id}>
+              <T v="caption" tone="muted">You typed: {e.raw_text}</T>
+              {chips
+                ? <OpenRow it={it} kind="unit" text={e.raw_text} onConfirm={(n) => st.confirmReview(e.id, n)} onEdit={(n) => st.confirmReview(e.id, n)} onRemove={() => st.dropReview(e.id)} />
+                : <ItemCard it={it} slot={e.slot} confirmed={false} onEdit={(n) => st.confirmReview(e.id, n)} onConfirm={() => st.confirmReview(e.id, it)} onRemove={() => st.dropReview(e.id)} onSlot={() => {}} />}
+              <T v="caption" tone="muted">{rejectCopy(e.reject_code)}</T>
+            </Card>
+          );
+        }
         return itemKind(it) === 'ai_estimate' || !it.dish_id ? (
           <ItemCard key={e.id} it={it} slot={e.slot} confirmed={false} plain={mode.allEstimates} onEdit={(n) => st.confirmReview(e.id, n)}
             onConfirm={() => st.confirmReview(e.id, it)} onRemove={() => st.dropReview(e.id)} onSlot={() => {}} />
@@ -37,9 +54,9 @@ export default function Review() {
           <T v="caption" tone="muted">Still waiting for an estimate. These fill in here when it arrives.</T>
         </Card>
       ) : null}
-      {rows.length ? (
+      {bulk.length ? (
         <Row><Button title={mode.allEstimates ? `Confirm & add ${kcal} kcal` : `✓ All look right · Add ${kcal} kcal`}
-          onPress={() => rows.forEach((e) => st.confirmReview(e.id, e.review_item!))} /></Row>
+          onPress={() => bulk.forEach((e) => st.confirmReview(e.id, e.review_item!))} /></Row>
       ) : null}
     </Screen>
   );

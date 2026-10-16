@@ -11,7 +11,18 @@ import { ItemIn, ParseResponse, parseLocal } from './parseLocal';
 export interface RememberedRow { id: number; span: string; dish_id: string | null; custom_name: string; qty: number; unit: string; oil_level: string;
   kcal_best: number; kcal_low: number; kcal_high: number; protein_best: number; protein_low: number; protein_high: number; carbs_g: number; fat_g: number; uses: number; updated_at: string }
 
-export class ApiError extends Error { constructor(public status: number, msg: string) { super(msg); } }
+export class ApiError extends Error {
+  constructor(public status: number, msg: string) { super(msg); }
+  /** Server error code from the body: {"error":{"code":"..."}} (or legacy {"error":"..."}); '' if none. */
+  get code(): string { return errorCode(this.message); }
+}
+export function errorCode(body: string): string {
+  try { const j = JSON.parse(body) as { error?: unknown }; const e = j?.error;
+    if (e && typeof e === 'object' && typeof (e as { code?: unknown }).code === 'string') return (e as { code: string }).code;
+    if (typeof e === 'string') return e;
+  } catch { /* not JSON */ }
+  return '';
+}
 /** Parse answered 202 {status:'pending', job_id}: the item stays pending; poll the job later.
  * next_attempt_at (RFC 3339) is the server's hint for when a requeued job will be tried again. */
 export class ParsePending extends Error { constructor(public jobId: string, public nextAttemptAt?: string) { super('parse pending'); } }

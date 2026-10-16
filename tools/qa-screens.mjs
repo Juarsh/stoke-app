@@ -16,9 +16,9 @@ async function shot(p, name, opts = {}) {
   }, SHA);
   await p.screenshot({ path: `${OUT}/${name}-${SHA}.png`, ...opts });
 }
-async function page(theme, variant = '') {
+async function page(theme, variant = '', viewport = { width: 390, height: 844 }) {
   const state = execFileSync('npx', ['tsx', 'tools/qa-seed.ts', theme, variant]).toString();
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: theme });
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, colorScheme: theme });
   await ctx.addInitScript((s) => { if (!localStorage.getItem('app-state-v1')) localStorage.setItem('app-state-v1', s); }, state);
   return ctx.newPage();
 }
@@ -69,5 +69,14 @@ for (const theme of ['light', 'dark']) {
   await o.goto(BASE + '/onboarding'); await wait(o, 2000);
   await shot(o, `onboarding-${theme}`);
   await o.context().close();
+  // step 2 at 360x800: 'Start logging' must be fully above the fold (fails QA otherwise)
+  const o2 = await page(theme, 'noprofile', { width: 360, height: 800 });
+  await o2.goto(BASE + '/onboarding'); await wait(o2, 2000);
+  await o2.getByText('Next', { exact: true }).click(); await wait(o2, 800);
+  await shot(o2, `onboarding-2-360x800-${theme}`);
+  const box = await o2.getByText('Start logging', { exact: true }).boundingBox();
+  if (!box || box.y + box.height > 800) throw new Error(`Start logging below the fold at 360x800 (${theme}): ${JSON.stringify(box)}`);
+  console.log(`fold ok ${theme}: Start logging bottom ${Math.round(box.y + box.height)} / 800`);
+  await o2.context().close();
 }
 await browser.close();

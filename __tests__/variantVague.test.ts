@@ -72,7 +72,7 @@ describe('server rejects a save (4xx): row reopens for review', () => {
     for (const st of [400, 422]) {
       const q: Op[] = [{ kind: 'upsert', entry: e, tries: 0 }, { kind: 'delete', id: 'z', tries: 0 }];
       const r = await flush(q, sender(st));
-      expect(r.rejected.map((x) => x.id)).toEqual(['e1']); expect(r.rest.some((o) => o.kind === 'upsert')).toBe(false);
+      expect(r.rejected.map((x) => x.entry.id)).toEqual(['e1']); expect(r.rest.some((o) => o.kind === 'upsert')).toBe(false);
     }
   });
   test('5xx / 409 keep the retry rule', async () => {

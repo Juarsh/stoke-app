@@ -45,12 +45,14 @@ function NumField({ label, unit, value, onChange }: { label: string; unit?: stri
 
 export default function Onboarding() {
   const t = useTheme(); const s = useStyles(); const st = useStore();
-  const [step, setStep] = useState<1 | 2>(1);
-  const [goal, setGoal] = useState<Goal>('maintain');
-  const [diet, setDiet] = useState<Diet>('veg');
-  const [sex, setSex] = useState<Sex>('x');
-  const [age, setAge] = useState('25'); const [h, setH] = useState('170'); const [w, setW] = useState('70');
-  const [activity, setActivity] = useState<Act>('moderate');
+  const [step, setStep] = useState<1 | 2>(st.profileError ? 2 : 1);
+  // values already on the phone (e.g. the server refused the profile) are kept, never reset
+  const pr = st.profile;
+  const [goal, setGoal] = useState<Goal>(pr?.goal ?? 'maintain');
+  const [diet, setDiet] = useState<Diet>(pr?.diet ?? 'veg');
+  const [sex, setSex] = useState<Sex>(pr?.sex ?? 'x');
+  const [age, setAge] = useState(String(pr?.age ?? 25)); const [h, setH] = useState(String(pr?.heightCm ?? 170)); const [w, setW] = useState(String(pr?.weightKg ?? 70));
+  const [activity, setActivity] = useState<Act>(pr?.activity === 'light' || pr?.activity === 'active' ? pr.activity : 'moderate');
   const base = { goal, sex, age: Number(age) || 25, heightCm: Number(h) || 170, weightKg: Number(w) || 70, activity: activity as Profile['activity'] };
   const tgt = computeTargets(base);
   const top = (
@@ -97,7 +99,8 @@ export default function Onboarding() {
         <T v="bodyStrong" style={{ fontSize: 18, lineHeight: 24 }}>{kc(tgt.kcal)} kcal · {grams(tgt.protein)} protein</T>
         <T v="caption" tone="muted">Updates as you change the fields above</T>
       </View>
-      <Button title="Start logging" onPress={() => st.setProfile({ ...base, diet, kcalTarget: tgt.kcal, proteinTarget: tgt.protein, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true })} />
+      {st.profileError ? <T tone="text2" accessibilityLiveRegion="polite">Couldn’t save this. Check it and try again.</T> : null}
+      <Button title="Start logging" onPress={() => st.setProfile({ ...base, diet, kcalTarget: tgt.kcal, proteinTarget: tgt.protein, maintenanceKcal: tgt.maintenance, stepsTarget: pr?.stepsTarget ?? 8000, addStepKcal: pr?.addStepKcal ?? false, showKcalOnCards: pr?.showKcalOnCards ?? true })} />
       <T v="caption" tone="muted" style={{ textAlign: 'center' }}>Edit later in Settings</T>
     </Screen>
   );

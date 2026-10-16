@@ -21,10 +21,10 @@ function Gate() {
     SplashScreen.hideAsync().catch(() => {});
     const top = seg[0] as string | undefined;
     // onboarding first (no account needed to start); sign-in comes after, as before
-    if (!st.profile && top !== 'onboarding') router.replace('/onboarding');
+    if ((!st.profile || st.profileError) && top !== 'onboarding') router.replace('/onboarding');
     else if (st.profile && !st.user && top !== 'sign-in') router.replace('/sign-in');
-    else if (st.user && st.profile && (top === 'sign-in' || top === 'onboarding')) router.replace('/');
-  }, [st.ready, st.user, st.profile, seg, router]);
+    else if (st.user && st.profile && !st.profileError && (top === 'sign-in' || top === 'onboarding')) router.replace('/');
+  }, [st.ready, st.user, st.profile, st.profileError, seg, router]);
   return (
     <>
       <StatusBar style={t.dark ? 'light' : 'dark'} />

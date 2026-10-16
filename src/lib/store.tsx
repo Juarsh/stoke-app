@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, reopenRejected, serverProfile } from './domain';
+import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -12,10 +12,12 @@ import { enqueue, flush, Op, PendingFood } from './syncQueue';
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
 interface Persisted {
+  /** server refused the profile (error.code): onboarding reopens with the values kept */
+  profileError?: string | null;
   user: User | null; profile: Profile | null; entries: FoodEntry[]; steps: Record<string, number>;
   queue: Op[]; themePref: ThemePref; challenge: Challenge | null; aiUsed: Record<string, number>; learned: Learned;
 }
-const EMPTY: Persisted = { user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {}, learned: {} };
+const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {}, learned: {} };
 const KEY = 'app-state-v1';
 
 function useStoreValue() {
@@ -31,7 +33,7 @@ function useStoreValue() {
   useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
   const sender = useMemo(() => ({
-    upsertEntry: api.upsertEntry, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
+    putProfile: api.putProfile, upsertEntry: api.upsertEntry, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
     resolvePending: (f: PendingFood) => resolvePending(api, f),
   }), [api]);
   const syncing = useRef(false);
@@ -40,10 +42,10 @@ function useStoreValue() {
     syncing.current = true;
     try {
       const sent = s.queue;
-      const { rest, resolved, rejected } = await flush(sent, sender);
-      const reopened = rejected.map((e) => reopenRejected(e));
+      const { rest, resolved, rejected, profileRejected } = await flush(sent, sender);
+      const reopened = rejected.map((r) => reopenRejected(r.entry, r.code));
       // ops added while we were sending stay queued after the remaining ones
-      setS((p) => ({ ...p, queue: reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), [...rest, ...p.queue.slice(sent.length)]),
+      setS((p) => ({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}), queue: reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), [...rest, ...p.queue.slice(sent.length)]),
         entries: mergeEntries(p.entries, resolved).map((x) => reopened.find((r) => r.id === x.id) ?? x) }));
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
@@ -68,7 +70,8 @@ function useStoreValue() {
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),
     signOut: () => upd((p) => ({ ...p, user: null })),
-    setProfile: (profile: Profile) => { upd((p) => ({ ...p, profile })); api.putProfile(serverProfile(profile)).catch(() => {}); },
+    /** Saved on the phone at once; the server copy goes through the queue, so it is sent after sign-in too. */
+    setProfile: (profile: Profile) => upd((p) => ({ ...p, profile, profileError: null, queue: enqueue(p.queue, { kind: 'profile', id: 'profile', payload: profilePayload(profile), tries: 0 }) })),
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
     addEntries: (es: FoodEntry[]) => upd((p) => ({ ...p, entries: [...p.entries, ...es], queue: es.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue) })),
     /** Explicit user edit: the only way saved numbers change. */

@@ -21,7 +21,7 @@ export function variantOptions(it: Item): VariantOption[] {
   const raw = (r.variant_options ?? r.variants ?? r.variant_choices) as unknown;
   if (!Array.isArray(raw)) return [];
   return raw.map((o: Record<string, unknown>) => ({ dish_id: String(o.dish_id ?? o.id ?? ''), name: String(o.name ?? o.label ?? o.dish_id ?? ''), kcal: num(o.kcal ?? o.kcal_best), protein_g: num(o.protein_g ?? o.protein) }))
-    .filter((o) => o.dish_id && o.name && Number.isFinite(o.kcal) && o.kcal > 0).map((o) => ({ ...o, protein_g: Number.isFinite(o.protein_g) ? o.protein_g : 0 }));
+    .filter((o) => o && o.dish_id && o.name && Number.isFinite(o.kcal) && o.kcal > 0).map((o) => ({ ...o, protein_g: Number.isFinite(o.protein_g) ? o.protein_g : 0 }));
 }
 export const isVariantChoice = (it: Item) => (it.flags ?? []).includes('variant_choice') || variantOptions(it).length > 0;
 export const isVague = (it: Item) => (it.flags ?? []).includes('vague_quantity');
@@ -31,7 +31,8 @@ export function pickVariant(it: Item, o: VariantOption): Item {
   delete r.variant_options; delete r.variants; delete r.variant_choices;
   const k = Math.round(o.kcal), p = Math.round(o.protein_g * 10) / 10;
   return { ...(r as unknown as Item), dish_id: o.dish_id, name: o.name, kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p },
-    flags: (it.flags ?? []).filter((f) => f !== 'variant_choice'), needs_confirmation: false, alternatives: undefined, unit_options: undefined };
+    flags: (it.flags ?? []).filter((f) => f !== 'variant_choice'), needs_confirmation: false, alternatives: undefined, unit_options: undefined,
+    variant_options_all: variantOptions(it) } as Item;
 }
 export const isAiEstimate = (it: Item) => it.ai_estimate || it.source === 'ai_estimate';
 
@@ -122,4 +123,11 @@ export function scaleItem(it: Item, qty: number): Item {
   const r1 = (x: number) => Math.round(x * f * 10) / 10;
   return { ...it, quantity: qty, grams: Math.round(it.grams * f), kcal: { low: r(it.kcal.low), best: r(it.kcal.best), high: r(it.kcal.high) },
     protein_g: { low: r1(it.protein_g.low), best: r1(it.protein_g.best), high: r1(it.protein_g.high) }, carbs_g: r1(it.carbs_g), fat_g: r1(it.fat_g) };
+}
+
+/** Copy for a save the server refused, keyed on error.code (not the HTTP status). */
+export function rejectCopy(code?: string): string {
+  if (code === 'variant_required') return 'Pick a type to save this.';
+  if (code === 'quantity_required') return 'Pick how much to save this.';
+  return 'Couldn’t save this. Check it and try again.';
 }
