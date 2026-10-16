@@ -34,9 +34,9 @@ function NumField({ label, unit, value, onChange }: { label: string; unit?: stri
   return (
     <View style={s.field}>
       <T v="caption" tone="muted">{label}</T>
-      <Row style={{ gap: 4 }}>
-        <TextInput value={value} onChangeText={(x) => onChange(x.replace(/[^0-9]/g, '').slice(0, 3))} keyboardType="number-pad" accessibilityLabel={label}
-          selectionColor={t.c.em} style={[t.type.body, { flex: 1, fontSize: 15, fontWeight: '700', color: t.c.text, padding: 0 }]} />
+      <Row style={{ gap: 4, width: '100%' }}>
+        <View style={{ flex: 1, minWidth: 0 }}><TextInput value={value} onChangeText={(x) => onChange(x.replace(/[^0-9]/g, '').slice(0, 3))} keyboardType="number-pad" accessibilityLabel={label}
+          selectionColor={t.c.em} style={[t.type.body, { flex: 1, minWidth: 0, width: '100%' as never, fontSize: 15, fontWeight: '700', color: t.c.text, padding: 0 }]} /></View>
         {unit ? <T v="caption" tone="muted">{unit}</T> : null}
       </Row>
     </View>
