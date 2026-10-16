@@ -9,7 +9,7 @@ import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
-import { isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
+import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
@@ -110,7 +110,8 @@ export const variantLabel = (name: string, base: string) => {
 const plural = (u: string) => (u === 'katori' ? 'katori' : `${u}s`);
 /** Open row (not counted until the user decides): inline AI estimate, estimate_unverified, or unit mismatch.
  * All numbers come from the API item: kcal.best/low/high and unit_options. */
-export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
+export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '' }: {
+  /** AI estimate: one tap saves this row at its shown kcal (no footer, no typing) */ onAdd?: (n: Item) => void;
   text?: string; it: Item; kind: 'estimate' | 'unverified' | 'unit'; onConfirm: (n: Item) => void; onEdit: (n: Item) => void; onRemove: () => void;
 }) {
   const s = { ...useStyles(), ...useOpenStyles() }; const t = useTheme();
@@ -119,6 +120,9 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
   const n = (x: number) => Math.round(x).toLocaleString('en-IN');
   const opts = it.unit_options ?? [];
   const variants = variantOptions(it); const isVar = kind === 'unit' && isVariantChoice(it);
+  // an unpicked variant row is titled by what the user typed ('Biryani'), never the default guess
+  const varBase = (it.matched_text || it.name).trim().split(/\s+/).slice(-1)[0] ?? it.name;
+  const title = isVar ? cap(it.matched_text || it.name) : cap(it.name);
   const isVg = kind === 'unit' && !isVar && !it.unit_options?.length && isVague(it); const vw = isVg ? vagueWord(it, text) : '';
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
   const sub = kind === 'estimate' ? `${portion} · usually ${n(it.kcal.low)}–${n(it.kcal.high)}` : kind === 'unverified' ? `${portion} · sources vary` : portion;
@@ -129,7 +133,7 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
         <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row style={{ gap: 6, flexWrap: 'wrap' }}>
-            <T v="bodyStrong">{cap(it.name)}</T>
+            <T v="bodyStrong">{title}</T>
             {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">{isVar ? '⚠ Choose type' : isVg ? '⚠ How much?' : '⚠ Check unit'}</T></View> : <Badge kind="ai" label="Estimate" />}
           </Row>
           <T v="caption" tone="muted">{sub}</T>
@@ -148,7 +152,7 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
               {variants.map((o) => (
                 <Pressable key={o.dish_id} onPress={() => onConfirm(pickVariant(it, o))} style={[s.optBtn, { flexBasis: '45%' }]} accessibilityRole="button"
                   accessibilityLabel={`${cap(o.name)}, ${n(o.kcal)} calories`}>
-                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(o.name, it.name)} · {n(o.kcal)} kcal</T>
+                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(o.name, varBase)} · {n(o.kcal)} kcal</T>
                 </Pressable>
               ))}
             </Row>
@@ -180,9 +184,17 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
           </>
         ) : (
           <Row style={{ gap: 8 }}>
+            {kind === 'estimate' && canAddEstimate(it) ? (
+              // ai-estimate-row: outlined coral 'Add · N kcal' (em = darker coral in light, never accentFill), saves only this row
+              <Pressable onPress={() => (onAdd ?? onConfirm)({ ...it, needs_confirmation: false })} style={[s.optBtn, { borderColor: t.c.em }]} accessibilityRole="button"
+                accessibilityLabel={`Add ${cap(it.name)}, ${n(it.kcal.best)} calories`}>
+                <T v="bodyStrong" tone="em">{estimateAddLabel(it)}</T>
+              </Pressable>
+            ) : (
             <Pressable onPress={() => onConfirm({ ...it, needs_confirmation: false })} style={[s.optBtn, { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill }]} accessibilityRole="button" accessibilityLabel={`Looks right, add ${cap(it.name)}`}>
               <T v="bodyStrong" tone="onAccent">Looks right</T>
             </Pressable>
+            )}
             <Pressable onPress={() => setSheet(true)} style={s.optBtn} accessibilityRole="button" accessibilityLabel={`Change portion of ${cap(it.name)}`}>
               <T v="bodyStrong">Change portion</T>
             </Pressable>

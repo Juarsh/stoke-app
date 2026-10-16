@@ -69,6 +69,14 @@ for (const theme of ['light', 'dark']) {
   await o.goto(BASE + '/onboarding'); await wait(o, 2000);
   await shot(o, `onboarding-${theme}`);
   await o.context().close();
+  // Review: AI estimates each with their own 'Add · N kcal'; failed row Enter kcal; biryani Choose type; no bulk button
+  const rv = await page(theme, 'aireview');
+  await rv.goto(BASE + '/review'); await wait(rv, 2000);
+  await shot(rv, `review-ai-rows-${theme}`, { fullPage: true });
+  for (let i = 0; i < 3; i++) { await rv.getByText(/^Add · [0-9,]+ kcal$/).first().click(); await wait(rv, 400); }
+  await shot(rv, `review-ai-rows-after-3-taps-${theme}`, { fullPage: true });
+  if (await rv.getByText(/All look right/).count()) throw new Error('bulk button shown with no eligible rows');
+  await rv.context().close();
   // step 2 at 360x800: 'Start logging' must be fully above the fold (fails QA otherwise)
   const o2 = await page(theme, 'noprofile', { width: 360, height: 800 });
   await o2.goto(BASE + '/onboarding'); await wait(o2, 2000);

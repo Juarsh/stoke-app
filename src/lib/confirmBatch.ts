@@ -75,11 +75,18 @@ export function reviewSummary<E extends { id: string; review_item?: Item; reject
     button: bulk.length ? `✓ All look right · Add ${Math.round(kcal).toLocaleString('en-IN')} kcal` : null };
 }
 /** Which own-pick row a review item shows: chips for type/portion/unit, kcal entry for placeholders. */
-export function reviewRowKind(it: Item): 'chips' | 'kcal' | 'card' {
+export function reviewRowKind(it: Item): 'chips' | 'kcal' | 'estimate' | 'card' {
   if (isPlaceholder(it)) return 'kcal';
   if (isVariantChoice(it) || isVague(it) || isUnitMismatch(it)) return 'chips';
+  if (canAddEstimate(it)) return 'estimate';
   return 'card';
 }
+
+/** AI estimate with a real number and nothing else to pick: its own one-tap 'Add · N kcal' (never bulk). */
+export function canAddEstimate(it: Item): boolean {
+  return isAiEstimate(it) && !isPlaceholder(it) && !isVariantChoice(it) && !isVague(it) && !isUnitMismatch(it);
+}
+export const estimateAddLabel = (it: Item) => `Add · ${Math.round(it.kcal.best).toLocaleString('en-IN')} kcal`;
 
 /** Explicit single confirm (store.confirmReview): the item must be a real, picked reading. */
 export function canConfirm(it: Item): boolean {

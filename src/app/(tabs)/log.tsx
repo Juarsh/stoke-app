@@ -8,7 +8,7 @@ import { SlotCycle } from '@/components/ItemEditor';
 import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
 import { aiStatus, failedCounts, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay } from '@/lib/aiRows';
 import { ApiError, ParsePending } from '@/lib/api';
-import { kindOf, plan, ServerItem } from '@/lib/confirmBatch';
+import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
@@ -207,6 +207,12 @@ export default function Log() {
   useFocusEffect(useCallback(() => () => { if (leaveRef.current()) setText(''); }, []));
   const setItem = (d: Draft, n: Item) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, it: n } : x))) : setEdits((e) => ({ ...e, [d.key]: n }));
   const remove = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.filter((x) => x.key !== d.key)) : setEdits((e) => ({ ...e, [d.key]: null }));
+  /** AI estimate row 'Add · N kcal': saves just this row now, at its shown kcal; the footer never adds it. */
+  const addOne = (d: Draft, n: Item) => {
+    if (!canAddEstimate(n)) return;
+    st.addEntries([entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION })]);
+    remove(d);
+  };
   const confirm = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, ok: true } : x))) : setOkd((o) => ({ ...o, [d.key]: true }));
 
   return (
@@ -231,7 +237,7 @@ export default function Log() {
             <Group>
               {openDrafts.map((d) => (
                 <OpenRow key={d.key} text={text} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
-                  onConfirm={(n) => { setItem(d, n); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+                  onConfirm={(n) => { setItem(d, n); confirm(d); }} onAdd={(n) => addOne(d, n)} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
               ))}
             </Group>
           ) : null}
