@@ -103,6 +103,14 @@ function useStoreValue() {
       const n = entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id });
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),
+    /** Placeholder / failed review row: the user's own typed kcal makes it a custom entry (never the placeholder number). */
+    confirmReviewKcal: (id: string, kcal: number) => upd((p) => {
+      const old = p.entries.find((e) => e.id === id); if (!old || !(kcal > 0)) return p;
+      const k = Math.round(kcal), z = { low: 0, best: 0, high: 0 };
+      const n: FoodEntry = { ...old, dish_id: null, custom_name: old.raw_text || old.review_item?.name || 'item', source: 'custom', kcal: { low: k, best: k, high: k }, protein_g: z,
+        carbs_g: 0, fat_g: 0, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, variant_dish_id: undefined, updated_at: new Date().toISOString() };
+      return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
+    }),
     /** Remove a review entry (it is on the server as needs_review, so delete it there too). */
     dropReview: (id: string) => upd((p) => ({
       ...p, entries: p.entries.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),

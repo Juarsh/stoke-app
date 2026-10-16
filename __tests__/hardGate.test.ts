@@ -38,7 +38,7 @@ describe('Review bulk ("All look right") uses the Log batch rule', () => {
   });
   test('review.tsx uses reviewBulk for the button and its kcal', () => {
     const src = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
-    expect(src).toMatch(/const bulk = reviewBulk\(rows\);/); expect(src).toMatch(/bulk\.forEach\(\(e\) => st\.confirmReview/); expect(src).toMatch(/const kcal = bulk\.reduce/);
+    expect(src).toMatch(/const sum = reviewSummary\(rows\);/); expect(src).toMatch(/sum\.bulk\.forEach\(\(e\) => st\.confirmReview/);
   });
 });
 
@@ -73,5 +73,33 @@ describe('other one-tap paths', () => {
       if (needsOwnPick(it)) expect(bulkEligible(it)).toBe(false);
     }
     expect(bulkEligible({ ...parser.unknown('x'), one_tap_ok: true } as ServerItem)).toBe(false);
+  });
+});
+
+import { reviewSummary, reviewRowKind } from '../src/lib/confirmBatch';
+describe('Review footer copy', () => {
+  test('N counts only eligible rows; X still need you; rows keep their own pick row', () => {
+    const rows = [good(), rev('biryani', 'b'), rev('thoda rice', 'r'), failed(), rev('chiken biryani', 'd')];
+    const s = reviewSummary(rows);
+    expect(s.bulk.map((e) => e.id)).toEqual(['g']);
+    expect(s.button).toBe(`✓ All look right · Add ${Math.round(good().review_item!.kcal.best)} kcal`);
+    expect(s.stillText).toBe('4 still need you');
+    expect(reviewRowKind(rows[1].review_item!)).toBe('chips'); expect(reviewRowKind(rows[2].review_item!)).toBe('chips'); expect(reviewRowKind(rows[3].review_item!)).toBe('kcal');
+  });
+  test('zero eligible: no button at all', () => {
+    const s = reviewSummary([rev('biryani', 'b'), failed()]);
+    expect(s.button).toBeNull(); expect(s.stillText).toBe('2 still need you');
+    expect(reviewSummary([rev('thoda rice', 'r')]).stillText).toBe('1 still needs you');
+  });
+  test('did_you_mean and AI estimate rows never bulk', () => {
+    const dym = { ...parseLocal('2 roti').items[0], source: 'did_you_mean' as const, needs_confirmation: true, one_tap_ok: true };
+    expect(bulkEligible(dym as ServerItem)).toBe(false);
+    const ai = { ...parseLocal('2 roti').items[0], ai_estimate: true, source: 'ai_estimate' as const, dish_id: '' };
+    expect(bulkEligible(ai as ServerItem)).toBe(false);
+  });
+  test('screen wiring: muted still-copy above the button, button only when eligible', () => {
+    const src = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
+    expect(src).toMatch(/sum\.stillText \? <T tone="muted">/); expect(src).toMatch(/sum\.button \? \(/);
+    expect(src.indexOf('sum.stillText ?')).toBeLessThan(src.indexOf('sum.button ?'));
   });
 });

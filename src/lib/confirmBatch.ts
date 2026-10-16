@@ -49,7 +49,8 @@ export function isPlaceholder(it: Item): boolean {
 const needsVerification = (it: Item) => !!(it.dish_id && parser.dishById(it.dish_id)?.needs_verification) || (it.flags ?? []).includes('needs_verification');
 /** Reasons this item needs its OWN pick (chip or typed kcal): never part of any bulk / one-tap confirm. */
 export function needsOwnPick(it: Item): boolean {
-  return isVariantChoice(it) || isVague(it) || isUnitMismatch(it) || isUnverified(it) || needsVerification(it) || isPlaceholder(it) || isAiEstimate(it);
+  return isVariantChoice(it) || isVague(it) || isUnitMismatch(it) || isUnverified(it) || needsVerification(it) || isPlaceholder(it) || isAiEstimate(it)
+    || it.source === 'did_you_mean' || it.fuzzy;
 }
 /**
  * THE single eligibility rule for every bulk confirm (Log "Confirm N / Add", Review "All look right"):
@@ -65,6 +66,21 @@ export function bulkEligible(it: ServerItem, confirmed = false): boolean {
 export function reviewBulk<E extends { review_item?: Item; reject_code?: string }>(rows: E[]): E[] {
   return rows.filter((e) => !!e.review_item && !e.reject_code && bulkEligible({ ...e.review_item, one_tap_ok: (e.review_item as ServerItem).one_tap_ok ?? oneTap(e.review_item) } as ServerItem));
 }
+/** Review footer: N counts only eligible rows; 'X still need you' for the rest; no button at all when nothing is eligible. */
+export function reviewSummary<E extends { id: string; review_item?: Item; reject_code?: string }>(rows: E[]) {
+  const bulk = reviewBulk(rows);
+  const kcal = bulk.reduce((a, e) => a + e.review_item!.kcal.best, 0);
+  const still = rows.length - bulk.length;
+  return { bulk, kcal, still, stillText: still ? `${still} still need${still === 1 ? 's' : ''} you` : '',
+    button: bulk.length ? `✓ All look right · Add ${Math.round(kcal).toLocaleString('en-IN')} kcal` : null };
+}
+/** Which own-pick row a review item shows: chips for type/portion/unit, kcal entry for placeholders. */
+export function reviewRowKind(it: Item): 'chips' | 'kcal' | 'card' {
+  if (isPlaceholder(it)) return 'kcal';
+  if (isVariantChoice(it) || isVague(it) || isUnitMismatch(it)) return 'chips';
+  return 'card';
+}
+
 /** Explicit single confirm (store.confirmReview): the item must be a real, picked reading. */
 export function canConfirm(it: Item): boolean {
   if (isPlaceholder(it)) return false;          // no real kcal

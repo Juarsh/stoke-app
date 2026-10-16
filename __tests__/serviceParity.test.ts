@@ -43,7 +43,7 @@ describe('review rows never show or confirm 0 kcal', () => {
   });
   test('UI and store guards', () => {
     const rv = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
-    expect(rv).toMatch(/— kcal · needs review/); expect(rv).toMatch(/const bulk = reviewBulk\(rows\);/);
+    expect(fs.readFileSync(path.join(__dirname, '../src/components/KcalRow.tsx'), 'utf8')).toMatch(/— kcal · needs review/); expect(rv).toMatch(/const sum = reviewSummary\(rows\);/);
     expect(fs.readFileSync(path.join(__dirname, '../src/lib/store.tsx'), 'utf8')).toMatch(/if \(!hasKcal\(it\) \|\| !canConfirm\(it\)\) return p;/);
   });
 });

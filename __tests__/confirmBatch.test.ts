@@ -1,7 +1,7 @@
 import { kindOf, oneTapOk, plan, ServerItem } from '../src/lib/confirmBatch';
 import { parser } from '../src/parser';
 
-const base = (o: Partial<ServerItem>): ServerItem => ({ ...parser.parse('2 roti').items[0], needs_confirmation: true, source: 'did_you_mean', ...o });
+const base = (o: Partial<ServerItem>): ServerItem => ({ ...parser.parse('2 roti').items[0], needs_confirmation: true, source: 'table', ...o });
 const r = (it: ServerItem, key = it.name, confirmed = false) => ({ key, it, confirmed });
 
 describe('one_tap_ok guard', () => {
