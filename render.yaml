@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: katoricount-api
+    runtime: go
+    plan: free
+    region: singapore
+    buildCommand: go build -o api ./cmd/api
+    startCommand: ./api
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: AUTH_MODE
+        value: google
+      - key: AI_MODE
+        value: gemini
+      - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_CLIENT_IDS
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
