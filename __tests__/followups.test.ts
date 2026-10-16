@@ -143,3 +143,48 @@ describe('f1fa437 contract', () => {
     expect(isUnverified({ ...t, flags: ['brand_unmatched'] })).toBe(true);
   });
 });
+
+describe('1c617da: variant_dish_id on every POST and PATCH for variant-group dishes', () => {
+  const run = async (e: FoodEntry, duplicate: boolean) => {
+    jest.resetModules();
+    jest.doMock('../src/lib/config', () => ({ config: { mock: false, apiUrl: 'http://x', mockAi: false } }));
+    const calls: { method: string; body: Record<string, unknown> }[] = [];
+    const g = global as unknown as { fetch: unknown }; const old = g.fetch;
+    g.fetch = jest.fn(async (_u: string, init: { method: string; body?: string }) => { calls.push({ method: init.method, body: init.body ? JSON.parse(init.body) : {} });
+      return { ok: true, status: 201, json: async () => (duplicate && init.method === 'POST' ? { duplicates: [{}] } : {}), text: async () => '' }; });
+    try { await require('../src/lib/api').createApi(() => 't').upsertEntry(e); } finally { g.fetch = old; jest.dontMock('../src/lib/config'); }
+    return calls;
+  };
+  test('group membership mirrors the backend list', () => {
+    for (const id of ['veg_biryani', 'chicken_biryani', 'mutton_biryani', 'egg_biryani', 'besan_chilla', 'moong_chilla']) expect([id, !!parser.variantGroup(id)]).toEqual([id, true]);
+    for (const id of ['roti', 'rice', 'dal']) expect(parser.variantGroup(id)).toBeNull();
+  });
+  test.each([
+    ['one-tap named "veg biryani"', '1 plate veg biryani', false],
+    ['did_you_mean "chiken biryani" confirmed', 'chiken biryani', false],
+    ['qty-only edit of an old entry (PATCH)', '2 moong chilla', true],
+  ])('%s', async (_n, text, dup) => {
+    const it = parser.parse(text).items[0];
+    const e = entryFromItem({ ...it, needs_confirmation: false }, { id: 'x1', slot: 'lunch', raw_text: text, local_date: '2026-10-16', tableVersion: 3 });
+    const calls = await run(dup ? { ...e, qty: e.qty + 1 } : e, dup);
+    const post = calls.find((c) => c.method === 'POST')!.body as { items: Record<string, unknown>[] };
+    expect(post.items[0].variant_dish_id).toBe(e.dish_id);
+    if (dup) { const patch = calls.find((c) => c.method === 'PATCH')!.body; expect(patch).toMatchObject({ variant_dish_id: e.dish_id, dish_id: e.dish_id, confirmed: true }); }
+  });
+  test('non-group dish sends no variant_dish_id; unchecked review rows never claim a pick', async () => {
+    const it = parser.parse('2 roti').items[0];
+    const e = entryFromItem(it, { id: 'r1', slot: 'lunch', raw_text: '2 roti', local_date: '2026-10-16', tableVersion: 3 });
+    const post = (await run(e, false))[0].body as { items: Record<string, unknown>[] };
+    expect('variant_dish_id' in post.items[0]).toBe(false);
+    const rv = reopenRejected(entry({ dish_id: 'chicken_biryani' }), 'variant_required');
+    const p2 = (await run(rv, false))[0].body as { items: Record<string, unknown>[] };
+    expect('variant_dish_id' in p2.items[0]).toBe(false);
+  });
+  test('old biryani entry edited -> 422 variant_required -> back to Review with the picker', async () => {
+    const opts = [{ dish_id: 'veg_biryani', name: 'veg biryani', kcal: 460, protein_g: 12 }, { dish_id: 'chicken_biryani', name: 'chicken biryani', kcal: 550, protein_g: 28 }];
+    const body = JSON.stringify({ error: { code: 'variant_required', item: 0, dish_id: 'chicken_biryani', variant_options: opts } });
+    const r = await flush([{ kind: 'upsert', entry: entry({ qty: 2 }), tries: 0 }], mk({ upsertEntry: async () => { throw new ApiError(422, body); } }));
+    const re = reopenRejected(r.rejected[0].entry, r.rejected[0].code, new Date(), r.rejected[0].variant_options);
+    expect(re.reject_code).toBe('variant_required'); expect(variantOptions(re.review_item!)).toEqual(opts); expect(rejectCopy(re.reject_code)).toBe('Pick a type to save this.');
+  });
+});

@@ -1,7 +1,7 @@
 // Typed client for the Go backend (/workspace/calorie-tracker). With no
 // EXPO_PUBLIC_API_URL it runs in MOCK mode: parse is answered locally by the
 // TS parser and writes resolve immediately (data stays on the device).
-import { DISH_TABLE_VERSION } from '../parser';
+import { DISH_TABLE_VERSION, parser } from '../parser';
 import { config } from './config';
 import type { FoodEntry } from './domain';
 
@@ -30,6 +30,12 @@ export function errorDetail(body: string): { code: string; variant_options?: { d
     if (typeof e === 'string') return { code: e };
   } catch { /* not JSON */ }
   return { code: '' };
+}
+/** API.md @ 1c617da: a confirmed save/edit of a variant-group dish (biryani, chilla) always sends variant_dish_id = dish_id.
+ * Confirmed entries only reach here after a pick or an explicitly named variant (bare "biryani" is an open row). */
+export function variantField(e: FoodEntry): { variant_dish_id?: string } {
+  if (!e.dish_id || e.needs_review) return {};
+  return e.variant_dish_id === e.dish_id || parser.variantGroup(e.dish_id, e.qty, e.unit) ? { variant_dish_id: e.dish_id } : {};
 }
 export function errorCode(body: string): string {
   try { const j = JSON.parse(body) as { error?: unknown }; const e = j?.error;
@@ -109,13 +115,14 @@ export function createApi(getToken: () => string | null) {
       }
       const item: ItemIn = e.dish_id
         ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
-          ...(e.variant_dish_id ? { variant_dish_id: e.variant_dish_id } : {}) } as ItemIn
+          ...variantField(e) } as ItemIn
         : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span };
       const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
       if (r?.duplicates?.length) {
         // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only.
         await req('PATCH', `/v1/entries/${encodeURIComponent(e.id)}`, {
-          slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level } : { custom_name: e.custom_name }),
+          slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, ...variantField(e) } : { custom_name: e.custom_name }),
+          confirmed: true,
           kcal: e.kcal.best, protein_g: e.protein_g.best, if_unmodified_since: e.updated_at,
           // confirms a needs_review entry on the server (no-op for confirmed ones)
           state: 'confirmed', ...(e.remember && e.span ? { span: e.span } : { remember: false }),

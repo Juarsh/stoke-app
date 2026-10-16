@@ -663,6 +663,26 @@ export class Parser {
     }
   }
 
+  /** Go VariantGroup (1c617da): options when dishId is in a no-default variant group whose kcal differ > variant_spread. */
+  variantGroup(dishId: string, qty = 1, unit = ''): VariantOption[] | null {
+    const d = this.dishById(dishId); if (!d) return null;
+    if (qty <= 0) qty = 1;
+    const valid = (o: Dish, u: string) => !!u && (o.unit === u || (o.units ?? []).some((x) => x.unit === u));
+    if (!valid(d, unit)) unit = d.unit;
+    for (const t of [...this.variants.keys()].sort()) {
+      const sib = this.variants.get(t)!;
+      if (!sib.includes(d)) continue;
+      let lo = Infinity, hi = 0; const opts: VariantOption[] = [];
+      for (const o of sib) {
+        const v = this.compute(o, blank(), qty, valid(o, unit) ? unit : o.unit);
+        opts.push({ dish_id: o.id, name: o.name, kcal: v.kcal.best, protein_g: v.protein_g.best });
+        lo = Math.min(lo, v.kcal.best); hi = Math.max(hi, v.kcal.best);
+      }
+      if (lo > 0 && (hi - lo) / lo > (this.r.variant_spread ?? 0)) return opts;
+    }
+    return null;
+  }
+
   /** Go variantChoice: the text named only a base dish; variants differing by > variant_spread are offered, never guessed. */
   private variantChoice(it: It) {
     const d = this.dishById(it.dish_id);
