@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { suggest } from './coach';
+import { coachPicks, pickItem } from './coach';
 import { computeStreak, counted, toReview, dayTotals, localDate, loggedDays, stepsKcal } from './domain';
-import { DISHES } from '../parser';
+import { DISHES, oneTap, parser } from '../parser';
 import { useStore } from './store';
 import { isOffline, isStale, pendingFor, STALE_PENDING_MS } from './syncQueue';
 
@@ -33,7 +33,7 @@ export function useDay(date = localDate()) {
     const proteinLeft = Math.max(0, Math.round((proteinTarget - tot.protein) * 10) / 10);
     const loggedDates = loggedDays(st.entries, pendingFor(st.queue).map((f) => f.local_date));
     const streak = computeStreak(loggedDates, localDate());
-    const picks = suggest(DISHES, Math.max(0, kcalLeft), proteinLeft, p?.diet ?? 'veg');
+    const picks = coachPicks(DISHES, Math.max(0, kcalLeft), proteinLeft, p?.diet ?? 'veg', 12).filter((s) => pickItem(s, (x) => parser.parse(x), oneTap)).slice(0, 3);
     return { date, entries, reviews, pending, stale, offline, reviewCount: reviews.length + stale.length, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
   }, [st.entries, st.steps, st.profile, st.queue, date, tick]);
 }

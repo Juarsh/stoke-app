@@ -1,100 +1,111 @@
-// v3.2 frame 2, two steps. Step 1 "What's your goal?": goal buttons, "About you" summary grid, target as hero numbers
-// (computed, real values), Start logging. Step 2 "About you": edit the details and, optionally, the target.
+// v3.2 onboarding (Oct 16): 2 steps, no account or sign-in. Step 1 goal + diet; step 2 age, sex, height/weight,
+// activity with a live "Your daily target" (Mifflin-St Jeor x activity, goal adjust, guard rails in computeTargets).
+// Sex stays on this phone: it is never sent to the server (serverProfile / stripSex).
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { Button, Field, Row, Screen, Segmented, T } from '@/components/ui';
-import { computeTargets, Diet, Goal, Profile } from '@/lib/domain';
+import { Pressable, TextInput, View } from 'react-native';
+import { Button, Row, Screen, T } from '@/components/ui';
+import { computeTargets, Diet, Goal, Profile, Sex } from '@/lib/domain';
 import { grams, kc } from '@/lib/format';
 import { useStore } from '@/lib/store';
 import { makeStyles, useTheme } from '@/theme';
 
-const GOALS: { value: Goal; label: string }[] = [{ value: 'lose', label: 'Lose fat' }, { value: 'maintain', label: 'Maintain' }, { value: 'gain', label: 'Gain muscle' }];
-const ACT: Record<Profile['activity'], string> = { sedentary: 'Desk job', light: 'Light', moderate: 'Gym 3–4×/wk', active: 'Daily' };
-const DIET: Record<Diet, string> = { veg: 'Veg', egg: 'Egg + veg', nonveg: 'Non-veg' };
+type Act = 'light' | 'moderate' | 'active';
+const ACT_HELP: Record<Act, string> = { light: 'Low: mostly sitting, little exercise', moderate: 'Some: walk daily or gym 2–3 times a week', active: 'Active: hard exercise or a physical job most days' };
+
+function Choice<V extends string>({ value, options, onChange, label }: { value: V; options: { value: V; label: string }[]; onChange: (v: V) => void; label: string }) {
+  const t = useTheme(); const s = useStyles();
+  return (
+    <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable key={o.value} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={o.label}
+            style={[s.chip, on ? { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill } : { backgroundColor: t.c.card, borderColor: t.c.cardLine }]}>
+            <T v="bodyStrong" style={{ color: on ? t.c.onAccent : t.c.text }} numberOfLines={1}>{o.label}</T>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function NumField({ label, unit, value, onChange }: { label: string; unit?: string; value: string; onChange: (v: string) => void }) {
+  const t = useTheme(); const s = useStyles();
+  return (
+    <View style={s.field}>
+      <T v="caption" tone="muted">{label}</T>
+      <Row style={{ gap: 4 }}>
+        <TextInput value={value} onChangeText={(x) => onChange(x.replace(/[^0-9]/g, '').slice(0, 3))} keyboardType="number-pad" accessibilityLabel={label}
+          selectionColor={t.c.em} style={[t.type.body, { flex: 1, fontSize: 15, fontWeight: '700', color: t.c.text, padding: 0 }]} />
+        {unit ? <T v="caption" tone="muted">{unit}</T> : null}
+      </Row>
+    </View>
+  );
+}
 
 export default function Onboarding() {
   const t = useTheme(); const s = useStyles(); const st = useStore();
   const [step, setStep] = useState<1 | 2>(1);
   const [goal, setGoal] = useState<Goal>('maintain');
-  const [sex, setSex] = useState<'m' | 'f'>('m');
-  const [age, setAge] = useState('25'); const [h, setH] = useState('170'); const [w, setW] = useState('70');
-  const [activity, setActivity] = useState<Profile['activity']>('light');
   const [diet, setDiet] = useState<Diet>('veg');
-  const base = { goal, sex, age: Number(age) || 25, heightCm: Number(h) || 170, weightKg: Number(w) || 70, activity };
-  const auto = computeTargets(base);
-  // user overrides; empty = follow the computed value (always shown as real text, never as a placeholder)
-  const [kOver, setKOver] = useState(''); const [pOver, setPOver] = useState('');
-  const kcal = Number(kOver) || auto.kcal, protein = Number(pOver) || auto.protein;
-  const header = (n: 1 | 2) => (
-    <Row style={{ justifyContent: 'space-between' }}>
-      {n === 2 ? <T tone="text2" accessibilityRole="button" onPress={() => setStep(1)} style={{ paddingVertical: 8 }}>← Back</T> : <View />}
-      <T tone="text2">Step {n} of 2</T>
-    </Row>
+  const [sex, setSex] = useState<Sex>('x');
+  const [age, setAge] = useState('25'); const [h, setH] = useState('170'); const [w, setW] = useState('70');
+  const [activity, setActivity] = useState<Act>('moderate');
+  const base = { goal, sex, age: Number(age) || 25, heightCm: Number(h) || 170, weightKg: Number(w) || 70, activity: activity as Profile['activity'] };
+  const tgt = computeTargets(base);
+  const top = (
+    <View style={{ gap: 8 }}>
+      <Row style={{ justifyContent: 'space-between', minHeight: 44 }}>
+        {step === 2 ? <Pressable onPress={() => setStep(1)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingRight: 12 }}><T tone="text2">← Back</T></Pressable> : <View />}
+        <T tone="muted">{step} of 2</T>
+      </Row>
+      <View style={s.track} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 2, now: step }}>
+        <View style={[s.fill, { width: step === 1 ? '50%' : '100%' }]} />
+      </View>
+    </View>
   );
-  if (step === 2) {
+  if (step === 1) {
     return (
       <Screen>
-        {header(2)}
-        <T v="title">About you</T>
-        <Segmented value={sex} onChange={setSex} options={[{ value: 'm', label: 'Male' }, { value: 'f', label: 'Female' }]} />
-        <Row>
-          <View style={{ flex: 1 }}><Field label="Age" keyboardType="numeric" value={age} onChangeText={setAge} /></View>
-          <View style={{ flex: 1 }}><Field label="Height cm" keyboardType="numeric" value={h} onChangeText={setH} /></View>
-          <View style={{ flex: 1 }}><Field label="Weight kg" keyboardType="numeric" value={w} onChangeText={setW} /></View>
-        </Row>
-        <T v="bodyStrong">Activity</T>
-        <Segmented value={activity} onChange={setActivity} options={[{ value: 'sedentary', label: 'Desk' }, { value: 'light', label: 'Light' }, { value: 'moderate', label: '3–4×/wk' }, { value: 'active', label: 'Daily' }]} />
-        <T v="bodyStrong">Food (for coach picks)</T>
-        <Segmented value={diet} onChange={setDiet} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg + veg' }, { value: 'nonveg', label: 'Non-veg' }]} />
-        <T v="bodyStrong">Your daily target</T>
-        <Row>
-          <View style={{ flex: 1 }}><Field label="kcal" keyboardType="numeric" value={kOver || String(auto.kcal)} onChangeText={setKOver} /></View>
-          <View style={{ flex: 1 }}><Field label="Protein g" keyboardType="numeric" value={pOver || String(auto.protein)} onChangeText={setPOver} /></View>
-        </Row>
-        <Button title="Done" onPress={() => setStep(1)} />
+        {top}
+        <T v="title" style={{ fontSize: 26, lineHeight: 32 }}>What’s your goal?</T>
+        <Choice label="Goal" value={goal} onChange={setGoal} options={[{ value: 'lose', label: 'Lose' }, { value: 'maintain', label: 'Maintain' }, { value: 'gain', label: 'Gain' }]} />
+        <T v="title" style={{ fontSize: 20, lineHeight: 26 }}>What do you eat?</T>
+        <T v="caption" tone="muted">We use this for Coach picks.</T>
+        <Choice label="Diet" value={diet} onChange={setDiet} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg' }, { value: 'nonveg', label: 'Non-veg' }]} />
+        <T v="caption" tone="muted">No account needed to start.</T>
+        <Button title="Next" onPress={() => setStep(2)} style={{ marginTop: 8 }} />
       </Screen>
     );
   }
-  const tiles: [string, string][] = [['Sex', sex === 'm' ? 'Male' : 'Female'], ['Age', String(base.age)], ['Food', DIET[diet]],
-    ['Height', `${base.heightCm} cm`], ['Weight', `${base.weightKg} kg`], ['Activity', ACT[activity]]];
   return (
     <Screen>
-      {header(1)}
-      <T v="title">What’s your goal?</T>
+      {top}
+      <T v="title" style={{ fontSize: 26, lineHeight: 32 }}>About you</T>
+      <NumField label="Age" unit="yrs" value={age} onChange={setAge} />
+      <Choice label="Sex" value={sex} onChange={setSex} options={[{ value: 'm', label: 'Male' }, { value: 'f', label: 'Female' }, { value: 'x', label: 'Prefer not' }]} />
+      <T v="caption" tone="muted">Only used to work out your target. Stays on this phone.</T>
       <Row style={{ gap: 8 }}>
-        {GOALS.map((o) => {
-          const on = o.value === goal;
-          return (
-            <Pressable key={o.value} onPress={() => setGoal(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }}
-              style={[s.goal, on && { backgroundColor: t.c.em, borderColor: t.c.em }]}>
-              <T v="bodyStrong" style={on ? { color: t.dark ? t.c.onAccent : '#FFFFFF' } : undefined}>{o.label}</T>
-            </Pressable>
-          );
-        })}
+        <View style={{ flex: 1 }}><NumField label="Height" unit="cm" value={h} onChange={setH} /></View>
+        <View style={{ flex: 1 }}><NumField label="Weight" unit="kg" value={w} onChange={setW} /></View>
       </Row>
-      <T v="caption" tone="muted">About you</T>
-      <View style={s.grid}>
-        {tiles.map(([k, v]) => (
-          <Pressable key={k} onPress={() => setStep(2)} style={s.tile} accessibilityRole="button" accessibilityLabel={`${k}: ${v}. Edit`}>
-            <T v="caption" tone="muted">{k}</T><T v="bodyStrong">{v}</T>
-          </Pressable>
-        ))}
+      <T v="bodyStrong">Activity</T>
+      <Choice label="Activity" value={activity} onChange={setActivity} options={[{ value: 'light', label: 'Low' }, { value: 'moderate', label: 'Some' }, { value: 'active', label: 'Active' }]} />
+      <T v="caption" tone="muted">{ACT_HELP[activity]}</T>
+      <View style={s.target} accessible accessibilityLiveRegion="polite" accessibilityLabel={`Your daily target: ${kc(tgt.kcal)} calories, ${tgt.protein} grams protein`}>
+        <T v="caption" tone="text2">Your daily target</T>
+        <T v="bodyStrong" style={{ fontSize: 18, lineHeight: 24 }}>{kc(tgt.kcal)} kcal · {grams(tgt.protein)} protein</T>
+        <T v="caption" tone="muted">Updates as you change the fields above</T>
       </View>
-      <Pressable onPress={() => setStep(2)} style={s.target} accessibilityRole="button" accessibilityLabel={`Your daily target: ${kc(kcal)} calories, ${Math.round(protein)} grams protein. Edit`}>
-        <T v="caption" tone="text2">Your daily target · you can edit this</T>
-        <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Row style={{ alignItems: 'baseline', gap: 4 }}><T v="displayM">{kc(kcal)}</T><T tone="text2">kcal</T></Row>
-          <Row style={{ alignItems: 'baseline', gap: 4 }}><T v="displayM">{grams(protein)}</T><T tone="text2">protein</T></Row>
-        </Row>
-        <T v="caption" tone="text2">Estimated with the Mifflin-St Jeor formula</T>
-      </Pressable>
-      <Button title="Start logging" onPress={() => st.setProfile({ ...base, diet, kcalTarget: kcal, proteinTarget: protein, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true })} />
+      <Button title="Start logging" onPress={() => st.setProfile({ ...base, diet, kcalTarget: tgt.kcal, proteinTarget: tgt.protein, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true })} />
+      <T v="caption" tone="muted" style={{ textAlign: 'center' }}>Edit later in Settings</T>
     </Screen>
   );
 }
 const useStyles = makeStyles((t) => ({
-  goal: { flex: 1, minHeight: 48, borderRadius: t.radius.tile, borderWidth: 1, borderColor: t.c.cardLine, backgroundColor: t.c.card, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tile: { width: '31.5%' as never, minHeight: 64, borderRadius: t.radius.tile, borderWidth: 1, borderColor: t.c.cardLine, backgroundColor: t.c.card, padding: 10, gap: 2 },
-  target: { backgroundColor: t.c.accentTint, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.emTintLine, padding: t.space.cardH, gap: 4 },
+  chip: { flex: 1, minHeight: 48, borderRadius: t.radius.tile, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  field: { minHeight: 60, borderRadius: t.radius.tile, borderWidth: 1, borderColor: t.c.cardLine, backgroundColor: t.c.card, paddingHorizontal: 12, paddingVertical: 8, justifyContent: 'center', gap: 2 },
+  track: { height: 4, borderRadius: 2, backgroundColor: t.c.track, overflow: 'hidden' },
+  fill: { height: 4, borderRadius: 2, backgroundColor: t.c.em },
+  target: { backgroundColor: t.c.accentTint, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.emTintLine, padding: 12, gap: 2 },
 }));

@@ -4,10 +4,13 @@ import type { Item, OilLevel, Range } from '../parser/parser';
 export type Slot = 'breakfast' | 'lunch' | 'snacks' | 'dinner';
 export type Diet = 'veg' | 'egg' | 'nonveg';
 export type Goal = 'lose' | 'gain' | 'maintain';
+/** 'x' = prefer not to say: BMR uses the average of the male (+5) and female (-161) Mifflin-St Jeor constants (-78). */
+export type Sex = 'm' | 'f' | 'x';
+export const SEX_CONST: Record<Sex, number> = { m: 5, f: -161, x: -78 };
 export type EntrySource = 'table' | 'ai' | 'manual' | 'custom';
 
 export interface Profile {
-  goal: Goal; sex: 'm' | 'f'; age: number; heightCm: number; weightKg: number;
+  goal: Goal; sex: Sex; age: number; heightCm: number; weightKg: number;
   activity: 'sedentary' | 'light' | 'moderate' | 'active'; diet: Diet;
   kcalTarget: number; proteinTarget: number; stepsTarget: number; addStepKcal: boolean; showKcalOnCards: boolean;
 }
@@ -43,14 +46,20 @@ export function reviewEntry(it: Item, o: { slot: Slot; raw_text: string; local_d
 
 export const ACTIVITY: Record<Profile['activity'], number> = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
 
-/** Mifflin-St Jeor; lose -400, gain +300 (spec: ±300–500); protein 1.6 g/kg (lose/gain) or 1.2 (maintain). */
+export const MIN_KCAL = 1200;
+export const MAX_DEFICIT = 500;
+/** Profile as sent to the server: sex is on-device only and never leaves the phone. */
+export function serverProfile(p: Profile): Omit<Profile, 'sex'> { const { sex: _sex, ...rest } = p; return rest; }
+/** Mifflin-St Jeor (sex 'x' = average of male/female); lose -400, gain +300 (spec: ±300–500); protein 1.6 g/kg (lose/gain) or 1.2 (maintain). */
 export function computeTargets(p: Pick<Profile, 'goal' | 'sex' | 'age' | 'heightCm' | 'weightKg' | 'activity'>) {
-  const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (p.sex === 'm' ? 5 : -161);
+  const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (SEX_CONST[p.sex] ?? SEX_CONST.x);
   const tdee = bmr * ACTIVITY[p.activity];
   const adj = p.goal === 'lose' ? -400 : p.goal === 'gain' ? 300 : 0;
-  const kcal = Math.round((tdee + adj) / 10) * 10;
+  // guard rails: a loss goal is never more than MAX_DEFICIT below maintenance; the target never drops below MIN_KCAL
+  const raw = Math.max(tdee + adj, tdee - MAX_DEFICIT);
+  const kcal = Math.max(MIN_KCAL, Math.round(raw / 10) * 10);
   const protein = Math.round(p.weightKg * (p.goal === 'maintain' ? 1.2 : 1.6));
-  return { kcal: Math.max(1200, kcal), protein };
+  return { kcal, protein, maintenance: Math.round(tdee) };
 }
 
 /** Spec: before 11 breakfast, 11–4 lunch, 4–7 snacks, after 7 dinner (IST). */

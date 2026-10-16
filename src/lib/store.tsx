@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile } from './domain';
+import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, serverProfile } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -66,7 +66,7 @@ function useStoreValue() {
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),
     signOut: () => upd((p) => ({ ...p, user: null })),
-    setProfile: (profile: Profile) => { upd((p) => ({ ...p, profile })); api.putProfile(profile).catch(() => {}); },
+    setProfile: (profile: Profile) => { upd((p) => ({ ...p, profile })); api.putProfile(serverProfile(profile)).catch(() => {}); },
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
     addEntries: (es: FoodEntry[]) => upd((p) => ({ ...p, entries: [...p.entries, ...es], queue: es.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue) })),
     /** Explicit user edit: the only way saved numbers change. */

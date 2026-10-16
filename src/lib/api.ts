@@ -28,7 +28,7 @@ export function createApi(getToken: () => string | null) {
     const tok = getToken();
     const res = await fetch(config.apiUrl + path, {
       method, headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(stripSex(body)),
     });
     if (!res.ok) throw new ApiError(res.status, await res.text());
     if (res.status === 204) return undefined as T;
@@ -106,9 +106,15 @@ export function createApi(getToken: () => string | null) {
     async putSteps(local_date: string, steps: number): Promise<void> {
       if (!config.mock) await req('POST', '/v1/activity/steps', { local_date, steps, source: 'health_connect' });
     },
-    async putProfile(body: unknown): Promise<void> { if (!config.mock) await req('PUT', '/v1/profile', body); },
+    async putProfile(body: unknown): Promise<void> { if (!config.mock) await req('PUT', '/v1/profile', stripSex(body)); },
     async deleteMe(): Promise<void> { if (!config.mock) await req('DELETE', '/v1/me'); },
   };
 }
 export type Api = ReturnType<typeof createApi>;
 export { DISH_TABLE_VERSION };
+
+/** Sex is on-device only: removed from anything sent to the server, whatever the caller passes. */
+export function stripSex<B>(body: B): B {
+  if (!body || typeof body !== 'object') return body;
+  const { sex: _sex, ...rest } = body as Record<string, unknown>; return rest as B;
+}
