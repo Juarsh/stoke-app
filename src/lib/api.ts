@@ -15,6 +15,21 @@ export class ApiError extends Error {
   constructor(public status: number, msg: string) { super(msg); }
   /** Server error code from the body: {"error":{"code":"..."}} (or legacy {"error":"..."}); '' if none. */
   get code(): string { return errorCode(this.message); }
+  /** variant_required: the server's options at the sent portion */
+  get variantOptions() { return errorDetail(this.message).variant_options; }
+}
+/** Extra fields of a 422 {error:{code,item,dish_id,message,variant_options,fields}}; {} for the plain {error:"string"} shape. */
+export function errorDetail(body: string): { code: string; variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[]; fields?: Record<string, string>; message?: string } {
+  try { const e = (JSON.parse(body) as { error?: unknown })?.error;
+    if (e && typeof e === 'object') { const o = e as Record<string, unknown>;
+      return { code: typeof o.code === 'string' ? o.code : '', message: typeof o.message === 'string' ? o.message : undefined,
+        fields: o.fields && typeof o.fields === 'object' ? o.fields as Record<string, string> : undefined,
+        variant_options: Array.isArray(o.variant_options) ? (o.variant_options as Record<string, unknown>[]).filter((v) => v && typeof v.dish_id === 'string')
+          .map((v) => ({ dish_id: String(v.dish_id), name: String(v.name ?? v.dish_id), kcal: Number(v.kcal) || 0, protein_g: Number(v.protein_g ?? v.protein) || 0 })).filter((v) => v.kcal > 0) : undefined };
+    }
+    if (typeof e === 'string') return { code: e };
+  } catch { /* not JSON */ }
+  return { code: '' };
 }
 export function errorCode(body: string): string {
   try { const j = JSON.parse(body) as { error?: unknown }; const e = j?.error;
@@ -93,7 +108,8 @@ export function createApi(getToken: () => string | null) {
         return;
       }
       const item: ItemIn = e.dish_id
-        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span }
+        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
+          ...(e.variant_dish_id ? { variant_dish_id: e.variant_dish_id } : {}) } as ItemIn
         : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span };
       const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
       if (r?.duplicates?.length) {

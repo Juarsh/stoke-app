@@ -36,6 +36,8 @@ export interface FoodEntry {
   pending?: boolean;
   /** server refused this save (error.code); the row is back in Review with copy keyed on it */
   reject_code?: string;
+  /** the variant the user picked for an ambiguous base dish (sent as variant_dish_id = dish_id) */
+  variant_dish_id?: string;
   /** local only: the variant choices the user picked from, so a variant_required rejection can reopen the chips */
   variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[];
 }
@@ -56,10 +58,12 @@ export const MIN_KCAL = 1200;
 export const MAX_DEFICIT = 500;
 /** Profile as sent to the server: sex is on-device only and never leaves the phone. */
 /** PUT /v1/profile payload: target, maintenance, goal, diet, age, height, weight, activity. Never sex. */
-export interface ProfilePayload { kcal_target: number; protein_target: number; maintenance_kcal: number | null; goal: Goal; diet: Diet; age: number; height_cm: number; weight_kg: number; activity: Profile['activity'] }
+export interface ProfilePayload { target_kcal: number; maintenance_kcal: number | null; goal: 'fat_loss' | 'maintain' | 'muscle_gain'; diet: Diet; age: number; height_cm: number; weight_kg: number; activity_level: Profile['activity'] }
+const GOAL_API: Record<Goal, ProfilePayload['goal']> = { lose: 'fat_loss', maintain: 'maintain', gain: 'muscle_gain' };
 export function profilePayload(p: Profile): ProfilePayload {
-  return { kcal_target: p.kcalTarget, protein_target: p.proteinTarget, maintenance_kcal: p.maintenanceKcal ?? null, goal: p.goal, diet: p.diet,
-    age: p.age, height_cm: p.heightCm, weight_kg: p.weightKg, activity: p.activity };
+  // API.md @ f1fa437 "PUT /v1/profile": the phone's target is stored as sent; the server validates it against MSJ
+  return { target_kcal: p.kcalTarget, maintenance_kcal: p.maintenanceKcal ?? null, goal: GOAL_API[p.goal], diet: p.diet,
+    age: p.age, height_cm: p.heightCm, weight_kg: p.weightKg, activity_level: p.activity };
 }
 export function serverProfile(p: Profile): Omit<Profile, 'sex'> { const { sex: _sex, ...rest } = p; return rest; }
 /** Mifflin-St Jeor (sex 'x' = average of male/female); lose -400, gain +300 (spec: ±300–500); protein 1.6 g/kg (lose/gain) or 1.2 (maintain). */
@@ -134,6 +138,7 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
     source: it.ai_estimate ? 'ai' : 'table', item_source: it.source, source_note: it.source_note, confirmed: true,
     dish_table_version: o.tableVersion, created_at: now, updated_at: now, deleted_at: null,
     span: it.matched_text, remember: !!o.remember,
+    ...(typeof (it as { variant_dish_id?: unknown }).variant_dish_id === 'string' ? { variant_dish_id: (it as unknown as { variant_dish_id: string }).variant_dish_id } : {}),
     ...(Array.isArray((it as { variant_options_all?: unknown }).variant_options_all) ? { variant_options: (it as unknown as { variant_options_all: FoodEntry['variant_options'] }).variant_options_all } : {}),
   };
 }
@@ -185,7 +190,8 @@ export function plateRows(entries: FoodEntry[], nameOf: (e: FoodEntry) => string
 
 /** A confirmed entry the server refused (e.g. variant without a pick): reopened as an item to review, never counted,
  * with its numbers kept only as the review item's reading so the user confirms or changes it. */
-export function reopenRejected(e: FoodEntry, code = '', now = new Date()): FoodEntry {
+export function reopenRejected(e: FoodEntry, code = '', now = new Date(), serverOptions?: FoodEntry['variant_options']): FoodEntry {
+  if (serverOptions?.length) e = { ...e, variant_options: serverOptions };
   const it: Item = {
     dish_id: e.dish_id ?? '', name: e.custom_name || e.dish_id || e.raw_text, matched_text: e.span ?? e.raw_text, quantity: e.qty, unit: e.unit, grams: 0,
     oil_level: e.oil_level, kcal: { ...e.kcal }, protein_g: { ...e.protein_g }, carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0,

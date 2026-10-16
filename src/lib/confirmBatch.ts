@@ -10,7 +10,8 @@ export type ServerItem = Item & { one_tap_ok?: boolean };
 export type Kind = 'counted' | 'batch' | 'unit' | 'estimate' | 'unverified' | 'choice';
 const n = (x: number) => Math.round(x).toLocaleString('en-IN');
 
-export const isUnverified = (it: Item) => (it.flags ?? []).includes('estimate_unverified');
+/** estimate_unverified, or a brand word no branded row matched (brand_unmatched): same unverified-estimate row as bhel */
+export const isUnverified = (it: Item) => (it.flags ?? []).includes('estimate_unverified') || (it.flags ?? []).includes('brand_unmatched');
 export const isUnitMismatch = (it: Item) => !!it.unit_options?.length || (it.flags ?? []).includes('unit_mismatch');
 /** Server variant choice (backend 519964a, API.md "Variant choice"): flag `variant_choice` + `variant_options`.
  * Tolerant of field names (variant_options | variants | variant_choices; protein_g | protein; kcal number | {best}). */
@@ -32,7 +33,7 @@ export function pickVariant(it: Item, o: VariantOption): Item {
   const k = Math.round(o.kcal), p = Math.round(o.protein_g * 10) / 10;
   return { ...(r as unknown as Item), dish_id: o.dish_id, name: o.name, kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p },
     flags: (it.flags ?? []).filter((f) => f !== 'variant_choice'), needs_confirmation: false, alternatives: undefined, unit_options: undefined,
-    variant_options_all: variantOptions(it) } as Item;
+    variant_options_all: variantOptions(it), variant_dish_id: o.dish_id } as Item;
 }
 export const isAiEstimate = (it: Item) => it.ai_estimate || it.source === 'ai_estimate';
 

@@ -43,7 +43,7 @@ function useStoreValue() {
     try {
       const sent = s.queue;
       const { rest, resolved, rejected, profileRejected } = await flush(sent, sender);
-      const reopened = rejected.map((r) => reopenRejected(r.entry, r.code));
+      const reopened = rejected.map((r) => reopenRejected(r.entry, r.code, new Date(), r.variant_options));
       // ops added while we were sending stay queued after the remaining ones
       setS((p) => ({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}), queue: reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), [...rest, ...p.queue.slice(sent.length)]),
         entries: mergeEntries(p.entries, resolved).map((x) => reopened.find((r) => r.id === x.id) ?? x) }));

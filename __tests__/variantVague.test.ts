@@ -27,7 +27,7 @@ describe('variant_choice', () => {
       expect(variantOptions(x)).toEqual([{ dish_id: 'veg_biryani', name: 'veg biryani', kcal: 230, protein_g: 6 }]);
       expect(kindOf(x, false)).toBe('unit');
     }
-    expect(variantOptions(base({ variant_options: [{ dish_id: 'x', name: 'x' }] }))).toEqual([]); // no kcal = not offered
+    expect(variantOptions(base({ variant_options: [{ dish_id: 'x', name: 'x' } as never] }))).toEqual([]); // no kcal = not offered
     expect(kindOf(base({ flags: ['variant_choice'] }), false)).toBe('unit'); // flag without options still stays open
   });
   test('chip label', () => { expect(variantLabel('veg biryani', 'biryani')).toBe('Veg'); expect(variantLabel('moong chilla', 'chilla')).toBe('Moong'); expect(variantLabel('pulao', 'biryani')).toBe('Pulao'); });

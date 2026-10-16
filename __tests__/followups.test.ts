@@ -22,9 +22,9 @@ describe('error.code parsing', () => {
 describe('profile re-send after sign-in', () => {
   test('payload: target, maintenance, goal, diet, age, height, weight, activity; never sex', () => {
     const p = profilePayload(prof);
-    expect(Object.keys(p).sort()).toEqual(['activity', 'age', 'diet', 'goal', 'height_cm', 'kcal_target', 'maintenance_kcal', 'protein_target', 'weight_kg']);
+    expect(Object.keys(p).sort()).toEqual(['activity_level', 'age', 'diet', 'goal', 'height_cm', 'maintenance_kcal', 'target_kcal', 'weight_kg']);
     expect(JSON.stringify(p)).not.toMatch(/sex|"f"/);
-    expect(p).toMatchObject({ kcal_target: 1600, maintenance_kcal: 1900, goal: 'lose', diet: 'veg', age: 30, height_cm: 160, weight_kg: 60, activity: 'light' });
+    expect(p).toMatchObject({ target_kcal: 1600, maintenance_kcal: 1900, goal: 'fat_loss', diet: 'veg', age: 30, height_cm: 160, weight_kg: 60, activity_level: 'light' });
   });
   test('queued before sign-in (one op, latest wins), sent by the next flush', async () => {
     let q: Op[] = [];
@@ -100,5 +100,46 @@ describe('coach Log + undo', () => {
     const del: string[] = []; const up: string[] = [];
     const r = await flush(restored, mk({ deleteEntry: async (id) => { del.push(id); }, upsertEntry: async (x) => { up.push(x.id); } }));
     expect(del).toEqual(['c1']); expect(up).toEqual([]); expect(r.rest).toEqual([]);
+  });
+});
+
+import { errorDetail } from '../src/lib/api';
+import { isUnverified, kindOf } from '../src/lib/confirmBatch';
+describe('f1fa437 contract', () => {
+  const opts = [{ dish_id: 'veg_biryani', name: 'veg biryani', kcal: 230, protein_g: 6 }, { dish_id: 'mutton_biryani', name: 'mutton biryani', kcal: 320, protein_g: 16 }];
+  test('422 variant_required body: options reopen the picker; plain {error:"string"} still parses', async () => {
+    const body = JSON.stringify({ error: { code: 'variant_required', item: 0, dish_id: 'chicken_biryani', message: 'pick', variant_options: opts } });
+    expect(errorDetail(body)).toMatchObject({ code: 'variant_required', variant_options: opts });
+    expect(errorDetail('{"error":"bad thing"}')).toEqual({ code: 'bad thing' });
+    expect(errorDetail(JSON.stringify({ error: { code: 'profile_invalid', fields: { target_kcal: 'below 1200' } } })).fields).toEqual({ target_kcal: 'below 1200' });
+    const r = await flush([{ kind: 'upsert', entry: entry(), tries: 0 }], mk({ upsertEntry: async () => { throw new ApiError(422, body); } }));
+    expect(r.rejected[0].variant_options).toEqual(opts);
+    const re = reopenRejected(r.rejected[0].entry, r.rejected[0].code, new Date(), r.rejected[0].variant_options);
+    expect(variantOptions(re.review_item!)).toEqual(opts); expect(kindOf(re.review_item!, false)).toBe('unit');
+  });
+  test('variant save sends dish_id AND variant_dish_id = pick; text = typed phrase; confirmed true', async () => {
+    jest.resetModules();
+    jest.doMock('../src/lib/config', () => ({ config: { mock: false, apiUrl: 'http://x', mockAi: false } }));
+    const bodies: Record<string, unknown>[] = [];
+    const g = global as unknown as { fetch: unknown }; const old = g.fetch;
+    g.fetch = jest.fn(async (_u: string, init: { body?: string }) => { if (init?.body) bodies.push(JSON.parse(init.body)); return { ok: true, status: 201, json: async () => ({}), text: async () => '' }; });
+    try {
+      const { createApi } = require('../src/lib/api');
+      const it = { ...parser.parse('biryani').items[0] };
+      expect(it.flags).toContain('variant_choice');
+      const picked = pickVariant(it, variantOptions(it).find((o) => o.dish_id === 'veg_biryani')!);
+      const e = entryFromItem(picked, { id: 'v1', slot: 'lunch', raw_text: 'kal ka biryani', local_date: '2026-10-16', tableVersion: 3 });
+      await createApi(() => 't').upsertEntry(e);
+      const b = bodies[0] as { text: string; items: Record<string, unknown>[] };
+      expect(b.text).toBe('kal ka biryani');
+      expect(b.items[0]).toMatchObject({ dish_id: 'veg_biryani', variant_dish_id: 'veg_biryani', confirmed: true });
+    } finally { g.fetch = old; jest.dontMock('../src/lib/config'); }
+  });
+  test('local parser mirrors Go: biryani never one-taps; thoda rice confirms; brand_unmatched -> unverified row', () => {
+    const b = parser.parse('biryani').items[0]; expect(oneTap(b)).toBe(false); expect(b.needs_confirmation).toBe(true);
+    const t = parser.parse('thoda rice').items[0]; expect(t.flags).toContain('vague_quantity'); expect(oneTap(t)).toBe(false);
+    const x = parser.parse('amul masti buttermilk').items.find((i) => i.dish_id);
+    if (x && (x.flags ?? []).includes('brand_unmatched')) { expect(isUnverified(x)).toBe(true); expect(kindOf(x, false)).toBe('unverified'); }
+    expect(isUnverified({ ...t, flags: ['brand_unmatched'] })).toBe(true);
   });
 });

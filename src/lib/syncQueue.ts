@@ -41,10 +41,10 @@ const codeOf = (e: unknown) => { const c = (e as { code?: unknown })?.code; retu
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
 /** Sends ops in order; stops at the first failure or backoff wait. Returns the remaining queue and entries resolved from pending foods. */
-export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ rest: Op[]; resolved: FoodEntry[]; rejected: { entry: FoodEntry; code: string }[]; profileRejected?: string }> {
+export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ rest: Op[]; resolved: FoodEntry[]; rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[]; profileRejected?: string }> {
   const rest = [...q];
   const resolved: FoodEntry[] = [];
-  const rejected: { entry: FoodEntry; code: string }[] = [];
+  const rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[] = [];
   let profileRejected: string | undefined;
   while (rest.length) {
     const op = rest[0];
@@ -70,7 +70,10 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
       if (isRejection(e, op)) {
         if (op.kind === 'profile') profileRejected = codeOf(e) || 'unknown';
-        else if (op.kind === 'upsert' && !op.entry.needs_review) rejected.push({ entry: op.entry, code: codeOf(e) });
+        else if (op.kind === 'upsert' && !op.entry.needs_review) {
+          const vo = (e as { variantOptions?: FoodEntry['variant_options'] })?.variantOptions;
+          rejected.push({ entry: op.entry, code: codeOf(e), ...(vo?.length ? { variant_options: vo } : {}) });
+        }
         rest.shift(); continue;
       }
       const cur = rest[0];
