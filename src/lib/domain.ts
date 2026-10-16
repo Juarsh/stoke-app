@@ -156,6 +156,8 @@ export function pendingEntry(f: { id: string; span: string; slot: Slot; local_da
     span: f.span, needs_review: true, pending: true };
 }
 /** Items the user can review now (pending placeholders are shown as '— kcal' rows instead). */
+/** A review row may be shown with a number / confirmed only when it has a real kcal reading (never 0). */
+export const hasKcal = (it?: Item | null) => !!it && Number.isFinite(it.kcal?.best) && it.kcal.best > 0;
 export const toReview = (e: FoodEntry) => !e.deleted_at && !!e.needs_review && !e.pending && !!e.review_item;
 
 export function dayTotals(entries: FoodEntry[]) {

@@ -5,7 +5,7 @@ import { OpenRow } from '@/components/LogRows';
 import { rejectCopy } from '@/lib/confirmBatch';
 import { PendingRow } from '@/components/PendingRow';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
-import { toReview } from '@/lib/domain';
+import { hasKcal, toReview } from '@/lib/domain';
 import { itemKind } from '@/lib/itemKind';
 import { reviewHeader } from '@/lib/reviewMode';
 import { useStore } from '@/lib/store';
@@ -19,7 +19,7 @@ export default function Review() {
   const rows = st.entries.filter((e) => toReview(e) && (!date || e.local_date === date));
   const waiting = pendingFor(st.queue, date).filter((f) => isStale(f));
   // rows the server refused never join the bulk confirm: each needs its own fix
-  const bulk = rows.filter((e) => !e.reject_code);
+  const bulk = rows.filter((e) => !e.reject_code && hasKcal(e.review_item));
   const mode = reviewHeader(rows.map((e) => e.review_item!));
   const kcal = bulk.reduce((a, e) => a + e.review_item!.kcal.best, 0).toLocaleString('en-IN');
   return (
@@ -28,6 +28,19 @@ export default function Review() {
       {mode.allEstimates ? <T tone="text2">AI estimates · tap any to adjust</T> : null}
       {rows.map((e) => {
         const it = e.review_item!;
+        if (!hasKcal(it)) {
+          // no number yet: never shown or confirmable as 0 kcal
+          return (
+            <Card key={e.id}>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <T v="bodyStrong" style={{ flex: 1 }}>{e.raw_text || it.name}</T>
+                <T tone="muted">— kcal · needs review</T>
+              </Row>
+              {e.reject_code ? <T v="caption" tone="muted">{rejectCopy(e.reject_code)}</T> : null}
+              <Row><Button kind="ghost" title="Remove" onPress={() => st.dropReview(e.id)} /></Row>
+            </Card>
+          );
+        }
         if (e.reject_code) {
           const chips = (e.reject_code === 'variant_required' && (it.flags ?? []).includes('variant_choice') && !!(it as { variant_options?: unknown[] }).variant_options?.length)
             || e.reject_code === 'quantity_required';

@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected } from './domain';
+import { entryFromItem, hasKcal, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -98,6 +98,7 @@ function useStoreValue() {
     /** Confirm a review entry with the (possibly corrected) item: it becomes a normal entry and syncs. */
     confirmReview: (id: string, it: Item) => upd((p) => {
       const old = p.entries.find((e) => e.id === id); if (!old) return p;
+      if (!hasKcal(it)) return p; // never confirm a 0 kcal reading
       const n = entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id });
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),
@@ -116,7 +117,8 @@ function useStoreValue() {
       for (let i = 0; i < fs.length; i++) { q = enqueue(q, { kind: 'upsert', entry: ph[i], tries: 0 }); q = enqueue(q, { kind: 'pending', food: fs[i], tries: 0 }); }
       return { ...p, entries: [...p.entries, ...ph], queue: q };
     }),
-    deleteAll: async () => { await api.deleteMe().catch(() => {}); setS(EMPTY); },
+    /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
+    deleteAll: async () => { await api.deleteMe().catch(() => {}); await kv.set(KEY, JSON.stringify(EMPTY)).catch(() => {}); setS(EMPTY); },
   };
 }
 export type Store = ReturnType<typeof useStoreValue>;

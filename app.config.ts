@@ -14,6 +14,8 @@ const config: ExpoConfig = {
   ios: { bundleIdentifier: brand.iosBundleId, supportsTablet: false },
   android: {
     package: brand.androidPackage,
+    // no Android Auto Backup / device-transfer copy of app data (profile store incl. sex stays on this phone only)
+    allowBackup: false,
     adaptiveIcon: {
       backgroundColor: '#FFFFFF',
       foregroundImage: './assets/images/android-icon-foreground.png',

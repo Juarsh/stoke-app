@@ -1,4 +1,5 @@
 // Pure (no React Native imports) so the Tester CLI can use it under Node.
+import { oneTap } from '../parser';
 import { Item, parser, totals } from '../parser';
 import type { Slot } from './domain';
 import { slotFor } from './domain';
@@ -48,6 +49,24 @@ export function claimAll(text: string, items: Item[], unmatched: string[]): Item
   });
 }
 
+/**
+ * Mirrors food.Service.Parse (backend 1c617da) without AI or remembered foods: a meal the table answers alone
+ * (TableOnly) keeps the parser's items; otherwise each item is claimed (confident table item) or, if it can't be
+ * claimed (style_ignored "grilled", a blocking trailing_qty/count_between, missing_side, any flag but
+ * leftover_in_meal), it still covers its words but must be confirmed (did_you_mean). one_tap_ok is recomputed
+ * (parser.SetOneTap). Generic placeholders and leftover_nearby phrases are left as the parser marked them.
+ */
+export function serverConfirm(text: string, r: { items: Item[]; unmatched: string[]; leftover: number }): Item[] {
+  const unm = r.unmatched.filter((u) => /\p{L}/u.test(u));
+  if (r.items.length && !unm.length && parser.tableOnly({ items: r.items, unmatched: [], leftover: r.leftover })) return r.items.map((it) => ({ ...it, one_tap_ok: oneTap(it) }));
+  return claimAll(text, r.items, r.unmatched).map((it) => {
+    if (parser.claim(it) && !(it.flags ?? []).length) return { ...it, one_tap_ok: oneTap(it) };
+    if (it.source === 'generic' || (it.flags ?? []).includes('leftover_nearby') || it.ai_estimate) return { ...it, one_tap_ok: oneTap(it) };
+    const n: Item = { ...it, needs_confirmation: true, source: it.source === 'table' ? 'did_you_mean' : it.source };
+    return { ...n, one_tap_ok: false };
+  });
+}
+
 /** AI items overlapping a table item (UTF-16 span offsets) are dropped: the table claimed that text. */
 export function dropOverlapping<T extends { span_start?: number; span_end?: number }>(table: T[], ai: T[]): T[] {
   return ai.filter((a) => a.span_start === undefined || a.span_end === undefined ||
@@ -59,7 +78,7 @@ export function dropOverlapping<T extends { span_start?: number; span_end?: numb
 export function parseLocal(text: string, now = new Date()): ParseResponse {
   const t = text.trim();
   const r = parser.parse(t);
-  const items: Item[] = claimAll(t, r.items, r.unmatched); // everyday combos arrive as their parts (parser rule, same as backend)
+  const items: Item[] = serverConfirm(t, r); // everyday combos arrive as their parts (parser rule, same as backend)
   const custom_items: ParseResponse['custom_items'] = [];
   for (const u of r.unmatched) {
     if (!/\p{L}/u.test(u)) continue;

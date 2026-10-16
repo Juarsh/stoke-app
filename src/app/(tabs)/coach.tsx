@@ -12,6 +12,7 @@ import { entryFromItem, localDate, slotFor } from '@/lib/domain';
 import { grams as g, kc } from '@/lib/format';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
+import { serverConfirm } from '@/lib/parseLocal';
 import { DISH_TABLE_VERSION, oneTap, parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -25,7 +26,7 @@ export default function Coach() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const log = (p: Suggestion) => {
-    const it = pickItem(p, (x) => parser.parse(x), oneTap);
+    const it = pickItem(p, (x) => { const r = parser.parse(x); return { items: serverConfirm(x, r), unmatched: r.unmatched }; }, oneTap);
     // instant save only for a one_tap_ok row; anything else opens Log prefilled so the user sees and confirms it
     if (!it || it.one_tap_ok !== true) { router.push({ pathname: '/log', params: { prefill: p.label } }); return; }
     const id = st.newId();
