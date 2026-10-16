@@ -86,3 +86,26 @@ func TestVagueQuantityForcesConfirm(t *testing.T) {
 		t.Errorf("oil level is mapped: %+v", it)
 	}
 }
+
+// A brand no row carries is never swallowed into a plain dish.
+func TestBrandWordsNotSwallowed(t *testing.T) {
+	p := mustParser(t)
+	for _, s := range []string{"amul masti buttermilk", "britannia bread", "haldiram bhujia", "4 good day biscuit"} {
+		r := p.Parse(s)
+		if len(r.Items) == 0 || r.Leftover == 0 {
+			t.Fatalf("%q: %+v", s, r)
+		}
+		for _, it := range r.Items {
+			if !it.NeedsConfirmation || it.OneTapOK || !has(it.Flags, "brand_unmatched") {
+				t.Errorf("%q: %+v", s, it)
+			}
+		}
+	}
+	// a branded row matches its brand
+	for _, s := range []string{"amul paneer", "amul dahi", "maggi"} {
+		it := p.Parse(s).Items[0]
+		if has(it.Flags, "brand_unmatched") || !it.OneTapOK {
+			t.Errorf("%q: %+v", s, it)
+		}
+	}
+}

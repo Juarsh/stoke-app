@@ -47,15 +47,18 @@ type Rules struct {
 	OilKcalPer150g  float64             `json:"oil_kcal_per_150g"`
 	Fillers         []string            `json:"fillers"`
 	BrandWords      []string            `json:"brand_words"`
-	MultPrefixes    []string            `json:"multiplier_prefixes"`
-	ProteinWords    map[string]string   `json:"protein_words"`
-	GenitiveWords   []string            `json:"genitive_words"`
-	FuzzyMinLen     int                 `json:"fuzzy_min_len"`
-	FuzzyMaxDist    int                 `json:"fuzzy_max_dist"`
-	FuzzyFirst      bool                `json:"fuzzy_same_first_letter"`
-	DevDigits       string              `json:"devanagari_digits"`
-	DevWords        map[string]string   `json:"devanagari_words"`
-	GenericProtein  map[string]string   `json:"generic_protein_dish"`
+	// BrandOnlyWords: brands that aren't fillers (some are dish words on
+	// their own) but still must be matched by a branded row.
+	BrandOnlyWords []string          `json:"brand_only_words"`
+	MultPrefixes   []string          `json:"multiplier_prefixes"`
+	ProteinWords   map[string]string `json:"protein_words"`
+	GenitiveWords  []string          `json:"genitive_words"`
+	FuzzyMinLen    int               `json:"fuzzy_min_len"`
+	FuzzyMaxDist   int               `json:"fuzzy_max_dist"`
+	FuzzyFirst     bool              `json:"fuzzy_same_first_letter"`
+	DevDigits      string            `json:"devanagari_digits"`
+	DevWords       map[string]string `json:"devanagari_words"`
+	GenericProtein map[string]string `json:"generic_protein_dish"`
 	// StrictStatedQty: the table answers alone only if every span had a
 	// count or unit in the text ("2 roti", "1 katori dal"); "dal" alone goes to AI.
 	StrictStatedQty bool `json:"strict_require_stated_quantity"`
@@ -570,7 +573,7 @@ func (p *Parser) Parse(text string) Result {
 // oneTapBlockers: flags that mean the user has a choice to make.
 var oneTapBlockers = map[string]bool{"unit_mismatch": true, "estimate_unverified": true, "compound_name": true,
 	"adjacent_split": true, "fuzzy": true, "generic": true, "combo_or_split": true, "leftover_in_meal": true,
-	"leftover_nearby": true, "variant_choice": true, "vague_quantity": true, "token_reuse": true, "fractional_combo": true, "egg_count": true, "needs_review": true}
+	"leftover_nearby": true, "variant_choice": true, "brand_unmatched": true, "vague_quantity": true, "token_reuse": true, "fractional_combo": true, "egg_count": true, "needs_review": true}
 
 // OneTap reports whether it can be saved with one tap.
 func OneTap(it Item) bool {
@@ -905,6 +908,7 @@ func (p *Parser) parse(text string) Result {
 	p.eggPieces(&res)
 	p.tokenRules(&res, toks)
 	vague := p.vagueQty(toks)
+	brandLeft := p.brandLeftover(text, &res)
 	present := map[string]bool{}
 	for _, it := range res.Items {
 		present[it.DishID] = true
@@ -925,6 +929,9 @@ func (p *Parser) parse(text string) Result {
 			if !has {
 				it.pen("missing_side")
 			}
+		}
+		if brandLeft {
+			it.pen("brand_unmatched")
 		}
 		if vague && !p.fat[it.DishID] {
 			it.pen("vague_quantity")
@@ -1156,7 +1163,7 @@ func (p *Parser) finish(it *Item) {
 	for _, f := range it.pens {
 		forced = forced || f == "leftover_in_meal" || f == "combo_or_split" || f == "leftover_nearby" ||
 			f == "token_reuse" || f == "adjacent_split" || f == "compound_name" || f == "unit_mismatch" || f == "fractional_combo" || f == "egg_count" || f == "estimate_unverified" ||
-			f == "variant_choice" || f == "vague_quantity"
+			f == "variant_choice" || f == "brand_unmatched" || f == "vague_quantity"
 	}
 	if it.Confidence < p.r.Confidence["threshold"] || forced {
 		it.NeedsConfirmation = true
@@ -2498,4 +2505,67 @@ func (p *Parser) variantChoice(it *Item) {
 		it.pen("variant_choice")
 		return
 	}
+}
+
+func brandKey(s string) string {
+	s = strings.ReplaceAll(strings.ToLower(s), "'", "")
+	return strings.TrimSuffix(strings.ReplaceAll(s, " ", ""), "s")
+}
+
+// brandLeftover: a brand word ("amul", "good day") that no item's row
+// carries (brand, name or alias) was swallowed into a plain dish: it counts
+// as leftover and the meal needs a look.
+func (p *Parser) brandLeftover(text string, res *Result) bool {
+	norm := " " + strings.Join(strings.Fields(strings.ToLower(p.transliterate(text))), " ") + " "
+	norm = reClean.ReplaceAllString(norm, " ")
+	norm = " " + strings.Join(strings.Fields(norm), " ") + " "
+	left := false
+	for _, b := range append(append([]string{}, p.r.BrandWords...), p.r.BrandOnlyWords...) {
+		if _, term := p.dish[b]; term || !strings.Contains(norm, " "+b+" ") {
+			continue
+		}
+		bk := brandKey(b)
+		ok := false
+		for _, it := range res.Items {
+			// a generic row (no brand) never carries a brand, even by alias
+			if d := p.dishByID(it.DishID); d != nil && d.Brand != "" {
+				if strings.Contains(brandKey(d.Brand), bk) || strings.Contains(brandKey(d.Name), bk) {
+					ok = true
+					break
+				}
+				for _, a := range d.Aliases {
+					ok = ok || strings.Contains(brandKey(a), bk)
+				}
+			}
+			if ok {
+				break
+			}
+		}
+		if !ok {
+			left = true
+			res.Leftover++
+		}
+	}
+	return left
+}
+
+// Choices re-reads text for the item with dishID: the variant options when
+// the text named only an ambiguous base dish, and whether a vague amount
+// ("thoda") applied to it. Used by the save endpoint.
+func (p *Parser) Choices(text, dishID string) ([]VariantOption, bool) {
+	if strings.TrimSpace(text) == "" {
+		return nil, false
+	}
+	var opts []VariantOption
+	vague := false
+	for _, it := range p.Parse(text).Items {
+		if it.DishID != dishID && !slices.ContainsFunc(it.VariantOptions, func(o VariantOption) bool { return o.DishID == dishID }) {
+			continue
+		}
+		if len(it.VariantOptions) > 0 {
+			opts = it.VariantOptions
+		}
+		vague = vague || slices.Contains(it.Flags, "vague_quantity")
+	}
+	return opts, vague
 }

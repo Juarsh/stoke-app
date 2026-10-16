@@ -306,7 +306,7 @@ func (s *Service) Parse(ctx context.Context, userID int64, text string, useAI bo
 		}
 		return failed(st, "error")
 	}
-	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open)
+	job, ok := s.Queue.Add(userID, text, key, hint, gen, slot, claimed, open, FailSplit{failClaimed, failOpen})
 	if !ok {
 		// our own queue is full (AI_QUEUE_MAX): no job to wait on, so this
 		// ends as error; the reserved call is given back
@@ -495,9 +495,10 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 // charges nothing. A later attempt is not made when AI_DAILY_CAP is already
 // used up (the meal ends as daily_limit).
 func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
+	fc, fs := j.failSplit()
 	if j.Requeues > 0 && s.globalCapFull(ctx) {
 		log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, "AI_DAILY_CAP used up before a requeued attempt")
-		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "global_cap_reached", "daily_limit"), false
+		return s.failedResponse(fc, fs, j.Slot, "global_cap_reached", "daily_limit"), false
 	}
 	sc := &sendCount{}
 	items, err := s.Fallback.EstimateMeal(withSendCount(ctx, sc), j.Text, j.Spans, j.Hint)
@@ -516,14 +517,14 @@ func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 		if errors.As(err, &ae) && ae.DailyQuota {
 			s.Quota.PersistExhausted(ctx, s.DB, httpx.Now())
 			log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, aiFailDetail(err))
-			return s.failedResponse(j.Claimed, j.Spans, j.Slot, "daily_limit", "daily_limit"), false
+			return s.failedResponse(fc, fs, j.Slot, "daily_limit", "daily_limit"), false
 		}
 		if reason == "rate_limited" || reason == "unavailable" || reason == "timeout" {
 			log.Printf("ai busy, requeue: job=%s reason=%s requeues=%d detail=%q", j.ID, reason, j.Requeues, aiFailDetail(err))
 			return ParseResponse{FallbackReason: reason}, true
 		}
 		log.Printf("ai failed error: job=%s reason=%s detail=%q", j.ID, reason, aiFailDetail(err))
-		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "error", "error"), false
+		return s.failedResponse(fc, fs, j.Slot, "error", "error"), false
 	}
 	s.cachePut(ctx, j.Key, placed) // raw AI answer (placed), never user corrections
 	return s.aiResponse(j.Claimed, placed, j.Hint, "used", j.Slot), false
@@ -768,6 +769,10 @@ type ItemIn struct {
 	ParseJobID   string `json:"parse_job_id,omitempty"`
 	JobID        string `json:"job_id,omitempty"`
 	ClientItemID string `json:"client_item_id,omitempty"`
+	// VariantDishID: the variant the user picked from variant_options. Required
+	// (and must equal dish_id) when the text named only an ambiguous base
+	// dish ("biryani"); otherwise the save is refused with variant_required.
+	VariantDishID string `json:"variant_dish_id,omitempty"`
 	// ClientID makes saves idempotent: a repeat returns the stored entry.
 	ClientID string `json:"client_id"`
 	// DishTableVersion is required when a table item carries the client's own
@@ -1147,6 +1152,10 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		if k := Normalize(it.Span); k != "" {
 			part = spanParts[k]
 			spanParts[k]++
+		}
+		if body := s.choiceCheck(in.Text, it, i); body != nil {
+			httpx.JSON(w, 422, body)
+			return
 		}
 		e, code, err := s.resolve(r.Context(), it)
 		if err != nil {
@@ -1593,4 +1602,49 @@ func (s *Service) releaseAI(ctx context.Context, userID int64) {
 	today := s.Quota.Day(httpx.Now())
 	_, _ = s.DB.Exec(ctx, `UPDATE ai_usage SET calls=calls-1 WHERE user_id=$1 AND local_date=$2 AND calls>0`, userID, today)
 	_, _ = s.DB.Exec(ctx, `UPDATE ai_global_usage SET calls=calls-1 WHERE local_date=$1 AND calls>0`, today)
+}
+
+// choiceCheck refuses a save the user never actually chose: a table item
+// read from an ambiguous base dish ("biryani") without variant_dish_id from
+// variant_options (variant_required), or one read with a vague amount
+// ("thoda rajma") without confirmed=true (confirmation_required). The text
+// checked is the item's span, else the request's text.
+func (s *Service) choiceCheck(text string, it ItemIn, i int) map[string]any {
+	if it.DishID == "" || it.Source == "ai_estimate" || it.Source == "custom" || it.Source == "manual" || it.State == "needs_review" {
+		return nil
+	}
+	var opts []parser.VariantOption
+	vague := false
+	for _, t := range []string{it.Span, text} {
+		o, v := s.parser().Choices(t, it.DishID)
+		if len(o) > 0 && len(opts) == 0 {
+			opts = o
+		}
+		vague = vague || v
+	}
+	if len(opts) > 0 {
+		ok := it.VariantDishID == it.DishID
+		if ok {
+			ok = false
+			for _, o := range opts {
+				ok = ok || o.DishID == it.VariantDishID
+			}
+		}
+		if !ok {
+			// options at the portion being saved
+			for k, o := range opts {
+				if v, err := s.parser().Recompute(o.DishID, it.Qty, it.Unit, it.OilLevel); err == nil {
+					opts[k].Kcal, opts[k].ProteinG = v.Kcal.Best, v.Protein.Best
+				}
+			}
+			return map[string]any{"error": map[string]any{"code": "variant_required", "item": i, "dish_id": it.DishID,
+				"message":         "Pick which one this was. Send the chosen variant as dish_id and variant_dish_id.",
+				"variant_options": opts}}
+		}
+	}
+	if vague && !it.Confirmed {
+		return map[string]any{"error": map[string]any{"code": "quantity_required", "reason": "vague_quantity", "item": i, "dish_id": it.DishID,
+			"message": "The amount was vague (thoda, zyada). Check the portion and send confirmed=true."}}
+	}
+	return nil
 }

@@ -22,11 +22,16 @@ type Job struct {
 	Hint    []parser.Item
 	Claimed []parser.Item // confident table items kept as they are
 	Spans   []Span        // unclaimed parts the AI must answer for
-	Generic ParseResponse // claimed items + open spans, used to build the failed state
-	Slot    string
-	Status  string // pending (estimating), done
-	Result  ParseResponse
-	Created time.Time
+	// FailClaimed / FailSpans: what a failed meal shows. Table dishes glued
+	// to unknown words ("roti zorbali") stay as items to confirm; only the
+	// unknown words need input. Nil means Claimed / Spans.
+	FailClaimed []parser.Item
+	FailSpans   []Span
+	Generic     ParseResponse // claimed items + open spans, used to build the failed state
+	Slot        string
+	Status      string // pending (estimating), done
+	Result      ParseResponse
+	Created     time.Time
 	// Requeues: times Gemini was still busy (rate_limited / unavailable /
 	// timeout) after its retries and the job went back into the queue.
 	Requeues  int
@@ -129,11 +134,14 @@ func (q *Queue) poke() {
 }
 
 // Add queues a job; false when the queue is full (requeued jobs count).
-func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic ParseResponse, slot string, claimed []parser.Item, spans []Span) (*Job, bool) {
+func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic ParseResponse, slot string, claimed []parser.Item, spans []Span, fail ...FailSplit) (*Job, bool) {
 	b := make([]byte, 12)
 	_, _ = rand.Read(b)
 	j := &Job{ID: hex.EncodeToString(b), UserID: uid, Text: text, Key: key, Hint: hint, Generic: generic, Slot: slot,
 		Status: "pending", Created: time.Now(), Claimed: claimed, Spans: spans}
+	if len(fail) > 0 {
+		j.FailClaimed, j.FailSpans = fail[0].Claimed, fail[0].Spans
+	}
 	q.mu.Lock()
 	q.gc()
 	if len(q.waiting) >= q.max {
@@ -250,7 +258,8 @@ func (q *Queue) gc() {
 func (s *Service) Start(ctx context.Context, q *Queue) {
 	q.run = s.runJob
 	q.gaveUp = func(j *Job) ParseResponse {
-		return s.failedResponse(j.Claimed, j.Spans, j.Slot, "gave_up", "gave_up")
+		c, sp := j.failSplit()
+		return s.failedResponse(c, sp, j.Slot, "gave_up", "gave_up")
 	}
 	s.Queue = q
 	go q.Run(ctx)
@@ -303,4 +312,17 @@ func (s *Service) jobEntries(ctx context.Context, uid int64, job string) []JobEn
 		}
 	}
 	return out
+}
+
+// FailSplit is the failed-state reading of a meal (see Job.FailClaimed).
+type FailSplit struct {
+	Claimed []parser.Item
+	Spans   []Span
+}
+
+func (j *Job) failSplit() ([]parser.Item, []Span) {
+	if j.FailClaimed == nil {
+		return j.Claimed, j.Spans
+	}
+	return j.FailClaimed, j.FailSpans
 }

@@ -635,3 +635,18 @@ block it. Items listed under a text save's `needs_confirmation` are always `fals
 - Time words (`temporal_words`: kal ka, bacha hua, aaj ka, …) are stripped before matching and never count as leftover.
 - Vague amounts (`vague_quantity_words`: thoda, zyada, bahut, kam, …) not about oil add flag `vague_quantity` and force confirmation.
 - When the AI cap is hit, a table dish next to unknown words ("roti zorbali") stays as an item to confirm; only the unknown words go to `failed_spans` / `custom_items`.
+
+### 422 error shape (choice and profile checks)
+`{"error": {"code": "<code>", "message": "...", ...}}`
+- `variant_required` (POST /v1/entries): a table item whose `span` (or the request `text`) names only an ambiguous base dish ("biryani") was sent without `variant_dish_id`, or `variant_dish_id` != `dish_id` / not one of the options. Extra fields: `item` (index), `dish_id`, `variant_options: [{dish_id, name, kcal, protein_g}]` at the sent qty/unit. Fix: user picks; resend with `dish_id` = `variant_dish_id` = the pick. Nothing in the request is saved.
+- `quantity_required` (POST /v1/entries): the span/text had a vague amount (`vague_quantity`: thoda, zyada…) and the item came without `confirmed: true`. Extra: `reason: "vague_quantity"`, `item`, `dish_id`. Fix: show the portion, resend with `confirmed: true`. Text-only saves (`{"text": ...}`) never save these; they come back in `needs_confirmation`.
+- `profile_invalid` (PUT /v1/profile): extra `fields: {field: problem}`.
+
+### PUT /v1/profile (changed)
+Body: `{target_kcal, maintenance_kcal, goal (fat_loss|maintain|muscle_gain), diet (veg|egg|nonveg, optional), age, height_cm, weight_kg, activity_level}`. The phone's target is stored as sent (macros derived from it), never recomputed. Rejected with `profile_invalid` when target_kcal < 1200, maintenance_kcal outside [female MSJ, male MSJ] × activity for that age/height/weight (±2 kcal), or target_kcal < maintenance_kcal − 500 (±2). A `sex` field is accepted and ignored: never stored (migration 011 drops `profiles.sex`), logged or echoed. Response `{profile: {birth_year, height_cm, weight_kg, activity_level, goal, maintenance_kcal}, target}`.
+
+### Brand words
+A brand (`brand_words` + `brand_only_words` in rules.json: amul, britannia, good day, haldiram…) that no branded row matches counts as leftover: items get `brand_unmatched`, `needs_confirmation`, `one_tap_ok: false` ("amul masti buttermilk" no longer one-taps as plain buttermilk).
+
+### Failed queued meals
+A meal that was queued and ends failed (gave_up, daily_limit, error, bad_request) keeps table dishes next to unknown words as items to confirm; only unknown words go to `failed_spans` / `custom_items`, same as the first-send cap path.

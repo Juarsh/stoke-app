@@ -4,6 +4,7 @@ package goals
 
 import (
 	"context"
+	"encoding/json"
 	"math"
 	"net/http"
 	"time"
@@ -14,13 +15,15 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 )
 
+// Profile is what the server keeps. Sex is never sent or stored: the phone
+// works out the target and sends it with the maintenance figure.
 type Profile struct {
-	Sex           string  `json:"sex"`
-	BirthYear     int     `json:"birth_year"`
-	HeightCM      float64 `json:"height_cm"`
-	WeightKG      float64 `json:"weight_kg"`
-	ActivityLevel string  `json:"activity_level"`
-	Goal          string  `json:"goal"`
+	BirthYear       int     `json:"birth_year"`
+	HeightCM        float64 `json:"height_cm"`
+	WeightKG        float64 `json:"weight_kg"`
+	ActivityLevel   string  `json:"activity_level"`
+	Goal            string  `json:"goal"`
+	MaintenanceKcal int     `json:"maintenance_kcal"`
 }
 
 type Target struct {
@@ -37,48 +40,84 @@ type Target struct {
 var activity = map[string]float64{"sedentary": 1.2, "light": 1.375, "moderate": 1.55, "active": 1.725, "very_active": 1.9}
 var goalAdj = map[string]float64{"fat_loss": -500, "maintain": 0, "muscle_gain": 300}
 
-// Compute uses Mifflin-St Jeor. Protein 1.6 g/kg (fat loss, gain) or 1.2 (maintain);
-// fat 25% of kcal; carbs the rest.
-func Compute(p Profile, year int) Target {
-	age := float64(year - p.BirthYear)
-	bmr := 10*p.WeightKG + 6.25*p.HeightCM - 5*age
-	if p.Sex == "male" {
-		bmr += 5
-	} else {
-		bmr -= 161
-	}
-	kcal := bmr*activity[p.ActivityLevel] + goalAdj[p.Goal]
-	if kcal < 1200 {
-		kcal = 1200
-	}
-	kcal = math.Round(kcal/10) * 10
-	perKg := 1.6
-	if p.Goal == "maintain" {
-		perKg = 1.2
-	}
-	prot := math.Round(p.WeightKG * perKg)
-	fat := math.Round(kcal * 0.25 / 9)
-	carbs := math.Max(0, math.Round((kcal-prot*4-fat*9)/4))
-	return Target{Kcal: int(kcal), ProteinG: int(prot), CarbsG: int(carbs), FatG: int(fat), WaterML: 2500, Steps: 8000}
+// Rules the phone's target must meet (spec: Coach and onboarding, Oct 16).
+const (
+	MinTargetKcal  = 1200
+	MaxCutKcal     = 500
+	MaintenanceTol = 2.0 // rounding on the phone
+)
+
+// MaintenanceRange is Mifflin-St Jeor maintenance (BMR x activity) for the
+// female (-161) and male (+5) constants; "prefer not to say" (-78) sits
+// between them, so any honest phone figure is inside.
+func MaintenanceRange(age int, heightCM, weightKG float64, act string) (float64, float64) {
+	base := 10*weightKG + 6.25*heightCM - 5*float64(age)
+	f := activity[act]
+	return (base - 161) * f, (base + 5) * f
 }
 
-func (p Profile) validate(year int) string {
-	switch {
-	case p.Sex != "male" && p.Sex != "female":
-		return "sex must be male or female"
-	case year-p.BirthYear < 13 || year-p.BirthYear > 100:
-		return "birth_year out of range"
-	case p.HeightCM < 100 || p.HeightCM > 250:
-		return "height_cm must be 100-250"
-	case p.WeightKG < 25 || p.WeightKG > 300:
-		return "weight_kg must be 25-300"
-	case activity[p.ActivityLevel] == 0:
-		return "activity_level must be sedentary, light, moderate, active or very_active"
+// Macros for a kcal target: protein 1.6 g/kg (fat loss, gain) or 1.2
+// (maintain); fat 25% of kcal; carbs the rest.
+func Macros(kcal int, weightKG float64, goal string) Target {
+	perKg := 1.6
+	if goal == "maintain" {
+		perKg = 1.2
+	}
+	k := float64(kcal)
+	prot := math.Round(weightKG * perKg)
+	fat := math.Round(k * 0.25 / 9)
+	carbs := math.Max(0, math.Round((k-prot*4-fat*9)/4))
+	return Target{Kcal: kcal, ProteinG: int(prot), CarbsG: int(carbs), FatG: int(fat), WaterML: 2500, Steps: 8000}
+}
+
+// ProfileIn is PUT /v1/profile. A "sex" field is accepted and ignored: it is
+// never stored, logged or echoed.
+type ProfileIn struct {
+	TargetKcal      int             `json:"target_kcal"`
+	MaintenanceKcal float64         `json:"maintenance_kcal"`
+	Goal            string          `json:"goal"`
+	Diet            string          `json:"diet"`
+	Age             int             `json:"age"`
+	HeightCM        float64         `json:"height_cm"`
+	WeightKG        float64         `json:"weight_kg"`
+	ActivityLevel   string          `json:"activity_level"`
+	Sex             json.RawMessage `json:"sex"` // ignored, never persisted
+}
+
+// Validate returns field -> problem; empty when the profile is valid.
+func (p ProfileIn) Validate() map[string]string {
+	bad := map[string]string{}
+	if p.Age < 13 || p.Age > 100 {
+		bad["age"] = "must be 13-100"
+	}
+	if p.HeightCM < 100 || p.HeightCM > 250 {
+		bad["height_cm"] = "must be 100-250"
+	}
+	if p.WeightKG < 25 || p.WeightKG > 300 {
+		bad["weight_kg"] = "must be 25-300"
+	}
+	if activity[p.ActivityLevel] == 0 {
+		bad["activity_level"] = "must be sedentary, light, moderate, active or very_active"
 	}
 	if _, ok := goalAdj[p.Goal]; !ok {
-		return "goal must be fat_loss, maintain or muscle_gain"
+		bad["goal"] = "must be fat_loss, maintain or muscle_gain"
 	}
-	return ""
+	if p.Diet != "" && p.Diet != "veg" && p.Diet != "egg" && p.Diet != "nonveg" {
+		bad["diet"] = "must be veg, egg or nonveg"
+	}
+	if p.TargetKcal < MinTargetKcal || p.TargetKcal > 6000 {
+		bad["target_kcal"] = "must be 1200-6000"
+	}
+	if len(bad) > 0 {
+		return bad
+	}
+	lo, hi := MaintenanceRange(p.Age, p.HeightCM, p.WeightKG, p.ActivityLevel)
+	if p.MaintenanceKcal < lo-MaintenanceTol || p.MaintenanceKcal > hi+MaintenanceTol {
+		bad["maintenance_kcal"] = "must be within Mifflin-St Jeor maintenance for this age, height, weight and activity"
+	} else if float64(p.TargetKcal) < p.MaintenanceKcal-MaxCutKcal-MaintenanceTol {
+		bad["target_kcal"] = "must not be more than 500 kcal below maintenance"
+	}
+	return bad
 }
 
 type Service struct{ DB *pgxpool.Pool }
@@ -154,8 +193,12 @@ func (s *Service) getMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var p Profile
-	if s.DB.QueryRow(r.Context(), `SELECT sex,birth_year,height_cm,weight_kg,activity_level,goal FROM profiles WHERE user_id=$1`, uid).
-		Scan(&p.Sex, &p.BirthYear, &p.HeightCM, &p.WeightKG, &p.ActivityLevel, &p.Goal) == nil {
+	var mk *int
+	if s.DB.QueryRow(r.Context(), `SELECT birth_year,height_cm,weight_kg,activity_level,goal,maintenance_kcal FROM profiles WHERE user_id=$1`, uid).
+		Scan(&p.BirthYear, &p.HeightCM, &p.WeightKG, &p.ActivityLevel, &p.Goal, &mk) == nil {
+		if mk != nil {
+			p.MaintenanceKcal = *mk
+		}
 		m.Profile = &p
 	}
 	httpx.JSON(w, 200, m)
@@ -192,27 +235,36 @@ func (s *Service) deleteMe(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// putProfile stores the phone's onboarding answers and its target as is
+// (never recomputed). Invalid -> 422 {"error":{"code":"profile_invalid","fields":{...}}}.
 func (s *Service) putProfile(w http.ResponseWriter, r *http.Request) {
-	var p Profile
-	if !httpx.Decode(w, r, &p) {
+	var in ProfileIn
+	if !httpx.Decode(w, r, &in) {
+		return
+	}
+	in.Sex = nil // never stored, logged or echoed
+	if bad := in.Validate(); len(bad) > 0 {
+		httpx.JSON(w, 422, map[string]any{"error": map[string]any{"code": "profile_invalid",
+			"message": "Profile or target doesn't add up; nothing was saved.", "fields": bad}})
 		return
 	}
 	today := httpx.Today()
-	if msg := p.validate(today.Year()); msg != "" {
-		httpx.Error(w, 400, msg)
-		return
-	}
 	uid := httpx.UserID(r)
-	t := Compute(p, today.Year())
+	p := Profile{BirthYear: today.Year() - in.Age, HeightCM: in.HeightCM, WeightKG: in.WeightKG, ActivityLevel: in.ActivityLevel,
+		Goal: in.Goal, MaintenanceKcal: int(math.Round(in.MaintenanceKcal))}
+	t := Macros(in.TargetKcal, in.WeightKG, in.Goal)
 	tx, err := s.DB.Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
 	}
 	defer tx.Rollback(r.Context())
-	_, err = tx.Exec(r.Context(), `INSERT INTO profiles(user_id,sex,birth_year,height_cm,weight_kg,activity_level,goal) VALUES ($1,$2,$3,$4,$5,$6,$7)
-		ON CONFLICT (user_id) DO UPDATE SET sex=$2,birth_year=$3,height_cm=$4,weight_kg=$5,activity_level=$6,goal=$7,updated_at=now()`,
-		uid, p.Sex, p.BirthYear, p.HeightCM, p.WeightKG, p.ActivityLevel, p.Goal)
+	_, err = tx.Exec(r.Context(), `INSERT INTO profiles(user_id,birth_year,height_cm,weight_kg,activity_level,goal,maintenance_kcal) VALUES ($1,$2,$3,$4,$5,$6,$7)
+		ON CONFLICT (user_id) DO UPDATE SET birth_year=$2,height_cm=$3,weight_kg=$4,activity_level=$5,goal=$6,maintenance_kcal=$7,updated_at=now()`,
+		uid, p.BirthYear, p.HeightCM, p.WeightKG, p.ActivityLevel, p.Goal, p.MaintenanceKcal)
+	if err == nil && in.Diet != "" {
+		_, err = tx.Exec(r.Context(), `UPDATE users SET diet=$2 WHERE id=$1`, uid, in.Diet)
+	}
 	if err == nil {
 		err = upsertTarget(r.Context(), tx, uid, today, t)
 	}

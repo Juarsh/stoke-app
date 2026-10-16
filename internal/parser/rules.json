@@ -1097,5 +1097,21 @@
   "lot",
   "lots"
  ],
- "variant_spread": 0.15
+ "variant_spread": 0.15,
+ "brand_only_words": [
+  "good day",
+  "goodday",
+  "mother dairy",
+  "nandini",
+  "bikaji",
+  "bingo",
+  "cadbury",
+  "paper boat",
+  "mtr",
+  "patanjali",
+  "pepsico",
+  "itc",
+  "tata",
+  "gits"
+ ]
 }

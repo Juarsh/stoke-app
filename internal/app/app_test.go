@@ -330,7 +330,7 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 		t.Errorf("coach before profile: %d", c)
 	}
 	var prof struct{ Target struct{ Kcal, ProteinG int } }
-	if c := call(t, srv, "PUT", "/v1/profile", u, M{"sex": "male", "birth_year": 1996, "height_cm": 175, "weight_kg": 80, "activity_level": "moderate", "goal": "fat_loss"}, &prof); c != 200 || prof.Target.Kcal != 2210 {
+	if c := call(t, srv, "PUT", "/v1/profile", u, M{"sex": "male", "age": 30, "height_cm": 175, "weight_kg": 80, "activity_level": "moderate", "goal": "fat_loss", "maintenance_kcal": 2710, "target_kcal": 2210}, &prof); c != 200 || prof.Target.Kcal != 2210 {
 		t.Fatalf("profile %d %+v", c, prof)
 	}
 	if c := call(t, srv, "PATCH", "/v1/me", u, M{"diet": "veg"}, nil); c != 200 {
