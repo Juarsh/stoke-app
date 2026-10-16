@@ -161,7 +161,6 @@ describe('1c617da: variant_dish_id on every POST and PATCH for variant-group dis
   });
   test.each([
     ['one-tap named "veg biryani"', '1 plate veg biryani', false],
-    ['did_you_mean "chiken biryani" confirmed', 'chiken biryani', false],
     ['qty-only edit of an old entry (PATCH)', '2 moong chilla', true],
   ])('%s', async (_n, text, dup) => {
     const it = parser.parse(text).items[0];
@@ -170,6 +169,13 @@ describe('1c617da: variant_dish_id on every POST and PATCH for variant-group dis
     const post = calls.find((c) => c.method === 'POST')!.body as { items: Record<string, unknown>[] };
     expect(post.items[0].variant_dish_id).toBe(e.dish_id);
     if (dup) { const patch = calls.find((c) => c.method === 'PATCH')!.body; expect(patch).toMatchObject({ variant_dish_id: e.dish_id, dish_id: e.dish_id, confirmed: true }); }
+  });
+  test('"chiken biryani" is an open variant choice (Go agrees): no variant_dish_id unless picked', async () => {
+    const it = parser.parse('chiken biryani').items[0];
+    expect(it.flags).toContain('variant_choice');
+    const e = entryFromItem({ ...it, needs_confirmation: false }, { id: 'c1', slot: 'lunch', raw_text: 'chiken biryani', local_date: '2026-10-16', tableVersion: 3 });
+    const post = (await run(e, false))[0].body as { items: Record<string, unknown>[] };
+    expect('variant_dish_id' in post.items[0]).toBe(false);
   });
   test('non-group dish sends no variant_dish_id; unchecked review rows never claim a pick', async () => {
     const it = parser.parse('2 roti').items[0];

@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { ItemCard } from '@/components/ItemEditor';
 import { OpenRow } from '@/components/LogRows';
+import { reviewBulk } from '@/lib/confirmBatch';
 import { rejectCopy } from '@/lib/confirmBatch';
 import { PendingRow } from '@/components/PendingRow';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
@@ -19,7 +20,7 @@ export default function Review() {
   const rows = st.entries.filter((e) => toReview(e) && (!date || e.local_date === date));
   const waiting = pendingFor(st.queue, date).filter((f) => isStale(f));
   // rows the server refused never join the bulk confirm: each needs its own fix
-  const bulk = rows.filter((e) => !e.reject_code && hasKcal(e.review_item));
+  const bulk = reviewBulk(rows);
   const mode = reviewHeader(rows.map((e) => e.review_item!));
   const kcal = bulk.reduce((a, e) => a + e.review_item!.kcal.best, 0).toLocaleString('en-IN');
   return (

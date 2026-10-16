@@ -4,6 +4,7 @@
 // AI estimates and estimate_unverified items, even if the server sends true.
 // Unconfirmed items are left out of every total; all kcal come from the API item (or its unit_options).
 import type { Item } from '../parser';
+import { oneTap, parser } from '../parser';
 import { withUnit } from './decision';
 
 export type ServerItem = Item & { one_tap_ok?: boolean };
@@ -37,10 +38,46 @@ export function pickVariant(it: Item, o: VariantOption): Item {
 }
 export const isAiEstimate = (it: Item) => it.ai_estimate || it.source === 'ai_estimate';
 
+/** Placeholder / failed reading with no real number: generic unknown-food placeholder, failed AI (ai_state failed,
+ * needs_input), or no kcal. Only the user's typed kcal can make it countable. */
+export function isPlaceholder(it: Item): boolean {
+  const r = it as unknown as Record<string, unknown>;
+  if (!(Number.isFinite(it.kcal?.best) && it.kcal.best > 0)) return true;
+  if (r.ai_state === 'failed' || r.needs_input === true || r.custom_item === true) return true;
+  return !it.dish_id && !isAiEstimate(it); // parser.unknown(): source generic, no dish
+}
+const needsVerification = (it: Item) => !!(it.dish_id && parser.dishById(it.dish_id)?.needs_verification) || (it.flags ?? []).includes('needs_verification');
+/** Reasons this item needs its OWN pick (chip or typed kcal): never part of any bulk / one-tap confirm. */
+export function needsOwnPick(it: Item): boolean {
+  return isVariantChoice(it) || isVague(it) || isUnitMismatch(it) || isUnverified(it) || needsVerification(it) || isPlaceholder(it) || isAiEstimate(it);
+}
+/**
+ * THE single eligibility rule for every bulk confirm (Log "Confirm N / Add", Review "All look right"):
+ * already confirmed by the user, or a confident item (no confirm needed), or a server one_tap_ok item, and never
+ * an item that needs its own pick.
+ */
+export function bulkEligible(it: ServerItem, confirmed = false): boolean {
+  if (confirmed) return !isPlaceholder(it);
+  if (needsOwnPick(it)) return false;
+  return !it.needs_confirmation || oneTapOk(it);
+}
+/** Review "All look right": unchecked review rows eligible under the same rule (server-refused rows never). */
+export function reviewBulk<E extends { review_item?: Item; reject_code?: string }>(rows: E[]): E[] {
+  return rows.filter((e) => !!e.review_item && !e.reject_code && bulkEligible({ ...e.review_item, one_tap_ok: (e.review_item as ServerItem).one_tap_ok ?? oneTap(e.review_item) } as ServerItem));
+}
+/** Explicit single confirm (store.confirmReview): the item must be a real, picked reading. */
+export function canConfirm(it: Item): boolean {
+  if (isPlaceholder(it)) return false;          // no real kcal
+  if (isVariantChoice(it)) return false;       // variant not picked (pickVariant clears it)
+  if (isVague(it)) return false;               // portion chip not picked (pickVague clears it)
+  if (isUnitMismatch(it)) return false;        // unit not picked (pickUnit clears it)
+  return true;
+}
+
 /** Server field only (missing = false), with the guard: never unit_mismatch, AI estimate or estimate_unverified. */
 export function oneTapOk(it: ServerItem): boolean {
   if (it.one_tap_ok !== true) return false;
-  return !isUnitMismatch(it) && !isAiEstimate(it) && !isUnverified(it) && !isVariantChoice(it) && !isVague(it);
+  return !needsOwnPick(it);
 }
 
 /** confirmed = the user already chose/confirmed this row in the app. */
@@ -57,7 +94,7 @@ export type Row = { key: string; it: ServerItem; confirmed: boolean };
 /** estimating = AI rows still estimating (not counted, no buttons, skipped by the batch). */
 /** waiting = failed AI rows with no kcal yet: they count as items that still need a choice. */
 export function plan(rows: Row[], estimating = 0, waiting = 0) {
-  const add = rows.filter((r) => { const k = kindOf(r.it, r.confirmed); return k === 'counted' || k === 'batch'; });
+  const add = rows.filter((r) => { const k = kindOf(r.it, r.confirmed); return (k === 'counted' || k === 'batch') && bulkEligible(r.it, r.confirmed); });
   const open = rows.filter((r) => !add.includes(r));
   const kcal = add.reduce((a, r) => a + r.it.kcal.best, 0);
   const protein = add.reduce((a, r) => a + r.it.protein_g.best, 0);

@@ -35,7 +35,8 @@ export function errorDetail(body: string): { code: string; variant_options?: { d
  * Confirmed entries only reach here after a pick or an explicitly named variant (bare "biryani" is an open row). */
 export function variantField(e: FoodEntry): { variant_dish_id?: string } {
   if (!e.dish_id || e.needs_review) return {};
-  return e.variant_dish_id === e.dish_id || parser.variantGroup(e.dish_id, e.qty, e.unit) ? { variant_dish_id: e.dish_id } : {};
+  // only a pick the user made (or a variant named in their text, recorded on the entry); never inferred here
+  return e.variant_dish_id && e.variant_dish_id === e.dish_id ? { variant_dish_id: e.dish_id } : {};
 }
 export function errorCode(body: string): string {
   try { const j = JSON.parse(body) as { error?: unknown }; const e = j?.error;

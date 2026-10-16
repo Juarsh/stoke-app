@@ -7,6 +7,7 @@ import { entryFromItem, hasKcal, FoodEntry, localDate, mergeEntries, pendingEntr
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
+import { canConfirm } from './confirmBatch';
 import { enqueue, flush, Op, PendingFood } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
@@ -98,7 +99,7 @@ function useStoreValue() {
     /** Confirm a review entry with the (possibly corrected) item: it becomes a normal entry and syncs. */
     confirmReview: (id: string, it: Item) => upd((p) => {
       const old = p.entries.find((e) => e.id === id); if (!old) return p;
-      if (!hasKcal(it)) return p; // never confirm a 0 kcal reading
+      if (!hasKcal(it) || !canConfirm(it)) return p; // never confirm 0 kcal, an unpicked variant/portion/unit, or a placeholder
       const n = entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id });
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),

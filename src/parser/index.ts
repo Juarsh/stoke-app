@@ -8,3 +8,7 @@ export const DISHES = dishesJson as unknown as Dish[];
 export const DISH_TABLE_VERSION = DISHES.reduce((m, d) => Math.max(m, d.version ?? 1), 1);
 export const parser = new Parser(DISHES, rulesJson as unknown as Rules);
 export const RULES = rulesJson as unknown as Rules;
+
+// entries record variant_dish_id only for a variant the user picked or named (see domain.namedVariant)
+import { setVariantGroupLookup } from '../lib/domain';
+setVariantGroupLookup((id) => parser.variantGroup(id));

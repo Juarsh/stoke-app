@@ -127,6 +127,15 @@ export function computeStreak(loggedDates: Iterable<string>, today: string): Str
   return { current: run, best, frozenDays: frozen, lastLogged: prev, freezeJustUsed: frozen.includes(yesterday) || frozen.includes(addDays(today, -2)) };
 }
 
+/** The text itself named the variant ("veg biryani", typo-confirmed "chiken biryani"): a group dish read
+ * without a variant_choice flag. A bare "biryani" always carries variant_choice, so it never counts as a pick. */
+let groupOf: ((id: string) => unknown) | null = null;
+export function setVariantGroupLookup(f: (id: string) => unknown) { groupOf = f; }
+function namedVariant(it: Item): boolean {
+  if (!it.dish_id || it.ai_estimate || (it.flags ?? []).includes('variant_choice') || (it as { variant_options?: unknown[] }).variant_options?.length) return false;
+  return !!groupOf?.(it.dish_id);
+}
+
 /** Build an immutable entry snapshot from a parsed (or edited) item. */
 export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local_date: string; tableVersion: number; now?: Date; id: string; remember?: boolean }): FoodEntry {
   const now = (o.now ?? new Date()).toISOString();
@@ -138,7 +147,8 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
     source: it.ai_estimate ? 'ai' : 'table', item_source: it.source, source_note: it.source_note, confirmed: true,
     dish_table_version: o.tableVersion, created_at: now, updated_at: now, deleted_at: null,
     span: it.matched_text, remember: !!o.remember,
-    ...(typeof (it as { variant_dish_id?: unknown }).variant_dish_id === 'string' ? { variant_dish_id: (it as unknown as { variant_dish_id: string }).variant_dish_id } : {}),
+    ...(typeof (it as { variant_dish_id?: unknown }).variant_dish_id === 'string' && (it as unknown as { variant_dish_id: string }).variant_dish_id === it.dish_id
+      ? { variant_dish_id: it.dish_id } : namedVariant(it) ? { variant_dish_id: it.dish_id } : {}),
     ...(Array.isArray((it as { variant_options_all?: unknown }).variant_options_all) ? { variant_options: (it as unknown as { variant_options_all: FoodEntry['variant_options'] }).variant_options_all } : {}),
   };
 }
