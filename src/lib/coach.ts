@@ -60,6 +60,7 @@ export function pickItem<I extends { dish_id: string; kcal: { best: number } }>(
 
 /** Coach picks: fit-what's-left picks, or lighter picks when at/over target. */
 export function coachPicks(dishes: Dish[], kcalLeft: number, proteinLeft: number, diet: Diet, n = 3): Suggestion[] {
+  dishes = dishes.filter((d) => !d.needs_verification); // one-tap saves only from verified table rows
   return kcalLeft >= 80 ? suggest(dishes, kcalLeft, proteinLeft, diet, n) : lighterPicks(dishes, diet, n);
 }
 

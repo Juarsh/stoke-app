@@ -60,12 +60,13 @@ describe('coach picks', () => {
     expect(ps).toHaveLength(3);
     for (const s of ps) {
       if (k >= 80) expect(s.kcal).toBeLessThanOrEqual(k); else expect(s.kcal).toBeLessThanOrEqual(150);
+      expect(s.dish.needs_verification).toBeFalsy();
       if (d === 'veg') expect(s.dish.diet ?? 'veg').toBe('veg');
       const it = pickItem(s, (x) => parser.parse(x), oneTap)!;
       expect(it.dish_id).toBe(s.dish.id); expect(Math.round(it.kcal.best)).toBe(s.kcal); // logged number = shown number
     }
   });
-  test('over budget switches to lighter picks', () => { expect(coachPicks(DISHES, 0, 0, 'veg')).toEqual(lighterPicks(DISHES, 'veg')); expect(coachPicks(DISHES, 500, 30, 'veg')).toEqual(suggest(DISHES, 500, 30, 'veg')); });
+  test('over budget switches to lighter picks', () => { const V = DISHES.filter((d) => !d.needs_verification); expect(coachPicks(DISHES, 0, 0, 'veg')).toEqual(lighterPicks(V, 'veg')); expect(coachPicks(DISHES, 500, 30, 'veg')).toEqual(suggest(V, 500, 30, 'veg')); });
   test('pickItem rejects anything not a confident same-dish read', () => {
     const s = suggest(DISHES, 520, 38, 'veg')[0];
     expect(pickItem(s, () => ({ items: [], unmatched: [] }), () => true)).toBeNull();
