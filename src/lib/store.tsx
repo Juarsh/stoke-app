@@ -3,7 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, serverProfile } from './domain';
+import { entryFromItem, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, reopenRejected, serverProfile } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -40,9 +40,11 @@ function useStoreValue() {
     syncing.current = true;
     try {
       const sent = s.queue;
-      const { rest, resolved } = await flush(sent, sender);
+      const { rest, resolved, rejected } = await flush(sent, sender);
+      const reopened = rejected.map((e) => reopenRejected(e));
       // ops added while we were sending stay queued after the remaining ones
-      setS((p) => ({ ...p, queue: [...rest, ...p.queue.slice(sent.length)], entries: mergeEntries(p.entries, resolved) }));
+      setS((p) => ({ ...p, queue: reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), [...rest, ...p.queue.slice(sent.length)]),
+        entries: mergeEntries(p.entries, resolved).map((x) => reopened.find((r) => r.id === x.id) ?? x) }));
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));

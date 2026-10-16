@@ -29,12 +29,18 @@ export function enqueue(q: Op[], op: Op): Op[] {
   return [...q.filter((o) => (o.kind === 'delete' ? o.id : opId(o)) !== id), op];
 }
 
+/** A save the server refused as invalid (400/422, e.g. a variant saved without a pick). Error code TBD by backend;
+ * any 400/422 on a confirmed (non-review) upsert counts. Other errors keep the retry-with-backoff rule. */
+export const isRejection = (e: unknown, op: Op) => op.kind === 'upsert' && !op.entry.needs_review && !op.entry.pending
+  && typeof (e as { status?: unknown })?.status === 'number' && [400, 422].includes((e as { status: number }).status);
+
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
 /** Sends ops in order; stops at the first failure or backoff wait. Returns the remaining queue and entries resolved from pending foods. */
-export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ rest: Op[]; resolved: FoodEntry[] }> {
+export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ rest: Op[]; resolved: FoodEntry[]; rejected: FoodEntry[] }> {
   const rest = [...q];
   const resolved: FoodEntry[] = [];
+  const rejected: FoodEntry[] = [];
   while (rest.length) {
     const op = rest[0];
     if (op.nextAt && op.nextAt > now) break; // keep order: wait for the head's backoff
@@ -53,13 +59,15 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
         rest.push(...es.map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
       }
       rest.shift();
-    } catch {
+    } catch (e) {
+      // refused save: not dropped, it goes back to the user as an item to review (the store re-queues it as needs_review)
+      if (isRejection(e, op)) { rejected.push((op as Extract<Op, { kind: 'upsert' }>).entry); rest.shift(); continue; }
       const cur = rest[0];
       rest[0] = { ...cur, tries: op.tries + 1, nextAt: now + backoffMs(op.tries + 1) } as Op;
       break;
     }
   }
-  return { rest, resolved };
+  return { rest, resolved, rejected };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */

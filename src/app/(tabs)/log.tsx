@@ -230,7 +230,7 @@ export default function Log() {
           {openDrafts.length ? (
             <Group>
               {openDrafts.map((d) => (
-                <OpenRow key={d.key} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
+                <OpenRow key={d.key} text={text} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
                   onConfirm={(n) => { setItem(d, n); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
               ))}
             </Group>

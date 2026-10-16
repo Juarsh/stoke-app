@@ -9,7 +9,7 @@ import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
-import { isVariantChoice, pickUnit, pickVariant, variantOptions } from '../lib/confirmBatch';
+import { isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
@@ -110,8 +110,8 @@ export const variantLabel = (name: string, base: string) => {
 const plural = (u: string) => (u === 'katori' ? 'katori' : `${u}s`);
 /** Open row (not counted until the user decides): inline AI estimate, estimate_unverified, or unit mismatch.
  * All numbers come from the API item: kcal.best/low/high and unit_options. */
-export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
-  it: Item; kind: 'estimate' | 'unverified' | 'unit'; onConfirm: (n: Item) => void; onEdit: (n: Item) => void; onRemove: () => void;
+export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, text = '' }: {
+  text?: string; it: Item; kind: 'estimate' | 'unverified' | 'unit'; onConfirm: (n: Item) => void; onEdit: (n: Item) => void; onRemove: () => void;
 }) {
   const s = { ...useStyles(), ...useOpenStyles() }; const t = useTheme();
   const [sheet, setSheet] = useState(false);
@@ -119,19 +119,21 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
   const n = (x: number) => Math.round(x).toLocaleString('en-IN');
   const opts = it.unit_options ?? [];
   const variants = variantOptions(it); const isVar = kind === 'unit' && isVariantChoice(it);
+  const isVg = kind === 'unit' && !isVar && !it.unit_options?.length && isVague(it); const vw = isVg ? vagueWord(it, text) : '';
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
   const sub = kind === 'estimate' ? `${portion} · usually ${n(it.kcal.low)}–${n(it.kcal.high)}` : kind === 'unverified' ? `${portion} · sources vary` : portion;
   const right = kind === 'unit' ? '—' : kind === 'unverified' ? `~${n(it.kcal.best)}` : n(it.kcal.best);
   return (
     <View style={s.open}>
-      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${isVar ? 'type needs choosing' : kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
+      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${isVar ? 'type needs choosing' : isVg ? 'amount needs choosing' : kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
         <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row style={{ gap: 6, flexWrap: 'wrap' }}>
             <T v="bodyStrong">{cap(it.name)}</T>
-            {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">{isVar ? '⚠ Choose type' : '⚠ Check unit'}</T></View> : <Badge kind="ai" label="Estimate" />}
+            {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">{isVar ? '⚠ Choose type' : isVg ? '⚠ How much?' : '⚠ Check unit'}</T></View> : <Badge kind="ai" label="Estimate" />}
           </Row>
           <T v="caption" tone="muted">{sub}</T>
+          {isVg && vw ? <T v="caption" tone="muted">you wrote: {vw}</T> : null}
         </View>
         <View style={{ alignItems: 'flex-end' }}><T v="number">{right}</T><T v="caption" tone="muted">not counted</T></View>
       </View>
@@ -147,6 +149,19 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
                 <Pressable key={o.dish_id} onPress={() => onConfirm(pickVariant(it, o))} style={[s.optBtn, { flexBasis: '45%' }]} accessibilityRole="button"
                   accessibilityLabel={`${cap(o.name)}, ${n(o.kcal)} calories`}>
                   <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(o.name, it.name)} · {n(o.kcal)} kcal</T>
+                </Pressable>
+              ))}
+            </Row>
+          </>
+        ) : isVg ? (
+          <>
+            <T tone="text2">How much?</T>
+            <Row style={{ gap: 8 }}>
+              {vagueChoices(it, scaleItem).map((c) => (
+                <Pressable key={c.key} onPress={() => onConfirm(pickVague(c.item))} style={s.optBtn} accessibilityRole="button"
+                  accessibilityLabel={`${c.label}, ${portionLabel(c.item.quantity, c.item.unit)}, ${n(c.item.kcal.best)} calories`}>
+                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{c.label}</T>
+                  <T v="caption" tone="text2" style={{ textAlign: 'center' }}>{portionLabel(c.item.quantity, c.item.unit)} · {n(c.item.kcal.best)} kcal</T>
                 </Pressable>
               ))}
             </Row>

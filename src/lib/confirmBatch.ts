@@ -44,10 +44,10 @@ export function oneTapOk(it: ServerItem): boolean {
 /** confirmed = the user already chose/confirmed this row in the app. */
 export function kindOf(it: ServerItem, confirmed: boolean): Kind {
   if (confirmed) return 'counted';
-  if (isUnitMismatch(it) || isVariantChoice(it)) return 'unit'; // variant choice reuses the unit-mismatch open row
+  if (isUnitMismatch(it) || isVariantChoice(it) || isVague(it)) return 'unit'; // variant choice reuses the unit-mismatch open row
   if (isUnverified(it)) return 'unverified';
   if (isAiEstimate(it)) return 'estimate';
-  if (!it.needs_confirmation && !isVague(it)) return 'counted'; // vague amounts always need a confirm
+  if (!it.needs_confirmation) return 'counted';
   return oneTapOk(it) ? 'batch' : 'choice';
 }
 
@@ -94,4 +94,32 @@ export function pickUnit(it: Item, o: { qty: number; unit: string }): Item {
   const n = withUnit(it, o.qty, o.unit);
   const { unit_options: _u, ...rest } = n;
   return { ...rest, flags: (n.flags ?? []).filter((f) => f !== 'unit_mismatch'), needs_confirmation: false, alternatives: undefined };
+}
+
+/** Vague amount (thoda, zyada…): Small / Usual / Large = 0.5x / 1x / 1.5x of the portion read, none pre-selected. */
+export const VAGUE_SIZES = [{ key: 'small', label: 'Small', f: 0.5 }, { key: 'usual', label: 'Usual', f: 1 }, { key: 'large', label: 'Large', f: 1.5 }] as const;
+const VAGUE_WORDS = ['thoda', 'thodi', 'thode', 'thora', 'thori', 'zyada', 'jyada', 'zada', 'bahut', 'bohot', 'kam', 'little', 'bit', 'lot', 'lots', 'some'];
+/** The amount word the user typed: server field if sent (vague_word / vague_text), else found in the text. */
+export function vagueWord(it: Item, text = ''): string {
+  const r = it as unknown as Record<string, unknown>;
+  const w = r.vague_word ?? r.vague_text ?? r.vague_quantity_word;
+  if (typeof w === 'string' && w) return w;
+  const words = `${text} ${it.matched_text}`.toLowerCase().split(/[^\p{L}]+/u);
+  return words.find((x) => VAGUE_WORDS.includes(x)) ?? '';
+}
+/** One chip: the same item at f x its quantity, numbers recomputed from the table by `scale` (parser.edit). */
+export function vagueChoices(it: Item, scale: (it: Item, qty: number) => Item) {
+  return VAGUE_SIZES.map((v) => ({ ...v, item: scale(it, Math.round(it.quantity * v.f * 100) / 100) }));
+}
+/** Picking a size confirms that recomputed item; the vague flag is cleared. */
+export function pickVague(c: Item): Item {
+  return { ...c, flags: (c.flags ?? []).filter((f) => f !== 'vague_quantity'), needs_confirmation: false, alternatives: undefined };
+}
+/** Server numbers scaled to a new quantity (table numbers are linear in portion). Grams scale too. */
+export function scaleItem(it: Item, qty: number): Item {
+  const f = it.quantity > 0 ? qty / it.quantity : 1;
+  const r = (x: number) => Math.round(x * f);
+  const r1 = (x: number) => Math.round(x * f * 10) / 10;
+  return { ...it, quantity: qty, grams: Math.round(it.grams * f), kcal: { low: r(it.kcal.low), best: r(it.kcal.best), high: r(it.kcal.high) },
+    protein_g: { low: r1(it.protein_g.low), best: r1(it.protein_g.best), high: r1(it.protein_g.high) }, carbs_g: r1(it.carbs_g), fat_g: r1(it.fat_g) };
 }

@@ -169,3 +169,16 @@ export function plateRows(entries: FoodEntry[], nameOf: (e: FoodEntry) => string
     return { slot, names: es.map(nameOf).join(', '), kcal: Math.round(es.reduce((a, e) => a + e.kcal.best, 0)), n: es.length };
   });
 }
+
+/** A confirmed entry the server refused (e.g. variant without a pick): reopened as an item to review, never counted,
+ * with its numbers kept only as the review item's reading so the user confirms or changes it. */
+export function reopenRejected(e: FoodEntry, now = new Date()): FoodEntry {
+  const it: Item = {
+    dish_id: e.dish_id ?? '', name: e.custom_name || e.dish_id || e.raw_text, matched_text: e.span ?? e.raw_text, quantity: e.qty, unit: e.unit, grams: 0,
+    oil_level: e.oil_level, kcal: { ...e.kcal }, protein_g: { ...e.protein_g }, carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0,
+    source: 'did_you_mean', data_source: '', source_note: e.source_note, fuzzy: false, needs_confirmation: true, flags: ['server_rejected'],
+    default_portion: false, span_start: 0, span_end: 0, ai_estimate: e.source === 'ai',
+  };
+  const z = { low: 0, best: 0, high: 0 };
+  return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: it, updated_at: now.toISOString() };
+}
