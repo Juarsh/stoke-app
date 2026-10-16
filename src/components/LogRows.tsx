@@ -9,7 +9,7 @@ import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
-import { pickUnit } from '../lib/confirmBatch';
+import { isVariantChoice, pickUnit, pickVariant, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
@@ -101,6 +101,12 @@ const useStyles = makeStyles((t) => ({
   decision: { borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.text2, paddingHorizontal: t.space.cardH, paddingBottom: t.space.cardV, gap: 8 },
 }));
 
+/** Chip text: 'Veg' from 'veg biryani' when the base name is shared, else the full name. */
+export const variantLabel = (name: string, base: string) => {
+  const b = base.trim().toLowerCase(); let v = name.trim();
+  if (b && v.toLowerCase().endsWith(' ' + b)) v = v.slice(0, -(b.length + 1)); else if (b && v.toLowerCase().startsWith(b + ' ')) v = v.slice(b.length + 1);
+  return cap(v.trim() || name);
+};
 const plural = (u: string) => (u === 'katori' ? 'katori' : `${u}s`);
 /** Open row (not counted until the user decides): inline AI estimate, estimate_unverified, or unit mismatch.
  * All numbers come from the API item: kcal.best/low/high and unit_options. */
@@ -112,17 +118,18 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
   const portion = portionLabel(it.quantity, it.unit);
   const n = (x: number) => Math.round(x).toLocaleString('en-IN');
   const opts = it.unit_options ?? [];
+  const variants = variantOptions(it); const isVar = kind === 'unit' && isVariantChoice(it);
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
   const sub = kind === 'estimate' ? `${portion} · usually ${n(it.kcal.low)}–${n(it.kcal.high)}` : kind === 'unverified' ? `${portion} · sources vary` : portion;
   const right = kind === 'unit' ? '—' : kind === 'unverified' ? `~${n(it.kcal.best)}` : n(it.kcal.best);
   return (
     <View style={s.open}>
-      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
+      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${isVar ? 'type needs choosing' : kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
         <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row style={{ gap: 6, flexWrap: 'wrap' }}>
             <T v="bodyStrong">{cap(it.name)}</T>
-            {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">⚠ Check unit</T></View> : <Badge kind="ai" label="Estimate" />}
+            {kind === 'unit' ? <View style={s.warnChip}><T v="label" tone="warn">{isVar ? '⚠ Choose type' : '⚠ Check unit'}</T></View> : <Badge kind="ai" label="Estimate" />}
           </Row>
           <T v="caption" tone="muted">{sub}</T>
         </View>
@@ -132,7 +139,19 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove }: {
         {kind === 'unverified' ? (
           <View style={s.warnNote}><T v="bodyStrong" tone="warn">Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {it.unit}. Check it matches your {it.unit}.</T></View>
         ) : null}
-        {kind === 'unit' ? (
+        {isVar ? (
+          <>
+            <T tone="text2">{variants.length ? 'Choose type' : 'Choose type: type it again with the kind, e.g. “veg biryani”.'}</T>
+            <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+              {variants.map((o) => (
+                <Pressable key={o.dish_id} onPress={() => onConfirm(pickVariant(it, o))} style={[s.optBtn, { flexBasis: '45%' }]} accessibilityRole="button"
+                  accessibilityLabel={`${cap(o.name)}, ${n(o.kcal)} calories`}>
+                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(o.name, it.name)} · {n(o.kcal)} kcal</T>
+                </Pressable>
+              ))}
+            </Row>
+          </>
+        ) : kind === 'unit' ? (
           <>
             <T tone="text2">{sameUnit ? `${portionLabel(it.quantity, it.unit)} is a lot. Which did you mean?` : `Did you mean ${opts.map((o) => plural(o.unit)).join(' or ')}?`}</T>
             <Row style={{ gap: 8 }}>

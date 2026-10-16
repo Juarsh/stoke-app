@@ -12,21 +12,42 @@ const n = (x: number) => Math.round(x).toLocaleString('en-IN');
 
 export const isUnverified = (it: Item) => (it.flags ?? []).includes('estimate_unverified');
 export const isUnitMismatch = (it: Item) => !!it.unit_options?.length || (it.flags ?? []).includes('unit_mismatch');
+/** Server variant choice (backend 519964a, API.md "Variant choice"): flag `variant_choice` + `variant_options`.
+ * Tolerant of field names (variant_options | variants | variant_choices; protein_g | protein; kcal number | {best}). */
+export interface VariantOption { dish_id: string; name: string; kcal: number; protein_g: number }
+const num = (x: unknown): number => (typeof x === 'number' ? x : x && typeof x === 'object' && typeof (x as { best?: unknown }).best === 'number' ? (x as { best: number }).best : NaN);
+export function variantOptions(it: Item): VariantOption[] {
+  const r = it as unknown as Record<string, unknown>;
+  const raw = (r.variant_options ?? r.variants ?? r.variant_choices) as unknown;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((o: Record<string, unknown>) => ({ dish_id: String(o.dish_id ?? o.id ?? ''), name: String(o.name ?? o.label ?? o.dish_id ?? ''), kcal: num(o.kcal ?? o.kcal_best), protein_g: num(o.protein_g ?? o.protein) }))
+    .filter((o) => o.dish_id && o.name && Number.isFinite(o.kcal) && o.kcal > 0).map((o) => ({ ...o, protein_g: Number.isFinite(o.protein_g) ? o.protein_g : 0 }));
+}
+export const isVariantChoice = (it: Item) => (it.flags ?? []).includes('variant_choice') || variantOptions(it).length > 0;
+export const isVague = (it: Item) => (it.flags ?? []).includes('vague_quantity');
+/** The user picked a type: that variant's server numbers (portion already applied), confirmed, no longer a choice. */
+export function pickVariant(it: Item, o: VariantOption): Item {
+  const r = { ...(it as unknown as Record<string, unknown>) };
+  delete r.variant_options; delete r.variants; delete r.variant_choices;
+  const k = Math.round(o.kcal), p = Math.round(o.protein_g * 10) / 10;
+  return { ...(r as unknown as Item), dish_id: o.dish_id, name: o.name, kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p },
+    flags: (it.flags ?? []).filter((f) => f !== 'variant_choice'), needs_confirmation: false, alternatives: undefined, unit_options: undefined };
+}
 export const isAiEstimate = (it: Item) => it.ai_estimate || it.source === 'ai_estimate';
 
 /** Server field only (missing = false), with the guard: never unit_mismatch, AI estimate or estimate_unverified. */
 export function oneTapOk(it: ServerItem): boolean {
   if (it.one_tap_ok !== true) return false;
-  return !isUnitMismatch(it) && !isAiEstimate(it) && !isUnverified(it);
+  return !isUnitMismatch(it) && !isAiEstimate(it) && !isUnverified(it) && !isVariantChoice(it) && !isVague(it);
 }
 
 /** confirmed = the user already chose/confirmed this row in the app. */
 export function kindOf(it: ServerItem, confirmed: boolean): Kind {
   if (confirmed) return 'counted';
-  if (isUnitMismatch(it)) return 'unit';
+  if (isUnitMismatch(it) || isVariantChoice(it)) return 'unit'; // variant choice reuses the unit-mismatch open row
   if (isUnverified(it)) return 'unverified';
   if (isAiEstimate(it)) return 'estimate';
-  if (!it.needs_confirmation) return 'counted';
+  if (!it.needs_confirmation && !isVague(it)) return 'counted'; // vague amounts always need a confirm
   return oneTapOk(it) ? 'batch' : 'choice';
 }
 
