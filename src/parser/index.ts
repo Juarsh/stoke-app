@@ -17,4 +17,4 @@ import { setUnitLookup, setVariantGroupLookup } from '../lib/domain';
 setVariantGroupLookup((id) => parser.variantGroup(id));
 // the store guard: a table row in a unit the server can't save it in is refused (rg6 F1); a dish with no units on the
 // phone is held for review ('Check amount', not counted)
-setUnitLookup({ units: (id) => parser.unitsFor(id), name: (id) => parser.dishById(id)?.name });
+setUnitLookup({ units: (id) => parser.unitsFor(id), name: (id) => parser.dishById(id)?.name ?? parser.pulledName(id) });

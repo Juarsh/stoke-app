@@ -76,6 +76,8 @@ export function reviewSummary<E extends { id: string; review_item?: Item; reject
 }
 /** Which own-pick row a review item shows: chips for type/portion/unit, kcal entry for placeholders. */
 export function reviewRowKind(it: Item): 'chips' | 'kcal' | 'estimate' | 'card' {
+  // a type pick with the server's choices: always the choices (rg7 B2), even when the row's own reading has no number
+  if (isVariantChoice(it) && variantOptions(it).length) return 'chips';
   if (isPlaceholder(it)) return 'kcal';
   if (isVariantChoice(it) || isVague(it) || isUnitMismatch(it)) return 'chips';
   if (canAddEstimate(it)) return 'estimate';

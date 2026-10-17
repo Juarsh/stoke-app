@@ -4,13 +4,18 @@
 // so. Phone == server == /v1/summary after every sync. Pure (testable).
 import { parser, type Item } from '../parser';
 import type { ServerRow } from './api';
-import { notMeasured, serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
+import { CHECK_AMOUNT_LINE, notMeasured, serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
 
 const near = (a: number | undefined, b: number) => typeof a !== 'number' || Math.abs(a - b) <= 0.5;
 const fmt = (n: number) => n.toLocaleString('en-IN');
 export const SERVER_REVIEW = 'server_review';
-export function reviewNote(e: FoodEntry): string {
-  if (e.dish_id && e.unit && !unitSupportedFor(e.dish_id, e.unit)) return `Not counted yet: ${notMeasured(e.dish_id, e.unit)}. Check the amount and add it again.`;
+/** The note on a row the server kept for review. Names the unit when the phone's list says the dish doesn't come in it, or
+ * when the server stored it in another unit (its own, newer list: an older-table phone, rg7 B4). No unit: no unit clause. */
+export function reviewNote(e: FoodEntry, row?: ServerRow): string {
+  const unit = e.unit?.trim() ?? '';
+  const serverMoved = !!row && !!row.unit && row.unit !== unit && !e.needs_review;
+  if (e.dish_id && unit && (!unitSupportedFor(e.dish_id, unit) || serverMoved)) return `Not counted yet: ${notMeasured(e.dish_id, unit)}. ${CHECK_AMOUNT_LINE}`;
+  if (e.dish_id && !unit) return `Not counted yet: ${CHECK_AMOUNT_LINE}`;
   return 'Not counted yet: this needs a check. Look at it and add it again.';
 }
 function itemOf(e: FoodEntry, row: ServerRow): Item {
@@ -30,7 +35,7 @@ export function adoptServer(e: FoodEntry, row: ServerRow): FoodEntry {
   if (row.state === 'needs_review') {
     const z = { low: 0, best: 0, high: 0 };
     return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: itemOf(e, row),
-      reject_code: SERVER_REVIEW, server_note: reviewNote(e) };
+      reject_code: SERVER_REVIEW, server_note: reviewNote(e, row) };
   }
   const dishRow = !!e.dish_id;
   const same = near(row.kcal_best, e.kcal.best) && near(row.protein_best, e.protein_g.best)

@@ -105,6 +105,28 @@ for (const theme of ['light', 'dark']) {
   if (/piece|glass|count/.test(chips)) throw new Error(`dal sheet offers units it doesn't come in: ${chips}`);
   await shot(g, `edit-sheet-units-dal-${theme}`);
   await g.context().close();
+  // rg7: a save the server 500ed three times ("Couldn’t sync this. Tap to retry", not counted); in Review a newly pulled dish's
+  // type pick (the server's types), an older-table dal-in-plates note and the empty-unit line; Log + edit sheet refusing
+  // a table row over 10,000 kcal ("That’s too much for one entry. Try a smaller amount.")
+  const h = await page(theme, 'rg7');
+  await h.goto(BASE + '/'); await wait(h, 3000);
+  const fail = h.getByRole('button', { name: /couldn’t sync this/i });
+  if ((await fail.count()) !== 1) throw new Error(`expected 1 sync-failed row, got ${await fail.count()}`);
+  await fail.scrollIntoViewIfNeeded(); await wait(h, 500);
+  await shot(h, `today-5xx-flag-${theme}`);
+  await h.goto(BASE + '/review'); await wait(h, 2000);
+  for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
+    if ((await h.getByText(t, { exact: false }).count()) < 1) throw new Error(`Review lacks: ${t}`);
+  if ((await h.getByRole('button', { name: /^Zarda pulao, 390 calories$/ }).count()) < 1) throw new Error('no zarda type choice in Review');
+  if ((await h.getByText(/measured in s\b/).count()) > 0) throw new Error('"measured in s." rendered');
+  await shot(h, `review-pulled-type-${theme}`, { fullPage: true });
+  await h.goto(BASE + '/log'); await wait(h, 2000);
+  await h.getByLabel('What did you eat?').fill('100 roti'); await wait(h, 1500);
+  await shot(h, `log-too-much-${theme}`);
+  await h.getByRole('button', { name: /Double-tap to edit$/ }).first().click(); await wait(h, 1200);
+  if ((await h.getByTestId('too-much').count()) < 1) throw new Error('no too-much line in the edit sheet');
+  await shot(h, `edit-sheet-too-much-${theme}`);
+  await h.context().close();
   // step 2 at 360x800: 'Start logging' must be fully above the fold (fails QA otherwise)
   const o2 = await page(theme, 'noprofile', { width: 360, height: 800 });
   await o2.goto(BASE + '/onboarding'); await wait(o2, 2000);

@@ -59,9 +59,20 @@ export interface FoodEntry {
   /** rg6 F1: the server saved this row differently from what the phone sent (needs_review, or other qty / unit / kcal). The
    * row now shows the server's version and this readable note says why (Review / Today); cleared by the next user edit. */
   server_note?: string;
+  /** rg7 H1: what the server last stored and counts for this row (from its save answer); used while the row is flagged */
+  server_counts?: { kcal: number; protein: number };
+  /** rg7 H1: the server answered this row's save 5xx three times in a row: flagged ("Couldn’t sync this. Tap to retry") and
+   * counted only as the server has it (server_counts, else not at all) until a save goes through */
+  server_failed?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
+/** The numbers a counted row adds to the day: the phone's, except a row the server couldn't save (5xx, rg7 H1), which adds
+ * what the server has (server-row-is-truth): its last stored numbers, or nothing for a row it never stored. */
+export function countedNums(e: FoodEntry): { kcal: number; protein: number } {
+  if (e.server_failed) return e.server_counts ?? { kcal: 0, protein: 0 };
+  return { kcal: e.kcal.best, protein: e.protein_g.best };
+}
 /** Only a confident table match may be saved without the user seeing it. */
 export const autoSavable = (it: Item) => it.source === 'table' && !it.needs_confirmation && !it.ai_estimate;
 /** Entry awaiting review: placeholder numbers are zero and never shown as a number. */
@@ -164,7 +175,9 @@ export const unitPlural = (unit: string) => PLURAL[unit] ?? (unit.endsWith('s') 
 export const notMeasured = (dishId: string, unit: string) => `${dishName(dishId)} isn’t measured ${unit === 'count' ? 'by count' : `in ${unitPlural(unit)}`}`;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** rg6 F1: a table row in a unit the server can't save it in (it would store it needs_review and count nothing) */
-export const unitReason = (unit: string, dishId = '') => `${cap(notMeasured(dishId, unit))}. Pick another unit.`;
+/** rg7 E: no unit -> no unit clause (never "isn’t measured in s."). */
+export const CHECK_AMOUNT_LINE = 'Check the amount and add it again.';
+export const unitReason = (unit: string, dishId = '') => (unit.trim() ? `${cap(notMeasured(dishId, unit))}. Pick another unit.` : CHECK_AMOUNT_LINE);
 /** PE: a dish whose units the phone doesn't have yet: not counted until they come down with the dish table */
 export const UNITS_UNKNOWN = 'Check amount';
 function namedVariant(it: Item): boolean {
@@ -208,7 +221,7 @@ export const toReview = (e: FoodEntry) => !e.deleted_at && !!e.needs_review && !
 
 export function dayTotals(entries: FoodEntry[]) {
   let kcal = 0, protein = 0;
-  for (const e of entries) if (counted(e)) { kcal += e.kcal.best; protein += e.protein_g.best; }
+  for (const e of entries) if (counted(e)) { const n = countedNums(e); kcal += n.kcal; protein += n.protein; }
   return { kcal: Math.round(kcal), protein: Math.round(protein * 10) / 10 };
 }
 
@@ -232,7 +245,7 @@ export function plateRows(entries: FoodEntry[], nameOf: (e: FoodEntry) => string
   const order: Slot[] = ['breakfast', 'lunch', 'snacks', 'dinner'];
   return order.map((slot) => {
     const es = entries.filter((e) => e.slot === slot && counted(e));
-    return { slot, names: es.map(nameOf).join(', '), kcal: Math.round(es.reduce((a, e) => a + e.kcal.best, 0)), n: es.length };
+    return { slot, names: es.map(nameOf).join(', '), kcal: Math.round(es.reduce((a, e) => a + countedNums(e).kcal, 0)), n: es.length };
   });
 }
 
@@ -271,11 +284,20 @@ export function entryRefusal(e: FoodEntry): string | null {
     if (!qtyInRange(e.qty)) return amountReason(e.unit);
     if (!unitsKnown(e.dish_id)) return UNITS_UNKNOWN;
     if (e.unit && !unitSupportedFor(e.dish_id, e.unit)) return unitReason(e.unit, e.dish_id);
-    return finite && k >= 0 ? null : NO_KCAL_REASON;
+    if (!finite || k < 0) return NO_KCAL_REASON;
+    return tableTooMuch(e) ? TOO_MUCH_REASON : null;
   }
   if (!finite || k <= 0) return NO_KCAL_REASON;
   // an AI reading (x the amount the user chose) over the server's 5000 / protein 300 per item: too much for one entry
   return limitReason({ kcal: e.kcal, protein_g: e.protein_g, carbs_g: e.carbs_g, fat_g: e.fat_g });
+}
+/** rg7 H1 (food.go TableKcalMax / TableProteinMax): a table row over 10,000 kcal or 500 g protein for one entry is refused
+ * by the server (400); the phone refuses it up front with TOO_MUCH_REASON. */
+export const TABLE_KCAL_MAX = 10000;
+export const TABLE_PROTEIN_MAX = 500;
+export function tableTooMuch(n: Pick<FoodEntry, 'kcal' | 'protein_g'>): boolean {
+  const k = n.kcal?.best, p = n.protein_g?.best;
+  return (typeof k === 'number' && k > TABLE_KCAL_MAX) || (typeof p === 'number' && p > TABLE_PROTEIN_MAX);
 }
 /** food.go resolve, custom / AI rows (no table dish): kcal 0-5000, protein_g 0-300, carbs_g and fat_g >= 0. Table rows are
  * recomputed by the server and have no such per-item cap. */
@@ -321,5 +343,6 @@ export function reopenRejected(e: FoodEntry, code = '', now = new Date(), server
   };
   const z = { low: 0, best: 0, high: 0 };
   // raw_text (what the user typed) is kept as is
-  return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: it, reject_code: code || 'unknown', updated_at: now.toISOString() };
+  // a note from an earlier state (e.g. 'Check amount' while its units were unknown) never hides this refusal's own line
+  return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: it, reject_code: code || 'unknown', server_note: undefined, updated_at: now.toISOString() };
 }

@@ -12,7 +12,7 @@ import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
-import { enqueue, flush, FlushResult, Op, PendingFood } from './syncQueue';
+import { enqueue, flush, FlushResult, Op, PendingFood, SERVER_ERROR } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
@@ -73,8 +73,14 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     let n = reopened.find((e) => e.id === x.id) ?? x;
     const v = r.versions[x.id];
     if (typeof v === 'number') n = { ...n, server_version: v, ...(n.sync_error && !failed.has(x.id) ? { sync_error: undefined, sync_reason: undefined } : {}) };
+    // what the server now stores and counts for this row (rg7 H1): its own copy, else (older servers) what was sent
+    const ok = r.rows?.[x.id];
+    if (ok && !failed.has(x.id)) {
+      const sr = ok.row, rev = sr.state ? sr.state === 'needs_review' : !!ok.sent.needs_review;
+      n = { ...n, server_failed: undefined, server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: sr.kcal_best ?? ok.sent.kcal.best, protein: sr.protein_best ?? ok.sent.protein_g.best } };
+    } else if (typeof v === 'number' && !failed.has(x.id) && n.server_failed) n = { ...n, server_failed: undefined };
     const f = failed.get(x.id);
-    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason, ...(f.options?.length ? { variant_options: f.options } : {}) };
+    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason, ...(f.options?.length ? { variant_options: f.options } : {}), ...(f.code === SERVER_ERROR ? { server_failed: true } : {}) };
     // rg6 F1: the server stored this save differently (needs_review, or other numbers / amount): the row shows the server's
     // version, so the phone counts exactly what the server counts. Only when the user hasn't changed it since it was sent.
     const sv = r.rows?.[x.id];
@@ -97,7 +103,22 @@ function useStoreValue() {
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = s.user?.idToken ?? null;
   // every server response with next_reset_at keeps the app's own AI count on the server's reset instant
-  const api = useMemo(() => createApi(() => tokenRef.current, (iso) => setS((p) => { const q = noteReset(p.aiQuota, iso); return q === p.aiQuota ? p : { ...p, aiQuota: q }; })), []);
+  // rg7 B4: a response says the server's dish table is newer than the phone's -> pull it (units, names, version)
+  const onTableVersion = useRef<(v: number) => void>(() => {});
+  const api = useMemo(() => createApi(() => tokenRef.current, (iso) => setS((p) => { const q = noteReset(p.aiQuota, iso); return q === p.aiQuota ? p : { ...p, aiQuota: q }; }),
+    (v) => onTableVersion.current(v)), []);
+  const pulling = useRef(false);
+  const unitsVersion = useRef(0);
+  unitsVersion.current = Math.max(unitsVersion.current, s.dishUnits?.version ?? 0);
+  const pullUnits = useCallback(async () => {
+    if (pulling.current) return;
+    pulling.current = true;
+    try {
+      const t = await (api.getDishUnits?.() ?? Promise.resolve(null)).catch(() => null);
+      if (t) { parser.setPulledUnits(t.units, t.version, t.names); unitsVersion.current = t.version; setS((p) => ({ ...p, dishUnits: t })); }
+    } finally { pulling.current = false; }
+  }, [api]);
+  onTableVersion.current = (v) => { if (v > Math.max(unitsVersion.current, DISH_TABLE_VERSION)) void pullUnits(); };
 
   useEffect(() => {
     kv.get(KEY).then((raw) => {
@@ -142,16 +163,13 @@ function useStoreValue() {
       // shown once (not persisted): the row is already gone from the phone
       if (r.gone?.length) setNotice(DELETED_ELSEWHERE);
       // a row held for its dish's units ('Check amount'): pull them again with the dish table
-      if (entriesRef.current.some((e) => e.reject_code === UNITS_HELD && !e.deleted_at)) {
-        const t = await (api.getDishUnits?.() ?? Promise.resolve(null)).catch(() => null);
-        if (t) { parser.setPulledUnits(t.units); setS((p) => ({ ...p, dishUnits: t })); }
-      }
+      if (entriesRef.current.some((e) => e.reject_code === UNITS_HELD && !e.deleted_at)) await pullUnits();
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
       }
     } finally { syncing.current = false; }
-  }, [api, sender, s.queue, expireAi]);
+  }, [api, sender, s.queue, expireAi, pullUnits]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
   // retry with backoff: wake up when the head op's wait is over
   const headAt = s.queue[0]?.nextAt;
@@ -161,11 +179,11 @@ function useStoreValue() {
     return () => clearTimeout(t);
   }, [ready, s.user, headAt, sync]);
   // PE: the dish units come down with the server's dish table and are kept on the phone (applied before any save)
-  useEffect(() => { parser.setPulledUnits(s.dishUnits?.units ?? null); }, [s.dishUnits]);
+  useEffect(() => { parser.setPulledUnits(s.dishUnits?.units ?? null, s.dishUnits?.version, s.dishUnits?.names); }, [s.dishUnits]);
   useEffect(() => {
     if (!ready || !s.user || api.mock) return;
-    (api.getDishUnits?.() ?? Promise.resolve(null)).then((t) => { if (t) { parser.setPulledUnits(t.units); setS((p) => ({ ...p, dishUnits: t })); } }).catch(() => {});
-  }, [ready, s.user, api]);
+    void pullUnits();
+  }, [ready, s.user, api, pullUnits]);
   // refresh Remembered foods from the server when signed in
   useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
@@ -199,6 +217,13 @@ function useStoreValue() {
      * re-saved. Returns the refusal reason (row unchanged) if the pick can't be saved. */
     pickVariant: (id: string, dishId: string): string | null => {
       const e = entriesRef.current.find((x) => x.id === id); if (!e) return 'Not found.';
+      // a type the phone's table doesn't have yet (a newer server table, rg7 B2): the server's own numbers for it, at this amount
+      const o = e.variant_options?.find((x) => x.dish_id === dishId);
+      if (!parser.dishById(dishId) && o) {
+        const k = Math.round(o.kcal), p = Math.round(o.protein_g * 10) / 10;
+        return updateEntry({ ...e, dish_id: dishId, kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p },
+          variant_dish_id: dishId, variant_options: undefined, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, server_note: undefined } as FoodEntry);
+      }
       let it: Item;
       try { it = parser.recompute(dishId, e.qty, parser.unitSupported(dishId, e.unit) ? e.unit : parser.dishById(dishId)?.unit ?? e.unit, e.oil_level || ''); } catch { return 'Pick another type.'; }
       return updateEntry({ ...e, dish_id: dishId, qty: it.quantity, unit: it.unit, kcal: it.kcal, protein_g: it.protein_g, carbs_g: it.carbs_g, fat_g: it.fat_g,

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser } from '../parser';
-import { unitReason, UNITS_UNKNOWN, amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
+import { unitReason, UNITS_UNKNOWN, amountReason, limitReason, tableTooMuch, TOO_MUCH_REASON, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -74,7 +74,8 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   const amountOff = table && !qtyInRange(qty);
   const preview: Item = !table ? scaleAi(it, qty) : amountOff ? it : safeEdit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined });
   // an AI reading scaled past the server's per-item limits (kcal > 5000, protein > 300): refused here, nothing is sent
-  const tooMuch = !table ? limitReason(preview) : null;
+  // a table reading over 10,000 kcal / 500 g protein for one entry (rg7 H1): refused here too
+  const tooMuch = !table ? limitReason(preview) : amountOff ? null : tableTooMuch(preview) ? TOO_MUCH_REASON : null;
   // rg6 F1 / PE: only the units this dish can be saved in (the server's data, pulled with its dish table); a reading in any
   // other unit (e.g. "1 glass roti") must pick one first. No units on the phone: 'Check amount', never all 7.
   const units = table ? parser.supportedUnits(dishId) : [];

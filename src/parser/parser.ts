@@ -170,7 +170,15 @@ export class Parser {
   private pulledUnits: Record<string, string[]> | null = null;
   private seedUnits: Record<string, string[]> = {};
   /** units pulled from the server with its dish table (GET /v1/dishes supported_units, stored on the phone) */
-  setPulledUnits(m: Record<string, string[]> | null) { this.pulledUnits = m; }
+  setPulledUnits(m: Record<string, string[]> | null, version = 0, names: Record<string, string> = {}) { this.pulledUnits = m; this.pulledVersion = m ? version : 0; this.pulledNames = m ? names : {}; }
+  /** the server table version those units came from (0: none pulled) */
+  pulledVersion = 0;
+  private pulledNames: Record<string, string> = {};
+  /** a pulled dish's name (a dish newer than the bundled table) */
+  pulledName(dishId: string): string | undefined { return this.pulledNames[dishId]; }
+  /** rg7 B3: the table version a save of this dish is checked against: the bundled one for a bundled dish (its numbers came
+   * from it), else the pulled table's (a dish the bundled table doesn't have yet) */
+  saveVersion(dishId: string, own: number): number { return this.dishById(dishId) || !this.pulledVersion ? own : Math.max(own, this.pulledVersion); }
   /** seed only (bundled golden copy), used when neither pulled data nor the bundled table has the dish's units */
   setSeedUnits(m: Record<string, string[]>) { this.seedUnits = m; }
   /** PE: the units the server saves this dish in, from the server's data: pulled units, else the bundled (pulled) dish

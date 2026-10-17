@@ -5,13 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
-import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
+import { DecisionCard, FailedAiRow, Group, HeldRow, ItemRow, OpenRow } from '@/components/LogRows';
 import { aiStatus, failedCounts, failReason, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay, resetOf } from '@/lib/aiRows';
 import { localCapHit } from '@/lib/aiQuota';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
-import { entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
+import { entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor, unitsKnown } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
 import { backstopDue, BACKSTOP_REASON, isExpiredId } from '@/lib/aiBackstop';
@@ -23,7 +23,7 @@ import { portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { parseLocal } from '@/lib/parseLocal';
 import { useStore } from '@/lib/store';
 import { config } from '@/lib/config';
-import { DISH_TABLE_VERSION, Item } from '@/parser';
+import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
 import { makeStyles } from '@/theme';
 
 /** per-user AI estimates a day (CEO: 3 for the closed test; matches the server's AI_USER_DAILY_CAP default) */
@@ -56,7 +56,11 @@ export default function Log() {
   const table: Draft[] = learnedItems
     .map((it, i) => ({ key: `t${i}`, it: (edits[`t${i}`] ?? it) as Draft['it'], ok: !!okd[`t${i}`] || !(edits[`t${i}`] ?? it).needs_confirmation, corrected: !!edits[`t${i}`] }))
     .filter((d) => edits[d.key] !== null);
-  const drafts = [...table, ...ai];
+  // rg7 B1: a dish the server matched that the phone has no units for yet (a newer table): held, 'Check amount', not counted;
+  // Add / leaving saves it for review. Once the table is pulled it is an ordinary row.
+  const isHeld = (d: Draft) => !!d.it.dish_id && !d.it.ai_estimate && !unitsKnown(d.it.dish_id);
+  const held = [...table, ...ai].filter(isHeld);
+  const drafts = [...table, ...ai].filter((d) => !isHeld(d));
   const pendingUnmatched = parsed.unmatched.filter((u) => !customs.some((c) => c.key === u) && !ai.some((a) => a.key.startsWith(`ai:${u}:`)));
 
   // AI-first: unknown spans go to the AI automatically (debounced, one batched call). Each span gets a STABLE id up front,
@@ -117,7 +121,8 @@ export default function Log() {
         toCustom(rows, '', why);
         done(); return;
       }
-      const got = r.items.filter((x) => x.ai_estimate);
+      // AI readings, and dishes the server's (newer) table has that the phone's doesn't (rg7 B1): never "Couldn’t estimate this"
+      const got = r.items.filter((x) => x.ai_estimate || (!!x.dish_id && !parser.dishById(x.dish_id)));
       spans.forEach((u, k) => {
         if (expired.current.has(ids[k])) return; // backstop already made this a failed row: ignore the late answer
         const its = splitBySpan(got, spans)[k];
@@ -166,7 +171,7 @@ export default function Log() {
   // Confirm batch (design-notes v3.2 Oct 15): only confirmed rows, plain confident rows and server-marked one_tap_ok rows are
   // added/counted. Unit mismatches, AI estimates, estimate_unverified and other choices stay open and out of every total.
   const nEstimating = pendingUnmatched.filter((u) => !offline.includes(u)).length;
-  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })), nEstimating, failedWaiting(customs));
+  const bp = plan(drafts.map((d) => ({ key: d.key, it: d.it as ServerItem, confirmed: d.ok })), nEstimating, failedWaiting(customs) + held.length);
   const kindByKey = new Map(drafts.map((d) => [d.key, kindOf(d.it as ServerItem, d.ok)] as const));
   const addedCustoms = customs.filter(failedCounts); // failed rows count only once their kcal is added
   const { kcal: total, protein } = draftTotals(bp.add.map((r) => r.it), addedCustoms);
@@ -175,9 +180,9 @@ export default function Log() {
   const nOpen = bp.open.length;
   const sum0 = logSummary({ kcal: total, protein, items: bp.add.length + addedCustoms.length, estimating: nEstimating, pending: nPending,
     toConfirm: 0, estimates: 0, needsKcal: 0 });
-  const openFailed = customs.length - addedCustoms.length;
+  const openFailed = customs.length - addedCustoms.length + held.length; // held rows wait like failed ones (never counted)
   const sum = nOpen || openFailed || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
-  const any = drafts.length + customs.length + pendingUnmatched.length > 0;
+  const any = drafts.length + held.length + customs.length + pendingUnmatched.length > 0;
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
   // every row Add would save is one the store guard refuses (e.g. 5001 roti) and there is nothing else to save: Add can't
   // save, so it shows disabled (Designer Oct 17) instead of looking enabled and doing nothing; the row says why
@@ -235,7 +240,10 @@ export default function Log() {
     const open = drafts.filter((d) => !bp.add.some((r) => r.key === d.key));
     const est = pendingUnmatched.filter((u) => !offline.includes(u) && !handedOff.current.has(idFor(u)));
     const failed = customs.filter((c) => !failedCounts(c));
-    if (!open.length && !failed.length && !est.length) return false;
+    if (!open.length && !failed.length && !est.length && !held.length) return false;
+    // held rows: saved as the confirmed reading; the store holds them for review ('Check amount') until the units come down
+    if (held.length) st.addEntries(held.map((d) => withJob(entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)));
+    for (const d of held) remove(d);
     const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => ({ id: idFor(u), span: u })), slot, text, date: localDate(), newId: st.newId });
     for (const f of failed) handedOff.current.add(f.id);
     for (const p of pending) handedOff.current.add(p.id);
@@ -297,6 +305,11 @@ export default function Log() {
                   <Refusal why={refused[d.key]} name={d.it.name} />
                 </Fragment>
               ))}
+            </Group>
+          ) : null}
+          {held.length ? (
+            <Group>
+              {held.map((d) => <HeldRow key={d.key} it={d.it} onRemove={() => remove(d)} />)}
             </Group>
           ) : null}
           {decisionDrafts.map((d) => (

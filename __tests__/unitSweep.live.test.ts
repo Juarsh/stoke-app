@@ -23,14 +23,18 @@ const agent = new nodeHttp.Agent({ keepAlive: true, maxSockets: 16 });
       const chunks: Buffer[] = [];
       res.on('data', (c) => chunks.push(c!));
       res.on('end', () => { const t = Buffer.concat(chunks).toString(); const st = res.statusCode;
+        if (st >= 500) fives.push(`${init.method ?? 'GET'} ${url.replace(URL, '')} ${st} ${t.slice(0, 80)}`);
         resolve({ ok: st >= 200 && st < 300, status: st, text: async () => t, json: async () => JSON.parse(t) }); });
     });
     rq.on('error', reject);
     if (init.body) rq.write(init.body);
     rq.end();
   });
+/** rg7: every server 5xx seen during the sweep (must stay empty) */
+const fives: string[] = [];
 const DAY = '2026-10-17';
 const run = Date.now().toString(36);
+const ODD = [0.25, 0.5, 1.5, 2.75, 3.3, 7, 13, 99.9, 333, 4999, 5001];
 type Case = { dish: string; unit: string; qty: number; mode: 'POST' | 'PATCH'; old?: boolean };
 type Bad = Case & { phone: number; server: number; summary: number; why: string };
 
@@ -72,6 +76,10 @@ async function save(user: string, entries: FoodEntry[], e: FoodEntry, guard: boo
       // the same unsupported unit queued by an older build (no guard): the server's needs_review must reach the row
       for (const u of UNITS) if (!parser.unitSupported(d.id, u)) cases.push({ dish: d.id, unit: u, qty: 1, mode, old: true });
       cases.push({ dish: d.id, unit: 'litre', qty: 1, mode }, { dish: d.id, unit: d.unit, qty: 0, mode });
+      // rg7 H1: the biggest amount in every unit the dish comes in (as the guard sees it, and as an older build's queue sends
+      // it), and odd amounts in its own unit; nothing may 500, list == summary
+      for (const u of parser.supportedUnits(d.id)) cases.push({ dish: d.id, unit: u, qty: 5000, mode }, { dish: d.id, unit: u, qty: 5000, mode, old: true });
+      for (const q of ODD) cases.push({ dish: d.id, unit: d.unit, qty: q, mode });
     }
     const bad: Bad[] = []; const flaggedCases: (Case & { why: string; reason?: string })[] = [];
     let n = 0, refused = 0, review = 0, flagged = 0, silentReview = 0;
@@ -111,9 +119,9 @@ async function save(user: string, entries: FoodEntry[], e: FoodEntry, guard: boo
     const POOL = 12;
     for (let i = 0; i < cases.length; i += POOL) await Promise.all(cases.slice(i, i + POOL).map((c, k) => work(c, i + k)));
     const by = (m: string) => bad.filter((b) => b.mode === m).length;
-    const out = { cases: cases.length, ran: n, guardRefused: refused, endedInReview: review, flaggedWithReason: flagged, reviewWithoutNote: silentReview, mismatches: bad.length, post: by('POST'), patch: by('PATCH') };
+    const out = { server5xx: fives.length, cases: cases.length, ran: n, guardRefused: refused, endedInReview: review, flaggedWithReason: flagged, reviewWithoutNote: silentReview, mismatches: bad.length, post: by('POST'), patch: by('PATCH') };
     console.log(JSON.stringify({ ...out, sample: bad.slice(0, 12) }, null, 1));
-    require('fs').writeFileSync(process.env.SWEEP_OUT ?? '/tmp/unit-sweep.json', JSON.stringify({ ...out, bad, flaggedCases }, null, 1));
-    expect(bad).toEqual([]); expect(silentReview).toBe(0);
+    require('fs').writeFileSync(process.env.SWEEP_OUT ?? '/tmp/unit-sweep.json', JSON.stringify({ ...out, bad, flaggedCases, fives: fives.slice(0, 50) }, null, 1));
+    expect(bad).toEqual([]); expect(silentReview).toBe(0); expect(fives).toEqual([]);
   });
 });

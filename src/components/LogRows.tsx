@@ -11,7 +11,7 @@ import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
-import { amountReason, qtyInRange, validTypedKcal } from '../lib/domain';
+import { amountReason, qtyInRange, UNITS_UNKNOWN, validTypedKcal } from '../lib/domain';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { AddButton, Badge, Row, Segmented, T } from './ui';
@@ -217,6 +217,31 @@ const useOpenStyles = makeStyles((t) => ({
 
 /** Failed AI estimate (retry failed / busy / daily limit): CUSTOM chip, "—", "not counted", the user's own kcal + Add.
  * Counts only once a kcal value is added; never part of the batch. */
+/** rg7 B1: a dish the server matched but the phone's table doesn't have units for yet (a newer table): held, never counted,
+ * 'Check amount'. Add / leaving saves it for review; it becomes a normal row once the phone has pulled the table. */
+export function HeldRow({ it, onRemove }: { it: Item; onRemove: () => void }) {
+  const s = { ...useStyles(), ...useOpenStyles() };
+  const portion = portionLabel(it.quantity, it.unit);
+  return (
+    <View style={s.open} testID="held-row">
+      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${portion}, ${UNITS_UNKNOWN}, not counted`}>
+        <FoodTile seed={it.dish_id || it.name} size={40} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Row style={{ gap: 6, flexWrap: 'wrap' }}>
+            <T v="bodyStrong">{cap(it.name)}</T>
+            <View style={s.warnChip}><T v="label" tone="warn">⚠ {UNITS_UNKNOWN}</T></View>
+          </Row>
+          <T v="caption" tone="muted">{portion}</T>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}><T v="number">—</T><T v="caption" tone="muted">not counted</T></View>
+      </View>
+      <Row style={{ gap: 8 }}>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Remove ${cap(it.name)}`}><T v="caption" tone="muted">Remove</T></Pressable>
+      </Row>
+    </View>
+  );
+}
+
 export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean; reason?: string; userDailyLimit?: number; resetsAt?: string }; onKcal: (v: string) => void; onAdd: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles(), ...useFailedStyles() }; const t = useTheme();
   const k = Number(row.kcal);

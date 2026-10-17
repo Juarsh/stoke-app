@@ -1,5 +1,5 @@
 // Builds a demo app state (mock user, profile, 10 days of logs) for QA screenshots.
-import { addDays, entryFromItem, localDate, reviewEntry, Slot } from '../src/lib/domain';
+import { addDays, entryFromItem, localDate, reopenRejected, reviewEntry, Slot } from '../src/lib/domain';
 import { DISH_TABLE_VERSION, parser } from '../src/parser';
 import { adoptServer, holdForUnits } from '../src/lib/serverRow';
 
@@ -41,7 +41,24 @@ if (process.argv[3] === 'rg6') {
     kcal: { low: 170, best: 210, high: 260 }, protein_g: { low: 4.5, best: 6, high: 7.5 }, carbs_g: 34, fat_g: 5, needs_confirmation: false } as never;
   entries.push(holdForUnits(entryFromItem(k, { id: 'g4', slot: 'breakfast', raw_text: '1 katori kodo khichdi', local_date: today, tableVersion: DISH_TABLE_VERSION })));
 }
-process.stdout.write(JSON.stringify({
+// 'rg7': a save the server answered 5xx three times (flagged, not counted), a newly pulled dish (zarda pulao, server table
+// v5) refused for a type pick (the server's types in Review), an older-table phone's dal in plates (unit note), an empty unit
+let dishUnits: unknown;
+if (process.argv[3] === 'rg7') {
+  const t = (id: string, dish: string, qty: number, unit: string, slot: Slot) => ({ ...entryFromItem({ ...parser.recompute(dish, qty, unit, ''), needs_confirmation: false },
+    { id, slot, raw_text: `${qty} ${unit} ${parser.dishById(dish)!.name}`, local_date: today, tableVersion: DISH_TABLE_VERSION }), qty, unit });
+  entries.push({ ...t('h1', 'rajma', 2, 'katori', 'dinner'), sync_error: 'server_error', server_failed: true });
+  dishUnits = { version: 5, units: { zarda_pulao: ['count', 'katori', 'spoon', 'plate', 'gram'] }, names: { zarda_pulao: 'zarda pulao' } };
+  const z = { ...parser.unknown('zarda'), dish_id: 'zarda_pulao', name: 'zarda pulao', matched_text: 'zarda', source: 'table', data_source: 'table', ai_estimate: false, quantity: 1, unit: 'katori',
+    kcal: { low: 320, best: 390, high: 470 }, protein_g: { low: 4, best: 5, high: 6.5 }, carbs_g: 72, fat_g: 9, needs_confirmation: false } as never;
+  const opts = [{ dish_id: 'veg_pulao', name: 'veg pulao', kcal: parser.recompute('veg_pulao', 1, 'katori', '').kcal.best, protein_g: parser.recompute('veg_pulao', 1, 'katori', '').protein_g.best },
+    { dish_id: 'zarda_pulao', name: 'zarda pulao', kcal: 390, protein_g: 5 }];
+  entries.push(reopenRejected(entryFromItem(z, { id: 'h2', slot: 'lunch', raw_text: '1 katori zarda', local_date: today, tableVersion: DISH_TABLE_VERSION }), 'variant_required', new Date(), opts));
+  const dal = parser.recompute('dal', 1, 'katori', '');
+  entries.push(adoptServer(t('h3', 'dal', 1, 'plate', 'snacks'), { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
+  entries.push(adoptServer({ ...t('h4', 'dal', 1, 'katori', 'snacks'), unit: '' }, { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
+}
+process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },
   profile: process.argv[3] === 'noprofile' ? null : { goal: 'maintain', sex: 'm', age: 30, heightCm: 172, weightKg: 68, activity: 'light', diet: 'veg', kcalTarget: 2350, proteinTarget: 82, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true },
   entries, steps: { [today]: 4210 }, queue: [], themePref: theme, challenge: { code: 'QA21AB', title: 'Hostel B Squad', startDate: addDays(today, -8), members: [{ name: 'Riya', days: 9 }, { name: 'Yas', days: 8 }, { name: 'Aman', days: 8 }, { name: 'Kabir', days: 6 }] }, aiQuota: { used: 0 },

@@ -62,12 +62,15 @@ async function say(r: ReactTestRenderer, text: string) {
 }
 const saved = () => st.entries.filter((e) => counted(e));
 
-test('entryRefusal: the 1-5000 rule is for typed kcal only; any table / dish row saves at its size', () => {
+test('entryRefusal: the 1-5000 rule is for typed kcal only; a table row saves at its size up to 10,000 kcal / 500 g (rg7 H1)', () => {
   const [roti] = parser.parse('60 roti').items;
   const big = entryFromItem({ ...roti, quantity: 60, needs_confirmation: false, kcal: { low: 6600, best: 6600, high: 6600 } }, { id: 't', slot: 'lunch', raw_text: '60 roti', local_date: today, tableVersion: DISH_TABLE_VERSION });
   expect(big.source).not.toBe('custom');
   expect(entryRefusal(big)).toBeNull();
-  expect(entryRefusal({ ...big, kcal: { low: 99999, best: 99999, high: 99999 } })).toBeNull();
+  expect(entryRefusal({ ...big, kcal: { low: 10000, best: 10000, high: 10000 } })).toBeNull();
+  expect(entryRefusal({ ...big, kcal: { low: 99999, best: 99999, high: 99999 } })).toBe('That’s too much for one entry. Try a smaller amount.');
+  expect(entryRefusal({ ...big, protein_g: { low: 500, best: 500, high: 500 } })).toBeNull();
+  expect(entryRefusal({ ...big, protein_g: { low: 501, best: 501, high: 501 } })).toBe('That’s too much for one entry. Try a smaller amount.');
   expect(entryRefusal({ ...big, kcal: { low: NaN, best: NaN, high: NaN } })).toBe(NO_KCAL_REASON);
   const typed = (k: number): FoodEntry => ({ ...big, dish_id: null, custom_name: 'x', source: 'custom', kcal: { low: k, best: k, high: k } });
   for (const k of [5001, 6000, 0, -1, NaN]) expect(entryRefusal(typed(k))).toBe(TYPED_KCAL_REASON);
@@ -154,7 +157,8 @@ describe('F2 (rg4): an amount the table can\'t take shows the range on the row; 
     const e = entryFromItem({ ...roti, needs_confirmation: false }, { id: 'q', slot: 'lunch', raw_text: 'roti', local_date: today, tableVersion: DISH_TABLE_VERSION });
     expect(entryRefusal({ ...e, qty: 0 })).toBe('Enter an amount between 0.5 and 5,000.');
     expect(entryRefusal({ ...e, qty: 5001 })).toBe('Enter an amount between 0.5 and 5,000.');
-    expect(entryRefusal({ ...e, qty: 5000, kcal: { low: 550000, best: 550000, high: 550000 } })).toBeNull();
+    expect(entryRefusal({ ...e, qty: 5000, kcal: { low: 550000, best: 550000, high: 550000 } })).toBe('That’s too much for one entry. Try a smaller amount.');
+    expect(entryRefusal({ ...e, qty: 90, kcal: { low: 9900, best: 9900, high: 9900 } })).toBeNull();
     // AI rows: the server's 0-5000 (food.go:969); typed rows 1-5000
     const ai = { ...e, dish_id: null, source: 'ai' as const, custom_name: 'wedding plate' };
     expect(entryRefusal({ ...ai, kcal: { low: 6000, best: 6000, high: 6000 } })).toBe('That’s too much for one entry. Try a smaller amount.');

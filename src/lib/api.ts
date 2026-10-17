@@ -30,7 +30,12 @@ export class ApiError extends Error {
 export type ServerRow = { version?: number; state?: string; dish_id?: string | null; name?: string; qty?: number; unit?: string; oil_level?: string;
   kcal_best?: number; kcal_low?: number; kcal_high?: number; protein_best?: number; protein_low?: number; protein_high?: number; carbs_g?: number; fat_g?: number };
 /** Units pulled with the server's dish table (stored on the phone). */
-export type DishUnits = { version: number; units: Record<string, string[]> };
+export type DishUnits = { version: number; units: Record<string, string[]>; names?: Record<string, string> };
+/** rg7 B4: the server's current dish table version from a response header (X-Dish-Table-Version); 0 when absent. */
+export function headerVersion(res: { headers?: { get?: (k: string) => string | null } }): number {
+  const v = Number(res.headers?.get?.('X-Dish-Table-Version') ?? '');
+  return Number.isInteger(v) && v > 0 ? v : 0;
+}
 /** A PATCH still refused after the one version-conflict retry: surfaced on the entry ("Couldn’t sync this"). */
 export const SYNC_CONFLICT = 'sync_conflict';
 /** Extra fields of a 422 {error:{code,item,dish_id,message,variant_options,fields}}; {} for the plain {error:"string"} shape. */
@@ -79,18 +84,27 @@ export function parseJobBody(b: JobBody, jobId?: string): ParseResponse {
 }
 
 /** onReset: called with next_reset_at whenever a server response carries it. */
-export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void) {
+/** onTableVersion: called with the server's dish table version (X-Dish-Table-Version) on every response that carries it,
+ * so a phone on an older table pulls the new one (rg7 B4). */
+export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void, onTableVersion?: (v: number) => void) {
   async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const r = await req0<T>(method, path, body);
+    return r.body;
+  }
+  async function req0<T>(method: string, path: string, body?: unknown): Promise<{ body: T; version: number }> {
     const tok = getToken();
     const res = await fetch(config.apiUrl + path, {
       method, headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
       body: body === undefined ? undefined : JSON.stringify(stripSex(body)),
     });
+    const version = headerVersion(res as unknown as Parameters<typeof headerVersion>[0]);
+    if (version && path !== '/v1/dishes') onTableVersion?.(version);
+    const out = (b: unknown) => ({ body: b as T, version });
     if (!res.ok) throw new ApiError(res.status, await res.text());
-    if (res.status === 204) return undefined as T;
+    if (res.status === 204) return out(undefined);
     const json = await res.json();
     if (onReset && json && typeof json.next_reset_at === 'string') onReset(json.next_reset_at);
-    return (res.status === 202 ? { status: 'pending', ...json } : json) as T;
+    return out(res.status === 202 ? { status: 'pending', ...json } : json);
   }
   return {
     mock: config.mock,
@@ -129,16 +143,20 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
      * version. null when the server doesn't send them (older build): the phone keeps what it has. */
     async getDishUnits(): Promise<DishUnits | null> {
       if (config.mock) return null;
-      const rows = await req<{ id?: string; version?: number; supported_units?: unknown }[]>('GET', '/v1/dishes');
+      const got = await req0<{ id?: string; name?: string; version?: number; supported_units?: unknown }[]>('GET', '/v1/dishes');
+      const rows = got.body;
       if (!Array.isArray(rows)) return null;
       const units: Record<string, string[]> = {};
-      let version = 1;
+      const names: Record<string, string> = {};
+      let maxDish = 1;
       for (const d of rows) {
         if (typeof d?.id !== 'string') continue;
-        version = Math.max(version, d.version ?? 1);
+        maxDish = Math.max(maxDish, d.version ?? 1);
+        if (typeof d.name === 'string' && d.name) names[d.id] = d.name;
         if (Array.isArray(d.supported_units) && d.supported_units.every((u) => typeof u === 'string') && d.supported_units.length) units[d.id] = d.supported_units as string[];
       }
-      return Object.keys(units).length ? { version, units } : null;
+      // rg7 B5: the table version is the server's header (a version that only removes a unit bumps no dish); older servers: max per dish
+      return Object.keys(units).length ? { version: got.version || maxDish, units, names } : null;
     },
     async upsertEntry(e: FoodEntry): Promise<{ version?: number; row?: ServerRow }> {
       if (config.mock) return {};
@@ -189,7 +207,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
         }
       }
       const item: ItemIn = e.dish_id
-        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
+        ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: parser.saveVersion(e.dish_id, e.dish_table_version), ...nums, ...span,
           ...variantField(e), ...job } as ItemIn
         : { custom_name: serverName(e.custom_name), source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
       const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });

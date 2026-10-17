@@ -10,7 +10,8 @@ import type { ServerRow } from './api';
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
 export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued (0 = straight to items to review) */ at?: number;
   /** ms when its AI job started (Log estimate start, else when queued): the 35-minute backstop (aiBackstop) runs from here */ queued_at?: number }
-type Retry = { tries: number; nextAt?: number };
+/** fives: consecutive 5xx answers for this op (rg7 H1: 3 in a row -> flagged on the row, off the queue head) */
+type Retry = { tries: number; nextAt?: number; fives?: number };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)
   | ({ kind: 'delete'; id: string } & Retry)
@@ -77,6 +78,10 @@ export function isStuck(e: unknown, op: Op, tries: number): boolean {
   return s >= 400 && s < 500 && s !== 401 && s !== 408 && s !== 429;
 }
 
+/** rg7 H1: an entry save the server answered 5xx this many times in a row is flagged on its row ("Couldn’t sync this. Tap
+ * to retry", tapping retries) and leaves the queue head so later ops proceed; a delete goes to the back of the queue. */
+export const MAX_FIVES = 3;
+export const SERVER_ERROR = 'server_error';
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
 /** Sends ops in order; stops at the first failure or backoff wait. Returns the remaining queue and entries resolved from pending foods. */
@@ -158,7 +163,16 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
         rest.shift(); continue;
       }
       const cur = rest[0];
-      rest[0] = { ...cur, tries: op.tries + 1, nextAt: now + backoffMs(op.tries + 1) } as Op;
+      // offline (no status) resets the 5xx run; a 5xx adds to it
+      const fives = statusOf(e) >= 500 ? (op.fives ?? 0) + 1 : 0;
+      if (fives >= MAX_FIVES && op.kind === 'upsert') {
+        failed.push({ id: op.entry.id, code: SERVER_ERROR, sent: op.entry });
+        rest.shift(); continue;
+      }
+      if (fives >= MAX_FIVES && op.kind === 'delete') { // nothing to flag on a deleted row: retried after the others
+        rest.shift(); rest.push({ ...cur, tries: op.tries + 1, fives: 0, nextAt: now + backoffMs(op.tries + 1) } as Op); continue;
+      }
+      rest[0] = { ...cur, tries: op.tries + 1, fives, nextAt: now + backoffMs(op.tries + 1) } as Op;
       break;
     }
   }

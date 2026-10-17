@@ -15,13 +15,15 @@ export function aiStatus(r: ParseResponse | unknown): AiStatus {
   const p = r as ParseResponse;
   if (p.ai_state === 'estimating') return 'estimating';
   if (p.ai_state === 'failed') return 'failed';
-  if (p.ai_state === 'answered') return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
+  if (p.ai_state === 'answered') return p.items?.some(answered) ? 'ready' : 'failed';
   // answers from a server without ai_state (mock / offline): the old fallback mapping
   if (['rate_limited', 'unavailable', 'timeout'].includes(p.fallback_reason ?? '') || (!p.fallback_reason && p.fallback === 'rate_limited')) return 'estimating';
   if (['gave_up', 'bad_request', 'user_limit', 'daily_limit', 'error'].includes(p.fallback_reason ?? '')) return 'failed';
   if (['error', 'busy', 'gave_up', 'bad_request', 'cap_reached', 'global_cap_reached', 'daily_limit', 'not_configured'].includes(p.fallback)) return 'failed';
-  return p.items?.some((i) => i.ai_estimate) ? 'ready' : 'failed';
+  return p.items?.some(answered) ? 'ready' : 'failed';
 }
+/** an answer for an unknown span: an AI reading, or a dish of the server's newer table the phone doesn't have yet (rg7 B1) */
+const answered = (i: { ai_estimate?: boolean; dish_id?: string }) => !!i.ai_estimate || (!!i.dish_id && !parser.dishById(i.dish_id));
 
 /** How long to wait before the next poll of a job that is still estimating. next_attempt_at (RFC 3339) is a hint:
  * wait until then, clamped so a far-off hint never stalls the row and a past one still backs off a little. */
