@@ -20,7 +20,7 @@ export function useDay(date = localDate()) {
     const entries = st.entries.filter((e) => e.local_date === date && counted(e));
     const reviews = st.entries.filter((e) => e.local_date === date && toReview(e));
     /** entries whose change could not be synced: only those rows say "Couldn’t sync this. Tap to retry" */
-    const syncFailed = st.entries.filter((e) => e.local_date === date && !!e.sync_error);
+    const syncFailed = st.entries.filter((e) => e.local_date === date && (!!e.sync_error || !!e.sync_retrying));
     const allPending = pendingFor(st.queue, date);
     const now = Date.now();
     const pending = allPending.filter((f) => !isStale(f, now));

@@ -27,6 +27,7 @@ const EMPTY: Persisted = { profileError: null, user: null, profile: null, entrie
 const KEY = 'app-state-v1';
 /** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
 /** The phone's entry is still the one that op sent (the user has not changed it since). */
+const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : (o as { id: string }).id);
 const unchangedSince = (cur: FoodEntry | undefined, sent: FoodEntry) => !!cur && cur.updated_at === sent.updated_at && !cur.deleted_at;
 /** After a flush: server versions recorded (a synced entry loses its sync error); refused / failed ops are handled ONLY when
  * the user has not changed the entry since it was sent, so a refusal never swallows a later typed value. Pure (testable). */
@@ -45,6 +46,8 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     const v = r.versions[x.id];
     if (typeof v === 'number') n = { ...n, server_version: v, ...(n.sync_error && !failed.has(x.id) ? { sync_error: undefined } : {}) };
     if (failed.has(x.id)) n = { ...n, sync_error: failed.get(x.id) };
+    // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
+    if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
   });
   return { ...p, queue, entries };
@@ -131,7 +134,7 @@ function useStoreValue() {
     /** Explicit user edit: the only way saved numbers change (same store guard). */
     updateEntry: (e: FoodEntry) => upd((p) => {
       if (!savableEntry(e)) return p;
-      const n = { ...e, sync_error: undefined, updated_at: new Date().toISOString() };
+      const n = { ...e, sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),
     deleteEntry: (id: string) => upd((p) => ({
@@ -171,13 +174,13 @@ function useStoreValue() {
       // typed: plain custom, without the AI job's provenance (job_abandoned never refuses it)
       const n: FoodEntry = { ...old, dish_id: null, custom_name: old.raw_text || old.review_item?.name || 'item', source: 'custom', kcal: { low: k, best: k, high: k }, protein_g: z,
         carbs_g: 0, fat_g: 0, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, variant_dish_id: undefined, job_id: undefined,
-        sync_error: undefined, updated_at: new Date().toISOString() } as FoodEntry;
+        sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() } as FoodEntry;
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }),
     /** "Couldn’t sync this. Tap to retry": the entry's current state goes through the queue again. */
     retrySync: (id: string) => upd((p) => {
       const e = p.entries.find((x) => x.id === id); if (!e?.sync_error) return p;
-      const n = { ...e, sync_error: undefined };
+      const n = { ...e, sync_error: undefined, sync_retrying: true };
       return { ...p, entries: p.entries.map((x) => (x.id === id ? n : x)),
         queue: enqueue(p.queue, n.deleted_at ? { kind: 'delete', id, tries: 0 } : { kind: 'upsert', entry: n, tries: 0 }) };
     }),

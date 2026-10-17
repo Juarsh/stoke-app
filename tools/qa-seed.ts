@@ -19,6 +19,11 @@ if (process.argv[3] === 'aireview') {
   entries.push(reviewEntry(ai('kombucha', 60, 0), o('r1', 'kombucha')), reviewEntry(ai('sushi', 320, 12), o('r2', 'sushi')), reviewEntry(ai('hummus', 180, 6), o('r3', 'hummus')),
     reviewEntry({ ...parser.unknown('zanthu'), needs_input: true } as never, o('r4', 'zanthu')), reviewEntry(parser.parse('biryani').items[0], o('r5', 'biryani')));
 }
+// 'syncfail': today's lunch (rajma) could not be synced: its row says "Couldn’t sync this. Tap to retry" and still counts
+if (process.argv[3] === 'syncfail') {
+  const i = entries.findIndex((e) => e.local_date === today && e.slot === 'lunch' && e.dish_id === 'rajma');
+  entries[i] = { ...entries[i], sync_error: 'sync_conflict' };
+}
 process.stdout.write(JSON.stringify({
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },
   profile: process.argv[3] === 'noprofile' ? null : { goal: 'maintain', sex: 'm', age: 30, heightCm: 172, weightKg: 68, activity: 'light', diet: 'veg', kcalTarget: 2350, proteinTarget: 82, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true },

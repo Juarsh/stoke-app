@@ -52,6 +52,8 @@ export interface FoodEntry {
   server_version?: number;
   /** this entry's change could not be synced (error code): its row says "Couldn’t sync this. Tap to retry" */
   sync_error?: string;
+  /** the user tapped retry and that op has not come back yet: the row shows a spinner (never changes what is counted) */
+  sync_retrying?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;

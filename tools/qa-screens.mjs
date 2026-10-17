@@ -77,6 +77,14 @@ for (const theme of ['light', 'dark']) {
   await shot(rv, `review-ai-rows-after-3-taps-${theme}`, { fullPage: true });
   if (await rv.getByText(/All look right/).count()) throw new Error('bulk button shown with no eligible rows');
   await rv.context().close();
+  // Today: one entry that could not be synced (row scrolled into view; its kcal still counts in the ring)
+  const sf = await page(theme, 'syncfail');
+  await sf.goto(BASE + '/'); await wait(sf, 3000);
+  const sfRow = sf.getByRole('button', { name: /couldn’t sync this/i });
+  if ((await sfRow.count()) !== 1) throw new Error(`expected 1 sync-failed row, got ${await sfRow.count()}`);
+  await sfRow.scrollIntoViewIfNeeded(); await wait(sf, 500);
+  await shot(sf, `today-sync-retry-${theme}`);
+  await sf.context().close();
   // step 2 at 360x800: 'Start logging' must be fully above the fold (fails QA otherwise)
   const o2 = await page(theme, 'noprofile', { width: 360, height: 800 });
   await o2.goto(BASE + '/onboarding'); await wait(o2, 2000);

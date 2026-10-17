@@ -11,7 +11,8 @@ jest.mock('../src/lib/kv', () => ({ kv: { get: async () => mockSaved, set: async
 let mockN = 0;
 jest.mock('expo-crypto', () => ({ randomUUID: () => `id${++mockN}` }));
 
-import { StoreProvider, Store, useStore } from '../src/lib/store';
+import { applyFlush, StoreProvider, Store, useStore } from '../src/lib/store';
+import type { Op } from '../src/lib/syncQueue';
 import { counted, dayTotals, FoodEntry, reviewEntry, savableEntry, validTypedKcal } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION } from '../src/parser';
 import { TextInput } from 'react-native';
@@ -146,6 +147,51 @@ test('a conflict that never clears: only that row shows it, later ops keep flowi
   expect(ent('C').sync_error).toBeUndefined();
   expectInSync();
   expect(server.rows.get('C')!.kcal).toBe(700);
+});
+
+test('retry spinner (Designer Oct 17): retrying while the op is in flight, the kcal still counts; cleared when it syncs or fails again', async () => {
+  await boot();
+  server.alwaysConflict.add('C');
+  await act(async () => { U(700)(st); });
+  await settle();
+  expect(ent('C')).toMatchObject({ sync_error: 'sync_conflict' });
+  const phoneKcal = () => dayTotals(st.entries.filter((e) => e.local_date === DAY && counted(e))).kcal;
+  expect(phoneKcal()).toBe(700); // the failed row still counts on the phone
+  // retry that fails again: retrying while in flight, then back to the failed state (no spinner)
+  server.holdNext = 1;
+  await act(async () => { st.retrySync('C'); });
+  await tick(4);
+  expect(server.held).toHaveLength(1);
+  expect(ent('C').sync_retrying).toBe(true); expect(ent('C').sync_error).toBeUndefined();
+  expect(phoneKcal()).toBe(700);
+  await act(async () => { st.retrySync('C'); }); // a second tap while retrying does nothing
+  expect(st.queue.filter((o) => o.kind === 'upsert')).toHaveLength(1);
+  await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+  await settle();
+  expect(ent('C').sync_retrying).toBeUndefined(); expect(ent('C').sync_error).toBe('sync_conflict');
+  expect(phoneKcal()).toBe(700);
+  // retry that succeeds: spinner while in flight, then a normal synced row
+  server.alwaysConflict.clear(); server.holdNext = 1;
+  await act(async () => { st.retrySync('C'); });
+  await tick(4);
+  expect(ent('C').sync_retrying).toBe(true);
+  await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+  await settle();
+  expect(ent('C').sync_retrying).toBeUndefined(); expect(ent('C').sync_error).toBeUndefined();
+  expectInSync();
+  expect(phoneKcal()).toBe(700);
+});
+
+test('retry spinner on a delete (no version comes back): cleared when the delete is done, or back to failed', () => {
+  const del = { kind: 'delete', id: 'C', tries: 0 } as Op;
+  const e = { ...custom('C', 300), deleted_at: '2026-10-17T05:00:00Z', sync_retrying: true };
+  const none = { rest: [], resolved: [], rejected: [], versions: {}, failed: [] };
+  expect(applyFlush({ entries: [e], queue: [del] }, [del], none).entries[0].sync_retrying).toBeUndefined();
+  const again = applyFlush({ entries: [e], queue: [del] }, [del], { ...none, failed: [{ id: 'C', code: 'http_403' }] }).entries[0];
+  expect(again).toMatchObject({ sync_error: 'http_403' }); expect(again.sync_retrying).toBeUndefined();
+  // a flush that did not send this row's op (still queued) keeps the spinner
+  const other = { kind: 'delete', id: 'X', tries: 0 } as Op;
+  expect(applyFlush({ entries: [e], queue: [other, del] }, [other], { ...none, rest: [] }).entries[0].sync_retrying).toBe(true);
 });
 
 describe('typed kcal after a late AI save got 409 job_abandoned (Tester item 6)', () => {

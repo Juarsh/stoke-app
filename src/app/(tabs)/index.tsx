@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { PendingRow } from '@/components/PendingRow';
 import { ReviewLink } from '@/components/ReviewLink';
 import { RingHero } from '@/components/RingHero';
+import { SyncFailedRow } from '@/components/SyncFailedRow';
 import { Card, Row, T } from '@/components/ui';
 import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
@@ -99,11 +100,8 @@ export default function Today() {
             </Pressable>
           ))}
           {d.syncFailed.map((e) => (
-            <Pressable key={`sync-${e.id}`} onPress={() => st.retrySync(e.id)} style={s.reviewRow} accessibilityRole="button"
-              accessibilityLabel={`${nameOf(e)}: couldn’t sync this. Tap to retry`}>
-              <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {nameOf(e)}{e.deleted_at ? ' (deleted)' : ''}</T>
-              <T v="caption" tone="warn">⚠ Couldn’t sync this. Tap to retry</T>
-            </Pressable>
+            <SyncFailedRow key={`sync-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.deleted_at ? ' (deleted)' : ''}`}
+              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} onRetry={() => st.retrySync(e.id)} />
           ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>
