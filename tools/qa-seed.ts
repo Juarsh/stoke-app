@@ -81,7 +81,7 @@ if (process.argv[3] === 'rg7') {
   // next build: the same, but the server's copy couldn't be read: amount "—", counted at the server's last 220 (shown 220)
   const h10 = t('h10', 'roti', 3, 'count', 'snacks');
   entries.push({ ...h10, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, kept_on_server: true,
-    server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' } as never);
+    server_note: 'Not deleted: the server kept this entry. This entry is shared. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' } as never);
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },
