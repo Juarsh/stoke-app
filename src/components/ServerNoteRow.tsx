@@ -7,13 +7,13 @@ import { makeStyles } from '../theme';
 import { Row, T } from './ui';
 
 export const NOTE_OK_COPY = 'OK';
-export function ServerNoteRow({ title, kcal, note, onDismiss }: { title: string; kcal: number; note: string; onDismiss: () => void }) {
+export function ServerNoteRow({ title, kcal, note, onDismiss }: { title: string; /** undefined: not known (shows '— kcal') */ kcal?: number; note: string; onDismiss: () => void }) {
   const s = useStyles();
   return (
     <View style={s.row} testID="server-note-row">
       <Row style={{ gap: 10, justifyContent: 'space-between' }}>
         <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
-        <T v="caption" tone="muted" testID="server-note-kcal">{`${Math.round(kcal).toLocaleString('en-IN')} kcal`}</T>
+        <T v="caption" tone="muted" testID="server-note-kcal">{kcal === undefined ? '— kcal' : `${Math.round(kcal).toLocaleString('en-IN')} kcal`}</T>
       </Row>
       <Row style={{ gap: 6, alignItems: 'center' }}>
         <T v="caption" tone="warn" style={s.line} testID="server-note">{note}</T>

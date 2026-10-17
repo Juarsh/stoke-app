@@ -72,6 +72,9 @@ export interface FoodEntry {
   /** next build: local only. Deleted while an edit to it had not reached the server (still queued, or flagged 5xx): the
    * phone's numbers are that edit, not the server's. If the server refuses the delete, the server's copy comes back and the note names the edit. */
   unsynced_edit?: boolean;
+  /** next build (CEO): a refused delete restored this row but the server's copy couldn't be read: its amount is unknown, so
+   * it shows "—" (never the phone's unsaved amount) and counts the server's last known numbers until a later read succeeds */
+  amount_unknown?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 /** live on the server: not deleted, or deleted on the phone but the delete was flagged (rg9 B3: the server still counts it) */
@@ -93,7 +96,8 @@ export function seedServerCounts(e: FoodEntry): FoodEntry {
 /** edge (a): a flagged row (5xx save or delete) the server has stored (it gave a version) but whose numbers the phone doesn't
  * know: an older build's queued edit means the phone's copy isn't the server's, so nothing could be seeded (rg8 F-1). Its
  * server copy is fetched (GET /v1/entries/{id}) so it counts what the server counts instead of 0. */
-export const needsServerCopy = (e: FoodEntry) => (!!e.server_failed || !!e.delete_failed) && !e.server_counts && typeof e.server_version === 'number';
+export const needsServerCopy = (e: FoodEntry) => (!!e.amount_unknown && !e.deleted_at)
+  || ((!!e.server_failed || !!e.delete_failed) && !e.server_counts && typeof e.server_version === 'number');
 /** Only a confident table match may be saved without the user seeing it. */
 export const autoSavable = (it: Item) => it.source === 'table' && !it.needs_confirmation && !it.ai_estimate;
 /** Entry awaiting review: placeholder numbers are zero and never shown as a number. */

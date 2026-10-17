@@ -132,9 +132,9 @@ export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[nu
     const copy = k.row && k.row.state ? k.row : undefined;
     const note = `${keptNote(k.reason)} ${editNotSaved(editWhat(e))}`;
     if (copy) return { ...serverCopy(n, copy), server_note: note };
-    // the server's copy couldn't be read (GET failed): counted as the server last had it (server_counts), flagged
-    const sc = n.server_counts;
-    return { ...n, server_counts: sc, server_failed: sc ? true : n.server_failed, server_note: note };
+    // the server's copy couldn't be read (GET failed): counted as the server last had it (server_counts; nothing if unknown),
+    // flagged, and the amount shows "—" (amount_unknown) until a later read brings the server's qty, unit and numbers
+    return { ...n, server_failed: true, amount_unknown: true, server_note: note };
   }
   if (k.row && k.row.state) {
     const rev = k.row.state === 'needs_review';
@@ -158,6 +158,14 @@ export function applyServerCopies<P extends { entries: FoodEntry[]; queue: Op[] 
   const entries = p.entries.map((e) => {
     if (!(e.id in got) || !needsServerCopy(e)) return e;
     const row = got[e.id];
+    // next build: a restored row whose amount was unknown: now the server's row (qty, unit, numbers; shown == counted), note kept.
+    // 404: the server no longer has it (deleted elsewhere): gone here too
+    if (e.amount_unknown) {
+      if (row === null) { changed = true; won.add(e.id); return { ...e, deleted_at: new Date().toISOString(), amount_unknown: undefined, server_failed: undefined, server_counts: undefined, server_note: undefined, kept_on_server: undefined }; }
+      if (!row || typeof row !== 'object' || !row.state) return e;
+      changed = true;
+      return { ...serverCopy(e, row), amount_unknown: undefined };
+    }
     if (row === null) {
       if (!e.deleted_at || !e.delete_failed) return e;
       changed = true; won.add(e.id);
@@ -169,7 +177,7 @@ export function applyServerCopies<P extends { entries: FoodEntry[]; queue: Op[] 
     return { ...e, server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: row.kcal_best ?? 0, protein: row.protein_best ?? 0 } };
   });
   if (!changed) return p;
-  return { ...p, entries, queue: won.size ? p.queue.filter((o) => !(o.kind === 'delete' && won.has(o.id))) : p.queue };
+  return { ...p, entries, queue: won.size ? p.queue.filter((o) => !((o.kind === 'delete' || o.kind === 'upsert') && won.has(opId(o)))) : p.queue };
 }
 
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
@@ -246,6 +254,9 @@ function useStoreValue() {
     if (api.mock || syncing.current) return; // mock mode: nothing leaves the device; queue is kept for later
     // job poll: anything past the 35-minute cutoff is converted first (the queue change re-runs sync without its poll)
     if (expirePending(entriesRef.current, s.queue).converted.length) { expireAi(); return; }
+    // next build: restored rows whose amount is unknown ("—"): read the server's copy on every sync, due ops or not
+    const unknown = entriesRef.current.filter((e) => e.amount_unknown && !e.deleted_at).map((e) => e.id);
+    if (unknown.length) await fillServerCopies(unknown);
     // head still in its backoff (offline): the headAt timer wakes us. Flushing now would only rewrite the queue, which
     // re-creates sync and re-runs the effect below: a hot re-render loop while offline (also in aaf1555)
     if (!hasDue(s.queue, Date.now())) return; // rg8 B3: only ops on a parked op's id wait; others are due
@@ -270,6 +281,15 @@ function useStoreValue() {
     } finally { syncing.current = false; }
   }, [api, sender, s.queue, expireAi, pullUnits, fillServerCopies]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
+  // next build: while a restored row's amount is unknown ("—"), ask the server again every 30 s and when the app comes back
+  const anyUnknown = s.entries.some((e) => e.amount_unknown && !e.deleted_at);
+  useEffect(() => {
+    if (!ready || !s.user || api.mock || !anyUnknown) return;
+    const again = () => { void fillServerCopies(entriesRef.current.filter((e) => e.amount_unknown && !e.deleted_at).map((e) => e.id)); };
+    const t = setInterval(again, 30_000);
+    const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') again(); });
+    return () => { clearInterval(t); sub?.remove?.(); };
+  }, [ready, s.user, anyUnknown, api, fillServerCopies]);
   // retry with backoff: wake up when the head op's wait is over
   const headAt = nextDueAt(s.queue);
   useEffect(() => {
@@ -291,7 +311,7 @@ function useStoreValue() {
       // before the edit: what the server has for a synced row nothing is queued for (rg8 F-1)
       const old = p.entries.find((x) => x.id === e.id);
       const was = old && !p.queue.some((o) => opId(o) === e.id) ? seedServerCounts(old) : old;
-      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, kept_on_server: undefined, updated_at: new Date().toISOString() };
+      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, kept_on_server: undefined, amount_unknown: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }); return null; };
   return {
@@ -331,6 +351,8 @@ function useStoreValue() {
       return updateEntry({ ...e, dish_id: dishId, qty: it.quantity, unit: it.unit, kcal: it.kcal, protein_g: it.protein_g, carbs_g: it.carbs_g, fat_g: it.fat_g,
         variant_dish_id: dishId, variant_options: undefined, confirmed: true, needs_review: false } as FoodEntry);
     },
+    /** next build: read the server's copy of rows whose amount is unknown ("—") now (Progress tap) */
+    refreshServerCopies: () => fillServerCopies(entriesRef.current.filter((e) => e.amount_unknown && !e.deleted_at).map((e) => e.id)),
     /** dismiss the "Saved as …" note on a row the server stored with other numbers */
     clearServerNote: (id: string) => upd((p) => ({ ...p, entries: p.entries.map((x) => (x.id === id && x.server_note && !x.needs_review ? { ...x, server_note: undefined } : x)) })),
     deleteEntry: (id: string) => upd((p) => {

@@ -692,6 +692,59 @@ describe('dropped edit (CEO: always restore, never re-send): a refused delete br
     expect(writesAfter(n0)).toHaveLength(0); expect(st.queue).toHaveLength(0);
     expect(dayTotals(st.entries).kcal).toBe(220); expect(serverTotal()).toBe(220);
   });
+  test('GET 503 too: the amount shows “—” (never the phone’s 3 pieces), kcal shown == counted (220); a later sync reads the server’s row and shows it', async () => {
+    server.rows.set('F', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 });
+    server.patch5xx = true;
+    await boot(<Today />, [F()]);
+    await edit3();
+    server.patch5xx = false; server.getDown = true; server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    let row = st.entries.find((x) => x.id === 'F')!;
+    expect(row).toMatchObject({ deleted_at: null, amount_unknown: true, server_failed: true, server_counts: { kcal: 220, protein: 7 } });
+    const title = () => r.root.findAll((n) => n.props.testID === 'server-note-row' && typeof n.type !== 'string').map((n) => texts({ root: n } as never).join(''));
+    expect(title()[0]).toContain('Breakfast · Roti · —'); expect(title()[0]).not.toMatch(/3 pieces?\b.*kcal|3 count/);
+    expect(r.root.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string').props.children).toBe('220 kcal');
+    expect(dayTotals(st.entries).kcal).toBe(220);
+    // still down: a sync with nothing queued asks again, changes nothing
+    await later();
+    expect(st.entries.find((x) => x.id === 'F')!.amount_unknown).toBe(true);
+    // the server answers: the row is the server's (2 pieces, 220, version 1), no "—", not flagged, note kept; nothing sent
+    server.getDown = false; const n0 = server.log.length;
+    await later(2);
+    row = st.entries.find((x) => x.id === 'F')!;
+    expect(row).toMatchObject({ qty: 2, unit: 'count', server_version: 1, server_counts: { kcal: 220, protein: 7 } });
+    expect(row.kcal.best).toBe(220); expect(row.amount_unknown).toBeUndefined(); expect(row.server_failed).toBeUndefined(); expect(row.server_note).toContain(NOT_SAVED);
+    expect(title()[0]).not.toContain('· —');
+    expect(r.root.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string').props.children).toBe('220 kcal');
+    expect(writesAfter(n0)).toHaveLength(0); expect(dayTotals(st.entries).kcal).toBe(serverTotal());
+  });
+  test('Progress: a past-day row whose amount is unknown reads “· —” with the counted kcal; tapping reads the server’s copy (no editor on a stale amount)', async () => {
+    const y = addDays(DAY, -1);
+    const u = { ...tableEntry('U', 'roti', 3, 'count', { slot: 'dinner', local_date: y }), server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, kept_on_server: true,
+      server_note: `${KEPT_COPY} ${NOT_SAVED}` } as FoodEntry;
+    server.rows.set('U', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 }); server.getDown = true;
+    await boot(<Progress />, [u]);
+    const day = r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /, 1 items, /.test(n.props.accessibilityLabel));
+    expect(day[0].props.accessibilityLabel).toContain('220 calories');
+    await act(async () => { day[0].props.onPress(); });
+    expect(textOf(r)).toContain('Dinner · roti · —'); expect(textOf(r)).not.toContain('3 pieces');
+    server.getDown = false;
+    const entry = r.root.findAll((n) => /^Edit /i.test(n.props.accessibilityLabel ?? '') && typeof n.props.onPress === 'function')[0];
+    await act(async () => { entry.props.onPress(); }); await tick();
+    expect(st.entries.find((x) => x.id === 'U')).toMatchObject({ qty: 2 }); expect(st.entries.find((x) => x.id === 'U')!.amount_unknown).toBeUndefined();
+    expect(textOf(r)).toContain('Dinner · roti · 2 pieces'); expect(r.root.findAll((n) => n.props.testID === 'edit-sheet').length).toBe(0);
+  });
+  test('applyServerCopies (pure), unknown amount: a copy -> the server’s row; 404 -> gone here too; no answer -> unchanged', () => {
+    const u = { ...tableEntry('U', 'roti', 3, 'count'), server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, server_note: 'n' } as FoodEntry;
+    const p = { entries: [u], queue: [] as Op[] };
+    const a = applyServerCopies(p, { U: { version: 2, state: 'confirmed', qty: 2, unit: 'count', kcal_best: 220, protein_best: 7 } }).entries[0];
+    expect(a).toMatchObject({ qty: 2, server_version: 2, server_note: 'n' }); expect(a.amount_unknown).toBeUndefined(); expect(dayTotals([a]).kcal).toBe(220);
+    const g = applyServerCopies(p, { U: null }).entries[0];
+    expect(g.deleted_at).toBeTruthy(); expect(counted(g)).toBe(false);
+    expect(applyServerCopies(p, {})).toBe(p);
+    // never counted at the phone's 330 while unknown
+    expect(dayTotals([u]).kcal).toBe(220);
+  });
   test('restoreKept (pure): edited + same-version copy -> the server’s copy + note (never the edit); newer copy -> same; no copy -> flagged at server_counts + note', () => {
     const del = (e: FoodEntry) => ({ ...e, deleted_at: '2026-10-17T05:00:00Z', unsynced_edit: true });
     const e3 = { ...tableEntry('A', 'roti', 3, 'count'), server_version: 2, server_counts: { kcal: 220, protein: 7 } } as FoodEntry;
@@ -702,7 +755,7 @@ describe('dropped edit (CEO: always restore, never re-send): a refused delete br
     expect(b).toMatchObject({ qty: 1, server_version: 3, server_counts: { kcal: 110, protein: 3 } }); expect(b.kcal.best).toBe(110);
     expect(dayTotals([b]).kcal).toBe(110); expect(b.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
     const c = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true });
-    expect(c.server_failed).toBe(true); expect(dayTotals([c]).kcal).toBe(220); expect(c.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
+    expect(c.server_failed).toBe(true); expect(c.amount_unknown).toBe(true); expect(dayTotals([c]).kcal).toBe(220); expect(c.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
   });
 });
 

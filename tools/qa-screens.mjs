@@ -145,6 +145,12 @@ for (const theme of ['light', 'dark']) {
   }
   await h.getByText('This entry is locked for now.', { exact: false }).first().scrollIntoViewIfNeeded(); await wait(h, 400);
   await shot(h, `today-delete-kept-edit-${theme}`);
+  // next build: a restored row whose server copy couldn't be read: amount "—", kcal shown == counted (220)
+  const unk = h.getByTestId('server-note-row').filter({ hasText: 'Snacks · Roti · —' });
+  if ((await unk.count()) !== 1) throw new Error('no "Snacks · Roti · —" row');
+  if (!/Snacks · Roti · —\s*220 kcal/.test(await unk.innerText())) throw new Error(`unknown-amount row: ${await unk.innerText()}`);
+  await unk.scrollIntoViewIfNeeded(); await wait(h, 400);
+  await shot(h, `today-amount-unknown-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
     if ((await h.getByText(t, { exact: false }).count()) < 1) throw new Error(`Review lacks: ${t}`);

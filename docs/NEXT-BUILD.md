@@ -9,6 +9,9 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 2. [x] Edit dropped when a delete is refused: an edit still queued at that point is lost with no message, and the row shows the phone's qty while counting the server's 220. Restore qty and unit from the server row, or re-queue the edit.
    Done (CEO, Oct 17: always restore, never re-send): a delete that replaced an unsynced edit (queued, or flagged 5xx) is marked; if the server refuses it, the server's copy is read (GET, or the 409's copy) and the row ALWAYS takes the server's qty, unit and numbers (shown == counted). The edit is never re-sent; the note after the reason says "Your change to 3 pieces wasn’t saved. Edit it again if you still want it." If the copy can't be read, the row counts the server's last known numbers, flagged, with the same note.
 
+## CEO-approved (Oct 17, evening)
+- [x] Refused delete whose server copy can't be read either: the row showed the phone's qty while counting the server's last kcal. Now the amount reads "—" (Today "Dinner · Roti · —", Progress "· —"), kcal shown == counted, until a later read (every sync, every 30 s, app foreground, or tapping the Progress row) brings the server's qty, unit and numbers; then it shows the server's row. 404 then = gone.
+
 ## rg10 notes (Tester)
 - "Saved as 2 count" reads badly. Needs pieces wording.
 - The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.

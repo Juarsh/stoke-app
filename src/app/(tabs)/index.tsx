@@ -18,7 +18,7 @@ import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
 import { countedNums, displayLabel, displayName, entryLabel, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
-import { SLOT_LABEL } from '@/lib/labels';
+import { AMOUNT_UNKNOWN, SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { parser } from '@/parser';
@@ -120,7 +120,8 @@ export default function Today() {
               onRetry={() => (e.sync_error === 'variant_required' && !e.deleted_at ? setPicking(e.id) : st.retrySync(e.id))} />
           ))}
           {notes.map((e) => (
-            <ServerNoteRow key={`note-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}`} kcal={countedNums(e).kcal} note={e.server_note!} onDismiss={() => st.clearServerNote(e.id)} />
+            <ServerNoteRow key={`note-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.amount_unknown ? ` · ${AMOUNT_UNKNOWN}` : ''}`}
+              kcal={e.amount_unknown && !e.server_counts ? undefined : countedNums(e).kcal} note={e.server_note!} onDismiss={() => st.clearServerNote(e.id)} />
           ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>

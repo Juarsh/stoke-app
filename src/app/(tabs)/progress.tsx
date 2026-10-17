@@ -8,7 +8,7 @@ import { addDays, counted, countedNums, displayName, onServer, entryLabel, toRev
 import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
-import { portionLabel, SLOT_LABEL } from '@/lib/labels';
+import { AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { Icon } from '@/components/Icon';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -52,7 +52,7 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
       {open ? items.map((e) => (
         <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${entryLabel(e)}`} style={s.entry}>
-          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {portionLabel(e.qty, e.unit)}</T>
+          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
           <T v="number">{fmt(e.delete_failed || e.kept_on_server ? countedNums(e).kcal : e.kcal.best)}</T>
         </Pressable>
       )) : null}
@@ -85,7 +85,8 @@ export default function Progress() {
   }, [today]);
   const month = asDate(today).toLocaleDateString('en-GB', { month: 'long' });
   // a flagged delete (rg9 B3) is not edited: tapping it retries the delete
-  const onPick = useCallback((e: FoodEntry) => { if (e.delete_failed) { st.retrySync(e.id); return; } setSlot(e.slot); setEditing(e); }, [st]);
+  // next build: a row whose amount is unknown ("—") isn't edited from the phone's stale amount: tapping reads the server's copy
+  const onPick = useCallback((e: FoodEntry) => { if (e.delete_failed) { st.retrySync(e.id); return; } if (e.amount_unknown) { void st.refreshServerCopies(); return; } setSlot(e.slot); setEditing(e); }, [st]);
   const weekAgo = addDays(today, -6);
   const lastFreeze = [...d.streak.frozenDays].sort().reverse().find((x) => x >= weekAgo);
   const header = (
