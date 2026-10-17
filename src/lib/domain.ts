@@ -48,6 +48,10 @@ export interface FoodEntry {
   ai_resets_at?: string;
   /** the server parse job this AI reading came from (sent as parse_job_id; an abandoned job's AI reading is refused) */
   job_id?: string;
+  /** the server's row version from its last response for this entry (sent with PATCH; never the phone clock) */
+  server_version?: number;
+  /** this entry's change could not be synced (error code): its row says "Couldn’t sync this. Tap to retry" */
+  sync_error?: string;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
@@ -210,6 +214,21 @@ export function plateRows(entries: FoodEntry[], nameOf: (e: FoodEntry) => string
 
 /** A confirmed entry the server refused (e.g. variant without a pick): reopened as an item to review, never counted,
  * with its numbers kept only as the review item's reading so the user confirms or changes it. */
+/** Typed kcal (the user's own number): 1 to 5000, like the server. Empty, 0, negatives, NaN and > 5000 are refused. */
+export const KCAL_MAX = 5000;
+export function validTypedKcal(k: unknown): boolean {
+  const n = typeof k === 'string' ? (k.trim() === '' ? NaN : Number(k)) : typeof k === 'number' ? k : NaN;
+  return Number.isFinite(n) && n >= 1 && n <= KCAL_MAX;
+}
+/** Store guard for every saved entry: a counted one carries a number the server accepts (typed kcal 1-5000; others
+ * 0-5000). needs_review entries carry no counted number. */
+export function savableEntry(e: FoodEntry): boolean {
+  if (e.needs_review || e.pending || e.deleted_at) return true;
+  const k = e.kcal?.best;
+  if (e.source === 'custom' || e.source === 'manual') return validTypedKcal(k);
+  return typeof k === 'number' && Number.isFinite(k) && k >= 0 && k <= KCAL_MAX;
+}
+
 export function reopenRejected(e: FoodEntry, code = '', now = new Date(), serverOptions?: FoodEntry['variant_options']): FoodEntry {
   if (serverOptions?.length) e = { ...e, variant_options: serverOptions };
   const it: Item = {

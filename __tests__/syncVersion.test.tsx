@@ -1,0 +1,226 @@
+// Tester rg2 (Oct 17): no phone-clock precondition, versions from the server, a 409 never jams the queue, a typed kcal
+// after job_abandoned always lands, and the 1-5000 store guard. Runs the REAL store against a fake server that follows
+// the backend contract (19a8517 / da5ccc6): row versions, version_conflict, job_abandoned for AI-source writes only,
+// kcal 0-5000, summary = confirmed, not deleted. After every sync: phone == server == /v1/summary, queue empty.
+import React from 'react';
+import { act, create, ReactTestRenderer } from 'react-test-renderer';
+
+jest.mock('../src/lib/config', () => ({ config: { mock: false, apiUrl: 'http://api.test', mockAi: false }, flags: {} }));
+let mockSaved: string | null = null;
+jest.mock('../src/lib/kv', () => ({ kv: { get: async () => mockSaved, set: async (_k: string, v: string) => { mockSaved = v; } } }));
+let mockN = 0;
+jest.mock('expo-crypto', () => ({ randomUUID: () => `id${++mockN}` }));
+
+import { StoreProvider, Store, useStore } from '../src/lib/store';
+import { counted, dayTotals, FoodEntry, reviewEntry, savableEntry, validTypedKcal } from '../src/lib/domain';
+import { parser, DISH_TABLE_VERSION } from '../src/parser';
+import { TextInput } from 'react-native';
+import { FailedAiRow } from '../src/components/LogRows';
+import { failedCounts } from '../src/lib/aiRows';
+
+const DAY = '2026-10-17';
+type Row = { client_id: string; version: number; kcal: number; state: string; source: string; custom_name: string; deleted: boolean; job?: string };
+type Hold = { release: () => void };
+const server = {
+  rows: new Map<string, Row>(), abandoned: new Set<string>(), held: [] as Hold[], holdNext: 0, foreignBump: 0, alwaysConflict: new Set<string>(), log: [] as string[],
+  reset() { this.rows.clear(); this.abandoned.clear(); this.held = []; this.holdNext = 0; this.foreignBump = 0; this.alwaysConflict.clear(); this.log = []; },
+  summary() { return [...this.rows.values()].filter((r) => !r.deleted && r.state === 'confirmed').reduce((s, r) => s + r.kcal, 0); },
+};
+const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
+const view = (r: Row) => ({ client_id: r.client_id, version: r.version, kcal_best: r.kcal, state: r.state, source: r.source, custom_name: r.custom_name });
+async function fakeFetch(url: string, init: { method: string; body?: string }) {
+  const path = url.replace('http://api.test', ''); const b = init.body ? JSON.parse(init.body) : {};
+  if (init.method !== 'GET' && server.holdNext > 0) { server.holdNext--; await new Promise<void>((res) => server.held.push({ release: res })); } // a slow request
+  server.log.push(`${init.method} ${path}`);
+  if (b.if_unmodified_since !== undefined) throw new Error('the phone clock must never be sent as a precondition');
+  if (path === '/v1/remembered') return reply(200, { remembered: [] });
+  if (/\/abandon$/.test(path)) return reply(200, { status: 'abandoned' });
+  if (init.method === 'POST' && path === '/v1/entries') {
+    const it = b.items[0]; const ex = server.rows.get(it.client_id);
+    if (ex) return reply(200, { entries: [view(ex)], duplicates: [it.client_id] });
+    if (it.source === 'ai_estimate' && it.parse_job_id && server.abandoned.has(it.parse_job_id)) return reply(409, { error: { code: 'job_abandoned' } });
+    if (it.state !== 'needs_review' && !(it.kcal >= 0 && it.kcal <= 5000)) return reply(400, { error: 'kcal 0-5000' });
+    const r: Row = { client_id: it.client_id, version: 1, kcal: it.state === 'needs_review' ? 0 : it.kcal, state: it.state ?? 'confirmed', source: it.source,
+      custom_name: it.custom_name ?? '', deleted: false, job: it.parse_job_id };
+    server.rows.set(r.client_id, r); return reply(201, { entries: [view(r)] });
+  }
+  const m = /^\/v1\/entries\/(.+)$/.exec(path); const r = m && server.rows.get(decodeURIComponent(m[1]));
+  if (!r || r.deleted) return reply(404, { error: 'entry not found' });
+  if (init.method === 'DELETE') { r.deleted = true; r.version++; return reply(204); }
+  // PATCH
+  if (server.foreignBump > 0) { server.foreignBump--; r.version++; } // another write landed on the server first
+  if (server.alwaysConflict.has(r.client_id) || (b.version != null && b.version !== r.version)) return reply(409, { error: { code: 'version_conflict', version: r.version }, entry: view(r) });
+  const state = b.state ?? r.state; const src = b.kcal != null ? 'custom' : r.source;
+  if ((b.source === 'ai_estimate' || (src === 'ai_estimate' && b.kcal == null && state !== 'needs_review')) && server.abandoned.has(b.parse_job_id ?? r.job ?? '')) return reply(409, { error: { code: 'job_abandoned' } });
+  if (b.kcal != null && !(b.kcal >= 0 && b.kcal <= 5000)) return reply(400, { error: 'kcal 0-5000' });
+  Object.assign(r, { kcal: state === 'needs_review' ? 0 : (b.kcal ?? r.kcal), state, source: src, custom_name: b.custom_name ?? r.custom_name, version: r.version + 1 });
+  return reply(200, view(r));
+}
+
+let st!: Store;
+function Probe() { st = useStore(); return null; }
+const tick = async (n = 12) => { for (let i = 0; i < n; i++) await act(async () => { await new Promise((res) => setTimeout(res, 0)); }); };
+const settle = async () => { for (let i = 0; i < 40 && (st.queue.length || server.held.length); i++) await tick(2); await tick(); };
+const ent = (id: string) => st.entries.find((e) => e.id === id)!;
+/** phone == server == summary, queue empty, no sync errors */
+function expectInSync() {
+  expect(st.queue).toEqual([]);
+  const phone = st.entries.filter((e) => e.local_date === DAY);
+  for (const e of phone) {
+    const r = server.rows.get(e.id);
+    if (e.deleted_at) { expect(!r || r.deleted).toBe(true); continue; }
+    expect(r).toBeDefined(); expect(e.sync_error).toBeUndefined();
+    expect({ id: e.id, kcal: counted(e) ? e.kcal.best : 0, state: e.needs_review ? 'needs_review' : 'confirmed' }).toEqual({ id: e.id, kcal: r!.kcal, state: r!.state });
+    expect(e.server_version).toBe(r!.version);
+  }
+  expect(dayTotals(phone.filter(counted)).kcal).toBe(server.summary());
+}
+const custom = (id: string, kcal: number): FoodEntry => {
+  const now = new Date().toISOString();
+  return { id, local_date: DAY, slot: 'lunch', raw_text: id, dish_id: null, custom_name: id, qty: 1, unit: 'count', oil_level: '', kcal: { low: kcal, best: kcal, high: kcal },
+    protein_g: { low: 0, best: 0, high: 0 }, source: 'custom', source_note: 'Your entry', confirmed: true, dish_table_version: DISH_TABLE_VERSION, created_at: now, updated_at: now, deleted_at: null };
+};
+const failedRow = (id: string): FoodEntry => ({ ...reviewEntry(parser.unknown('zorbu'), { id, slot: 'dinner', raw_text: 'zorbu', local_date: DAY, tableVersion: DISH_TABLE_VERSION }), custom_name: 'zorbu', span: 'zorbu' });
+let r!: ReactTestRenderer;
+async function boot() {
+  server.reset(); mockN = 0;
+  mockSaved = JSON.stringify({ user: { id: 'u', name: 'A', email: 'a@x', idToken: 't', mock: false }, entries: [], queue: [], aiQuota: { used: 0 } });
+  await act(async () => { r = create(<StoreProvider><Probe /></StoreProvider>); });
+  await tick();
+  await act(async () => { st.addEntries([custom('C', 300), failedRow('R')]); });
+  await settle(); expectInSync();
+}
+beforeAll(() => { (global as unknown as { fetch: unknown }).fetch = jest.fn(fakeFetch); });
+afterEach(async () => { await act(async () => { r?.unmount(); }); jest.useRealTimers(); });
+
+type Act = (s: Store) => void;
+const K = (kcal: number): Act => (s) => s.confirmReviewKcal('R', kcal);
+const U = (kcal: number): Act => (s) => s.updateEntry({ ...s.entries.find((e) => e.id === 'C')!, kcal: { low: kcal, best: kcal, high: kcal } });
+const D = (id: string): Act => (s) => s.deleteEntry(id);
+// Tester item 4: the first op is in flight (slow), the second arrives meanwhile
+const CASES: [string, Act, Act][] = [
+  ['I1 typed kcal, then typed again', K(450), K(470)], ['I2 edit, then edit again', U(480), U(520)], ['I3 typed kcal, then edit', K(450), U(480)],
+  ['I4 edit, then typed kcal', U(480), K(450)], ['I5 delete, then typed kcal', D('C'), K(450)], ['I6 typed kcal, then delete it', K(450), D('R')],
+  ['I7 edit, then delete it', U(480), D('C')], ['I8 delete review row, then edit', D('R'), U(480)], ['I9 edit, delete, typed kcal', U(480), (s) => { s.deleteEntry('C'); s.confirmReviewKcal('R', 300); }],
+];
+describe.each([['clock right', 0], ['phone clock 60 s slow', -60_000], ['phone clock 60 s fast', 60_000]])('sync race (%s)', (_n, skew) => {
+  test.each(CASES)('%s: phone == server == summary, nothing stuck', async (_name, first, second) => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'clearTimeout', 'clearInterval', 'queueMicrotask', 'nextTick'] });
+    jest.setSystemTime(Date.now() + (skew as number));
+    await boot();
+    server.holdNext = 1;
+    await act(async () => { first(st); });
+    await tick(4);
+    expect(server.held).toHaveLength(1); // the first op is in flight
+    await act(async () => { second(st); });
+    await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+    await settle();
+    expectInSync();
+    expect(server.log.filter((l) => l.startsWith('PATCH')).length).toBeLessThanOrEqual(6); // no retry storm
+  });
+});
+
+test('another write moved the server version: the user\'s edit is re-applied on it once and wins', async () => {
+  await boot();
+  server.foreignBump = 1;
+  await act(async () => { U(610)(st); });
+  await settle();
+  expect(server.rows.get('C')).toMatchObject({ kcal: 610 });
+  expectInSync();
+});
+
+test('a conflict that never clears: only that row shows it, later ops keep flowing; tap to retry syncs it', async () => {
+  await boot();
+  server.alwaysConflict.add('C');
+  await act(async () => { U(700)(st); st.confirmReviewKcal('R', 250); });
+  await settle();
+  expect(st.queue).toEqual([]);                     // nothing jammed
+  expect(ent('C').sync_error).toBe('sync_conflict'); // shown on that row
+  expect(ent('R').sync_error).toBeUndefined();
+  expect(server.rows.get('R')).toMatchObject({ kcal: 250, state: 'confirmed' }); // the later op went through
+  const patches = server.log.filter((l) => l === 'PATCH /v1/entries/C').length;
+  expect(patches).toBe(2); // first try + exactly ONE re-apply
+  server.alwaysConflict.clear();
+  await act(async () => { st.retrySync('C'); });
+  await settle();
+  expect(ent('C').sync_error).toBeUndefined();
+  expectInSync();
+  expect(server.rows.get('C')!.kcal).toBe(700);
+});
+
+describe('typed kcal after a late AI save got 409 job_abandoned (Tester item 6)', () => {
+  const aiReview = (): FoodEntry => {
+    const it = { ...parser.unknown('qelto'), name: 'qelto', matched_text: 'qelto', ai_estimate: true, source: 'ai_estimate', kcal: { low: 400, best: 520, high: 600 }, protein_g: { low: 1, best: 2, high: 3 } } as never;
+    return { ...reviewEntry(it, { id: 'A', slot: 'lunch', raw_text: 'qelto', local_date: DAY, tableVersion: DISH_TABLE_VERSION }), job_id: 'j1' };
+  };
+  async function seedAi() {
+    await boot();
+    await act(async () => { st.addEntries([aiReview()]); });
+    await settle();
+    server.abandoned.add('j1'); // the backstop abandoned the job
+  }
+  test('exact sequence: late AI save refused -> user types 300 -> 300 everywhere', async () => {
+    await seedAi();
+    await act(async () => { st.confirmReview('A', ent('A').review_item!); }); // the late AI reading (an AI save tied to j1)
+    await settle();
+    expect(server.log).toContain('PATCH /v1/entries/A');
+    expect(ent('A')).toMatchObject({ needs_review: true, ai_expired: true, kcal: { best: 0 } }); // back to the failed row
+    expect(server.rows.get('A')).toMatchObject({ state: 'needs_review', kcal: 0 });
+    await act(async () => { st.confirmReviewKcal('A', 300); });
+    await settle();
+    expect(ent('A')).toMatchObject({ source: 'custom', kcal: { best: 300 } }); expect(ent('A').job_id).toBeUndefined();
+    expect(server.rows.get('A')).toMatchObject({ kcal: 300, state: 'confirmed', source: 'custom' });
+    expectInSync();
+  });
+  test('the typed value arrives while the refused AI save is in flight: never swallowed', async () => {
+    await seedAi();
+    server.holdNext = 1;
+    await act(async () => { st.confirmReview('A', ent('A').review_item!); });
+    await tick(4);
+    await act(async () => { st.confirmReviewKcal('A', 300); });
+    await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+    await settle();
+    expect(ent('A').kcal.best).toBe(300);
+    expect(server.rows.get('A')).toMatchObject({ kcal: 300, state: 'confirmed' });
+    expectInSync();
+  });
+});
+
+describe('1-5000 store guard (every path) and the Log Add button', () => {
+  const BAD: unknown[] = ['', ' ', 0, '0', -5, '-5', NaN, 'abc', 5000.5, 5001, 6000, 99999, Infinity];
+  test('validTypedKcal', () => {
+    for (const k of BAD) expect([k, validTypedKcal(k)]).toEqual([k, false]);
+    for (const k of [1, '1', 250, '5000', 5000]) expect([k, validTypedKcal(k)]).toEqual([k, true]);
+    expect(savableEntry(custom('x', 6000))).toBe(false); expect(savableEntry(custom('x', 0))).toBe(false); expect(savableEntry(custom('x', 5000))).toBe(true);
+  });
+  test('confirmReviewKcal, addEntries and updateEntry refuse every bad value; nothing counted or sent', async () => {
+    await boot();
+    const before = JSON.stringify(st.entries);
+    for (const k of BAD) {
+      await act(async () => { st.confirmReviewKcal('R', k as number); st.addEntries([custom(`n${String(k)}`, k as number)]); U(k as number)(st); });
+    }
+    expect(JSON.stringify(st.entries)).toBe(before);
+    expect(st.queue).toEqual([]);
+    await act(async () => { st.confirmReviewKcal('R', 5000); st.addEntries([custom('ok1', 1)]); });
+    await settle();
+    expect(ent('R').kcal.best).toBe(5000); expect(ent('ok1').kcal.best).toBe(1);
+    expectInSync();
+  });
+  test('Log failed row: Add disabled for empty, 0, negative, 5001, 6000, 99999; enabled for 1 and 5000', async () => {
+    for (const [v, ok] of [['', false], ['0', false], ['-5', false], ['5001', false], ['6000', false], ['99999', false], ['abc', false], ['1', true], ['5000', true]] as const) {
+      const onAdd = jest.fn();
+      let rr!: ReactTestRenderer;
+      await act(async () => { rr = create(<FailedAiRow row={{ name: 'zorbu', kcal: v, added: false, reason: 'daily_limit' }} onKcal={() => {}} onAdd={onAdd} />); });
+      const btn = rr.root.findAll((n) => n.props.accessibilityLabel === 'Add zorbu' && typeof n.props.onPress === 'function')[0];
+      expect([v, !!btn.props.disabled]).toEqual([v, !ok]);
+      await act(async () => { btn.props.onPress(); }); // a forced press while disabled does nothing
+      expect([v, onAdd.mock.calls.length]).toEqual([v, ok ? 1 : 0]);
+      expect(rr.root.findAllByType(TextInput)).toHaveLength(1);
+      await act(async () => { rr.unmount(); });
+    }
+  });
+  test('an added failed row with 6000 does not count', async () => {
+    expect(failedCounts({ key: 'k', id: 'i', name: 'n', kcal: '6000', protein: '', added: true } as never)).toBe(false);
+    expect(failedCounts({ key: 'k', id: 'i', name: 'n', kcal: '5000', protein: '', added: true } as never)).toBe(true);
+  });
+});

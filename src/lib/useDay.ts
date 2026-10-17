@@ -19,6 +19,8 @@ export function useDay(date = localDate()) {
     const p = st.profile;
     const entries = st.entries.filter((e) => e.local_date === date && counted(e));
     const reviews = st.entries.filter((e) => e.local_date === date && toReview(e));
+    /** entries whose change could not be synced: only those rows say "Couldn’t sync this. Tap to retry" */
+    const syncFailed = st.entries.filter((e) => e.local_date === date && !!e.sync_error);
     const allPending = pendingFor(st.queue, date);
     const now = Date.now();
     const pending = allPending.filter((f) => !isStale(f, now));
@@ -34,6 +36,6 @@ export function useDay(date = localDate()) {
     const loggedDates = loggedDays(st.entries, pendingFor(st.queue).map((f) => f.local_date));
     const streak = computeStreak(loggedDates, localDate());
     const picks = coachPicks(DISHES, Math.max(0, kcalLeft), proteinLeft, p?.diet ?? 'veg');
-    return { date, entries, reviews, pending, stale, offline, reviewCount: reviews.length + stale.length, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
+    return { date, entries, reviews, syncFailed, pending, stale, offline, reviewCount: reviews.length + stale.length, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
   }, [st.entries, st.steps, st.profile, st.queue, date, tick]);
 }

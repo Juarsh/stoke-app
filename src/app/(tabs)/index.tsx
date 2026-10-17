@@ -98,6 +98,13 @@ export default function Today() {
               <T v="caption" tone="muted">— kcal · needs review</T>
             </Pressable>
           ))}
+          {d.syncFailed.map((e) => (
+            <Pressable key={`sync-${e.id}`} onPress={() => st.retrySync(e.id)} style={s.reviewRow} accessibilityRole="button"
+              accessibilityLabel={`${nameOf(e)}: couldn’t sync this. Tap to retry`}>
+              <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {nameOf(e)}{e.deleted_at ? ' (deleted)' : ''}</T>
+              <T v="caption" tone="warn">⚠ Couldn’t sync this. Tap to retry</T>
+            </Pressable>
+          ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>
             {rows.map((r, i) => (

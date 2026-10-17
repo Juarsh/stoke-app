@@ -77,9 +77,11 @@ describe('flush: online sends, offline keeps it queued', () => {
     expect(r.rest).toEqual([]);
     expect(r.rejected).toEqual([{ entry: e, code: 'job_abandoned' }]);
   });
-  test('other 409s keep the retry rule', async () => {
+  test('other 409s never block the queue: surfaced on the entry', async () => {
     const s = sender({ upsertEntry: jest.fn(async () => { throw new ApiError(409, JSON.stringify({ error: 'entry changed on the server' })); }) });
-    expect((await flush([{ kind: 'upsert', entry: aiEntry(), tries: 0 }], s, NOW)).rest[0].tries).toBe(1);
+    const r = await flush([{ kind: 'upsert', entry: aiEntry(), tries: 0 }, { kind: 'abandon', id: 'j2', tries: 0 }], s, NOW);
+    expect(r.rest).toEqual([]); expect(r.failed).toEqual([{ id: 'p1', code: 'entry changed on the server', sent: expect.objectContaining({ id: 'p1' }) }]);
+    expect(s.abandonJob).toHaveBeenCalledWith('j2'); // the later op still went out
   });
   test('the refused AI reading becomes the failed row again: no number, typed kcal only', () => {
     const e = abandonedEntry(aiEntry(), new Date(NOW));
@@ -107,11 +109,12 @@ describe('api', () => {
     expect(post.items[0]).toMatchObject({ source: 'ai_estimate', parse_job_id: 'j1' });
     expect(patch).toMatchObject({ source: 'ai_estimate', parse_job_id: 'j1' });
   });
-  test('typed kcal on the same row: source custom, never ai_estimate; no job, no extra PATCH fields', async () => {
+  test('typed kcal on the same row: source custom without the job (no AI provenance), never ai_estimate', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { duplicates: [{}] })).mockResolvedValueOnce(reply(200, {}));
     await api.upsertEntry({ ...aiEntry(), source: 'custom', custom_name: 'kombucha', kcal: { low: 90, best: 90, high: 90 } });
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).items[0]).toMatchObject({ source: 'custom', kcal: 90, parse_job_id: 'j1' });
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).source).toBeUndefined();
+    const post = JSON.parse(fetchMock.mock.calls[0][1].body).items[0], patch1 = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(post).toMatchObject({ source: 'custom', kcal: 90 }); expect(post.parse_job_id).toBeUndefined();
+    expect(patch1.source).toBeUndefined(); expect(patch1.parse_job_id).toBeUndefined(); expect(patch1.if_unmodified_since).toBeUndefined();
     fetchMock.mockClear().mockResolvedValueOnce(reply(200, { duplicates: [{}] })).mockResolvedValueOnce(reply(200, {}));
     await api.upsertEntry({ ...aiEntry(), job_id: undefined });
     const patch = JSON.parse(fetchMock.mock.calls[1][1].body);

@@ -75,8 +75,9 @@ describe('server rejects a save (4xx): row reopens for review', () => {
       expect(r.rejected.map((x) => x.entry.id)).toEqual(['e1']); expect(r.rest.some((o) => o.kind === 'upsert')).toBe(false);
     }
   });
-  test('5xx / 409 keep the retry rule', async () => {
-    for (const st of [500, 409, 429]) { const r = await flush([{ kind: 'upsert', entry: e, tries: 0 }], sender(st)); expect(r.rejected).toEqual([]); expect(r.rest[0].tries).toBe(1); }
+  test('5xx / 429 keep the retry rule; a 409 is surfaced on the entry and never blocks the queue', async () => {
+    for (const st of [500, 429]) { const r = await flush([{ kind: 'upsert', entry: e, tries: 0 }], sender(st)); expect(r.rejected).toEqual([]); expect(r.rest[0].tries).toBe(1); }
+    const r = await flush([{ kind: 'upsert', entry: e, tries: 0 }], sender(409)); expect(r.rejected).toEqual([]); expect(r.rest).toEqual([]); expect(r.failed.map((f) => f.id)).toEqual([e.id]);
   });
   test('reopened entry is not counted and carries a review item', () => {
     const r = reopenRejected(e);

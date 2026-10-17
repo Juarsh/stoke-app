@@ -2,7 +2,7 @@
 // Pure, so it is testable under Node.
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { ParsePending } from './api';
-import { FoodEntry, reviewEntry, Slot } from './domain';
+import { FoodEntry, reviewEntry, Slot, validTypedKcal } from './domain';
 import type { ParseResponse } from './parseLocal';
 import type { PendingFood } from './syncQueue';
 
@@ -94,7 +94,8 @@ export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit' | 'res
 }
 /** failed rows still waiting for the user's kcal (they count as "still needs a choice") */
 export const failedWaiting = (fs: FailedRow[]) => fs.filter((f) => !failedCounts(f)).length;
-export const failedCounts = (f: FailedRow) => f.added && Number(f.kcal) > 0;
+/** counts only once added with a typed kcal of 1-5000 (the store guard's rule) */
+export const failedCounts = (f: FailedRow) => f.added && validTypedKcal(f.kcal);
 
 /** Late AI answer for a span: fills the same row (same stable id) as an unconfirmed inline estimate.
  * Never auto-confirmed; dropped when the user already typed their own kcal on the failed row. */

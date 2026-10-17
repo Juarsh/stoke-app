@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { AddButton, Button, Row, T } from '@/components/ui';
 import { useTheme } from '@/theme';
+import { validTypedKcal } from '@/lib/domain';
 
 /** note: the failed-AI copy (failedCopy) shown above the kcal field, e.g. the 35-minute backstop's. */
 export function KcalRow({ name, note, onAdd, onRemove }: { name: string; note?: string; onAdd: (kcal: number) => void; onRemove: () => void }) {
   const t = useTheme(); const [v, setV] = useState('');
   const k = Number(v);
-  const ok = Number.isFinite(k) && k > 0 && k <= 5000;
+  const ok = validTypedKcal(v); // 1-5000, the store guard's rule
   return (
     <View style={{ gap: 8 }}>
       <Row style={{ justifyContent: 'space-between' }}>

@@ -11,6 +11,7 @@ import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
+import { validTypedKcal } from '../lib/domain';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { AddButton, Badge, Row, Segmented, T } from './ui';
@@ -218,6 +219,7 @@ const useOpenStyles = makeStyles((t) => ({
 export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal: string; added: boolean; reason?: string; userDailyLimit?: number; resetsAt?: string }; onKcal: (v: string) => void; onAdd: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles(), ...useFailedStyles() }; const t = useTheme();
   const k = Number(row.kcal);
+  const ok = validTypedKcal(row.kcal); // 1-5000, mirrors the store guard
   return (
     <View style={s.open}>
       <View style={s.row}>
@@ -226,8 +228,8 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
           <Row style={{ gap: 6 }}><T v="bodyStrong">{cap(row.name)}</T><Badge kind="brand" label="Custom" /></Row>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <T v="number">{row.added && k > 0 ? Math.round(k).toLocaleString('en-IN') : '—'}</T>
-          {row.added && k > 0 ? null : <T v="caption" tone="muted">not counted</T>}
+          <T v="number">{row.added && ok ? Math.round(k).toLocaleString('en-IN') : '—'}</T>
+          {row.added && ok ? null : <T v="caption" tone="muted">not counted</T>}
         </View>
       </View>
       {row.added ? null : (
@@ -236,7 +238,7 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
           <Row style={{ gap: 8 }}>
             <TextInput value={row.kcal} onChangeText={onKcal} keyboardType="numeric" placeholder="kcal" placeholderTextColor={t.c.muted}
               accessibilityLabel={`Calories for ${row.name}`} style={[s.kcalInput, { color: t.c.text, borderColor: t.c.muted }]} />
-            <AddButton onPress={onAdd} disabled={!(k > 0)} accessibilityLabel={`Add ${row.name}`} />
+            <AddButton onPress={() => ok && onAdd()} disabled={!ok} accessibilityLabel={`Add ${row.name}`} />
           </Row>
         </View>
       )}

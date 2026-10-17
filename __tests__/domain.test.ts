@@ -45,8 +45,8 @@ test('sync queue coalesces and stops on failure without changing payload', async
   expect(q).toHaveLength(1);
   const sent: unknown[] = [];
   const base = { upsertEntry: async () => {}, deleteEntry: async () => {}, resolvePending: async () => null, deleteRemembered: async () => {} };
-  const { rest } = await flush(q, { ...base, upsertEntry: async (x) => { sent.push(x); throw new ApiError(409, 'conflict'); } }, 1000);
-  expect(rest).toHaveLength(1); // never dropped, even on 409
+  const { rest } = await flush(q, { ...base, upsertEntry: async (x) => { sent.push(x); throw new ApiError(503, 'busy'); } }, 1000);
+  expect(rest).toHaveLength(1); // never dropped on a server / network error (a 409 is surfaced on the entry instead: syncVersion.test)
   expect(rest[0].tries).toBe(1);
   expect(rest[0].nextAt).toBe(1000 + backoffMs(1));
   expect((await flush(rest, base, 1001)).rest).toHaveLength(1); // still backing off

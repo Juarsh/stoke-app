@@ -17,7 +17,13 @@ export class ApiError extends Error {
   get code(): string { return errorCode(this.message); }
   /** variant_required: the server's options at the sent portion */
   get variantOptions() { return errorDetail(this.message).variant_options; }
+  /** 409 version_conflict: the server's current row ({"entry": ...}) */
+  get entry(): { version?: number } | undefined {
+    try { const j = JSON.parse(this.message) as { entry?: { version?: number } }; return j?.entry && typeof j.entry === 'object' ? j.entry : undefined; } catch { return undefined; }
+  }
 }
+/** A PATCH still refused after the one version-conflict retry: surfaced on the entry ("Couldn’t sync this"). */
+export const SYNC_CONFLICT = 'sync_conflict';
 /** Extra fields of a 422 {error:{code,item,dish_id,message,variant_options,fields}}; {} for the plain {error:"string"} shape. */
 export function errorDetail(body: string): { code: string; variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[]; fields?: Record<string, string>; message?: string } {
   try { const e = (JSON.parse(body) as { error?: unknown })?.error;
@@ -100,41 +106,60 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     async parseJob(jobId: string): Promise<ParseResponse> {
       return parseJobBody(await req<JobBody>('GET', `/v1/parse/jobs/${encodeURIComponent(jobId)}`), jobId);
     },
-    /** POST with client_id (idempotent). If the server already has it (an edit), PATCH by client_id. */
-    async upsertEntry(e: FoodEntry): Promise<void> {
-      if (config.mock) return;
+    /** POST with client_id (idempotent). If the server already has it (an edit), PATCH by client_id with the row version the
+     * phone last saw (never its clock). On 409 version_conflict the user's edit is re-applied on the server's current version
+     * and retried ONCE; still refused -> ApiError(409, sync_conflict). Returns the server's new version. */
+    async upsertEntry(e: FoodEntry): Promise<{ version?: number }> {
+      if (config.mock) return {};
+      type Saved = { version?: number };
+      const patch = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number }> => {
+        const path = `/v1/entries/${encodeURIComponent(e.id)}`;
+        try { return { version: (await req<Saved>('PATCH', path, { ...body, ...(known ? { version: known } : {}) }))?.version }; }
+        catch (err) {
+          if (!(err instanceof ApiError && err.status === 409 && err.code === 'version_conflict')) throw err;
+          const cur = err.entry?.version; // the server's row: our body (the user's latest values) goes on top of it
+          try { return { version: (await req<Saved>('PATCH', path, { ...body, ...(cur ? { version: cur } : {}) }))?.version }; }
+          catch (err2) {
+            if (err2 instanceof ApiError && err2.status === 409 && err2.code === 'version_conflict') throw new ApiError(409, JSON.stringify({ error: { code: SYNC_CONFLICT } }));
+            throw err2;
+          }
+        }
+      };
+      type Posted = { duplicates?: unknown[]; entries?: Saved[] };
       const source = e.source === 'custom' || e.source === 'manual' ? 'custom' : e.source === 'ai' ? 'ai_estimate' : (e.item_source ?? 'table');
       const nums = { kcal: e.kcal.best, kcal_low: e.kcal.low, kcal_high: e.kcal.high, protein_g: e.protein_g.best, protein_low: e.protein_g.low,
         protein_high: e.protein_g.high, carbs_g: e.carbs_g, fat_g: e.fat_g };
       // span => the server remembers this confirmed reading for the user (Remembered foods)
       const span = e.remember && e.span ? { span: e.span } : {};
-      // the parse job this reading came from: the server refuses an AI reading tied to an abandoned job (409 job_abandoned)
-      const job = e.job_id ? { parse_job_id: e.job_id } : {};
+      // the parse job this AI reading came from: the server refuses an AI reading tied to an abandoned job (409 job_abandoned).
+      // A typed (custom) save never carries the job's AI provenance.
+      const job = e.job_id && source === 'ai_estimate' ? { parse_job_id: e.job_id } : {};
       if (e.needs_review) {
         // logged but unchecked (API.md "Entry state"): counts for the server streak, not in totals. Identity only; numbers are display-only.
         const id = e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level } : { custom_name: e.custom_name || e.span || 'item' };
-        const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
+        const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
           items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}), ...job }] });
-        if (r?.duplicates?.length) await req('PATCH', `/v1/entries/${encodeURIComponent(e.id)}`, { slot: e.slot, local_date: e.local_date, ...id, remember: false });
-        return;
+        if (r?.duplicates?.length) return patch({ slot: e.slot, local_date: e.local_date, ...id, remember: false }, e.server_version ?? r.entries?.[0]?.version);
+        return { version: r?.entries?.[0]?.version };
       }
       const item: ItemIn = e.dish_id
         ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
           ...variantField(e), ...job } as ItemIn
         : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
-      const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
-      if (r?.duplicates?.length) {
-        // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only.
-        await req('PATCH', `/v1/entries/${encodeURIComponent(e.id)}`, {
-          slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, ...variantField(e) } : { custom_name: e.custom_name }),
-          confirmed: true,
-          kcal: e.kcal.best, protein_g: e.protein_g.best, if_unmodified_since: e.updated_at,
-          // confirms a needs_review entry on the server (no-op for confirmed ones)
-          state: 'confirmed', ...(e.remember && e.span ? { span: e.span } : { remember: false }),
-          // only an AI reading tied to a job says so (servers before 4022019 reject unknown PATCH fields)
-          ...(e.job_id ? { parse_job_id: e.job_id, ...(source === 'ai_estimate' ? { source } : {}) } : {}),
-        });
-      }
+      const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
+      if (!r?.duplicates?.length) return { version: r?.entries?.[0]?.version };
+      // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only. No phone-clock precondition:
+      // the version is the server's own, from its last response for this entry (else the POST's copy of the row).
+      return patch({
+        slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, ...variantField(e) } : { custom_name: e.custom_name }),
+        confirmed: true,
+        kcal: e.kcal.best, protein_g: e.protein_g.best,
+        // confirms a needs_review entry on the server (no-op for confirmed ones)
+        state: 'confirmed', ...(e.remember && e.span ? { span: e.span } : { remember: false }),
+        // only an AI reading says so; a typed (custom) save is plain custom, without the job's AI provenance
+        // (a typed kcal on a custom row is custom on the server by itself)
+        ...(source === 'ai_estimate' && e.job_id ? { parse_job_id: e.job_id, source } : {}),
+      }, e.server_version ?? r.entries?.[0]?.version);
     },
     /** Remembered foods (per user). */
     async getRemembered(): Promise<RememberedRow[]> { if (config.mock) return []; return (await req<{ remembered: RememberedRow[] }>('GET', '/v1/remembered')).remembered ?? []; },
@@ -148,7 +173,11 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       if (config.mock || !jobId) return;
       try { await req('POST', `/v1/parse/jobs/${encodeURIComponent(jobId)}/abandon`); } catch (e) { if (!(e instanceof ApiError && (e.status === 404 || e.status === 410))) throw e; }
     },
-    async deleteEntry(id: string): Promise<void> { if (!config.mock) await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); },
+    /** 404 (never reached the server / already gone) counts as done. */
+    async deleteEntry(id: string): Promise<void> {
+      if (config.mock) return;
+      try { await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
+    },
     async putSteps(local_date: string, steps: number): Promise<void> {
       if (!config.mock) await req('POST', '/v1/activity/steps', { local_date, steps, source: 'health_connect' });
     },

@@ -1,7 +1,9 @@
 // Offline-first sync queue. Ops are persisted and replayed in order; the payload
 // is the entry snapshot, so syncing never recalculates numbers.
-// Nothing is ever dropped: on a 409 or any error the op stays at the head with
-// tries+1 and a backoff (5 s doubling, max 30 min), and is retried later.
+// Offline / server errors (no status, 5xx): the op stays at the head with tries+1 and a backoff (5 s doubling,
+// max 30 min). A 409 never blocks the queue: a version conflict is resolved in the API (the user's edit re-applied
+// on the server's version, retried once); what still can't be applied (409, other 4xx, or a 409 keep-and-retry
+// after MAX_TRIES) is surfaced on its entry ("Couldn’t sync this. Tap to retry") and later ops keep flowing.
 import type { FoodEntry, Slot } from './domain';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
@@ -19,7 +21,8 @@ export type Op =
   /** onboarding profile: queued even before sign-in, sent once signed in (ProfilePayload: on-device-only fields excluded) */
   | ({ kind: 'profile'; id: 'profile'; payload: import('./domain').ProfilePayload } & Retry);
 export interface Sender {
-  upsertEntry(e: FoodEntry): Promise<void>; deleteEntry(id: string): Promise<void>;
+  /** returns the server's row version for the entry, when the server sent one */
+  upsertEntry(e: FoodEntry): Promise<void | { version?: number }>; deleteEntry(id: string): Promise<void>;
   /** Resolve a pending food into entries, or null if still unknown (stays queued). */
   /** entries, null (still unknown) or { job_id } (server is working on it: poll that job next time) */
   resolvePending(f: PendingFood): Promise<FoodEntry[] | null | { job_id: string }>;
@@ -45,11 +48,30 @@ export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((o
 export const isAbandonedSave = (e: unknown, op: Op) => op.kind === 'upsert' && (e as { status?: unknown })?.status === 409 && codeOf(e) === 'job_abandoned';
 const codeOf = (e: unknown) => { const c = (e as { code?: unknown })?.code; return typeof c === 'string' ? c : ''; };
 
+const statusOf = (e: unknown) => { const s = (e as { status?: unknown })?.status; return typeof s === 'number' ? s : 0; };
+/** Tries before a 409 that asks to keep-and-retry (e.g. an unknown dish table version) is surfaced instead. */
+export const MAX_TRIES = 5;
+/** An entry op that can't be applied: surfaced on the entry, removed from the queue, never blocks later ops.
+ * Offline (no status) and 5xx keep the backoff retry. */
+export function isStuck(e: unknown, op: Op, tries: number): boolean {
+  if (op.kind !== 'upsert' && op.kind !== 'delete') return false;
+  const s = statusOf(e);
+  if (s === 409) return codeOf(e) === 'unknown_dish_table_version' ? tries >= MAX_TRIES : true;
+  return s >= 400 && s < 500 && s !== 401 && s !== 408 && s !== 429;
+}
+
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
 /** Sends ops in order; stops at the first failure or backoff wait. Returns the remaining queue and entries resolved from pending foods. */
-export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ rest: Op[]; resolved: FoodEntry[]; rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[]; profileRejected?: string }> {
+export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[]; profileRejected?: string;
+  /** entry id -> the server's row version after this flush */
+  versions: Record<string, number>;
+  /** entry ops that could not be applied (surfaced on the entry); `sent` is the op's entry snapshot (undefined for a delete) */
+  failed: { id: string; code: string; sent?: FoodEntry }[] };
+export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
   const rest = [...q];
+  const versions: Record<string, number> = {};
+  const failed: FlushResult['failed'] = [];
   const resolved: FoodEntry[] = [];
   const rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[] = [];
   let profileRejected: string | undefined;
@@ -57,7 +79,11 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
     const op = rest[0];
     if (op.nextAt && op.nextAt > now) break; // keep order: wait for the head's backoff
     try {
-      if (op.kind === 'upsert') await s.upsertEntry(op.entry);
+      if (op.kind === 'upsert') {
+        const known = versions[op.entry.id] ?? op.entry.server_version;
+        const r = await s.upsertEntry(known === op.entry.server_version ? op.entry : { ...op.entry, server_version: known });
+        if (r && typeof r.version === 'number') versions[op.entry.id] = r.version;
+      }
       else if (op.kind === 'delete') await s.deleteEntry(op.id);
       else if (op.kind === 'forget') await s.deleteRemembered(op.id);
       else if (op.kind === 'forgetAll') await s.deleteRemembered();
@@ -84,12 +110,17 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
         }
         rest.shift(); continue;
       }
+      // can't be applied (e.g. still a conflict after the one re-apply): shown on the entry, never jams the queue
+      if (isStuck(e, op, op.tries + 1)) {
+        failed.push(op.kind === 'upsert' ? { id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry } : { id: (op as { id: string }).id, code: codeOf(e) || `http_${statusOf(e)}` });
+        rest.shift(); continue;
+      }
       const cur = rest[0];
       rest[0] = { ...cur, tries: op.tries + 1, nextAt: now + backoffMs(op.tries + 1) } as Op;
       break;
     }
   }
-  return { rest, resolved, rejected, profileRejected };
+  return { rest, resolved, rejected, profileRejected, versions, failed };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */
