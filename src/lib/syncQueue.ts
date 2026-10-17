@@ -14,6 +14,8 @@ export type Op =
   | ({ kind: 'pending'; food: PendingFood } & Retry)
   | ({ kind: 'forget'; id: number } & Retry)
   | ({ kind: 'forgetAll'; id: 'all' } & Retry)
+  /** the 35-minute backstop gave up on this parse job: POST /v1/parse/jobs/{id}/abandon (queued offline, sent when online) */
+  | ({ kind: 'abandon'; id: string } & Retry)
   /** onboarding profile: queued even before sign-in, sent once signed in (ProfilePayload: on-device-only fields excluded) */
   | ({ kind: 'profile'; id: 'profile'; payload: import('./domain').ProfilePayload } & Retry);
 export interface Sender {
@@ -23,6 +25,8 @@ export interface Sender {
   resolvePending(f: PendingFood): Promise<FoodEntry[] | null | { job_id: string }>;
   deleteRemembered(id?: number): Promise<void>;
   putProfile?(p: import('./domain').ProfilePayload): Promise<void>;
+  /** POST /v1/parse/jobs/{id}/abandon; 404/410 count as done */
+  abandonJob?(jobId: string): Promise<void>;
 }
 
 const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : o.kind === 'pending' ? `pending:${o.food.id}` : `${o.kind}:${o.id}`);
@@ -35,8 +39,10 @@ export function enqueue(q: Op[], op: Op): Op[] {
 
 /** A save the server refused as invalid (400/422, e.g. a variant saved without a pick). Error code TBD by backend;
  * any 400/422 on a confirmed (non-review) upsert counts. Other errors keep the retry-with-backoff rule. */
-export const isRejection = (e: unknown, op: Op) => (op.kind === 'profile' || (op.kind === 'upsert' && !op.entry.pending))
-  && typeof (e as { status?: unknown })?.status === 'number' && [400, 422].includes((e as { status: number }).status);
+export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((op.kind === 'profile' || (op.kind === 'upsert' && !op.entry.pending))
+  && typeof (e as { status?: unknown })?.status === 'number' && [400, 422].includes((e as { status: number }).status));
+/** 409 job_abandoned: an AI reading saved with an abandoned job's id is refused for good (the user's typed kcal is what counts). */
+export const isAbandonedSave = (e: unknown, op: Op) => op.kind === 'upsert' && (e as { status?: unknown })?.status === 409 && codeOf(e) === 'job_abandoned';
 const codeOf = (e: unknown) => { const c = (e as { code?: unknown })?.code; return typeof c === 'string' ? c : ''; };
 
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
@@ -56,6 +62,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<{ res
       else if (op.kind === 'forget') await s.deleteRemembered(op.id);
       else if (op.kind === 'forgetAll') await s.deleteRemembered();
       else if (op.kind === 'profile') { if (s.putProfile) await s.putProfile(op.payload); }
+      else if (op.kind === 'abandon') { if (s.abandonJob) await s.abandonJob(op.id); }
       else {
         const es = await s.resolvePending(op.food);
         if (es && 'job_id' in es) { rest[0] = { ...op, food: { ...op.food, job_id: es.job_id || undefined } }; throw new Error(es.job_id ? 'job running' : 'job lost'); }

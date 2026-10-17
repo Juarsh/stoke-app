@@ -10,7 +10,7 @@ const mockStore = {
   learned: {}, aiQuota: { used: 0 }, entries: [], queue: [],
   api: { mock: true, parse: jest.fn(), parseJob: jest.fn() },
   newId: (() => { let n = 0; return () => `id${n++}`; })(),
-  useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(), expireAi: jest.fn(),
+  useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(), expireAi: jest.fn(), abandonJob: jest.fn(),
 };
 jest.mock('@/lib/store', () => ({ useStore: () => mockStore }));
 jest.mock('@/lib/config', () => ({ config: { mock: true, mockAi: true, mockAiDelay: 0 }, flags: {} }));
@@ -70,10 +70,30 @@ test('Log: 34 min still Estimating; 36 min a failed row with the exact copy, and
   // converted row: no kcal until typed, nothing added
   expect(has(r, 'not counted')).toBe(true);
   expect(mockStore.addEntries).not.toHaveBeenCalled();
+  // the server is told once: no further AI attempt, a late result ignored
+  expect(mockStore.abandonJob).toHaveBeenCalledTimes(1);
+  expect(mockStore.abandonJob).toHaveBeenCalledWith('job1');
+  await act(async () => { r.unmount(); });
+});
+
+test('Log: no abandon before the cutoff; an AI reading added from the job carries its id (parse_job_id)', async () => {
+  mockStore.abandonJob.mockClear(); mockStore.addEntries.mockClear();
+  const r = await startEstimating();
+  await jump(34 * MIN);
+  expect(mockStore.abandonJob).not.toHaveBeenCalled();
+  await act(async () => { jobs[0].resolve(answer); });
+  await act(async () => { await Promise.resolve(); });
+  const add = r.root.findAll((n) => n.props.accessibilityLabel === 'Add Kombucha, 60 calories' && typeof n.props.onPress === 'function')[0];
+  await act(async () => { add.props.onPress(); });
+  expect(mockStore.addEntries).toHaveBeenCalledTimes(1);
+  expect(mockStore.addEntries.mock.calls[0][0][0]).toMatchObject({ job_id: 'job1', source: 'ai', kcal: { best: 60 } });
+  await jump(2 * MIN);
+  expect(mockStore.abandonJob).not.toHaveBeenCalled(); // answered: nothing to abandon
   await act(async () => { r.unmount(); });
 });
 
 test('Log: a late server answer for a converted row is ignored', async () => {
+  mockStore.addEntries.mockClear(); mockStore.fillPending.mockClear();
   const r = await startEstimating();
   await jump(36 * MIN);
   expect(has(r, COPY)).toBe(true);
@@ -82,5 +102,6 @@ test('Log: a late server answer for a converted row is ignored', async () => {
   expect(has(r, COPY)).toBe(true);          // still the failed row
   expect(has(r, 'Add · 60 kcal')).toBe(false); // no AI estimate row overwrote it
   expect(mockStore.fillPending).not.toHaveBeenCalled();
+  expect(mockStore.addEntries).not.toHaveBeenCalled();
   await act(async () => { r.unmount(); });
 });

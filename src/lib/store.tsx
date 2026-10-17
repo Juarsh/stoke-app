@@ -1,7 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { dropLate, dropLateOps, expirePending, stampPending } from './aiBackstop';
+import { abandonedEntry, dropLate, dropLateOps, expirePending, stampPending } from './aiBackstop';
 import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
@@ -55,7 +55,7 @@ function useStoreValue() {
   useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
   const sender = useMemo(() => ({
-    putProfile: api.putProfile, upsertEntry: api.upsertEntry, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
+    putProfile: api.putProfile, abandonJob: api.abandonJob, upsertEntry: api.upsertEntry, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
     resolvePending: (f: PendingFood) => resolvePending(api, f),
   }), [api]);
   const syncing = useRef(false);
@@ -65,11 +65,15 @@ function useStoreValue() {
     if (api.mock || syncing.current) return; // mock mode: nothing leaves the device; queue is kept for later
     // job poll: anything past the 35-minute cutoff is converted first (the queue change re-runs sync without its poll)
     if (expirePending(entriesRef.current, s.queue).converted.length) { expireAi(); return; }
+    // head still in its backoff (offline): the headAt timer wakes us. Flushing now would only rewrite the queue, which
+    // re-creates sync and re-runs the effect below: a hot re-render loop while offline (also in aaf1555)
+    if ((s.queue[0]?.nextAt ?? 0) > Date.now()) return;
     syncing.current = true;
     try {
       const sent = s.queue;
       const { rest, resolved, rejected, profileRejected } = await flush(sent, sender);
-      const reopened = rejected.map((r) => reopenRejected(r.entry, r.code, new Date(), r.variant_options));
+      // job_abandoned: the AI reading is refused for good; the row goes back to the failed row (typed kcal only)
+      const reopened = rejected.map((r) => (r.code === 'job_abandoned' ? abandonedEntry(r.entry) : reopenRejected(r.entry, r.code, new Date(), r.variant_options)));
       // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
       // remaining ones and replace their same-id op
       // a late result for a job the backstop converted while we were sending is ignored (dropLate / dropLateOps)
@@ -114,6 +118,8 @@ function useStoreValue() {
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),
     setChallenge: (challenge: Challenge | null) => upd((p) => ({ ...p, challenge })),
     useAi: () => upd((p) => ({ ...p, aiQuota: countAi(p.aiQuota) })),
+    /** The 35-minute backstop gave up on a server job: queued, so it is sent now when online and later when offline. */
+    abandonJob: (jobId: string) => upd((p) => (jobId ? { ...p, queue: enqueue(p.queue, { kind: 'abandon', id: jobId, tries: 0 }) } : p)),
     /** Offline cache only; the server learns from the entry's span when it syncs. */
     remember: (pairs: [string, Reading][]) => upd((p) => ({ ...p, learned: { ...p.learned, ...Object.fromEntries(pairs) } })),
     /** Reset one (by key) or all. Server deletes go through the queue so they survive being offline. */

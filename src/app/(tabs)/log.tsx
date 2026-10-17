@@ -66,8 +66,19 @@ export default function Log() {
   // 35-minute backstop (aiBackstop): when each span's AI job started, and the span ids it already turned into failed rows
   const estStart = useRef(new Map<string, number>());
   const expired = useRef(new Set<string>());
+  // server job -> its span ids, and span id -> job: a job whose spans were all converted by the backstop is abandoned once;
+  // AI readings saved from a polled job carry its id (parse_job_id)
+  const jobSpans = useRef(new Map<string, string[]>());
+  const jobOf = useRef(new Map<string, string>());
+  const abandoned = useRef(new Set<string>());
   const entriesRef = useRef(st.entries); entriesRef.current = st.entries;
   const gone = (id: string) => expired.current.has(id) || isExpiredId(entriesRef.current, id);
+  const abandonIfGone = (jobId: string) => {
+    const ids = jobSpans.current.get(jobId);
+    if (!ids || abandoned.current.has(jobId) || !ids.every(gone)) return;
+    abandoned.current.add(jobId); st.abandonJob(jobId);
+  };
+  const jobFor = (d: Draft) => { const p = d.key.split(':'); return d.key.startsWith('ai:') ? jobOf.current.get(p[p.length - 2]) : undefined; };
   const idFor = (u: string) => { let id = spanIds.current.get(u); if (!id) { id = st.newId(); spanIds.current.set(u, id); } return id; };
   const unk = pendingUnmatched.filter((u) => !estimating.includes(u) && !offline.includes(u));
   const unkKey = unk.join('|');
@@ -121,10 +132,11 @@ export default function Log() {
     };
     const poll = async (p: ParsePending): Promise<void> => {
       let cur = p;
+      if (cur.jobId) { jobSpans.current.set(cur.jobId, ids); for (const id of ids) jobOf.current.set(id, cur.jobId); }
       for (;;) {
         await new Promise((res) => setTimeout(res, pollDelay(cur.nextAttemptAt)));
         if (gen.current !== myGen) return; // the text changed; handed-off spans are resolved by the sync queue
-        if (ids.every(gone)) return; // every span was converted by the 35-minute backstop: stop polling this job
+        if (ids.every(gone)) { abandonIfGone(cur.jobId); return; } // every span was converted by the 35-minute backstop: stop polling, abandon the job
         try { land(await st.api.parseJob(cur.jobId)); return; }
         catch (e2) {
           if (e2 instanceof ParsePending) { cur = e2; continue; }
@@ -171,12 +183,13 @@ export default function Log() {
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
   const decisionDrafts = drafts.filter((d) => kindByKey.get(d.key) === 'choice');
 
+  const withJob = (e: FoodEntry, d: Draft): FoodEntry => { const j = jobFor(d); return j ? { ...e, job_id: j } : e; };
   function add(leave = false) {
     const date = localDate();
     // uncertain or corrected readings carry their span, so the server remembers them (Remembered foods)
     const learn = (d: Draft) => (!d.ok || d.corrected || d.it.source !== 'table') && !d.it.remembered && !d.it.learned;
     const adding = drafts.filter((d) => bp.add.some((r) => r.key === d.key));
-    const es: FoodEntry[] = adding.map((d) => entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION, remember: learn(d) }));
+    const es: FoodEntry[] = adding.map((d) => withJob(entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: date, tableVersion: DISH_TABLE_VERSION, remember: learn(d) }), d));
     // offline ones wait as Pending; estimating ones go straight to items to review (at: 0), keyed by their stable id
     if (pendingUnmatched.length) st.addPending(pendingUnmatched.map((span) => {
       const id = idFor(span); handedOff.current.add(id);
@@ -224,6 +237,7 @@ export default function Log() {
     for (const u of due) expired.current.add(idFor(u));
     setEstimating((e) => e.filter((x) => !due.includes(x))); setOffline((o) => o.filter((x) => !due.includes(x)));
     setCustoms((c) => [...c, ...due.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, reason: BACKSTOP_REASON }))]);
+    for (const j of new Set(due.map((u) => jobOf.current.get(idFor(u))))) if (j) abandonIfGone(j);
   }
   const backstopRef = useRef(checkBackstop); backstopRef.current = checkBackstop;
   useBackstopTick(() => { st.expireAi(); backstopRef.current(); });
@@ -233,7 +247,7 @@ export default function Log() {
   /** AI estimate row 'Add · N kcal': saves just this row now, at its shown kcal; the footer never adds it. */
   const addOne = (d: Draft, n: Item) => {
     if (!canAddEstimate(n)) return;
-    st.addEntries([entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION })]);
+    st.addEntries([withJob(entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)]);
     remove(d);
   };
   const confirm = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, ok: true } : x))) : setOkd((o) => ({ ...o, [d.key]: true }));

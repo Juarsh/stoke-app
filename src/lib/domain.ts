@@ -46,6 +46,8 @@ export interface FoodEntry {
   ai_fail_reason?: string;
   /** local only: the server's next_reset_at for a cap failure (the cap copy shows it) */
   ai_resets_at?: string;
+  /** the server parse job this AI reading came from (sent as parse_job_id; an abandoned job's AI reading is refused) */
+  job_id?: string;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;

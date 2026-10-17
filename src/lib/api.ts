@@ -108,18 +108,20 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
         protein_high: e.protein_g.high, carbs_g: e.carbs_g, fat_g: e.fat_g };
       // span => the server remembers this confirmed reading for the user (Remembered foods)
       const span = e.remember && e.span ? { span: e.span } : {};
+      // the parse job this reading came from: the server refuses an AI reading tied to an abandoned job (409 job_abandoned)
+      const job = e.job_id ? { parse_job_id: e.job_id } : {};
       if (e.needs_review) {
         // logged but unchecked (API.md "Entry state"): counts for the server streak, not in totals. Identity only; numbers are display-only.
         const id = e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level } : { custom_name: e.custom_name || e.span || 'item' };
         const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
-          items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}) }] });
+          items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}), ...job }] });
         if (r?.duplicates?.length) await req('PATCH', `/v1/entries/${encodeURIComponent(e.id)}`, { slot: e.slot, local_date: e.local_date, ...id, remember: false });
         return;
       }
       const item: ItemIn = e.dish_id
         ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
-          ...variantField(e) } as ItemIn
-        : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span };
+          ...variantField(e), ...job } as ItemIn
+        : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
       const r = await req<{ duplicates?: unknown[] }>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
       if (r?.duplicates?.length) {
         // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only.
@@ -129,6 +131,8 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
           kcal: e.kcal.best, protein_g: e.protein_g.best, if_unmodified_since: e.updated_at,
           // confirms a needs_review entry on the server (no-op for confirmed ones)
           state: 'confirmed', ...(e.remember && e.span ? { span: e.span } : { remember: false }),
+          // only an AI reading tied to a job says so (servers before 4022019 reject unknown PATCH fields)
+          ...(e.job_id ? { parse_job_id: e.job_id, ...(source === 'ai_estimate' ? { source } : {}) } : {}),
         });
       }
     },
@@ -138,6 +142,11 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     async deleteRemembered(id?: number): Promise<void> {
       if (config.mock) return;
       try { await req('DELETE', id === undefined ? '/v1/remembered' : `/v1/remembered/${id}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
+    },
+    /** The 35-minute backstop gave up on this job: the server stops trying and ignores a late result. 404/410 = done. */
+    async abandonJob(jobId: string): Promise<void> {
+      if (config.mock || !jobId) return;
+      try { await req('POST', `/v1/parse/jobs/${encodeURIComponent(jobId)}/abandon`); } catch (e) { if (!(e instanceof ApiError && (e.status === 404 || e.status === 410))) throw e; }
     },
     async deleteEntry(id: string): Promise<void> { if (!config.mock) await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); },
     async putSteps(local_date: string, steps: number): Promise<void> {

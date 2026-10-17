@@ -29,7 +29,8 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
   // only a confident table match is saved; anything uncertain becomes a 'needs review' entry (no unwarned number)
   return got.map((it, i) => {
     const o = { id: i === 0 ? f.id : `${f.id}-${i}`, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION };
-    return autoSavable(it) ? entryFromItem(it, o) : reviewEntry(it, o);
+    const e = autoSavable(it) ? entryFromItem(it, o) : reviewEntry(it, o);
+    return f.job_id ? { ...e, job_id: f.job_id } : e;
   });
 }
 

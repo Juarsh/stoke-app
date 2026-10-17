@@ -57,8 +57,15 @@ export function backstopEntry(f: PendingFood, ph?: FoodEntry, now = new Date()):
   return { ...failedAiEntry(f, BACKSTOP_REASON, ph, now), ai_expired: true };
 }
 
+/** A save the server refused because its job was abandoned (409 job_abandoned): the AI number is dropped and the row is the
+ * backstop's failed row again (typed kcal only), same id. */
+export function abandonedEntry(e: FoodEntry, now = new Date()): FoodEntry {
+  const span = e.span || e.custom_name || e.raw_text;
+  return backstopEntry({ id: e.id, span, slot: e.slot, local_date: e.local_date, raw_text: e.raw_text }, e, now);
+}
+
 /** Queued foods past the cutoff: placeholder -> failed AI review row, its pending op (the job poll) removed, the row synced
- * as needs_review. Returns the same arrays when nothing is due. */
+ * as needs_review, and its server job (if any) abandoned. Returns the same arrays when nothing is due. */
 export function expirePending(entries: FoodEntry[], queue: Op[], now = Date.now()): { entries: FoodEntry[]; queue: Op[]; converted: string[] } {
   const due = queue.flatMap((o) => (o.kind === 'pending' && backstopDue(pendingStart(o.food, entries), now) ? [o.food] : []));
   if (!due.length) return { entries, queue, converted: [] };
@@ -69,6 +76,8 @@ export function expirePending(entries: FoodEntry[], queue: Op[], now = Date.now(
     const n = backstopEntry(f, ph, new Date(now));
     es = ph ? es.map((e) => (e.id === f.id ? n : e)) : [...es, n];
     q = enqueue(q.filter((o) => !(o.kind === 'pending' && o.food.id === f.id)), { kind: 'upsert', entry: n, tries: 0 });
+    // the server stops trying this job and ignores its late result (sent when online, kept queued while offline)
+    if (f.job_id) q = enqueue(q, { kind: 'abandon', id: f.job_id, tries: 0 });
   }
   return { entries: es, queue: q, converted: due.map((f) => f.id) };
 }

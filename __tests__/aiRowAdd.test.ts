@@ -41,7 +41,7 @@ describe('AI estimate row: own one-tap "Add · N kcal"', () => {
     expect(p.add).toHaveLength(0); expect(p.primary).toBe(false);
     const log = src('src/app/(tabs)/log.tsx');
     expect(log).toMatch(/onAdd=\{\(n\) => addOne\(d, n\)\}/);
-    expect(log).toMatch(/const addOne = \(d: Draft, n: Item\) => \{\n\s+if \(!canAddEstimate\(n\)\) return;\n\s+st\.addEntries\(\[entryFromItem/);
+    expect(log).toMatch(/const addOne = \(d: Draft, n: Item\) => \{\n\s+if \(!canAddEstimate\(n\)\) return;\n\s+st\.addEntries\(\[(?:withJob\()?entryFromItem/);
     expect(log).toMatch(/remove\(d\);\n\s+\};/);
   });
   test('styling: outlined, em (darker coral in light), never accentFill for this button', () => {
