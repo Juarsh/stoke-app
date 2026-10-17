@@ -9,6 +9,9 @@ import { kc } from '../lib/format';
 
 export const SYNC_FAILED_COPY = 'Couldn’t sync this. Tap to retry';
 export const SYNC_RETRYING_COPY = 'Retrying…';
+/** the row's screen-reader label (Today's row and Progress rows whose tap retries say the same) */
+export const syncFailedLabel = (title: string, o: { retrying?: boolean; reason?: string; line?: string } = {}) =>
+  `${title}: ${o.retrying ? 'retrying sync' : o.line ? o.line : `couldn’t sync this. Tap to retry${o.reason ? `. ${o.reason}` : ''}`}`;
 
 export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line, notCounted }: { title: string; kcal?: number;
   /** rg7 H1: the server never stored this row (5xx): it isn't counted, and the row says so */ notCounted?: boolean; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string;
@@ -18,7 +21,7 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line, no
   return (
     <Pressable onPress={retrying ? undefined : onRetry} disabled={retrying} style={s.row} accessibilityRole="button"
       accessibilityState={{ busy: retrying, disabled: retrying }}
-      accessibilityLabel={`${title}: ${retrying ? 'retrying sync' : line ? line : `couldn’t sync this. Tap to retry${reason ? `. ${reason}` : ''}`}`}>
+      accessibilityLabel={syncFailedLabel(title, { retrying, reason, line })}>
       <View style={{ flex: 1, gap: 2 }}>
         <Row style={{ gap: 10, justifyContent: 'space-between' }}>
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>

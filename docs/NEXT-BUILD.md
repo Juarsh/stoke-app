@@ -22,7 +22,8 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 - 5xx path: an edit from another device leaves the flagged count stale until a retry (N4).
 - [x] 5xx path: a stale `delete_failed` flag stays after editing a flagged row.
   Done: an edit (updateEntry -> editedState) takes the row's sync state from the store as it is NOW, never from the copy the edit sheet opened with (an automatic retry, a flagged delete or a server copy may have landed since): server version, server_counts, server_failed. An edit of a row whose delete is flagged or still queued replaces that delete: the row is live, delete_failed / unsynced_edit go, the delete op is replaced by the upsert, and it counts what the server has until the edit syncs; then phone == server. A row whose delete already went through stays deleted (nothing queued). Progress rows now show the kcal they count (countedNums) in every state. (__tests__/fiveXXPath.test.tsx)
-- 5xx path: the Progress row says "Edit" where it should say retry.
+- [x] 5xx path: the Progress row says "Edit" where it should say retry.
+  Done: a Progress row whose tap retries (a flagged delete) has Today's screen-reader wording, built by the same helper (syncFailedLabel): "Breakfast · roti (deleted): couldn’t sync this. Tap to retry. Not deleted on the server yet.", and "…: retrying sync" (busy) while the retry runs. Every other row still says "Edit …". No new copy. (__tests__/fiveXXPath.test.tsx)
 - 5xx path: the streak dips while a delete is pending.
 
 ## Carried over (CEO-deferred)

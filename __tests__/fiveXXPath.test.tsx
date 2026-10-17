@@ -142,3 +142,45 @@ describe('T3b: editing a flagged row never leaves a stale delete flag (shown == 
     expect(nums).toContain('220'); expect(nums).not.toContain(String(Math.round(k(3))));
   });
 });
+
+import { SYNC_FAILED_COPY, syncFailedLabel } from '../src/components/SyncFailedRow';
+describe('Progress: a flagged row whose tap retries says "Tap to retry", never "Edit"', () => {
+  const y = () => new Date(now - 86_400_000).toISOString().slice(0, 10);
+  const open = async () => {
+    const day = r.root.findAll((x) => typeof x.props.accessibilityLabel === 'string' && /, \d+ items?, /.test(x.props.accessibilityLabel) && typeof x.props.onPress === 'function');
+    await act(async () => { day[0].props.onPress(); });
+  };
+  const labels = () => r.root.findAll((x) => typeof x.props.accessibilityLabel === 'string' && typeof x.props.onPress === 'function').map((x) => x.props.accessibilityLabel as string);
+  test('the flagged delete: Today’s exact wording (with the reason); tapping it retries; a normal row still says Edit', async () => {
+    seed220(); server.fail = true;
+    const d = { ...flaggedDelete(), local_date: y(), slot: 'breakfast' as const };
+    const g = { ...tableEntry('G', 'dal', 1, 'katori'), local_date: y(), server_version: 1 };
+    server.rows.set('G', { kcal: g.kcal.best, protein: g.protein_g.best, qty: 1, unit: 'katori', version: 1 });
+    await boot([d, g], [], <Progress />);
+    await open();
+    const want = `Breakfast · roti (deleted): couldn’t sync this. Tap to retry. ${NOT_DELETED_REASON}`;
+    expect(syncFailedLabel('Breakfast · roti (deleted)', { reason: NOT_DELETED_REASON })).toBe(want);
+    expect(want.toLowerCase()).toContain(SYNC_FAILED_COPY.toLowerCase());
+    expect(labels()).toContain(want);
+    expect(labels().filter((l) => /^Edit /.test(l))).toEqual(['Edit Dal']);
+    expect(labels().some((l) => /^Edit roti/i.test(l))).toBe(false);
+    // tap: retried (server back -> the delete goes through, gone on both)
+    server.fail = false; server.log = [];
+    const row = r.root.findAll((x) => x.props.accessibilityLabel === want && typeof x.props.onPress === 'function')[0];
+    await act(async () => { row.props.onPress(); }); await flushP(80);
+    expect(server.log).toContain('DELETE /v1/entries/F');
+    expect(F().delete_failed).toBeUndefined(); expect(server.rows.has('F')).toBe(false);
+    expect(Math.round(dayTotals(st.entries.filter((e) => e.local_date === y())).kcal)).toBe(serverTotal());
+  });
+  test('while the retry runs it says "retrying sync" and is busy (like Today’s row)', async () => {
+    seed220(); server.fail = true;
+    const d = { ...flaggedDelete(), local_date: y(), slot: 'breakfast' as const, sync_error: undefined, sync_retrying: true };
+    await boot([d], [{ kind: 'delete', id: 'F', tries: 1, fives: 1, nextAt: now + 3_600_000 } as Op], <Progress />);
+    await open();
+    if (!labels().length) throw new Error('no rows');
+    const want = syncFailedLabel('Breakfast · roti (deleted)', { retrying: true });
+    expect(want).toBe('Breakfast · roti (deleted): retrying sync');
+    const row = r.root.findAll((x) => x.props.accessibilityLabel === want && typeof x.props.onPress === 'function');
+    expect(row.length).toBeGreaterThan(0); expect(row[0].props.accessibilityState).toEqual({ busy: true });
+  });
+});

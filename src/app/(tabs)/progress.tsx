@@ -11,6 +11,7 @@ import { PendingRow } from '@/components/PendingRow';
 import { AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { kc } from '@/lib/format';
 import { Icon } from '@/components/Icon';
+import { syncFailedLabel } from '@/components/SyncFailedRow';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
@@ -52,7 +53,10 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       {day.reviews ? <ReviewLink date={day.date} n={day.reviews} /> : null}
       {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
       {open ? items.map((e) => (
-        <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${entryLabel(e)}`} style={s.entry}>
+        <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" style={s.entry}
+          // rg10: a flagged delete's tap retries it, so it says so (Today's "Tap to retry" wording); every other row opens the editor
+          accessibilityLabel={e.delete_failed ? syncFailedLabel(`${SLOT_LABEL[e.slot]} · ${displayName(e.custom_name || '', e.dish_id)} (deleted)`, { retrying: !!e.sync_retrying, reason: e.sync_reason }) : `Edit ${entryLabel(e)}`}
+          accessibilityState={e.delete_failed && e.sync_retrying ? { busy: true } : undefined}>
           <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
           <T v="number">{fmt(countedNums(e).kcal)}</T>
         </Pressable>
