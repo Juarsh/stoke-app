@@ -57,6 +57,12 @@ if (process.argv[3] === 'rg7') {
   const dal = parser.recompute('dal', 1, 'katori', '');
   entries.push(adoptServer(t('h3', 'dal', 1, 'plate', 'snacks'), { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
   entries.push(adoptServer({ ...t('h4', 'dal', 1, 'katori', 'snacks'), unit: '' }, { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
+  // rg8 B3: a delete the server answered 5xx three times (flagged on the deleted row); F-2: a custom name kept as typed
+  entries.push({ ...t('h5', 'roti', 2, 'count', 'breakfast'), deleted_at: new Date().toISOString(), server_version: 1, sync_error: 'server_error', server_failed: true, sync_reason: 'Not deleted on the server yet.' });
+  const now = new Date().toISOString();
+  entries.push({ id: 'h6', local_date: today, slot: 'snacks', raw_text: 'akarsh_special_shake 250', dish_id: null, custom_name: 'akarsh_special_shake', qty: 1, unit: 'count', oil_level: '',
+    kcal: { low: 250, best: 250, high: 250 }, protein_g: { low: 20, best: 20, high: 20 }, source: 'custom', source_note: 'Your entry', confirmed: true, dish_table_version: DISH_TABLE_VERSION,
+    created_at: now, updated_at: now, deleted_at: null, server_version: 1, server_counts: { kcal: 250, protein: 20 } } as never);
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },
