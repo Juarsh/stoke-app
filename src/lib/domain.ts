@@ -167,7 +167,23 @@ let unitLook: { units: (dishId: string) => string[] | null; name: (dishId: strin
 export function setUnitLookup(f: typeof unitLook) { unitLook = f; }
 export const unitsKnown = (dishId: string) => !unitLook || unitLook.units(dishId) !== null;
 export const unitSupportedFor = (dishId: string, unit: string) => !unitLook || !!unitLook.units(dishId)?.includes(unit);
-export const dishName = (dishId: string) => unitLook?.name(dishId) ?? 'this dish';
+/** A dish id as words, never a slug: zarda_pulao -> "zarda pulao" (until the dish's own name has arrived). */
+export const prettyId = (dishId: string) => dishId.replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+const slug = (s: string) => /_/.test(s);
+export const dishName = (dishId: string) => unitLook?.name(dishId) ?? (dishId ? prettyId(dishId) : 'this dish');
+/** THE display name of a food (Today, Review, Log, edit sheet, notes): the dish table's name (bundled, else pulled), else the
+ * name it carries if that isn't a slug, else the id as words. Display only. */
+export function displayName(name: string | null | undefined, dishId?: string | null): string {
+  const known = dishId ? unitLook?.name(dishId) : undefined;
+  if (known) return known;
+  if (name && !slug(name)) return name;
+  if (dishId) return prettyId(dishId);
+  return name ? prettyId(name) : 'item';
+}
+/** displayName with its first letter capitalised (a row's title: "Zarda pulao"). */
+export const displayLabel = (name: string | null | undefined, dishId?: string | null) => { const n = displayName(name, dishId); return n.charAt(0).toUpperCase() + n.slice(1); };
+/** an entry's title: what the user named it (custom), else its dish's display name */
+export const entryLabel = (e: { custom_name?: string; dish_id?: string | null }) => displayLabel(e.custom_name || '', e.dish_id);
 /** Designer (rg6): unit plurals in the 'isn’t measured in' copy */
 const PLURAL: Record<string, string> = { katori: 'katoris', spoon: 'spoons', plate: 'plates', gram: 'grams', piece: 'pieces', glass: 'glasses', litre: 'litres' };
 export const unitPlural = (unit: string) => PLURAL[unit] ?? (unit.endsWith('s') ? unit : `${unit}s`);

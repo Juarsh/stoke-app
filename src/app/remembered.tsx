@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Alert, View } from 'react-native';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
 import { portionLabel } from '@/lib/labels';
+import { displayName } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -18,7 +19,7 @@ export default function Remembered() {
             <Row key={text} style={[{ justifyContent: 'space-between', minHeight: 56, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: t.c.lineSoft }]}>
               <View style={{ flex: 1 }}>
                 <T v="bodyStrong" numberOfLines={1}>“{text}”</T>
-                <T v="caption" tone="text2" numberOfLines={1}>→ {r.name} · {portionLabel(r.qty, r.unit)}{r.oil_level && r.oil_level !== 'normal' ? ` · oil ${r.oil_level}` : ''}</T>
+                <T v="caption" tone="text2" numberOfLines={1}>→ {displayName(r.name, r.dish_id)} · {portionLabel(r.qty, r.unit)}{r.oil_level && r.oil_level !== 'normal' ? ` · oil ${r.oil_level}` : ''}</T>
               </View>
               <T v="bodyStrong" tone="em" accessibilityRole="button" accessibilityLabel={`Reset ${text}`} onPress={() => st.forget(text)} style={{ padding: 12 }}>Reset</T>
             </Row>

@@ -11,7 +11,7 @@ import { localCapHit } from '@/lib/aiQuota';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
-import { entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor, unitsKnown } from '@/lib/domain';
+import { displayLabel, entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor, unitsKnown } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
 import { backstopDue, BACKSTOP_REASON, isExpiredId } from '@/lib/aiBackstop';
@@ -291,7 +291,7 @@ export default function Log() {
                 <Fragment key={d.key}>
                   <ItemRow it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'}
                     tableMatch={kindByKey.get(d.key) === 'batch'} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
-                  <Refusal why={refused[d.key]} name={d.it.name} />
+                  <Refusal why={refused[d.key]} name={displayLabel(d.it.name, d.it.dish_id)} />
                 </Fragment>
               ))}
             </Group>
@@ -302,7 +302,7 @@ export default function Log() {
                 <Fragment key={d.key}>
                   <OpenRow text={text} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
                     onConfirm={(n) => { setItem(d, n); confirm(d); }} onAdd={(n) => addOne(d, n)} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
-                  <Refusal why={refused[d.key]} name={d.it.name} />
+                  <Refusal why={refused[d.key]} name={displayLabel(d.it.name, d.it.dish_id)} />
                 </Fragment>
               ))}
             </Group>
@@ -315,7 +315,7 @@ export default function Log() {
           {decisionDrafts.map((d) => (
             <Fragment key={d.key}>
               <DecisionCard it={d.it} onPick={(x) => { setItem(d, x); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
-              <Refusal why={refused[d.key]} name={d.it.name} />
+              <Refusal why={refused[d.key]} name={displayLabel(d.it.name, d.it.dish_id)} />
             </Fragment>
           ))}
           {pendingUnmatched.length ? (

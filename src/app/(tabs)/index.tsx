@@ -15,7 +15,7 @@ import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet'
 import { Card, Row, T } from '@/components/ui';
 import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
-import { countedNums, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
+import { countedNums, displayLabel, displayName, entryLabel, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
 import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
@@ -23,7 +23,9 @@ import { useDay } from '@/lib/useDay';
 import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
-const nameOf = (e: FoodEntry) => e.custom_name || parser.dishById(e.dish_id ?? '')?.name || parser.pulledName(e.dish_id ?? '') || 'item';
+// the same display name as Review (rows: "Zarda pulao"; the plate summary lists names as they read: "poha, chai")
+const nameOf = (e: FoodEntry) => entryLabel(e);
+const plateName = (e: FoodEntry) => displayName(e.custom_name || '', e.dish_id);
 
 const FillCard = memo(function FillCard({ kcal, protein, picks, diet }: { kcal: number; protein: number; picks: Suggestion[]; diet: string }) {
   const s = useStyles(); const t = useTheme(); const router = useRouter();
@@ -56,7 +58,7 @@ export default function Today() {
   const protPct = d.proteinTarget ? d.tot.protein / d.proteinTarget : 0;
   const reviewSlots = new Set<Slot>([...d.reviews.map((e) => e.slot), ...d.stale.map((f) => f.slot)]);
   const reviewSlot = reviewSlots.size === 1 ? SLOT_LABEL[[...reviewSlots][0]] : undefined;
-  const rows = useMemo(() => plateRows(d.entries, nameOf), [d.entries]);
+  const rows = useMemo(() => plateRows(d.entries, plateName), [d.entries]);
   const stepsK = Math.round((d.profile?.stepsTarget ?? 8000) / 1000);
   // rg6 F4: the row the user is picking a type for (variant_required on a sync)
   const [picking, setPicking] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function Today() {
               accessibilityLabel={`${nameOf(e)}, needs review, not counted${e.server_note ? `. ${e.server_note}` : ''}`}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Row style={{ gap: 10 }}>
-                  <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.review_item?.name ?? nameOf(e)}</T>
+                  <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.review_item ? displayLabel(e.review_item.name, e.review_item.dish_id) : nameOf(e)}</T>
                   <T v="caption" tone="muted">— kcal · needs review</T>
                 </Row>
                 {e.server_note ? <T v="caption" tone="warn" testID="server-note">{e.server_note}</T> : null}

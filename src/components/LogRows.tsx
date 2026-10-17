@@ -11,7 +11,7 @@ import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
-import { amountReason, qtyInRange, UNITS_UNKNOWN, validTypedKcal } from '../lib/domain';
+import { amountReason, displayLabel, displayName, qtyInRange, UNITS_UNKNOWN, validTypedKcal } from '../lib/domain';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { AddButton, Badge, Row, Segmented, T } from './ui';
@@ -41,10 +41,10 @@ export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, tableMat
   const extra = sub ?? [it.oil_level ? `oil ${it.oil_level}` : '', it.ai_estimate ? 'AI estimate, not in our table' : ''].filter(Boolean).join(' · ');
   return (
     <Pressable style={s.row} onPress={() => setSheet(true)} accessibilityRole="button"
-      accessibilityLabel={`${it.name}, ${portion}, ${it.kcal.best} calories${chip ? `, ${chip.label}` : ''}. Double-tap to edit`}>
+      accessibilityLabel={`${displayName(it.name, it.dish_id)}, ${portion}, ${it.kcal.best} calories${chip ? `, ${chip.label}` : ''}. Double-tap to edit`}>
       <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Row style={{ gap: 6, flexWrap: 'wrap' }}><T v="bodyStrong">{cap(it.name)}</T>{chip ? <Badge kind={chip.kind} label={chip.label} /> : null}</Row>
+        <Row style={{ gap: 6, flexWrap: 'wrap' }}><T v="bodyStrong">{displayLabel(it.name, it.dish_id)}</T>{chip ? <Badge kind={chip.kind} label={chip.label} /> : null}</Row>
         {it.default_portion && !it.ai_estimate ? (
           <T v="caption" tone="muted">
             <T v="caption" tone="text" style={s.dotted} onPress={() => setSheet(true)}>{portion}</T>
@@ -80,7 +80,7 @@ export function DecisionCard({ it, onPick, onEdit, onRemove }: { it: Item; onPic
     helper = ''; opts = [{ value: 'use', label: 'Use estimate' }, { value: 'own', label: 'Enter my own' }]; value = 'use';
     choose = (v) => (v === 'use' ? ok() : setSheet(true));
   } else {
-    helper = `Read as ${it.name} · ${reasonWord(it)}`;
+    helper = `Read as ${displayName(it.name, it.dish_id)} · ${reasonWord(it)}`;
     opts = [{ value: 'ok', label: 'Looks right' }, { value: 'change', label: 'Change' }]; value = 'ok';
     choose = (v) => (v === 'ok' ? ok() : setSheet(true));
   }
@@ -126,15 +126,16 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
   // the word every type shares ('biryani', 'pulao'): the chips show what differs (Veg / Zarda); else what the user typed
   const lastWord = (x: string) => x.trim().split(/\s+/).slice(-1)[0] ?? '';
   const shared = variants.length > 1 && variants.every((o) => lastWord(o.name).toLowerCase() === lastWord(variants[0].name).toLowerCase()) ? lastWord(variants[0].name) : '';
-  const varBase = shared || (lastWord(it.matched_text || it.name) || it.name);
-  const title = isVar ? cap(it.matched_text || it.name) : cap(it.name);
+  const varBase = shared || (lastWord(it.matched_text || displayName(it.name, it.dish_id)) || displayName(it.name, it.dish_id));
+  const nm = displayLabel(it.name, it.dish_id);
+  const title = isVar ? (it.matched_text ? cap(it.matched_text) : nm) : nm;
   const isVg = kind === 'unit' && !isVar && !it.unit_options?.length && isVague(it); const vw = isVg ? vagueWord(it, text) : '';
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
   const sub = kind === 'estimate' ? `${portion} · usually ${n(it.kcal.low)}–${n(it.kcal.high)}` : kind === 'unverified' ? `${portion} · sources vary` : portion;
   const right = kind === 'unit' ? '—' : kind === 'unverified' ? `~${n(it.kcal.best)}` : n(it.kcal.best);
   return (
     <View style={s.open}>
-      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${sub}, ${isVar ? 'type needs choosing' : isVg ? 'amount needs choosing' : kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
+      <View style={s.row} accessible accessibilityLabel={`${nm}, ${sub}, ${isVar ? 'type needs choosing' : isVg ? 'amount needs choosing' : kind === 'unit' ? 'unit needs checking' : `about ${n(it.kcal.best)} calories`}, not counted`}>
         <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row style={{ gap: 6, flexWrap: 'wrap' }}>
@@ -156,8 +157,8 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
             <Row style={{ gap: 8, flexWrap: 'wrap' }}>
               {variants.map((o) => (
                 <Pressable key={o.dish_id} onPress={() => onConfirm(pickVariant(it, o))} style={[s.optBtn, { flexBasis: '45%' }]} accessibilityRole="button"
-                  accessibilityLabel={`${cap(o.name)}, ${n(o.kcal)} calories`}>
-                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(o.name, varBase)} · {n(o.kcal)} kcal</T>
+                  accessibilityLabel={`${displayLabel(o.name, o.dish_id)}, ${n(o.kcal)} calories`}>
+                  <T v="bodyStrong" style={{ textAlign: 'center' }}>{variantLabel(displayName(o.name, o.dish_id), varBase)} · {n(o.kcal)} kcal</T>
                 </Pressable>
               ))}
             </Row>
@@ -192,15 +193,15 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
             {kind === 'estimate' && canAddEstimate(it) ? (
               // ai-estimate-row: outlined coral 'Add · N kcal' (em = darker coral in light, never accentFill), saves only this row
               <Pressable onPress={() => (onAdd ?? onConfirm)({ ...it, needs_confirmation: false })} style={[s.optBtn, { borderColor: t.c.em }]} accessibilityRole="button"
-                accessibilityLabel={`Add ${cap(it.name)}, ${n(it.kcal.best)} calories`}>
+                accessibilityLabel={`Add ${nm}, ${n(it.kcal.best)} calories`}>
                 <T v="bodyStrong" tone="em">{estimateAddLabel(it)}</T>
               </Pressable>
             ) : (
-            <Pressable onPress={() => onConfirm({ ...it, needs_confirmation: false })} style={[s.optBtn, { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill }]} accessibilityRole="button" accessibilityLabel={`Looks right, add ${cap(it.name)}`}>
+            <Pressable onPress={() => onConfirm({ ...it, needs_confirmation: false })} style={[s.optBtn, { backgroundColor: t.c.accentFill, borderColor: t.c.accentFill }]} accessibilityRole="button" accessibilityLabel={`Looks right, add ${nm}`}>
               <T v="bodyStrong" tone="onAccent">Looks right</T>
             </Pressable>
             )}
-            <Pressable onPress={() => setSheet(true)} style={s.optBtn} accessibilityRole="button" accessibilityLabel={`Change portion of ${cap(it.name)}`}>
+            <Pressable onPress={() => setSheet(true)} style={s.optBtn} accessibilityRole="button" accessibilityLabel={`Change portion of ${nm}`}>
               <T v="bodyStrong">Change portion</T>
             </Pressable>
           </Row>
@@ -225,13 +226,14 @@ const useOpenStyles = makeStyles((t) => ({
 export function HeldRow({ it, onRemove }: { it: Item; onRemove: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles() };
   const portion = portionLabel(it.quantity, it.unit);
+  const nm = displayLabel(it.name, it.dish_id);
   return (
     <View style={s.open} testID="held-row">
-      <View style={s.row} accessible accessibilityLabel={`${cap(it.name)}, ${portion}, ${UNITS_UNKNOWN}, not counted`}>
+      <View style={s.row} accessible accessibilityLabel={`${nm}, ${portion}, ${UNITS_UNKNOWN}, not counted`}>
         <FoodTile seed={it.dish_id || it.name} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row style={{ gap: 6, flexWrap: 'wrap' }}>
-            <T v="bodyStrong">{cap(it.name)}</T>
+            <T v="bodyStrong">{nm}</T>
             <View style={s.warnChip}><T v="label" tone="warn">⚠ {UNITS_UNKNOWN}</T></View>
           </Row>
           <T v="caption" tone="muted">{portion}</T>
@@ -239,7 +241,7 @@ export function HeldRow({ it, onRemove }: { it: Item; onRemove: () => void }) {
         <View style={{ alignItems: 'flex-end' }}><T v="number">—</T><T v="caption" tone="muted">not counted</T></View>
       </View>
       <Row style={{ gap: 8 }}>
-        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Remove ${cap(it.name)}`}><T v="caption" tone="muted">Remove</T></Pressable>
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Remove ${nm}`}><T v="caption" tone="muted">Remove</T></Pressable>
       </Row>
     </View>
   );

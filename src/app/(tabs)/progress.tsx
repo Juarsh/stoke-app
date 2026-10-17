@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
-import { addDays, counted, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
+import { addDays, counted, displayName, entryLabel, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
 import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
@@ -17,7 +17,7 @@ import { makeStyles, useTheme } from '@/theme';
 
 /** Saved entry -> editable Item view. Numbers come from the snapshot, not the table. */
 function asItem(e: FoodEntry): Item {
-  return { dish_id: e.dish_id ?? '', name: e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item', matched_text: e.raw_text,
+  return { dish_id: e.dish_id ?? '', name: displayName(e.custom_name || '', e.dish_id), matched_text: e.raw_text,
     quantity: e.qty, unit: e.unit, grams: 0, oil_level: e.oil_level, kcal: e.kcal, protein_g: e.protein_g,
     source: 'table', data_source: e.source === 'table' ? (parser.dishById(e.dish_id ?? '')?.source ?? 'estimate') : e.source, source_note: e.source_note,
     fuzzy: false, ai_estimate: e.source === 'ai' || e.source === 'custom', carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0, needs_confirmation: false, default_portion: false, span_start: 0, span_end: e.raw_text.length };
@@ -51,8 +51,8 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       {day.reviews ? <ReviewLink date={day.date} n={day.reviews} /> : null}
       {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
       {open ? items.map((e) => (
-        <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${e.custom_name || e.dish_id}`} style={s.entry}>
-          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.custom_name || parser.dishById(e.dish_id ?? '')?.name || e.dish_id} · {portionLabel(e.qty, e.unit)}</T>
+        <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${entryLabel(e)}`} style={s.entry}>
+          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)} · {portionLabel(e.qty, e.unit)}</T>
           <T v="number">{fmt(e.kcal.best)}</T>
         </Pressable>
       )) : null}

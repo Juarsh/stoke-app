@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { reasonWord } from '../lib/learned';
 import { portionLabel } from '../lib/labels';
+import { displayName } from '../lib/domain';
 import { Alternative, DISHES, Item, parser } from '../parser';
 import { makeStyles } from '../theme';
 import { EditSheet } from './ItemEditor';
@@ -20,13 +21,13 @@ export function ConfirmCard({ it, onResolve, onRemove }: { it: Item; onResolve: 
   const pickAlt = (a: Alternative) => onResolve(fixed(parser.edit(it, { quantity: a.quantity, unit: a.unit })));
   const matches = q.length > 1 ? DISHES.filter((d) => d.name.includes(q.toLowerCase())).slice(0, 5) : [];
   return (
-    <Pressable onPress={() => setEdit(true)} style={s.card} accessibilityRole="button" accessibilityLabel={`Check: read as ${it.name}, ${portionLabel(it.quantity, it.unit)}, ${it.kcal.best} calories. Double-tap to edit.`}>
+    <Pressable onPress={() => setEdit(true)} style={s.card} accessibilityRole="button" accessibilityLabel={`Check: read as ${displayName(it.name, it.dish_id)}, ${portionLabel(it.quantity, it.unit)}, ${it.kcal.best} calories. Double-tap to edit.`}>
       <Row style={{ justifyContent: 'space-between' }}>
         <Row style={{ flex: 1 }}><Badge kind="check" label="Check" /><T v="caption" tone="muted">{reasonWord(it)}</T></Row>
         <T v="number">{it.kcal.best.toLocaleString('en-IN')}</T>
       </Row>
       <T>
-        <T tone="text2">Read as: </T><T v="bodyStrong">{it.name} · {portionLabel(it.quantity, it.unit)}</T>
+        <T tone="text2">Read as: </T><T v="bodyStrong">{displayName(it.name, it.dish_id)} · {portionLabel(it.quantity, it.unit)}</T>
         <T tone="text2"> · </T><T v="bodyStrong" tone="em" onPress={() => setOpen((v) => !v)} accessibilityRole="button">Change</T>
       </T>
       {it.matched_text && it.matched_text !== it.name ? <T v="caption" tone="muted">You typed “{it.matched_text}”</T> : null}

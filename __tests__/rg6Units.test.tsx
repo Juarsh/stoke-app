@@ -296,7 +296,7 @@ describe('Designer copy: "isn’t measured in {unit plural}"', () => {
     expect(['katori', 'spoon', 'plate', 'gram', 'piece', 'glass', 'litre'].map(unitPlural)).toEqual(['katoris', 'spoons', 'plates', 'grams', 'pieces', 'glasses', 'litres']);
     expect(notMeasured('dal', 'piece')).toBe('dal isn’t measured in pieces');
     expect(unitReason('glass', 'roti')).toBe('Roti isn’t measured in glasses. Pick another unit.');
-    expect(unitReason('piece', 'kodo_khichdi')).toBe('This dish isn’t measured in pieces. Pick another unit.'); // a dish the phone doesn't have
+    expect(unitReason('piece', 'kodo_khichdi')).toBe('Kodo khichdi isn’t measured in pieces. Pick another unit.'); // a dish the phone doesn't have: its id as words, never a slug
     const { reviewNote } = require('../src/lib/serverRow');
     expect(reviewNote(tableEntry('x', 'dal', 1, 'piece'))).toBe('Not counted yet: dal isn’t measured in pieces. Check the amount and add it again.');
   });

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser } from '../parser';
-import { unitReason, UNITS_UNKNOWN, amountReason, limitReason, tableTooMuch, TOO_MUCH_REASON, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
+import { displayName, unitReason, UNITS_UNKNOWN, amountReason, limitReason, tableTooMuch, TOO_MUCH_REASON, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -30,7 +30,7 @@ export function ItemCard({ it, slot, confirmed, remembered, plain, onEdit, onCon
       <Row style={{ justifyContent: 'space-between' }}>
         <FoodTile seed={it.dish_id || it.name} category={dish?.category} size={36} />
         <Row style={{ flex: 1, flexWrap: 'wrap' }}>
-          <T v="bodyStrong">{it.name}</T>
+          <T v="bodyStrong">{displayName(it.name, it.dish_id)}</T>
           {dish?.brand ? <Badge kind="brand" label="brand" /> : null}
           {ai ? <Badge kind="ai" label="Estimate" /> : null}
         </Row>
@@ -88,7 +88,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   const save = () => { if (!blocked) onSave(chosen(preview)); };
   const matches = search.length > 1 ? DISHES.filter((d) => d.name.includes(search.toLowerCase())).slice(0, 5) : [];
   return (
-    <Sheet visible={visible} onClose={onClose} title={preview.name}>
+    <Sheet visible={visible} onClose={onClose} title={displayName(preview.name, preview.dish_id)}>
       <T v="caption" tone="muted">Matched dish · {table ? 'from our table' : 'AI estimate'}</T>
       {table ? <Field placeholder="Change dish…" value={search} onChangeText={setSearch} accessibilityLabel="Change dish" /> : null}
       {matches.map((d) => <Chip key={d.id} kind="neutral" label={d.name} onPress={() => { setDishId(d.id); setUnit(parser.supportedUnits(d.id).includes(unit) ? unit : d.unit); setQty(1); setSearch(''); }} />)}

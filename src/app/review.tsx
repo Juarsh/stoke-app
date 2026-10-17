@@ -9,7 +9,7 @@ import { rejectCopy } from '@/lib/confirmBatch';
 import { PendingRow } from '@/components/PendingRow';
 import { SyncFailedRow } from '@/components/SyncFailedRow';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
-import { hasKcal, toReview } from '@/lib/domain';
+import { displayLabel, hasKcal, toReview } from '@/lib/domain';
 import { itemKind } from '@/lib/itemKind';
 import { reviewHeader } from '@/lib/reviewMode';
 import { CHOOSE_FIRST_REASON, useStore } from '@/lib/store';
@@ -49,7 +49,7 @@ export default function Review() {
         const body = choice[e.id]
           ? <OpenRow it={choice[e.id]} kind="unit" text={e.raw_text} onConfirm={(n) => confirmIt(e.id, n)} onEdit={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'kcal'
-          ? <KcalRow name={e.raw_text || it.name} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason, resetsAt: e.ai_resets_at }) : undefined} onAdd={(k) => tried(e.id, st.confirmReviewKcal(e.id, k))} onRemove={() => st.dropReview(e.id)} />
+          ? <KcalRow name={e.raw_text || displayLabel(it.name, it.dish_id)} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason, resetsAt: e.ai_resets_at }) : undefined} onAdd={(k) => tried(e.id, st.confirmReviewKcal(e.id, k))} onRemove={() => st.dropReview(e.id)} />
           : kind === 'estimate'
             ? <OpenRow it={it} kind="estimate" text={e.raw_text} onAdd={(n) => confirmIt(e.id, n)} onConfirm={(n) => confirmIt(e.id, n)} onEdit={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'chips'
@@ -64,7 +64,7 @@ export default function Review() {
             {e.reject_code ? <T v="caption" tone={e.server_note ? 'warn' : 'muted'} testID={e.server_note ? 'server-note' : undefined}>{e.server_note ?? rejectCopy(e.reject_code)}</T> : null}
             {no[e.id] ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {no[e.id]}</T> : null}
             {/* the server refused this item's sync (4xx): kept here with its reason, never dropped (rg5 G1) */}
-            {e.sync_error || e.sync_retrying ? <SyncFailedRow title={e.raw_text || it.name} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} /> : null}
+            {e.sync_error || e.sync_retrying ? <SyncFailedRow title={e.raw_text || displayLabel(it.name, it.dish_id)} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} /> : null}
           </Card>
         );
       })}
