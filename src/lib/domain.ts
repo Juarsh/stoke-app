@@ -245,11 +245,42 @@ export function entryRefusal(e: FoodEntry): string | null {
   if (e.needs_review || e.pending || e.deleted_at) return null;
   const k = e.kcal?.best;
   const src = serverSource(e);
-  if (src === 'custom') return validTypedKcal(k) ? null : TYPED_KCAL_REASON;
+  if (src === 'custom') return validTypedKcal(k) ? macroReason(e, true) : TYPED_KCAL_REASON;
   const finite = typeof k === 'number' && Number.isFinite(k);
   if (e.dish_id && src !== 'ai_estimate') return !qtyInRange(e.qty) ? amountReason(e.unit) : finite && k >= 0 ? null : NO_KCAL_REASON;
   if (!finite || k <= 0) return NO_KCAL_REASON;
-  return k <= KCAL_MAX ? null : TYPED_KCAL_REASON;
+  // an AI reading (x the amount the user chose) over the server's 5000 / protein 300 per item: too much for one entry
+  return limitReason({ kcal: e.kcal, protein_g: e.protein_g, carbs_g: e.carbs_g, fat_g: e.fat_g });
+}
+/** food.go resolve, custom / AI rows (no table dish): kcal 0-5000, protein_g 0-300, carbs_g and fat_g >= 0. Table rows are
+ * recomputed by the server and have no such per-item cap. */
+export const PROTEIN_MAX = 300;
+/** Designer (Oct 17): an amount change that takes a row past a server limit (AI kcal > 5000, protein > 300). */
+export const TOO_MUCH_REASON = 'That’s too much for one entry. Try a smaller amount.';
+export const BAD_NUMBERS_REASON = 'These numbers can’t be saved. Check them and try again.';
+export const TYPED_PROTEIN_REASON = 'Enter between 0 and 300 g protein.';
+const num = (x: unknown, d = 0) => (typeof x === 'number' ? x : d);
+function macroReason(e: Pick<FoodEntry, 'protein_g' | 'carbs_g' | 'fat_g'>, typed: boolean): string | null {
+  const p = num(e.protein_g?.best), c = num(e.carbs_g), f = num(e.fat_g);
+  if (![p, c, f].every(Number.isFinite) || p < 0 || c < 0 || f < 0) return BAD_NUMBERS_REASON;
+  return p > PROTEIN_MAX ? (typed ? TYPED_PROTEIN_REASON : TOO_MUCH_REASON) : null;
+}
+/** A computed (non-table) reading the server would refuse, or null: the edit sheets and the store guard both use it. */
+export function limitReason(n: { kcal: Range; protein_g: Range; carbs_g?: number; fat_g?: number }): string | null {
+  if (num(n.kcal?.best) > KCAL_MAX) return TOO_MUCH_REASON;
+  return macroReason(n, false);
+}
+/** custom_name as the server takes it: trimmed, at most 120 bytes (Go len), cut at a word boundary (G3). The full text
+ * stays in raw_text. */
+export const NAME_MAX_BYTES = 120;
+const utf8Len = (s: string) => { let n = 0; for (const ch of s) { const c = ch.codePointAt(0)!; n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; } return n; };
+export function serverName(s: string): string {
+  const t = (s ?? '').trim();
+  if (utf8Len(t) <= NAME_MAX_BYTES) return t;
+  let out = '';
+  for (const w of t.split(/\s+/)) { const next = out ? `${out} ${w}` : w; if (utf8Len(next) > NAME_MAX_BYTES) break; out = next; }
+  if (!out) for (const ch of t) { if (utf8Len(out + ch) > NAME_MAX_BYTES) break; out += ch; } // one very long word
+  return out.replace(/[\s,;:.\-–—]+$/u, '') || out;
 }
 export const savableEntry = (e: FoodEntry): boolean => entryRefusal(e) === null;
 

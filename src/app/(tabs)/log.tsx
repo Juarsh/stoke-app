@@ -11,7 +11,7 @@ import { localCapHit } from '@/lib/aiQuota';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
-import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
+import { entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
 import { backstopDue, BACKSTOP_REASON, isExpiredId } from '@/lib/aiBackstop';
@@ -179,7 +179,11 @@ export default function Log() {
   const sum = nOpen || openFailed || (nEstimating && bp.add.length) ? { ...sum0, total: bp.total, button: bp.button, soFar: !!nEstimating } : sum0;
   const any = drafts.length + customs.length + pendingUnmatched.length > 0;
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
-  const canAdd = any && !(bp.disabled && bp.later); // confirm-none: the main button is not shown at all; 'Save · N to review later' is the way out
+  // every row Add would save is one the store guard refuses (e.g. 5001 roti) and there is nothing else to save: Add can't
+  // save, so it shows disabled (Designer Oct 17) instead of looking enabled and doing nothing; the row says why
+  const guardRefuses = (it: Item) => !!entryRefusal(entryFromItem({ ...it, needs_confirmation: false }, { id: 'x', slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }));
+  const addBlocked = bp.add.length > 0 && bp.add.every((r) => guardRefuses(r.it)) && !addedCustoms.length && !pendingUnmatched.length && !nOpen && !openFailed;
+  const canAdd = any && !(bp.disabled && bp.later) && !addBlocked; // confirm-none: the main button is not shown at all; 'Save · N to review later' is the way out
   const addLabel = sum.button;
   const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));

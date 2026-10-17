@@ -212,7 +212,7 @@ describe('F1 (rg4): the app refuses up front what the server would refuse; a PAT
     const n = server.log.length;
     let why: string | null = null;
     await act(async () => { why = st.updateEntry({ ...ent('W'), qty: 3, kcal: { low: 6000, best: 6000, high: 6000 } }); });
-    expect(why).toBe('Enter between 1 and 5,000 kcal.');
+    expect(why).toBe('That’s too much for one entry. Try a smaller amount.'); // Designer Oct 17: an AI row scaled past 5000
     await settle();
     expect(server.log.length).toBe(n); // nothing sent
     expect(ent('W').kcal.best).toBe(2000);

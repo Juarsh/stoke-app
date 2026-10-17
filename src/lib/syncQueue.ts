@@ -32,6 +32,8 @@ export interface Sender {
   abandonJob?(jobId: string): Promise<void>;
 }
 
+/** Final, non-cap AI endings the server names (fallback_reason, else fallback): the job will never answer (backend 22a6a18). */
+export const FINAL_FAIL_REASONS = ['gave_up', 'error'];
 const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : o.kind === 'pending' ? `pending:${o.food.id}` : `${o.kind}:${o.id}`);
 
 /** Coalesce: a newer op for the same id replaces older queued ops. */
@@ -40,9 +42,13 @@ export function enqueue(q: Op[], op: Op): Op[] {
   return [...q.filter((o) => (o.kind === 'delete' ? o.id : opId(o)) !== id), op];
 }
 
-/** A save the server refused as invalid (400/422, e.g. a variant saved without a pick). Error code TBD by backend;
- * any 400/422 on a confirmed (non-review) upsert counts. Other errors keep the retry-with-backoff rule. */
-export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((op.kind === 'profile' || (op.kind === 'upsert' && !op.entry.pending))
+/** Reopened in Review (not flagged): 409 job_abandoned, a refused profile, or a 400/422 CHOICE_CODES pick on the POST of a
+ * new confirmed row. Every other 4xx on an upsert is isRefusal (flagged, value kept). */
+/** The server asks the user to pick (variant / amount) and says which: the one 4xx on a NEW confirmed row that goes back to
+ * Review with its choices (the app only confirms after a pick, so this is an old-build / table-drift case). */
+export const CHOICE_CODES = ['variant_required', 'quantity_required'];
+export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((op.kind === 'profile'
+  || (op.kind === 'upsert' && !op.entry.pending && !op.entry.needs_review && (e as { patch?: unknown })?.patch !== true && CHOICE_CODES.includes(codeOf(e))))
   && typeof (e as { status?: unknown })?.status === 'number' && [400, 422].includes((e as { status: number }).status));
 /** 409 job_abandoned: an AI reading saved with an abandoned job's id is refused for good (the user's typed kcal is what counts). */
 export const isAbandonedSave = (e: unknown, op: Op) => op.kind === 'upsert' && (e as { status?: unknown })?.status === 409 && codeOf(e) === 'job_abandoned';
@@ -50,10 +56,12 @@ const codeOf = (e: unknown) => { const c = (e as { code?: unknown })?.code; retu
 
 const reasonOf = (e: unknown) => { const r = (e as { reason?: unknown })?.reason; return typeof r === 'string' && r ? r : undefined; };
 /** A 4xx on an upsert's PATCH, other than 404 (delete wins), 409 (version / abandon) and the retryable 401/408/429. */
-export const isPatchRefusal = (e: unknown) => {
-  const s = statusOf(e);
-  return (e as { patch?: unknown })?.patch === true && s >= 400 && s < 500 && ![401, 404, 408, 409, 429].includes(s);
-};
+export const isPatchRefusal = (e: unknown) => (e as { patch?: unknown })?.patch === true && isRefusalStatus(statusOf(e));
+/** Hard-gate rule (rg5 G2/G1): any 4xx on an upsert, POST (a new row, a review-later draft) or PATCH, other than 404 / 409 /
+ * the retryable 401/408/429 and the CHOICE_CODES pick: the phone keeps the user's row and value, shows
+ * "Couldn’t sync this. Tap to retry" with the server's reason; never a 0-kcal Review row, never an undone Add. */
+export const isRefusal = (e: unknown, op: Op) => op.kind === 'upsert' && isRefusalStatus(statusOf(e)) && !isRejection(e, op);
+const isRefusalStatus = (s: number) => s >= 400 && s < 500 && ![401, 404, 408, 409, 429].includes(s);
 const statusOf = (e: unknown) => { const s = (e as { status?: unknown })?.status; return typeof s === 'number' ? s : 0; };
 /** Tries before a 409 that asks to keep-and-retry (e.g. an unknown dish table version) is surfaced instead. */
 export const MAX_TRIES = 5;
@@ -106,6 +114,10 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
         // review entries stay on the device until confirmed
         // review entries sync too (state needs_review): they count for the server streak, not in totals
         rest.push(...es.map((entry): Op => ({ kind: 'upsert', entry, tries: 0 })));
+        // a job that ended for good without a number (gave_up / error): abandoned on the server, as the backstop does, so a
+        // late AI reading for it is never saved (sent in order after the failed row)
+        const job = op.food.job_id;
+        if (job && es.some((x) => FINAL_FAIL_REASONS.includes(x.ai_fail_reason ?? '')) && !rest.some((o) => o.kind === 'abandon' && o.id === job)) rest.push({ kind: 'abandon', id: job, tries: 0 });
       }
       rest.shift();
     } catch (e) {
@@ -116,7 +128,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       // any other 4xx on the PATCH of a row the server already has (409 = the version / abandon flows; 401/408/429 retry):
       // the server kept its copy, so the phone's row is NEVER rewritten (no 0-kcal review row). It keeps the user's value,
       // shows "Couldn't sync this. Tap to retry" with the server's reason, and the rest of the queue keeps flowing.
-      if (op.kind === 'upsert' && isPatchRefusal(e)) {
+      if (op.kind === 'upsert' && (isPatchRefusal(e) || isRefusal(e, op))) {
         failed.push({ id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry, reason: reasonOf(e) });
         rest.shift(); continue;
       }

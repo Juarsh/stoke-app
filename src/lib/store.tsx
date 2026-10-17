@@ -6,7 +6,7 @@ import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, TYPED_KCAL_REASON, validTypedKcal } from './domain';
+import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -208,8 +208,9 @@ function useStoreValue() {
       // store guard: 1-5000 only (empty, 0, negatives, NaN, > 5000 refused), like the server; the row stays with the reason
       const old = p.entries.find((e) => e.id === id); if (!old || !validTypedKcal(kcal)) return p;
       const k = Math.round(kcal), z = { low: 0, best: 0, high: 0 };
-      // typed: plain custom, without the AI job's provenance (job_abandoned never refuses it)
-      const n: FoodEntry = { ...old, dish_id: null, custom_name: old.raw_text || old.review_item?.name || 'item', source: 'custom', kcal: { low: k, best: k, high: k }, protein_g: z,
+      // typed: plain custom, without the AI job's provenance (job_abandoned never refuses it). The name is the server's
+      // custom_name (<= 120 bytes, cut at a word: G3); the whole meal text stays in raw_text
+      const n: FoodEntry = { ...old, dish_id: null, custom_name: serverName(old.raw_text || old.review_item?.name || 'item') || 'item', source: 'custom', kcal: { low: k, best: k, high: k }, protein_g: z,
         carbs_g: 0, fat_g: 0, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, variant_dish_id: undefined, job_id: undefined,
         sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() } as FoodEntry;
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };

@@ -157,7 +157,8 @@ describe('F2 (rg4): an amount the table can\'t take shows the range on the row; 
     expect(entryRefusal({ ...e, qty: 5000, kcal: { low: 550000, best: 550000, high: 550000 } })).toBeNull();
     // AI rows: the server's 0-5000 (food.go:969); typed rows 1-5000
     const ai = { ...e, dish_id: null, source: 'ai' as const, custom_name: 'wedding plate' };
-    expect(entryRefusal({ ...ai, kcal: { low: 6000, best: 6000, high: 6000 } })).toBe(TYPED_KCAL_REASON);
+    expect(entryRefusal({ ...ai, kcal: { low: 6000, best: 6000, high: 6000 } })).toBe('That’s too much for one entry. Try a smaller amount.');
+    expect(entryRefusal({ ...ai, source: 'custom', kcal: { low: 6000, best: 6000, high: 6000 } })).toBe(TYPED_KCAL_REASON);
     expect(entryRefusal({ ...ai, kcal: { low: 5000, best: 5000, high: 5000 } })).toBeNull();
   });
 });

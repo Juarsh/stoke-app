@@ -68,12 +68,16 @@ describe('server rejects a save (4xx): row reopens for review', () => {
     kcal: { low: 275, best: 275, high: 275 }, protein_g: { low: 14, best: 14, high: 14 }, source: 'table', source_note: '', confirmed: true, dish_table_version: 3,
     created_at: '', updated_at: '', deleted_at: null } as FoodEntry;
   const sender = (status: number) => ({ upsertEntry: async () => { throw Object.assign(new Error('x'), { status }); }, deleteEntry: async () => {}, resolvePending: async () => null, deleteRemembered: async () => {} });
-  test('422 / 400: op leaves the queue, entry returned as rejected (queue not blocked)', async () => {
+  test('422 / 400 (no pick asked for): op leaves the queue, the entry is flagged, not reopened (rg5 rule; queue not blocked)', async () => {
     for (const st of [400, 422]) {
       const q: Op[] = [{ kind: 'upsert', entry: e, tries: 0 }, { kind: 'delete', id: 'z', tries: 0 }];
       const r = await flush(q, sender(st));
-      expect(r.rejected.map((x) => x.entry.id)).toEqual(['e1']); expect(r.rest.some((o) => o.kind === 'upsert')).toBe(false);
+      expect(r.rejected).toEqual([]); expect(r.failed.map((x) => x.id)).toEqual(['e1']); expect(r.rest).toEqual([]);
     }
+  });
+  test('variant_required: op leaves the queue, entry returned as rejected with its choices', async () => {
+    const r = await flush([{ kind: 'upsert', entry: e, tries: 0 }], { ...sender(0), upsertEntry: async () => { throw Object.assign(new Error('x'), { status: 422, code: 'variant_required' }); } });
+    expect(r.rejected.map((x) => x.entry.id)).toEqual(['e1']); expect(r.failed).toEqual([]);
   });
   test('5xx / 429 keep the retry rule; a 409 is surfaced on the entry and never blocks the queue', async () => {
     for (const st of [500, 429]) { const r = await flush([{ kind: 'upsert', entry: e, tries: 0 }], sender(st)); expect(r.rejected).toEqual([]); expect(r.rest[0].tries).toBe(1); }

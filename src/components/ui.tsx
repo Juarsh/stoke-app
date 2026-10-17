@@ -67,11 +67,13 @@ export function Card({ style, tone = 'card', dashed, outline, children, ...p }: 
 export function Button({ title, kind = 'primary', disabled, style, ...p }: PressableProps & { title: string; kind?: 'primary' | 'soft' | 'danger' | 'ghost' | 'onCoach' | 'outline' }) {
   const t = useTheme(); const s = useStyles();
   const grad = kind === 'primary' && !disabled;
-  const bg = disabled ? t.c.card2 : grad ? t.c.accentFill : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
-  const fg: Tone = disabled ? 'text2' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : kind === 'outline' ? 'text' : 'emChip';
+  // Designer (Oct 17): a primary Add / Save that can't save is the AddButton's disabled look, the coral fill at 40%
+  const dimmed = kind === 'primary' && !!disabled;
+  const bg = dimmed ? t.c.accentFill : disabled ? t.c.card2 : grad ? t.c.accentFill : kind === 'soft' ? t.c.tint : kind === 'onCoach' ? t.c.onCoachFill : 'transparent';
+  const fg: Tone = dimmed ? 'onGrad' : disabled ? 'text2' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : kind === 'outline' ? 'text' : 'emChip';
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
-      style={(st) => [s.btn, { backgroundColor: bg }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, kind === 'outline' && !disabled && { borderWidth: 1.5, borderColor: t.c.muted }, st.pressed && { opacity: 0.85 }, style as object]}>
+      style={(st) => [s.btn, { backgroundColor: bg }, dimmed && { opacity: 0.4 }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, kind === 'outline' && !disabled && { borderWidth: 1.5, borderColor: t.c.muted }, st.pressed && { opacity: 0.85 }, style as object]}>
       {kind === 'danger' ? (
         // delete: always the trash icon + the word "Delete" (never colour alone)
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

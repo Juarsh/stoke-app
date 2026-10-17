@@ -137,8 +137,29 @@ describe('queued food: the cap ends it as a failed row with the cap copy', () =>
     expect(resolved).toHaveLength(1); expect(resolved[0].ai_fail_reason).toBe('global_cap_reached');
     expect(rest).toEqual([]);
   });
-  test('a non-cap failure stays pending (retried; the 35-minute backstop covers it)', async () => {
-    expect(await resolvePending({ parse: async () => capBody({ fallback: 'error', fallback_reason: 'error' }) as never }, f)).toBeNull();
+  test.each(['gave_up', 'error'])('a final non-cap failure (%s, backend 22a6a18) is the failed row now, not Estimating until the backstop', async (reason) => {
+    const es = await resolvePending({ parse: async () => capBody({ fallback: reason, fallback_reason: reason }) as never }, f) as ReturnType<typeof pendingEntry>[];
+    expect(es).toHaveLength(1);
+    const e = es[0];
+    expect(e).toMatchObject({ id: 'p1', ai_fail_reason: reason, needs_review: true, pending: false }); expect(e.ai_expired).toBeUndefined();
+    expect(failedCopy({ reason: e.ai_fail_reason })).toBe(FAILED_COPY);
+    expect(counted(e)).toBe(false); expect(dayTotals([e]).kcal).toBe(0); expect(e.kcal.best).toBe(0); expect(hasKcal(e.review_item)).toBe(false);
+    expect(reviewRowKind(e.review_item!)).toBe('kcal');
+  });
+  test('gave_up on the job poll via the sync queue: pending op gone, failed row synced, the job abandoned (as the backstop does)', async () => {
+    const fj = { ...f, job_id: 'job-7' };
+    const sent: string[] = [];
+    const q = enqueue(enqueue([], { kind: 'upsert', entry: pendingEntry(fj), tries: 0 }), { kind: 'pending', food: fj, tries: 0 });
+    const { rest, resolved } = await flush(q, { upsertEntry: async (e) => { sent.push(`upsert ${e.id} ${e.ai_fail_reason ?? ''}`); }, deleteEntry: async () => {}, deleteRemembered: async () => {},
+      abandonJob: async (id) => { sent.push(`abandon ${id}`); },
+      resolvePending: (x) => resolvePending({ parse: async () => { throw new Error('no'); }, parseJob: async () => ({ ...capBody({ fallback: 'gave_up', fallback_reason: 'gave_up' }), attempts: 3, max_attempts: 3 }) as never }, x) }, 0);
+    expect(resolved.map((e) => e.ai_fail_reason)).toEqual(['gave_up']);
+    expect(rest).toEqual([]);
+    expect(sent).toEqual(['upsert p1 ', 'upsert p1 gave_up', 'abandon job-7']);
+  });
+  test('busy / still estimating (rate_limited, timeout) stays pending: only no answer at all is left to the 35-minute backstop', async () => {
+    for (const reason of ['rate_limited', 'timeout', 'unavailable'])
+      expect(await resolvePending({ parse: async () => ({ ...capBody({ fallback: 'busy', fallback_reason: reason }), ai_state: 'estimating' }) as never }, f)).toBeNull();
   });
   test('leaving Log keeps the cap reason on the review row', () => {
     const { reviews } = leaveLog({ open: [], failed: [{ key: 'k', id: 'f1', name: 'kombucha', kcal: '', protein: '', added: false, reason: 'daily_limit', resetsAt: RESET }],

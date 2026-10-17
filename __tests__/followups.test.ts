@@ -55,10 +55,18 @@ describe('rejected save -> Review, copy by error.code', () => {
     expect(rejectCopy('quantity_required')).toBe('Pick how much to save this.');
     expect(rejectCopy('whatever')).toBe('Couldn’t save this. Check it and try again.'); expect(rejectCopy()).toBe(rejectCopy('x'));
   });
-  test('flush hands back entry + code for 400 and 422 alike', async () => {
-    for (const [st, code] of [[400, 'variant_required'], [422, 'variant_required'], [422, 'quantity_required'], [400, undefined]] as const) {
+  test('flush hands back entry + code for a pick the server asks for (400 and 422 alike)', async () => {
+    for (const [st, code] of [[400, 'variant_required'], [422, 'variant_required'], [422, 'quantity_required']] as const) {
       const r = await flush([{ kind: 'upsert', entry: entry(), tries: 0 }], mk({ upsertEntry: async () => { throw rej(st, code); } }));
-      expect(r.rejected).toEqual([{ entry: entry(), code: code ?? '' }]); expect(r.rest).toEqual([]);
+      expect(r.rejected).toEqual([{ entry: entry(), code }]); expect(r.rest).toEqual([]);
+    }
+  });
+  test('rg5 hard gate: any other POST 4xx is never a Review row; the row is flagged with the server reason', async () => {
+    for (const st of [400, 403, 413, 422]) {
+      const err = new ApiError(st, JSON.stringify({ error: 'protein_g, carbs_g and fat_g must be >= 0 (protein <= 300)' }));
+      const r = await flush([{ kind: 'upsert', entry: entry(), tries: 0 }], mk({ upsertEntry: async () => { throw err; } }));
+      expect(r.rejected).toEqual([]); expect(r.rest).toEqual([]);
+      expect(r.failed).toEqual([{ id: 'e1', code: 'protein_g, carbs_g and fat_g must be >= 0 (protein <= 300)', sent: entry(), reason: 'protein_g, carbs_g and fat_g must be >= 0 (protein <= 300)' }]);
     }
   });
   test('no infinite retry: a refused review entry is dropped from the queue', async () => {

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser, UNITS } from '../parser';
-import { amountReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
+import { amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -73,10 +73,13 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   // never throws while drawing (F2): an amount the table can't take (0, > 5000) keeps the last good numbers and says why
   const amountOff = table && !qtyInRange(qty);
   const preview: Item = !table ? scaleAi(it, qty) : amountOff ? it : safeEdit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined });
+  // an AI reading scaled past the server's per-item limits (kcal > 5000, protein > 300): refused here, nothing is sent
+  const tooMuch = !table ? limitReason(preview) : null;
+  const blocked = amountOff || !!tooMuch;
   const step = qtyStep(unit);
   // Save = the amount the user chose: a confirmed reading, so the "unusual amount" options recompute attaches for a big
   // quantity (12 katori, 24 pieces) are the choice already made, never a new one (F3)
-  const save = () => { if (!amountOff) onSave(chosen(preview)); };
+  const save = () => { if (!blocked) onSave(chosen(preview)); };
   const matches = search.length > 1 ? DISHES.filter((d) => d.name.includes(search.toLowerCase())).slice(0, 5) : [];
   return (
     <Sheet visible={visible} onClose={onClose} title={preview.name}>
@@ -105,8 +108,9 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
         <T v="displayM" tone="emChip">{preview.kcal.best} kcal</T>
         {rangeLines(preview).map((l, i) => <T key={i} v="caption" tone="primaryText">{l}</T>)}
       </Card>
-      {error ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {error}</T> : null}
-      <Button title="Save changes" disabled={amountOff} onPress={save} />
+      {tooMuch ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="too-much">{tooMuch}</T> : null}
+      {error && !blocked ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {error}</T> : null}
+      <Button title="Save changes" disabled={blocked} onPress={save} />
       <Button kind="danger" title="Delete item" onPress={onDelete} />
     </Sheet>
   );

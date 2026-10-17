@@ -6,7 +6,7 @@ import { ApiError, ParsePending } from './api';
 import { autoSavable, entryFromItem, FoodEntry, mergeEntries, reviewEntry } from './domain';
 import type { Item } from '../parser';
 import { isPlaceholder } from './itemKind';
-import { enqueue, Op, PendingFood } from './syncQueue';
+import { enqueue, FINAL_FAIL_REASONS, Op, PendingFood } from './syncQueue';
 import { aiStatus, failReason, isCapReason, resetOf } from './aiRows';
 import { failedAiEntry } from './aiBackstop';
 
@@ -25,6 +25,10 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
   const got = r.items.filter((it) => !isPlaceholder(it) && it.kcal.best > 0);
   // the daily cap ran out for a queued food: a failed row with the cap copy now (typed kcal only), not an endless 'pending'
   if (!got.length && aiStatus(r) === 'failed' && isCapReason(failReason(r))) return [failedAiEntry(f, failReason(r), undefined, new Date(), resetOf(r))];
+  // the server's job ended for good without a number (backend 22a6a18: gave_up after AI_MAX_ATTEMPTS, or error): the failed
+  // row "Couldn’t estimate this. Add the calories yourself." now, not 'Estimating' until the 35-minute backstop
+  const fin = finalReason(r);
+  if (!got.length && aiStatus(r) === 'failed' && fin) return [failedAiEntry(f, fin, undefined, new Date())];
   if (!got.length) return null;
   // only a confident table match is saved; anything uncertain becomes a 'needs review' entry (no unwarned number)
   return got.map((it, i) => {
@@ -32,6 +36,12 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
     const e = autoSavable(it) ? entryFromItem(it, o) : reviewEntry(it, o);
     return f.job_id ? { ...e, job_id: f.job_id } : e;
   });
+}
+
+export { FINAL_FAIL_REASONS };
+export function finalReason(r: { fallback_reason?: string; fallback?: string }): string | null {
+  const x = r.fallback_reason || (FINAL_FAIL_REASONS.includes(r.fallback ?? '') ? r.fallback! : '');
+  return FINAL_FAIL_REASONS.includes(x) ? x : null;
 }
 
 /** Late AI answer for a food already handed to the queue (Add tapped while estimating, or the 10 s timeout).

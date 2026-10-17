@@ -7,6 +7,7 @@ import { reviewRowKind, reviewSummary } from '@/lib/confirmBatch';
 import { KcalRow } from '@/components/KcalRow';
 import { rejectCopy } from '@/lib/confirmBatch';
 import { PendingRow } from '@/components/PendingRow';
+import { SyncFailedRow } from '@/components/SyncFailedRow';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
 import { hasKcal, toReview } from '@/lib/domain';
 import { itemKind } from '@/lib/itemKind';
@@ -62,6 +63,8 @@ export default function Review() {
             {body}
             {e.reject_code ? <T v="caption" tone="muted">{rejectCopy(e.reject_code)}</T> : null}
             {no[e.id] ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {no[e.id]}</T> : null}
+            {/* the server refused this item's sync (4xx): kept here with its reason, never dropped (rg5 G1) */}
+            {e.sync_error || e.sync_retrying ? <SyncFailedRow title={e.raw_text || it.name} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} /> : null}
           </Card>
         );
       })}

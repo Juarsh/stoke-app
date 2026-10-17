@@ -3,7 +3,7 @@
 // TS parser and writes resolve immediately (data stays on the device).
 import { DISH_TABLE_VERSION, parser } from '../parser';
 import { config } from './config';
-import { serverSource, type FoodEntry } from './domain';
+import { KCAL_MAX, qtyInRange, serverName, serverSource, type FoodEntry } from './domain';
 
 export * from './parseLocal';
 import { ItemIn, ParseResponse, parseLocal } from './parseLocal';
@@ -47,6 +47,13 @@ export function variantField(e: FoodEntry): { variant_dish_id?: string } {
   if (!e.dish_id || e.needs_review) return {};
   // only a pick the user made (or a variant named in their text, recorded on the entry); never inferred here
   return e.variant_dish_id && e.variant_dish_id === e.dish_id ? { variant_dish_id: e.dish_id } : {};
+}
+/** A needs_review dish the server's draft check takes as is: qty in range and its reading (when the phone has one) at most
+ * 5000 kcal (food.go draft: "quantity out of range" / "numbers out of range"). */
+export function draftDishOk(e: Pick<FoodEntry, 'qty' | 'review_item'>): boolean {
+  if (!qtyInRange(e.qty)) return false;
+  const k = e.review_item?.kcal;
+  return !k || [k.best, k.high].every((x) => !Number.isFinite(x) || x <= KCAL_MAX);
 }
 export function errorCode(body: string): string {
   try { const j = JSON.parse(body) as { error?: unknown }; const e = j?.error;
@@ -141,22 +148,35 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       const job = e.job_id && source === 'ai_estimate' ? { parse_job_id: e.job_id } : {};
       if (e.needs_review) {
         // logged but unchecked (API.md "Entry state"): counts for the server streak, not in totals. Identity only; numbers are display-only.
-        const id = e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level } : { custom_name: e.custom_name || e.span || 'item' };
-        const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
-          items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}), ...job }] });
-        if (r?.duplicates?.length) return patch({ slot: e.slot, local_date: e.local_date, ...id, remember: false }, e.server_version ?? r.entries?.[0]?.version);
-        return { version: r?.entries?.[0]?.version };
+        // G1: the server's draft check (food.go draft) recomputes a dish at its qty and refuses a qty out of range or a reading
+        // over 5000 kcal (60 roti, 5001 roti, 5001 g rice). Such a draft is saved by name instead, so the server has the row
+        // too (streak / "logged" match); the phone keeps the dish reading in review_item, and confirming it sends the dish.
+        const name = { custom_name: serverName(e.custom_name || e.review_item?.name || e.span || e.raw_text || 'item') || 'item' };
+        const dish = e.dish_id && draftDishOk(e) ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level } : null;
+        const send = async (id: Record<string, unknown>, clear: Record<string, unknown> = {}) => {
+          const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
+            items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}), ...job }] });
+          if (r?.duplicates?.length) return patch({ slot: e.slot, local_date: e.local_date, ...clear, ...id, remember: false }, e.server_version ?? r.entries?.[0]?.version);
+          return { version: r?.entries?.[0]?.version };
+        };
+        if (!dish) return send(name, e.dish_id ? { dish_id: '' } : {});
+        try { return await send(dish); }
+        catch (err) {
+          // the server still refused the dish draft (400: its own recompute): the same row by name, never lost
+          if (!(err instanceof ApiError && err.status === 400)) throw err;
+          return send(name, { dish_id: '' });
+        }
       }
       const item: ItemIn = e.dish_id
         ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, source, confirmed: true, client_id: e.id, dish_table_version: e.dish_table_version, ...nums, ...span,
           ...variantField(e), ...job } as ItemIn
-        : { custom_name: e.custom_name, source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
+        : { custom_name: serverName(e.custom_name), source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
       const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
       if (!r?.duplicates?.length) return { version: r?.entries?.[0]?.version };
       // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only. No phone-clock precondition:
       // the version is the server's own, from its last response for this entry (else the POST's copy of the row).
       return patch({
-        slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, ...variantField(e) } : { custom_name: e.custom_name }),
+        slot: e.slot, local_date: e.local_date, ...(e.dish_id ? { dish_id: e.dish_id, qty: e.qty, unit: e.unit, oil_level: e.oil_level, ...variantField(e) } : { custom_name: serverName(e.custom_name) }),
         confirmed: true,
         kcal: e.kcal.best, protein_g: e.protein_g.best,
         // confirms a needs_review entry on the server (no-op for confirmed ones)
