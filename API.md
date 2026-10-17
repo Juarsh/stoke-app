@@ -604,6 +604,12 @@ and `adjacent_split`, are never confident, and the whole phrase goes to the AI. 
   so a day can never be left with list != summary. Numeric columns are wide (migration 018: per-entry
   NUMERIC(12,1), summaries NUMERIC(14,1)); a value no column can hold is a 400 (`"That’s too much for one
   entry…"` / `"That’s too much for one day. Try a smaller amount."`), never a 500.
+- **Racing writes on one row (rg8 B1).** Under the lock, `PATCH` and `DELETE` re-read the row
+  (`FOR UPDATE`). `DELETE` rebuilds the day the row is on at that moment (`RETURNING local_date`), and a
+  second, concurrent `DELETE` of the same row is a 204 that changes nothing. If the row changed after the
+  `PATCH` read it, a `PATCH` with `version` is a 409 `version_conflict` carrying the locked row. A
+  version-less `PATCH` is merged again onto the row as it is now, so it keeps a concurrent day-move or edit.
+  It rebuilds that row's day and the new day. If the row was deleted meanwhile, the `PATCH` is a 404.
 - `kcal_per_unit` on any non-`ai_estimate` item (including table items): 400.
 
 ### GET /version

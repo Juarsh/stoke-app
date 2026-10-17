@@ -1436,46 +1436,49 @@ func (s *Service) handleGetOne(w http.ResponseWriter, r *http.Request) {
 	httpx.JSON(w, 200, e)
 }
 
+// patchIn: the PATCH /v1/entries/{id} body.
+type patchIn struct {
+	Slot       *string  `json:"slot"`
+	LocalDate  *string  `json:"local_date"`
+	DishID     *string  `json:"dish_id"`
+	Qty        *float64 `json:"qty"`
+	Unit       *string  `json:"unit"`
+	OilLevel   *string  `json:"oil_level"`
+	CustomName *string  `json:"custom_name"`
+	Kcal       *float64 `json:"kcal"`
+	ProteinG   *float64 `json:"protein_g"`
+	ProteinAlt *float64 `json:"protein"` // alias
+	// IfUnmodSince is accepted from older apps and IGNORED: a phone clock is
+	// never a precondition (it jammed queues with permanent 409s).
+	IfUnmodSince *time.Time `json:"if_unmodified_since"`
+	// Version: the row version the client last saw (from any entry response).
+	// Stale -> 409 {"error":{"code":"version_conflict"},"entry": current row}.
+	Version *int `json:"version"`
+	// Span overrides the stored parsed span; the corrected reading is
+	// remembered for it (set "remember": false to skip).
+	Span     *string `json:"span"`
+	Remember *bool   `json:"remember"`
+	// State "confirmed" confirms a needs_review entry (full checks apply).
+	State *string `json:"state"`
+	// parse_job_id (alias job_id) / client_item_id link the entry to a parse job / app item.
+	ParseJobID   *string `json:"parse_job_id"`
+	JobID        *string `json:"job_id"`
+	ClientItemID *string `json:"client_item_id"`
+	// Source (optional) says where the new numbers come from; "ai_estimate"
+	// for an entry tied to an abandoned parse job is refused (job_abandoned).
+	Source *string `json:"source"`
+	// Same checks as POST: variant_dish_id for variant-group dishes,
+	// confirmed=true when the (new) span has a vague amount.
+	VariantDishID *string `json:"variant_dish_id"`
+	Confirmed     *bool   `json:"confirmed"`
+}
+
 // handlePatch edits a chip. Dish rows are recomputed from the table; custom
 // rows take the given numbers. If the client sends the row version it last saw
 // and the row has moved on, it's a 409 version_conflict carrying the current
 // row; the client reapplies its own edit on top and retries with that version.
 func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
-	var in struct {
-		Slot       *string  `json:"slot"`
-		LocalDate  *string  `json:"local_date"`
-		DishID     *string  `json:"dish_id"`
-		Qty        *float64 `json:"qty"`
-		Unit       *string  `json:"unit"`
-		OilLevel   *string  `json:"oil_level"`
-		CustomName *string  `json:"custom_name"`
-		Kcal       *float64 `json:"kcal"`
-		ProteinG   *float64 `json:"protein_g"`
-		ProteinAlt *float64 `json:"protein"` // alias
-		// IfUnmodSince is accepted from older apps and IGNORED: a phone clock is
-		// never a precondition (it jammed queues with permanent 409s).
-		IfUnmodSince *time.Time `json:"if_unmodified_since"`
-		// Version: the row version the client last saw (from any entry response).
-		// Stale -> 409 {"error":{"code":"version_conflict"},"entry": current row}.
-		Version *int `json:"version"`
-		// Span overrides the stored parsed span; the corrected reading is
-		// remembered for it (set "remember": false to skip).
-		Span     *string `json:"span"`
-		Remember *bool   `json:"remember"`
-		// State "confirmed" confirms a needs_review entry (full checks apply).
-		State *string `json:"state"`
-		// parse_job_id (alias job_id) / client_item_id link the entry to a parse job / app item.
-		ParseJobID   *string `json:"parse_job_id"`
-		JobID        *string `json:"job_id"`
-		ClientItemID *string `json:"client_item_id"`
-		// Source (optional) says where the new numbers come from; "ai_estimate"
-		// for an entry tied to an abandoned parse job is refused (job_abandoned).
-		Source *string `json:"source"`
-		// Same checks as POST: variant_dish_id for variant-group dishes,
-		// confirmed=true when the (new) span has a vague amount.
-		VariantDishID *string `json:"variant_dish_id"`
-		Confirmed     *bool   `json:"confirmed"`
-	}
+	var in patchIn
 	if !httpx.Decode(w, r, &in) {
 		return
 	}
@@ -1483,28 +1486,42 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		in.ProteinG = in.ProteinAlt
 	}
 	uid := httpx.UserID(r)
+	// The edit is checked against a read of the row taken before the user's lock (no pool
+	// calls while holding it), then re-read FOR UPDATE under the lock: if another write
+	// landed in between (a delete, a day-move, any edit), the merge is redone on the row as
+	// it now is, so the update never writes a stale row and the days rebuilt are the locked
+	// row's day and the new day (rg8 B1).
+	for attempt := 0; ; attempt++ {
+		if done := s.patchOnce(w, r, &in, uid, attempt); done {
+			return
+		}
+	}
+}
+
+// patchOnce runs one merge-and-save; false = the row moved on before the lock, merge again.
+func (s *Service) patchOnce(w http.ResponseWriter, r *http.Request, in *patchIn, uid int64, attempt int) bool {
 	e, code, err := s.load(r.Context(), uid, r)
 	if err != nil {
 		httpx.Error(w, code, err.Error())
-		return
+		return true
 	}
 	if in.Version != nil && *in.Version != e.Version {
 		httpx.JSON(w, 409, versionConflict(e))
-		return
+		return true
 	}
 	oldDay, _ := time.Parse("2006-01-02", e.LocalDate)
 	day := oldDay
 	if in.LocalDate != nil {
 		if day, err = httpx.Day(*in.LocalDate); err != nil {
 			httpx.Error(w, 400, err.Error())
-			return
+			return true
 		}
 	}
 	slot := e.Slot
 	if in.Slot != nil {
 		if !slots[*in.Slot] {
 			httpx.Error(w, 400, "slot must be breakfast, lunch, snacks or dinner")
-			return
+			return true
 		}
 		slot = *in.Slot
 	}
@@ -1532,7 +1549,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Qty != nil && *in.Qty <= 0 {
 		httpx.Error(w, 400, QtyReason) // never stored as 1 (F5)
-		return
+		return true
 	}
 	if in.Qty != nil {
 		// custom items scale their numbers with quantity
@@ -1579,7 +1596,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		}
 		if s.jobAbandoned(r.Context(), uid, job) {
 			httpx.JSON(w, 409, abandonedBody(0, job))
-			return
+			return true
 		}
 	}
 	chk := it
@@ -1592,34 +1609,54 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	if body := s.choiceCheck("", chk, 0); body != nil {
 		httpx.JSON(w, 422, body)
-		return
+		return true
 	}
 	ne, code, err := s.resolve(r.Context(), it)
 	if uv, ok := err.(*unknownVersion); ok {
 		httpx.JSON(w, 409, uv.body(0))
-		return
+		return true
 	}
 	if err != nil {
 		httpx.Error(w, code, err.Error())
-		return
+		return true
 	}
 	// the row, its job link, the remembered reading and the summaries of both days
 	// in ONE transaction under the user's summary lock: all or nothing (H1)
 	tx, err := s.DB.Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
-		return
+		return true
 	}
 	defer tx.Rollback(context.WithoutCancel(r.Context()))
 	if err := summary.LockUser(r.Context(), tx, uid); err != nil {
 		httpx.Error(w, 500, "db")
-		return
+		return true
+	}
+	locked, err := s.scan(tx.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL FOR UPDATE`, e.ID, uid))
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.Error(w, 404, "entry not found") // deleted while this edit was checked: the delete wins
+		return true
+	}
+	if err != nil {
+		httpx.Error(w, 500, "db")
+		return true
+	}
+	if locked.Version != e.Version {
+		if in.Version != nil {
+			httpx.JSON(w, 409, versionConflict(locked)) // the client's version is stale against the locked row
+			return true
+		}
+		if attempt < 8 {
+			return false // merge this edit onto the row as it now is
+		}
+		httpx.Error(w, 409, "entry changed while saving; retry")
+		return true
 	}
 	saved, err := s.scan(tx.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
 		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
 		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
-		WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND ($21::int IS NULL OR version=$21) RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
-		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State, in.Version))
+		WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND version=$21 RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
+		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State, e.Version))
 	if errors.Is(err, pgx.ErrNoRows) {
 		// Another write landed between the load and this update (the update is atomic on
 		// version and deleted_at): a delete wins (404, the same as a PATCH after the delete);
@@ -1628,18 +1665,18 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		cur, code, lerr := s.load(r.Context(), uid, r)
 		if lerr != nil {
 			httpx.Error(w, code, lerr.Error())
-			return
+			return true
 		}
 		if in.Version != nil {
 			httpx.JSON(w, 409, versionConflict(cur))
-			return
+			return true
 		}
 		httpx.Error(w, 409, "entry changed while saving; retry")
-		return
+		return true
 	}
 	if err != nil {
 		writeErr(w, err, TooMuchReason, "save failed")
-		return
+		return true
 	}
 	if in.ParseJobID == nil {
 		in.ParseJobID = in.JobID
@@ -1657,24 +1694,25 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if corrected && span != "" && saved.State == "confirmed" && (in.Remember == nil || *in.Remember) {
 		if err := remember(r.Context(), tx, uid, span, e.SpanPart, false, saved); err != nil {
 			httpx.Error(w, 500, "save failed")
-			return
+			return true
 		}
 	}
 	if !day.Equal(oldDay) {
 		if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, oldDay); err != nil {
 			writeErr(w, err, TooMuchDayReason, "summary failed")
-			return
+			return true
 		}
 	}
 	if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, day); err != nil {
 		writeErr(w, err, TooMuchDayReason, "summary failed")
-		return
+		return true
 	}
 	if err := tx.Commit(r.Context()); err != nil {
 		httpx.Error(w, 500, "save failed")
-		return
+		return true
 	}
 	httpx.JSON(w, 200, saved)
+	return true
 }
 
 // versionConflict: 409 body for a stale PATCH version, with the server's current row.
@@ -1700,11 +1738,18 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, 500, "db")
 		return
 	}
-	if _, err := tx.Exec(r.Context(), `UPDATE food_entries SET deleted_at=now(), updated_at=now() WHERE id=$1 AND user_id=$2`, e.ID, uid); err != nil {
+	// the day comes from the row as it is under the lock (a concurrent day-move may have
+	// changed it since the read above), and only a live row is deleted (rg8 B1)
+	var day time.Time
+	err = tx.QueryRow(r.Context(), `UPDATE food_entries SET deleted_at=now(), updated_at=now() WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL RETURNING local_date`, e.ID, uid).Scan(&day)
+	if errors.Is(err, pgx.ErrNoRows) {
+		w.WriteHeader(http.StatusNoContent) // a concurrent delete got there first (and rebuilt its day)
+		return
+	}
+	if err != nil {
 		httpx.Error(w, 500, "delete failed")
 		return
 	}
-	day, _ := time.Parse("2006-01-02", e.LocalDate)
 	if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, day); err != nil {
 		httpx.Error(w, 500, "summary failed")
 		return
