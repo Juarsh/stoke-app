@@ -125,8 +125,8 @@ const server = {
   version: DISH_TABLE_VERSION, dishes: [] as { id: string; name: string; version: number; supported_units: string[] }[],
   rows: new Map<string, { kcal: number; state: string; dish_id: string; unit: string; version: number }>(),
   log: [] as { method: string; path: string; body: Record<string, unknown> }[],
-  parse: null as unknown,
-  reset() { this.version = DISH_TABLE_VERSION; this.dishes = []; this.rows.clear(); this.log = []; this.parse = null; },
+  parse: null as unknown, fail: false,
+  reset() { this.version = DISH_TABLE_VERSION; this.dishes = []; this.rows.clear(); this.log = []; this.parse = null; this.fail = false; },
   importZarda() { this.version = NEW_V; this.dishes = [{ id: 'zarda_pulao', name: 'zarda pulao', version: NEW_V, supported_units: ['katori', 'plate', 'gram'] }]; },
 };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, headers: { get: (k: string) => (k.toLowerCase() === 'x-dish-table-version' ? String(server.version) : null) },
@@ -137,6 +137,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
   if (path === '/v1/remembered') return reply(200, { remembered: [] });
   if (path === '/v1/dishes') return reply(200, server.dishes);
   if (path === '/v1/parse') return reply(200, server.parse);
+  if (server.fail && path.startsWith('/v1/entries')) return reply(503, { error: 'unavailable' });
   if (init.method === 'POST' && path === '/v1/entries') {
     const it = b.items[0];
     if (server.rows.has(it.client_id)) { const r = server.rows.get(it.client_id)!; return reply(200, { entries: [{ version: r.version, state: r.state, kcal_best: r.kcal }], duplicates: [it.client_id] }); }
@@ -239,7 +240,11 @@ describe('Import path (zarda_pulao at a newer server table)', () => {
 describe('H1: the flagged row on Today', () => {
   test('"Couldn’t sync this. Tap to retry", not counted; tapping retries and a good save counts it', async () => {
     const n = { ...tableEntry('N', 'roti', 2, 'count'), sync_error: SERVER_ERROR, server_failed: true };
-    await boot(<Today />, [n]);
+    server.fail = true; // next build: app start retries a flagged row by itself; the server is still down -> flagged again
+    await boot(<Today />, [n]); await settle();
+    expect(server.log.some((l) => l.method === 'POST' && l.path === '/v1/entries')).toBe(true);
+    expect(ent('N').sync_error).toBe(SERVER_ERROR);
+    server.fail = false;
     expect(textOf(r)).toContain('Couldn’t sync this. Tap to retry');
     expect(textOf(r)).not.toContain('save failed');
     expect(textOf(r)).toContain('— kcal · not counted');

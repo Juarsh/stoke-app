@@ -14,7 +14,7 @@ import { portionLabel } from './labels';
 import { kc } from './format';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
-import { enqueue, flush, FlushResult, hasDue, nextDueAt, Op, PendingFood, SERVER_ERROR } from './syncQueue';
+import { enqueue, flush, FlushResult, hasDue, MAX_FIVES, nextDueAt, Op, opKey, PendingFood, SERVER_ERROR } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
@@ -181,6 +181,33 @@ export function applyServerCopies<P extends { entries: FoodEntry[]; queue: Op[] 
   return { ...p, entries, queue: won.size ? p.queue.filter((o) => !((o.kind === 'delete' || o.kind === 'upsert') && won.has(opId(o)))) : p.queue };
 }
 
+/** next build (rg10 T2): a row flagged after 3x 5xx ("Couldn’t sync this. Tap to retry") retries by itself once the server
+ * may be back: on a backoff (30 s, doubling, max 30 min), when the app comes to the foreground (and at app start), and right
+ * after any request that succeeds. The row stays flagged (sync_error kept, counted as the server has it) until the retry
+ * succeeds; then applyFlush clears it as for a tap. One 5xx flags it again at once (fives = MAX_FIVES - 1). Tap-retry is
+ * unchanged. */
+export const AUTO_RETRY_FIRST_MS = 30_000;
+export const autoRetryMs = (n: number) => Math.min(30 * 60_000, AUTO_RETRY_FIRST_MS * 2 ** Math.max(0, n - 1));
+/** flagged by 5xx, not already being retried (tap spinner) and nothing queued for it */
+export const autoRetryable = (e: FoodEntry, queue: Op[]) => e.sync_error === SERVER_ERROR && !e.sync_retrying
+  && !queue.some((o) => (o.kind === 'upsert' || o.kind === 'delete') && opId(o) === e.id);
+/** queue the automatic retry of these flagged rows (all retryable ones when ids is omitted). Pure. */
+export function queueAutoRetry<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, ids?: string[]): P {
+  let q = p.queue;
+  for (const e of p.entries) {
+    if ((ids && !ids.includes(e.id)) || !autoRetryable(e, q)) continue;
+    q = enqueue(q, e.deleted_at ? { kind: 'delete', id: e.id, tries: 0, fives: MAX_FIVES - 1, auto: true, ...(e.unsynced_edit ? { edited: true } : {}) }
+      : { kind: 'upsert', entry: e, tries: 0, fives: MAX_FIVES - 1, auto: true });
+  }
+  return q === p.queue ? p : { ...p, queue: q };
+}
+/** did this flush get any op through (the server answered it 2xx)? */
+export function anyOk(sent: Op[], r: Pick<FlushResult, 'rest' | 'failed' | 'rejected'> & Partial<Pick<FlushResult, 'kept' | 'gone'>>): boolean {
+  const left = new Set(r.rest.map(opKey));
+  const bad = new Set([...r.failed.map((f) => f.id), ...r.rejected.map((x) => x.entry.id), ...(r.kept ?? []).map((k) => k.id), ...(r.gone ?? [])]);
+  return sent.some((o) => !left.has(opKey(o)) && !((o.kind === 'upsert' || o.kind === 'delete') && bad.has(opId(o))));
+}
+
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
   const r = expirePending(p.entries, p.queue, now);
   return r.converted.length ? { ...p, entries: r.entries, queue: r.queue } : p;
@@ -267,6 +294,8 @@ function useStoreValue() {
       const r = await flush(sent, sender);
       const { rest, profileRejected } = r;
       setS((p) => applyFlush({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}) }, sent, r));
+      // rg10 T2: the server answered something: flagged rows retry now (each needs its own success to clear)
+      if (anyOk(sent, r)) setS((p) => queueAutoRetry(p));
       // edge (a): a row flagged now (or before) that the server has but whose numbers the phone doesn't know: ask the server
       const flagged = new Set(r.failed.filter((f) => f.code === SERVER_ERROR).map((f) => f.id));
       await fillServerCopies(entriesRef.current.filter((e) => (flagged.has(e.id) || e.server_failed || e.delete_failed) && !e.server_counts && !r.rows?.[e.id]
@@ -291,6 +320,35 @@ function useStoreValue() {
     const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') again(); });
     return () => { clearInterval(t); sub?.remove?.(); };
   }, [ready, s.user, anyUnknown, api, fillServerCopies]);
+  // rg10 T2: flagged rows (3x 5xx) retry by themselves: backoff per row, foreground / app start, and after any success (sync)
+  const autoAt = useRef(new Map<string, { n: number; at: number }>());
+  const flaggedKey = s.entries.filter((e) => e.sync_error === SERVER_ERROR).map((e) => e.id).join(',');
+  const retryKey = s.entries.filter((e) => autoRetryable(e, s.queue)).map((e) => e.id).join(',');
+  const autoRetry = useCallback((ids?: string[]) => {
+    const now = Date.now();
+    for (const e of entriesRef.current) if (e.sync_error === SERVER_ERROR && (!ids || ids.includes(e.id))) {
+      const n = (autoAt.current.get(e.id)?.n ?? 0) + 1; autoAt.current.set(e.id, { n, at: now + autoRetryMs(n + 1) });
+    }
+    setS((p) => queueAutoRetry(p, ids));
+  }, []);
+  useEffect(() => {
+    if (!ready || !s.user || api.mock) return;
+    const flagged = new Set(flaggedKey ? flaggedKey.split(',') : []);
+    for (const id of [...autoAt.current.keys()]) if (!flagged.has(id)) autoAt.current.delete(id); // cleared: a new flag starts over
+    const due = retryKey ? retryKey.split(',') : [];
+    if (!due.length) return;
+    const now = Date.now();
+    for (const id of due) if (!autoAt.current.has(id)) autoAt.current.set(id, { n: 0, at: now + autoRetryMs(1) });
+    const at = Math.min(...due.map((id) => autoAt.current.get(id)!.at));
+    const t = setTimeout(() => autoRetry(due.filter((id) => (autoAt.current.get(id)?.at ?? 0) <= Date.now() + 50)), Math.max(0, at - now) + 50);
+    return () => clearTimeout(t);
+  }, [ready, s.user, api, flaggedKey, retryKey, autoRetry]);
+  useEffect(() => {
+    if (!ready || !s.user || api.mock) return;
+    autoRetry(); // app start counts as coming to the foreground
+    const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') autoRetry(); });
+    return () => sub?.remove?.();
+  }, [ready, s.user?.id, api, autoRetry]); // eslint-disable-line react-hooks/exhaustive-deps
   // retry with backoff: wake up when the head op's wait is over
   const headAt = nextDueAt(s.queue);
   useEffect(() => {

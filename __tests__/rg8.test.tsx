@@ -386,6 +386,7 @@ describe('rg9 B3: a delete flagged after 3x 5xx is counted at the server’s num
     const y = addDays(DAY, -1);
     const F = { ...roti(), local_date: y, deleted_at: `${y}T05:00:00Z`, server_failed: true, delete_failed: true, sync_error: SERVER_ERROR, sync_reason: NOT_DELETED_REASON };
     const G = { ...dal(), local_date: y };
+    server.del5xx.add('F'); // still failing: the app-start auto retry flags it again
     await boot(<Progress />, [F, G]);
     const day = r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /, 2 items, /.test(n.props.accessibilityLabel));
     expect(day.length).toBeGreaterThan(0);

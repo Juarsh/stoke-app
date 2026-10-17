@@ -13,7 +13,8 @@ export interface PendingFood { id: string; span: string; slot: Slot; local_date:
   /** rg8 B2: the amount the phone read in `span` (which carries its amount words): a table answer that differs is saved for review */ amount?: { qty: number; unit: string } }
 /** fives: consecutive 5xx answers for this op (rg7 H1: 3 in a row -> flagged on the row, off the queue head) */
 type Retry = { tries: number; nextAt?: number; fives?: number;
-  /** the wait is for no connection (or a wait the server asked for), not a 5xx: everything behind it waits too (rg8 B3) */ net?: boolean };
+  /** the wait is for no connection (or a wait the server asked for), not a 5xx: everything behind it waits too (rg8 B3) */ net?: boolean;
+  /** next build (rg10 T2): the phone's own retry of a 5xx-flagged row (queueAutoRetry), not a user action */ auto?: boolean };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)
   /** edited: the row had an edit the server never got (FoodEntry.unsynced_edit): a refusal fetches the server's copy */
