@@ -94,7 +94,7 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 | `GET /v1/targets?date=`, `PUT /v1/targets` | Target in effect on a date; manual override (history kept by `effective_from`) |
 | `POST /v1/activity/steps` | Health Connect day totals `{source:"health_connect", days:[{date, steps, external_id?}]}`; re-sending a day replaces it |
 | `GET /v1/activity/steps?date=` | Steps + estimated kcal burned |
-| `GET /v1/summary?date=` | Shared daily summary: kcal_in, protein_in, kcal_out, steps, water_ml, logged, streak_day |
+| `GET /v1/summary?date=` | Shared daily summary: kcal_in, protein_in, kcal_out, steps, water_ml, logged, streak_day. Rebuilt after every committed entry write, in one transaction under a per-user lock, so concurrent writes (two devices) always leave it equal to the entry list's total |
 | `GET /v1/streak` | current, best, freezes_left (this Mon-Sun week), logged_today, freeze_saved_on |
 | `GET /v1/coach/suggestions?date=` | `{remaining, message, options[3]}`; each option has `items` ready to POST to /v1/entries |
 | `GET /healthz` | Liveness |
