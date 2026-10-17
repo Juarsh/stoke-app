@@ -47,17 +47,19 @@ test('Today: while retrying the row shows a spinner, is busy and not tappable; i
   expect(ringEaten(r)).toBe(500); // poha (retrying) + dal
   await act(async () => { r.unmount(); });
 });
-test('Today: a failed row still counts in the totals (ring + plate), a delete the server refused (not 5xx) does not', async () => {
+test('Today: a failed row still counts in the totals (ring + plate); a delete the server refused (4xx, rg10) is restored, counts and says why', async () => {
   mockStore.entries = [e('a', 'poha', 300, 'sync_conflict'), e('b', 'dal', 200)];
   let r!: ReactTestRenderer;
   await act(async () => { r = create(<Today />); });
   expect(ringEaten(r)).toBe(500);
   expect(r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /^Lunch: .*500 calories$/.test(n.props.accessibilityLabel)).length).toBeGreaterThan(0);
   await act(async () => { r.unmount(); });
-  mockStore.entries = [{ ...e('a', 'poha', 300, 'http_403'), deleted_at: '2026-10-17T05:00:00Z' } as never, e('b', 'dal', 200)];
+  const note = 'Not deleted: the server kept this entry. This entry is locked.';
+  mockStore.entries = [{ ...e('a', 'poha', 300), kept_on_server: true, server_version: 1, server_counts: { kcal: 300, protein: 0 }, server_note: note } as never, e('b', 'dal', 200)];
   await act(async () => { r = create(<Today />); });
-  expect(ringEaten(r)).toBe(200);
-  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Lunch · poha (deleted): couldn’t sync this. Tap to retry').length).toBeGreaterThan(0);
+  expect(ringEaten(r)).toBe(500);
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === `poha: ${note} Tap to dismiss`).length).toBeGreaterThan(0);
+  expect(r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /\(deleted\)|couldn’t sync/i.test(n.props.accessibilityLabel))).toHaveLength(0);
   await act(async () => { r.unmount(); });
 });
 test('the sync-failed row is at least 44 px tall and the 13 px line uses the warn token', () => {

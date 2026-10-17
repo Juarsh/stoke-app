@@ -49,7 +49,7 @@ const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : (o as { id: string }
 const unchangedSince = (cur: FoodEntry | undefined, sent: FoodEntry) => !!cur && cur.updated_at === sent.updated_at && !cur.deleted_at;
 /** After a flush: server versions recorded (a synced entry loses its sync error); refused / failed ops are handled ONLY when
  * the user has not changed the entry since it was sent, so a refusal never swallows a later typed value. Pure (testable). */
-export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'> & Pick<Partial<FlushResult>, 'rows'>): P {
+export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'> & Pick<Partial<FlushResult>, 'rows' | 'kept'>): P {
   const now = new Date();
   // deleted on another device (a save got 404): the delete wins. The local row is dropped (a tombstone: not counted, not
   // shown, no sync error) and every op still queued for it goes, so nothing re-creates or retries it.
@@ -69,7 +69,8 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
   // remaining ones and replace their same-id op; a late result for a job the backstop converted is ignored (dropLate / dropLateOps)
   const queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
-  const failedIds = new Set(r.failed.map((f) => f.id));
+  const kept = new Map((r.kept ?? []).map((k) => [k.id, k]));
+  const failedIds = new Set([...r.failed.map((f) => f.id), ...kept.keys()]);
   const deletedOk = new Set(sent.filter((o) => o.kind === 'delete' && !r.rest.includes(o) && !r.rest.some((x) => x.kind === 'delete' && x.id === (o as { id: string }).id) && !failedIds.has((o as { id: string }).id)).map((o) => (o as { id: string }).id));
   const entries = mergeEntries(p.entries, dropLate(p.entries, r.resolved)).map((x) => {
     let n = reopened.find((e) => e.id === x.id) ?? x;
@@ -90,11 +91,35 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     // version, so the phone counts exactly what the server counts. Only when the user hasn't changed it since it was sent.
     const sv = r.rows?.[x.id];
     if (sv && !f && !reopened.some((e) => e.id === x.id) && unchangedSince(x, sv.sent)) n = adoptServer(n, sv.row);
+    // rg10: the server refused the delete (4xx other than 404): it still has the row, so the phone has it too
+    const k = kept.get(x.id);
+    if (k && n.deleted_at) n = restoreKept(n, k);
     // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
     if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
   });
   return { ...p, queue, entries };
+}
+
+/** rg10: copy on a row whose delete the server refused; the server's own readable reason follows it when it sent one */
+export const KEPT_COPY = 'Not deleted: the server kept this entry.';
+const sentence = (s: string) => { const t = s.trim(); return t ? (/[.!?]$/.test(t) ? t : `${t}.`).replace(/^./, (c) => c.toUpperCase()) : ''; };
+export const keptNote = (reason?: string) => (reason && sentence(reason) ? `${KEPT_COPY} ${sentence(reason)}` : KEPT_COPY);
+/** rg10: a delete the server refused: the row is live again (no deleted_at, no delete op), counted at the server's numbers
+ * (its copy when the refusal carried one, else server_counts, else the row as the server last confirmed it) and it says why.
+ * Edit / delete work on it as on any row. Pure. */
+export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[number]): FoodEntry {
+  let n: FoodEntry = { ...e, deleted_at: null, delete_failed: undefined, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, kept_on_server: true };
+  if (k.row && k.row.state) {
+    const rev = k.row.state === 'needs_review';
+    n = { ...adoptServer(n, k.row), ...(typeof k.row.version === 'number' ? { server_version: k.row.version } : {}), server_failed: undefined,
+      server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: k.row.kcal_best ?? n.kcal.best, protein: k.row.protein_best ?? n.protein_g.best } };
+  } else {
+    const sc = n.server_counts ?? (typeof n.server_version === 'number' && !n.needs_review ? { kcal: n.kcal.best, protein: n.protein_g.best } : undefined);
+    const differs = !!sc && (Math.abs(sc.kcal - n.kcal.best) > 0.5 || Math.abs(sc.protein - n.protein_g.best) > 0.05);
+    n = { ...n, server_counts: sc, server_failed: differs ? true : undefined };
+  }
+  return { ...n, server_note: keptNote(k.reason) };
 }
 
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
@@ -199,7 +224,7 @@ function useStoreValue() {
       // before the edit: what the server has for a synced row nothing is queued for (rg8 F-1)
       const old = p.entries.find((x) => x.id === e.id);
       const was = old && !p.queue.some((o) => opId(o) === e.id) ? seedServerCounts(old) : old;
-      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, updated_at: new Date().toISOString() };
+      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, kept_on_server: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }); return null; };
   return {

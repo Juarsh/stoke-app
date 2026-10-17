@@ -104,8 +104,8 @@ describe('B2: an unmatched span keeps its amount words', () => {
 
 // ---------- Log: what goes to /v1/parse, and what the row shows ----------
 const server = { log: [] as { method: string; path: string; body: Record<string, any> }[], answerUnit: 'plate' as string | null, del5xx: new Set<string>(), rows: new Map<string, { kcal: number }>(),
-  down: false, patch5xx: false,
-  reset() { this.log = []; this.answerUnit = 'plate'; this.del5xx.clear(); this.rows.clear(); this.down = false; this.patch5xx = false; } };
+  down: false, patch5xx: false, delAnswer: new Map<string, { status: number; body: unknown }[]>(),
+  reset() { this.log = []; this.answerUnit = 'plate'; this.del5xx.clear(); this.rows.clear(); this.down = false; this.patch5xx = false; this.delAnswer.clear(); } };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, headers: { get: () => null }, json: async () => body, text: async () => JSON.stringify(body) });
 const PULLED = [{ id: 'zarda_pulao', name: 'zarda pulao', version: DISH_TABLE_VERSION, supported_units: ['katori', 'plate', 'gram'] }];
 async function fakeFetch(url: string, init: { method: string; body?: string }) {
@@ -128,6 +128,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
     return reply(201, { entries: [{ version: 1, state: 'confirmed', qty: it.qty, unit: it.unit, kcal_best: it.kcal ?? 0, protein_best: 0 }] });
   }
   const m = /^\/v1\/entries\/(.+)$/.exec(path); const id = m ? decodeURIComponent(m[1]) : '';
+  if (init.method === 'DELETE' && server.delAnswer.get(id)?.length) { const a = server.delAnswer.get(id)!.shift()!; if (a.status < 300) server.rows.delete(id); return reply(a.status, a.body); }
   if (init.method === 'DELETE') { if (server.del5xx.has(id)) return reply(503, { error: 'unavailable' }); server.rows.delete(id); return reply(204); }
   if (server.patch5xx) return reply(500, { error: 'save failed' });
   return reply(200, { version: 2, state: 'confirmed', kcal_best: b.kcal ?? 0, protein_best: 0 });
@@ -362,10 +363,8 @@ describe('rg9 B3: a delete flagged after 3x 5xx is counted at the server’s num
     await act(async () => { st.deleteEntry('P'); }); await tick(); await flagIt('P');
     expect(dayTotals(st.entries).kcal).toBe(Math.round(old.kcal.best));
   });
-  test('a delete refused for another reason (not 5xx) is not counted (the old rule); a pure applyFlush success clears the flag', () => {
+  test('pure applyFlush: a 5xx-flagged delete counts while it backs off; a success clears the flag (4xx refusals: rg10 below)', () => {
     const F = { ...roti(), deleted_at: '2026-10-17T05:00:00Z' };
-    const refused = applyFlush({ entries: [F], queue: [] }, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [], resolved: [], rejected: [], versions: {}, gone: [], failed: [{ id: 'F', code: 'http_403' }] } as never);
-    expect(refused.entries[0].delete_failed).toBeUndefined(); expect(counted(refused.entries[0])).toBe(false);
     const flagged = applyFlush({ entries: [F], queue: [] }, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [], resolved: [], rejected: [], versions: {}, gone: [], failed: [{ id: 'F', code: SERVER_ERROR, reason: NOT_DELETED_REASON }] } as never);
     expect(flagged.entries[0]).toMatchObject({ delete_failed: true, server_failed: true }); expect(dayTotals(flagged.entries).kcal).toBe(220);
     const parked = applyFlush(flagged, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [{ kind: 'delete', id: 'F', tries: 1, fives: 1 }], resolved: [], rejected: [], versions: {}, gone: [], failed: [] } as never);
@@ -383,5 +382,116 @@ describe('rg9 B3: a delete flagged after 3x 5xx is counted at the server’s num
     expect(day[0].props.accessibilityLabel).toContain(`${220 + Math.round(G.kcal.best)} calories`);
     await act(async () => { day[0].props.onPress(); });
     expect(textOf(r)).toContain('(deleted)');
+  });
+});
+
+// ---------- rg10 (CEO): a delete the server refuses with a 4xx other than 404 -> the row stays (restored, counted, says why) ----------
+import { KEPT_COPY, keptNote, restoreKept } from '../src/lib/store';
+describe('rg10: a delete refused with a 4xx (not 404) restores the row at the server’s numbers with the server’s reason', () => {
+  const F = () => ({ ...tableEntry('F', 'roti', 2, 'count', { slot: 'breakfast' }), server_version: 1, server_counts: { kcal: 220, protein: 7 } });
+  const G = () => ({ ...tableEntry('G', 'dal', 1, 'katori', { slot: 'breakfast' }), server_version: 1 });
+  const seedServer = (...es: FoodEntry[]) => es.forEach((e) => server.rows.set(e.id, { kcal: e.server_counts?.kcal ?? e.kcal.best }));
+  const serverTotal = () => Math.round([...server.rows.values()].reduce((a, x) => a + x.kcal, 0));
+  const dels = () => server.log.filter((l) => l.method === 'DELETE').length;
+  const LOCKED = { error: { code: 'forbidden', message: 'This entry is locked.' } };
+  test('403 with a reason: restored (no deleted_at, no delete op), phone == server, Today says why; edit and delete again work', async () => {
+    const f = F(), g = G(); seedServer(f, g);
+    server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
+    await boot(<Today />, [f, g]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    const row = st.entries.find((x) => x.id === 'F')!;
+    expect(row.deleted_at).toBeNull(); expect(row.sync_error).toBeUndefined(); expect(row.delete_failed).toBeUndefined();
+    expect(row.server_note).toBe(`${KEPT_COPY} This entry is locked.`);
+    expect(st.queue.some((o) => o.kind === 'delete')).toBe(false);
+    expect(counted(row)).toBe(true);
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(220 + Math.round(g.kcal.best));
+    expect(textOf(r)).toContain('Not deleted: the server kept this entry. This entry is locked.');
+    expect(textOf(r)).not.toContain('(deleted)'); expect(textOf(r)).not.toContain('Couldn’t sync this');
+    // edit works as on any row (PATCH, note cleared, counted at what the server saved)
+    const n0 = server.log.length;
+    let why: string | null = 'x';
+    await act(async () => { why = st.updateEntry({ ...st.entries.find((x) => x.id === 'F')!, ...tableEntry('F', 'roti', 3, 'count', { slot: 'breakfast' }), server_version: 1 }); }); await tick();
+    expect(why).toBeNull();
+    expect(server.log.slice(n0).some((l) => l.path.startsWith('/v1/entries') && l.method !== 'DELETE' && l.method !== 'GET')).toBe(true); // the edit was sent
+    expect(st.queue).toHaveLength(0);
+    const ed = st.entries.find((x) => x.id === 'F')!;
+    expect(ed.server_note ?? '').not.toContain(KEPT_COPY); expect(ed.kept_on_server).toBeUndefined(); expect(ed.sync_error).toBeUndefined();
+    // and it can be deleted again (this time the server takes it)
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    expect(counted(st.entries.find((x) => x.id === 'F')!)).toBe(false); expect(server.rows.has('F')).toBe(false);
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal());
+  });
+  test('every refusing 4xx (400, 403, 409 twice, 410, 422) restores; a reason-less body gets the plain copy', async () => {
+    for (const status of [400, 403, 409, 410, 422]) {
+      server.reset(); const f = F(); seedServer(f);
+      server.delAnswer.set('F', status === 409 ? [{ status, body: { error: 'forbidden' } }, { status, body: { error: 'forbidden' } }] : [{ status, body: { error: 'forbidden' } }]);
+      await boot(<Today />, [f]);
+      await act(async () => { st.deleteEntry('F'); }); await tick();
+      const row = st.entries.find((x) => x.id === 'F')!;
+      expect([status, row.deleted_at, row.server_note]).toEqual([status, null, KEPT_COPY]);
+      expect(dayTotals(st.entries).kcal).toBe(220);
+      await act(async () => { r.unmount(); });
+    }
+  });
+  test('404: the row is already gone on the server: the delete wins (not restored, not counted, no note)', async () => {
+    const f = F(); server.delAnswer.set('F', [{ status: 404, body: { error: 'entry not found' } }]);
+    await boot(<Today />, [f]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    const row = st.entries.find((x) => x.id === 'F')!;
+    expect(row.deleted_at).toBeTruthy(); expect(row.server_note).toBeUndefined(); expect(row.sync_error).toBeUndefined();
+    expect(counted(row)).toBe(false); expect(st.queue).toHaveLength(0); expect(dayTotals(st.entries).kcal).toBe(0);
+  });
+  test('401 / 429 are not refusals: retried later (the row stays deleted on the phone while it waits)', async () => {
+    for (const status of [401, 429]) {
+      server.reset(); server.delAnswer.set('F', [{ status, body: { error: 'later' } }]);
+      await boot(undefined, [F()]);
+      await act(async () => { st.deleteEntry('F'); }); await tick();
+      const row = st.entries.find((x) => x.id === 'F')!;
+      expect(row.deleted_at).toBeTruthy(); expect(row.server_note).toBeUndefined(); expect(st.queue.some((o) => o.kind === 'delete')).toBe(true);
+      await act(async () => { r.unmount(); });
+    }
+  });
+  test('409 version_conflict with the server’s copy: retried once at once; still 409 -> restored as the server has it; 409 then 204 -> deleted', async () => {
+    const copy = { version: 5, state: 'confirmed', dish_id: 'roti', qty: 3, unit: 'count', kcal_best: 330, protein_best: 10 };
+    server.delAnswer.set('F', [{ status: 409, body: { error: { code: 'version_conflict', message: 'entry changed' }, entry: copy } }, { status: 409, body: { error: { code: 'version_conflict' }, entry: copy } }]);
+    server.rows.set('F', { kcal: 330 });
+    await boot(<Today />, [F()]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    expect(dels()).toBe(2);
+    const row = st.entries.find((x) => x.id === 'F')!;
+    expect(row).toMatchObject({ deleted_at: null, server_version: 5, qty: 3, server_counts: { kcal: 330, protein: 10 } });
+    expect(row.kcal.best).toBe(330); expect(dayTotals(st.entries).kcal).toBe(330); expect(row.server_note).toBe(`${KEPT_COPY} Entry changed.`);
+    await act(async () => { r.unmount(); });
+    server.reset(); server.delAnswer.set('F', [{ status: 409, body: { error: { code: 'version_conflict' } } }, { status: 204, body: {} }]);
+    await boot(undefined, [F()]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    expect(dels()).toBe(2); expect(counted(st.entries.find((x) => x.id === 'F')!)).toBe(false); expect(st.queue).toHaveLength(0);
+  });
+  test('a flagged 5xx delete that is then refused (4xx) on retry is restored, no longer flagged', async () => {
+    server.del5xx.add('F'); const f = F(); seedServer(f);
+    await boot(<Today />, [f]);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    for (let i = 0; i < 6 && !st.entries.find((x) => x.id === 'F')?.sync_error; i++) {
+      const spy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + (i + 1) * 3_600_000);
+      await act(async () => { await st.sync(); }); await tick(); spy.mockRestore();
+    }
+    expect(st.entries.find((x) => x.id === 'F')!.delete_failed).toBe(true);
+    server.del5xx.clear(); server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
+    await act(async () => { st.retrySync('F'); }); await tick();
+    const row = st.entries.find((x) => x.id === 'F')!;
+    expect(row).toMatchObject({ deleted_at: null, server_note: `${KEPT_COPY} This entry is locked.` });
+    expect(row.delete_failed).toBeUndefined(); expect(row.sync_error).toBeUndefined(); expect(row.sync_retrying).toBeUndefined();
+    expect(dayTotals(st.entries).kcal).toBe(220); expect(textOf(r)).not.toContain('(deleted)');
+  });
+  test('restoreKept (pure): server_counts win over the phone’s numbers; unknown -> the row as the server last confirmed it; review rows go back to Review', () => {
+    const del = (e: FoodEntry) => ({ ...e, deleted_at: '2026-10-17T05:00:00Z' });
+    const a = restoreKept(del({ ...tableEntry('A', 'roti', 4, 'count'), server_version: 2, server_counts: { kcal: 220, protein: 7 } }), { id: 'A', code: 'forbidden' });
+    expect(a).toMatchObject({ deleted_at: null, server_failed: true, kept_on_server: true }); expect(dayTotals([a]).kcal).toBe(220);
+    const old = { ...tableEntry('B', 'roti', 2, 'count'), server_version: 3 } as FoodEntry; delete (old as Partial<FoodEntry>).server_counts;
+    const b = restoreKept(del(old), { id: 'B', code: 'forbidden', reason: 'locked' });
+    expect(b.server_counts).toEqual({ kcal: old.kcal.best, protein: old.protein_g.best }); expect(b.server_note).toBe(`${KEPT_COPY} Locked.`); expect(dayTotals([b]).kcal).toBe(Math.round(old.kcal.best));
+    const rv = restoreKept(del({ ...tableEntry('C', 'dal', 1, 'katori'), needs_review: true, server_version: 1 }), { id: 'C', code: 'forbidden' });
+    expect(rv.deleted_at).toBeNull(); expect(counted(rv)).toBe(false);
+    expect(keptNote('')).toBe(KEPT_COPY);
   });
 });

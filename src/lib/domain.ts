@@ -67,6 +67,8 @@ export interface FoodEntry {
   /** rg9 B3: the user deleted this row but the server answered 5xx three times: the server still has it, so it stays counted
    * at the server's numbers (server_counts) and flagged ("Not deleted on the server yet.") until a delete gets through */
   delete_failed?: boolean;
+  /** rg10: a delete the server refused (4xx other than 404): the row was restored and counts as the server has it */
+  kept_on_server?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 /** live on the server: not deleted, or deleted on the phone but the delete was flagged (rg9 B3: the server still counts it) */

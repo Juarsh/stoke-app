@@ -122,6 +122,13 @@ for (const theme of ['light', 'dark']) {
   if (!/roti/i.test(bf ?? '') || Number((/([\d,]+) calories/.exec(bf ?? '')?.[1] ?? '0').replace(/,/g, '')) < 220) throw new Error(`Breakfast doesn't count the flagged delete: ${bf}`);
   await fail.first().scrollIntoViewIfNeeded(); await wait(h, 500);
   await shot(h, `today-5xx-flag-${theme}`);
+  // rg10: the restored row (delete refused with a 4xx) says why; it is counted (Lunch includes it)
+  const kept = h.getByText('Not deleted: the server kept this entry. This entry is locked.', { exact: false });
+  if ((await kept.count()) < 1) throw new Error('no restored-with-reason row on Today');
+  const lunch = await h.getByRole('button', { name: /^Lunch: / }).first().getAttribute('aria-label');
+  if (!/idli/i.test(lunch ?? '')) throw new Error(`Lunch doesn't count the restored row: ${lunch}`);
+  await kept.first().scrollIntoViewIfNeeded(); await wait(h, 400);
+  await shot(h, `today-delete-kept-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
     if ((await h.getByText(t, { exact: false }).count()) < 1) throw new Error(`Review lacks: ${t}`);

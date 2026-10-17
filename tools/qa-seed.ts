@@ -66,6 +66,10 @@ if (process.argv[3] === 'rg7') {
   entries.push({ id: 'h6', local_date: today, slot: 'snacks', raw_text: 'akarsh_special_shake 250', dish_id: null, custom_name: 'akarsh_special_shake', qty: 1, unit: 'count', oil_level: '',
     kcal: { low: 250, best: 250, high: 250 }, protein_g: { low: 20, best: 20, high: 20 }, source: 'custom', source_note: 'Your entry', confirmed: true, dish_table_version: DISH_TABLE_VERSION,
     created_at: now, updated_at: now, deleted_at: null, server_version: 1, server_counts: { kcal: 250, protein: 20 } } as never);
+  // rg10: a delete the server refused (403 with its reason): restored, counted at the server's numbers, says why
+  const h7 = t('h7', 'idli', 2, 'count', 'lunch');
+  entries.push({ ...h7, server_version: 1, server_counts: { kcal: h7.kcal.best, protein: h7.protein_g.best }, kept_on_server: true,
+    server_note: 'Not deleted: the server kept this entry. This entry is locked.' });
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },
