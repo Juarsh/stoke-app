@@ -13,7 +13,7 @@ import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, 
 import { failedCopy } from '../lib/aiRows';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
-import { Badge, Row, Segmented, T } from './ui';
+import { AddButton, Badge, Row, Segmented, T } from './ui';
 
 export type RowState = 'plain' | 'remembered' | 'check' | 'estimate';
 const chipOf = (it: Item, state: RowState): { label: string; kind: 'brand' | 'check' | 'ai' } | null => {
@@ -236,10 +236,7 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
           <Row style={{ gap: 8 }}>
             <TextInput value={row.kcal} onChangeText={onKcal} keyboardType="numeric" placeholder="kcal" placeholderTextColor={t.c.muted}
               accessibilityLabel={`Calories for ${row.name}`} style={[s.kcalInput, { color: t.c.text, borderColor: t.c.muted }]} />
-            <Pressable onPress={onAdd} disabled={!(k > 0)} accessibilityRole="button" accessibilityState={{ disabled: !(k > 0) }} accessibilityLabel={`Add ${row.name}`}
-              style={[s.addBtn, { backgroundColor: k > 0 ? t.c.accentFill : t.c.card2 }]}>
-              <T v="bodyStrong" tone={k > 0 ? 'onAccent' : 'text2'}>Add</T>
-            </Pressable>
+            <AddButton onPress={onAdd} disabled={!(k > 0)} accessibilityLabel={`Add ${row.name}`} />
           </Row>
         </View>
       )}
@@ -248,5 +245,4 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
 }
 const useFailedStyles = makeStyles((t) => ({
   kcalInput: { width: 96, height: 44, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, backgroundColor: t.c.card },
-  addBtn: { height: 44, minWidth: 72, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
 }));

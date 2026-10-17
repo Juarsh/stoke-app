@@ -1,7 +1,7 @@
 // Review row with no real number (failed AI / placeholder): '— kcal · needs review' until the user types kcal.
 import { useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
-import { Button, Row, T } from '@/components/ui';
+import { TextInput, View } from 'react-native';
+import { AddButton, Button, Row, T } from '@/components/ui';
 import { useTheme } from '@/theme';
 
 /** note: the failed-AI copy (failedCopy) shown above the kcal field, e.g. the 35-minute backstop's. */
@@ -20,10 +20,8 @@ export function KcalRow({ name, note, onAdd, onRemove }: { name: string; note?: 
       <Row style={{ gap: 8 }}>
         <TextInput value={v} onChangeText={(x) => setV(x.replace(/[^0-9]/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="kcal" placeholderTextColor={t.c.muted}
           accessibilityLabel={`Calories for ${name}`} style={[t.type.body, { flex: 1, minHeight: 44, borderWidth: 1, borderColor: t.c.muted, borderRadius: 12, paddingHorizontal: 12, color: t.c.text }]} />
-        <Pressable onPress={() => ok && onAdd(k)} disabled={!ok} accessibilityRole="button" accessibilityState={{ disabled: !ok }} accessibilityLabel={`Add ${name}`}
-          style={{ minHeight: 44, minWidth: 64, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: ok ? t.c.accentFill : t.c.card2 }}>
-          <T v="bodyStrong" tone={ok ? 'onAccent' : 'text2'}>Add</T>
-        </Pressable>
+        {/* disabled (40%) until a valid number is typed */}
+        <AddButton onPress={() => ok && onAdd(k)} disabled={!ok} accessibilityLabel={`Add ${name}`} />
       </Row>
       <Row><Button kind="ghost" title="Remove" onPress={onRemove} /></Row>
     </View>

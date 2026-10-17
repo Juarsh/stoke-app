@@ -83,6 +83,18 @@ export function Button({ title, kind = 'primary', disabled, style, ...p }: Press
   );
 }
 
+/** 'Add' next to a kcal field (failed AI row, Review 'Enter kcal'): the primary button's tokens at 44 px (coral fill, dark
+ * text, pill, glow), so it reads as tappable and meets 3:1 on the card. Disabled: same look at 40% opacity. */
+export function AddButton({ disabled, style, ...p }: PressableProps & { accessibilityLabel: string }) {
+  const t = useTheme(); const s = useStyles();
+  return (
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
+      style={(st) => [s.btn, s.addBtn, { backgroundColor: t.c.accentFill }, disabled ? { opacity: 0.4 } : t.elev.glow, st.pressed && { opacity: 0.85 }, style as object]}>
+      <T v="button" tone="onGrad">Add</T>
+    </Pressable>
+  );
+}
+
 export function Chip({ label, onPress, kind = 'primary', a11y, selected, faded }: { label: string; onPress?: () => void; kind?: 'primary' | 'ai' | 'neutral' | 'onCoach'; a11y?: string; selected?: boolean; faded?: boolean }) {
   const t = useTheme(); const s = useStyles();
   const bg = kind === 'ai' ? t.c.aiBg : kind === 'onCoach' ? t.c.onCoachFill : kind === 'neutral' && !selected ? t.c.card2 : t.c.tint;
@@ -169,6 +181,7 @@ const useStyles = makeStyles((t) => ({
     borderWidth: 1, borderColor: t.c.cardLine, ...t.elev.e1 },
   highlight: { position: 'absolute', top: 0, left: t.radius.card / 2, right: t.radius.card / 2, height: 1, backgroundColor: t.c.cardHighlight },
   btn: { minHeight: t.sizes.touch, borderRadius: t.radius.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: t.space.md },
+  addBtn: { minHeight: 44, height: 44, minWidth: 72 },
   chipHit: { minHeight: t.sizes.touch, justifyContent: 'center' },
   chip: { height: t.sizes.chip, borderRadius: t.radius.chip, paddingHorizontal: t.space.sm, justifyContent: 'center' },
   badge: { borderRadius: t.radius.full, paddingHorizontal: t.space.xs, paddingVertical: 2 },
