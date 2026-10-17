@@ -92,6 +92,9 @@ for (const theme of ['light', 'dark']) {
   const pick = g.getByRole('button', { name: /: Pick a type to save this\.$/ });
   if ((await pick.count()) !== 1) throw new Error(`expected 1 pick-a-type row, got ${await pick.count()}`);
   if ((await g.getByText('Not counted yet: dal isn’t measured in pieces.', { exact: false }).count()) < 1) throw new Error('no server review note on Today');
+  // rg10 note: piece dishes read in pieces, never "count"
+  if ((await g.getByText('Saved as 2 pieces · 220 kcal.', { exact: false }).count()) !== 1) throw new Error('no "Saved as 2 pieces" note on Today');
+  if (/\b\d+ count\b/.test(await g.locator('body').innerText())) throw new Error('"N count" shown on Today');
   await pick.scrollIntoViewIfNeeded(); await wait(g, 500);
   await shot(g, `today-server-version-${theme}`, { fullPage: true });
   await pick.click(); await wait(g, 1200);

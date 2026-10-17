@@ -210,10 +210,10 @@ export const displayLabel = (name: string | null | undefined, dishId?: string | 
 /** an entry's title: what the user named it (custom, verbatim), else its dish's display name */
 export const entryLabel = (e: { custom_name?: string; dish_id?: string | null }) => (e.custom_name ? e.custom_name : displayLabel('', e.dish_id));
 /** Designer (rg6): unit plurals in the 'isn’t measured in' copy */
-const PLURAL: Record<string, string> = { katori: 'katoris', spoon: 'spoons', plate: 'plates', gram: 'grams', piece: 'pieces', glass: 'glasses', litre: 'litres' };
+const PLURAL: Record<string, string> = { katori: 'katoris', spoon: 'spoons', plate: 'plates', gram: 'grams', piece: 'pieces', count: 'pieces', glass: 'glasses', litre: 'litres' };
 export const unitPlural = (unit: string) => PLURAL[unit] ?? (unit.endsWith('s') ? unit : `${unit}s`);
-/** "dal isn’t measured in pieces" ('count': "by count") */
-export const notMeasured = (dishId: string, unit: string) => `${dishName(dishId)} isn’t measured ${unit === 'count' ? 'by count' : `in ${unitPlural(unit)}`}`;
+/** "dal isn’t measured in pieces" ('count' reads "pieces" too: never "by count", rg10 note) */
+export const notMeasured = (dishId: string, unit: string) => `${dishName(dishId)} isn’t measured in ${unitPlural(unit)}`;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** rg6 F1: a table row in a unit the server can't save it in (it would store it needs_review and count nothing) */
 /** rg7 E: no unit -> no unit clause (never "isn’t measured in s."). */

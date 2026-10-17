@@ -34,6 +34,9 @@ if (process.argv[3] === 'rg6') {
   entries.push(adoptServer(t('g1', 'dal', 1, 'piece', 'dinner'), { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
   entries.push(adoptServer(t('g2', 'dal', 2, 'katori', 'snacks'), { version: 1, state: 'corrected', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best, kcal_low: dal.kcal.low, kcal_high: dal.kcal.high,
     protein_best: dal.protein_g.best, protein_low: dal.protein_g.low, protein_high: dal.protein_g.high }));
+  // rg10 note: a piece dish the server stored at another count: "Saved as 2 pieces · …" (never "2 count")
+  const roti2 = parser.recompute('roti', 2, 'count', '');
+  entries.push(adoptServer(t('g5', 'roti', 3, 'count', 'lunch'), { version: 1, state: 'confirmed', dish_id: 'roti', qty: 2, unit: 'count', kcal_best: roti2.kcal.best, protein_best: roti2.protein_g.best }));
   entries.push({ ...t('g3', 'veg_biryani', 1, 'plate', 'dinner'), variant_dish_id: 'veg_biryani', server_version: 1, sync_error: 'variant_required', sync_reason: 'Pick a type to save this.',
     variant_options: parser.variantGroup('veg_biryani', 1, 'plate') ?? [] });
   // PE: a dish the phone has no units for yet (new on the server, not pulled): held, 'Check amount', not counted

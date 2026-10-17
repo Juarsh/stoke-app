@@ -4,7 +4,7 @@
 import { memo, ReactNode, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { reasonWord } from '../lib/learned';
-import { portionLabel } from '../lib/labels';
+import { portionLabel, unitWord } from '../lib/labels';
 import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -74,7 +74,7 @@ export function DecisionCard({ it, onPick, onEdit, onRemove }: { it: Item; onPic
   if (alts.length) {
     const a = alts[0];
     const cs = unitChoices(it);
-    helper = `Did you mean ${a.unit === 'piece' ? 'pieces' : portionLabel(a.quantity, a.unit)} or ${it.unit}s?`;
+    helper = `Did you mean ${a.unit === 'piece' ? 'pieces' : portionLabel(a.quantity, a.unit)} or ${plural(it.unit)}?`;
     opts = cs.map((c) => ({ value: c.key, label: c.label }));
     value = unitKey(it); // highlight = the unit the shown kcal is computed for (never a different one)
     choose = (v) => onPick(chooseUnit(it, v));
@@ -112,7 +112,7 @@ export const variantLabel = (name: string, base: string) => {
   if (b && v.toLowerCase().endsWith(' ' + b)) v = v.slice(0, -(b.length + 1)); else if (b && v.toLowerCase().startsWith(b + ' ')) v = v.slice(b.length + 1);
   return cap(v.trim() || name);
 };
-const plural = (u: string) => (u === 'katori' ? 'katori' : `${u}s`);
+const plural = (u: string) => (u === 'katori' ? 'katori' : u === 'count' ? unitWord(u, true) : `${u}s`);
 /** Open row (not counted until the user decides): inline AI estimate, estimate_unverified, or unit mismatch.
  * All numbers come from the API item: kcal.best/low/high and unit_options. */
 export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '' }: {
@@ -152,7 +152,7 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
       </View>
       <View style={s.openBody}>
         {kind === 'unverified' ? (
-          <View style={s.warnNote}><T v="bodyStrong" tone="warn">Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {it.unit}. Check it matches your {it.unit}.</T></View>
+          <View style={s.warnNote}><T v="bodyStrong" tone="warn">Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {unitWord(it.unit)}. Check it matches your {unitWord(it.unit)}.</T></View>
         ) : null}
         {isVar ? (
           <>

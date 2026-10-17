@@ -4,6 +4,7 @@
 // so. Phone == server == /v1/summary after every sync. Pure (testable).
 import { parser, type Item } from '../parser';
 import type { ServerRow } from './api';
+import { portionLabel } from './labels';
 import { CHECK_AMOUNT_LINE, notMeasured, serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
 
 const near = (a: number | undefined, b: number) => typeof a !== 'number' || Math.abs(a - b) <= 0.5;
@@ -46,7 +47,7 @@ export function adoptServer(e: FoodEntry, row: ServerRow): FoodEntry {
   return { ...e, dish_id: dishRow ? row.dish_id ?? e.dish_id : e.dish_id, qty, unit,
     kcal: { low: row.kcal_low ?? k, best: k, high: row.kcal_high ?? k }, protein_g: { low: row.protein_low ?? p, best: p, high: row.protein_high ?? p },
     carbs_g: row.carbs_g ?? e.carbs_g, fat_g: row.fat_g ?? e.fat_g,
-    server_note: dishRow ? `Saved as ${fmt(qty)} ${unit} · ${fmt(k)} kcal.` : `Saved as ${fmt(k)} kcal.` };
+    server_note: dishRow ? `Saved as ${portionLabel(qty, unit)} · ${fmt(k)} kcal.` : `Saved as ${fmt(k)} kcal.` };
 }
 
 export const UNITS_HELD = 'units_unknown';

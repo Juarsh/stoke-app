@@ -13,7 +13,8 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 - [x] Refused delete whose server copy can't be read either: the row showed the phone's qty while counting the server's last kcal. Now the amount reads "—" (Today "Dinner · Roti · —", Progress "· —"), kcal shown == counted, until a later read (every sync, every 30 s, app foreground, or tapping the Progress row) brings the server's qty, unit and numbers; then it shows the server's row. 404 then = gone.
 
 ## rg10 notes (Tester)
-- "Saved as 2 count" reads badly. Needs pieces wording.
+- [x] "Saved as 2 count" reads badly. Needs pieces wording.
+  Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces", "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel).
 - The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.
 - 5xx path: no automatic retry once the server is back.
 - 5xx path: an edit from another device leaves the flagged count stale until a retry (N4).

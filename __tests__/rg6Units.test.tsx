@@ -5,6 +5,7 @@
 // reason), other numbers / amounts are taken with a note. F5: qty 0 -> the server's readable 400, flagged on the row.
 // F4 (PE): a variant_required edit shows exactly "Pick a type to save this."; tapping it opens the types; a pick re-saves.
 // Runs the REAL store against a fake server following internal/food/food.go @ this change (UnitSupported, QtyReason).
+import { unitWord } from '../src/lib/labels';
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
@@ -121,7 +122,7 @@ describe('F1 (a): only the units the dish comes in', () => {
       await act(async () => { t = create(<EditSheet visible it={it} onClose={() => {}} onSave={() => {}} onDelete={() => {}} />); });
       const chips = t.root.find((n) => n.props.testID === 'unit-chips' && typeof n.type !== 'string');
       const labels = chips.findAll((n) => typeof n.props.label === 'string' && typeof n.props.onPress === 'function').map((n) => n.props.label);
-      expect(labels).toEqual(parser.supportedUnits(dish));
+      expect(labels).toEqual(parser.supportedUnits(dish).map((u) => unitWord(u, true))); expect(labels).not.toContain('count'); // rg10 note: 'count' reads 'pieces'
       expect(labels.length).toBeLessThan(UNITS.length);
       await act(async () => { t.unmount(); });
     }
