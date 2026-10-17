@@ -70,12 +70,11 @@ import { resetTime } from '../src/lib/aiRows';
 describe('failed-row copy by fallback_reason', () => {
   const at = '2026-10-15T07:00:00Z'; const time = resetTime(at);
   test('reset time is local h:mm AM/PM', () => expect(time).toMatch(/^\d{1,2}:\d{2} (AM|PM)$/));
-  test('user_limit with number and reset time', () => expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3, resetsAt: at }))
-    .toBe(`You’ve used today’s 3 AI estimates. Add the calories yourself, or try again after ${time}.`));
-  test('user_limit without reset time / number', () => expect(failedCopy({ reason: 'user_limit' }))
-    .toBe('You’ve used today’s AI estimates. Add the calories yourself.'));
-  test('daily_limit with time', () => expect(failedCopy({ reason: 'daily_limit', resetsAt: at })).toBe(`AI estimates are used up until ${time}. Add the calories yourself.`));
-  test('daily_limit without time', () => expect(failedCopy({ reason: 'daily_limit' })).toBe('AI estimates are used up for now. Add the calories yourself.'));
+  // Oct 17: one plain cap copy for every cap reason, with or without the reset time / number
+  test('user_limit with number and reset time', () => expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3, resetsAt: at })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.'));
+  test('user_limit without reset time / number', () => expect(failedCopy({ reason: 'user_limit' })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.'));
+  test('daily_limit with time', () => expect(failedCopy({ reason: 'daily_limit', resetsAt: at })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.'));
+  test('daily_limit without time', () => expect(failedCopy({ reason: 'daily_limit' })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.'));
   test.each([undefined, 'error'])('%s -> generic', (r) => expect(failedCopy({ reason: r })).toBe('Couldn’t estimate this. Add the calories yourself.'));
   test.each(['rate_limited', 'unavailable', 'timeout'])('%s keeps the row Estimating', (r) =>
     expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'busy', fallback_reason: r, custom_items: [] } as never)).toBe('estimating'));
@@ -132,8 +131,7 @@ describe('ai_state drives the row (backend a72964e)', () => {
       custom_items: [{ custom_name: 'thukpa', needs_input: true }] } as never);
     expect(aiStatus(r)).toBe('failed');
     expect(failedRows(r, ['thukpa'])).toEqual(['thukpa']);
-    expect(failedCopy({ reason: r.fallback_reason, userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }))
-      .toBe(`You’ve used today’s 3 AI estimates. Add the calories yourself, or try again after ${resetTime('2026-10-16T07:00:00Z')}.`);
+    expect(failedCopy({ reason: r.fallback_reason, userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.');
   });
 });
 
@@ -162,9 +160,9 @@ describe('reset time from ai_resets_at (Pacific RFC 3339) in local time', () => 
     const d = new Date('2026-10-16T00:00:00-07:00');
     if (-d.getTimezoneOffset() === 330) expect(resetTime('2026-10-16T00:00:00-07:00')).toBe('12:30 PM');
   });
-  test('daily_limit copy uses it; missing -> left out', () => {
-    expect(failedCopy({ reason: 'daily_limit', resetsAt: '2026-10-16T00:00:00-07:00' })).toBe(`AI estimates are used up until ${resetTime('2026-10-16T07:00:00Z')}. Add the calories yourself.`);
-    expect(failedCopy({ reason: 'daily_limit', resetsAt: 'garbage' })).toBe('AI estimates are used up for now. Add the calories yourself.');
+  test('daily_limit copy is the plain cap copy with or without it', () => {
+    expect(failedCopy({ reason: 'daily_limit', resetsAt: '2026-10-16T00:00:00-07:00' })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.');
+    expect(failedCopy({ reason: 'daily_limit', resetsAt: 'garbage' })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.');
   });
 });
 
@@ -184,8 +182,8 @@ test('estimate-failed frame: "Confirm 2 · 1 still needs a choice" + outline "Ad
   expect(p.button).toBe('Confirm 2 · 1 still needs a choice');
   expect(p.later).toBe(`Add ${roti.kcal.best + dal.kcal.best} kcal · 1 to review later`);
 });
-test('app-side user_limit keeps the number in the copy', () =>
-  expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3 })).toBe('You’ve used today’s 3 AI estimates. Add the calories yourself.'));
+test('app-side user_limit uses the plain cap copy', () =>
+  expect(failedCopy({ reason: 'user_limit', userDailyLimit: 3 })).toBe('Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.'));
 test('3f4f401: fallback "gave_up" alone (no ai_state) is failed with generic copy', () => {
   expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', custom_items: [] } as never)).toBe('failed');
   expect(aiStatus({ items: [], unmatched: ['x'], fallback: 'gave_up', fallback_reason: 'gave_up', ai_state: 'failed', custom_items: [] } as never)).toBe('failed');

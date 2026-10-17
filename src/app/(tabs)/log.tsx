@@ -6,7 +6,7 @@ import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
 import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
-import { aiStatus, failedCounts, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay } from '@/lib/aiRows';
+import { aiStatus, failedCounts, failReason, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay } from '@/lib/aiRows';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
@@ -97,7 +97,7 @@ export default function Log() {
       const status = aiStatus(r);
       if (status === 'estimating') return; // no job to poll on an inline answer: stays Estimating; Add / leaving hands it to review
       if (status === 'failed') {
-        const why = { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at };
+        const why = { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at };
         // every asked span gets a failed row (no AI kcal came for any of them), plus any extra open span the server listed
         const rows = failedRows(r, spans).filter((u) => !(spanIds.current.has(u) && (handedOff.current.has(idFor(u)) || expired.current.has(idFor(u))))); // handed-off spans stay needs_review
         toCustom(rows, '', why);
@@ -108,7 +108,7 @@ export default function Log() {
         if (expired.current.has(ids[k])) return; // backstop already made this a failed row: ignore the late answer
         const its = splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
-        if (!its.length) { toCustom([u], '', { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
+        if (!its.length) { toCustom([u], '', { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
         setCustoms((cs) => {
           const l = lateAnswer(cs.find((c) => c.key === u), its);
           if (l.drop) return cs; // the user's own kcal wins

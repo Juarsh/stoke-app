@@ -56,11 +56,21 @@ export function resetTime(iso?: string): string {
   const h = d.getHours(), m = d.getMinutes();
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
+/** The daily AI cap ran out (per user or for everyone): fallback_reason daily_limit / user_limit, or fallback cap_reached /
+ * global_cap_reached / daily_limit when the server sent no reason; also the app's own per-user cap and queued foods. */
+export const CAP_REASONS = ['daily_limit', 'user_limit', 'cap_reached', 'global_cap_reached'];
+export const isCapReason = (reason?: string) => CAP_REASONS.includes(reason ?? '');
+export const CAP_COPY = 'Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.';
+export const FAILED_COPY = 'Couldn’t estimate this. Add the calories yourself.';
+/** FailedRow.reason for a failed answer: fallback_reason, else a cap-type fallback, else 'error' (generic copy). */
+export function failReason(r: { fallback_reason?: string; fallback?: string }): string {
+  if (r.fallback_reason) return r.fallback_reason;
+  return isCapReason(r.fallback) ? r.fallback! : 'error';
+}
+/** Failed-row copy: the cap one for any cap reason (never a bare 'failed'), else the generic one.
+ * userDailyLimit / resetsAt are kept on the row but no longer shown (Product, Oct 17: "try again tomorrow"). */
 export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit' | 'resetsAt'>): string {
-  const time = resetTime(f.resetsAt);
-  if (f.reason === 'user_limit') return `You’ve used today’s ${f.userDailyLimit ? `${f.userDailyLimit} ` : ''}AI estimates. Add the calories yourself${time ? `, or try again after ${time}` : ''}.`;
-  if (f.reason === 'daily_limit') return time ? `AI estimates are used up until ${time}. Add the calories yourself.` : 'AI estimates are used up for now. Add the calories yourself.';
-  return 'Couldn’t estimate this. Add the calories yourself.';
+  return isCapReason(f.reason) ? CAP_COPY : FAILED_COPY;
 }
 /** failed rows still waiting for the user's kcal (they count as "still needs a choice") */
 export const failedWaiting = (fs: FailedRow[]) => fs.filter((f) => !failedCounts(f)).length;
@@ -80,7 +90,7 @@ export function leaveLog(o: { open: Item[]; failed: FailedRow[]; estimating: { i
   const base = { slot: o.slot, raw_text: o.text, local_date: o.date, tableVersion: DISH_TABLE_VERSION, now: o.now };
   const reviews: FoodEntry[] = [
     ...o.open.map((it) => reviewEntry({ ...it, needs_confirmation: true }, { ...base, id: o.newId() })),
-    ...o.failed.filter((f) => !failedCounts(f)).map((f) => reviewEntry(parser.unknown(f.name), { ...base, id: f.id })),
+    ...o.failed.filter((f) => !failedCounts(f)).map((f) => ({ ...reviewEntry(parser.unknown(f.name), { ...base, id: f.id }), ...(f.reason ? { ai_fail_reason: f.reason } : {}) })),
   ];
   const pending: PendingFood[] = o.estimating.map((e) => ({ id: e.id, span: e.span, slot: o.slot, local_date: o.date, raw_text: o.text, at: 0 }));
   return { reviews, pending };

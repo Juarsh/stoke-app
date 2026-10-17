@@ -45,11 +45,15 @@ export function failedAiItem(span: string): Item {
     ai_state: 'failed', needs_input: true } as unknown as Item;
 }
 
-/** The converted review row (same stable id as the pending placeholder): needs_review, typed kcal only. */
-export function backstopEntry(f: PendingFood, ph?: FoodEntry, now = new Date()): FoodEntry {
+/** A queued food that ended without a number (same stable id as the pending placeholder): needs_review, typed kcal only;
+ * Review shows failedCopy(reason). */
+export function failedAiEntry(f: PendingFood, reason: string, ph?: FoodEntry, now = new Date()): FoodEntry {
   const e = reviewEntry(failedAiItem(f.span), { id: f.id, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION, now });
-  return { ...e, custom_name: f.span, span: f.span, pending: false, ai_expired: true, ai_fail_reason: BACKSTOP_REASON,
-    created_at: ph?.created_at ?? e.created_at, updated_at: now.toISOString() };
+  return { ...e, custom_name: f.span, span: f.span, pending: false, ai_fail_reason: reason, created_at: ph?.created_at ?? e.created_at, updated_at: now.toISOString() };
+}
+/** The backstop's converted row: a failed AI row whose late server answer is ignored (ai_expired). */
+export function backstopEntry(f: PendingFood, ph?: FoodEntry, now = new Date()): FoodEntry {
+  return { ...failedAiEntry(f, BACKSTOP_REASON, ph, now), ai_expired: true };
 }
 
 /** Queued foods past the cutoff: placeholder -> failed AI review row, its pending op (the job poll) removed, the row synced

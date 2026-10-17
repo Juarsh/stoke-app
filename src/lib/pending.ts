@@ -7,6 +7,8 @@ import { autoSavable, entryFromItem, FoodEntry, mergeEntries, reviewEntry } from
 import type { Item } from '../parser';
 import { isPlaceholder } from './itemKind';
 import { enqueue, Op, PendingFood } from './syncQueue';
+import { aiStatus, failReason, isCapReason } from './aiRows';
+import { failedAiEntry } from './aiBackstop';
 
 /** Entries for a resolved span, or null while it is still unknown (cap reached, AI off, placeholder only). Ids derive from the
  * pending id, so a retried resolve is idempotent on the server (client_id). */
@@ -21,6 +23,8 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
     throw e;
   }
   const got = r.items.filter((it) => !isPlaceholder(it) && it.kcal.best > 0);
+  // the daily cap ran out for a queued food: a failed row with the cap copy now (typed kcal only), not an endless 'pending'
+  if (!got.length && aiStatus(r) === 'failed' && isCapReason(failReason(r))) return [failedAiEntry(f, failReason(r))];
   if (!got.length) return null;
   // only a confident table match is saved; anything uncertain becomes a 'needs review' entry (no unwarned number)
   return got.map((it, i) => {
