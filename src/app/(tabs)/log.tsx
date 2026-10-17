@@ -189,10 +189,13 @@ export default function Log() {
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
   // every row Add would save is one the store guard refuses (e.g. 5001 roti) and there is nothing else to save: Add can't
   // save, so it shows disabled (Designer Oct 17) instead of looking enabled and doing nothing; the row says why
-  const guardRefuses = (it: Item) => !!entryRefusal(entryFromItem({ ...it, needs_confirmation: false }, { id: 'x', slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }));
+  const guardWhy = (it: Item) => entryRefusal(entryFromItem({ ...it, needs_confirmation: false }, { id: 'x', slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }));
+  const guardRefuses = (it: Item) => !!guardWhy(it);
   const addBlocked = bp.add.length > 0 && bp.add.every((r) => guardRefuses(r.it)) && !addedCustoms.length && !pendingUnmatched.length && !nOpen && !openFailed;
   const canAdd = any && !(bp.disabled && bp.later) && !addBlocked; // confirm-none: the main button is not shown at all; 'Save · N to review later' is the way out
   const addLabel = sum.button;
+  // the disabled Add says why under it (Designer): e.g. "That’s too much for one entry. Try a smaller amount."
+  const blockedWhy = addBlocked ? bp.add.map((r) => guardWhy(r.it)).find(Boolean) ?? '' : '';
   const listDrafts = drafts.filter((d) => ['counted', 'batch'].includes(kindByKey.get(d.key)!));
   const openDrafts = drafts.filter((d) => ['unit', 'estimate', 'unverified'].includes(kindByKey.get(d.key)!));
   const decisionDrafts = drafts.filter((d) => kindByKey.get(d.key) === 'choice');
@@ -346,7 +349,8 @@ export default function Log() {
               <T v="caption" tone="muted">{sum.total}</T>
               <T v="number">{sum.kcalText} <T v="caption" tone="muted">{sum.soFar ? 'kcal so far' : `kcal · ${sum.protein} g`}</T></T>
             </Row>
-            {bp.primary ? <Button title={addLabel} disabled={!canAdd} onPress={() => add()} accessibilityLabel={addLabel} /> : null}
+            {bp.primary ? <Button title={addLabel} disabled={!canAdd} onPress={() => add()} accessibilityLabel={blockedWhy ? `${addLabel}. ${blockedWhy}` : addLabel} /> : null}
+            {bp.primary && blockedWhy ? <T v="caption" tone="warn" style={{ textAlign: 'center' }} testID="add-blocked" accessibilityLiveRegion="polite">{blockedWhy}</T> : null}
             {bp.later ? <Button kind="outline" title={bp.later} onPress={() => add(true)} accessibilityLabel={bp.later} /> : null}
             {nOpen && bp.add.length ? <T v="caption" tone="muted" style={{ textAlign: 'center' }}>{bp.note}</T> : null}
           </View>

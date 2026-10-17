@@ -160,6 +160,7 @@ describe('B2 on the Log screen', () => {
     expect(server.log.filter((l) => l.path === '/v1/parse').map((l) => l.body.text)).toEqual(['1 plate zarda']);
     expect(textOf(r)).toContain('Zarda pulao'); expect(textOf(r)).toContain('1 plate');
     expect(textOf(r)).toContain('640'); expect(textOf(r)).not.toContain('not counted'); expect(textOf(r)).not.toContain('320');
+    expect(textOf(r)).toContain('Read as zarda pulao'); expect(textOf(r)).not.toMatch(/· check/i); // the Check badge isn't repeated
     await typeIt('2 plates zarda');
     expect(server.log.filter((l) => l.path === '/v1/parse').map((l) => l.body.text)).toContain('2 plates zarda');
   });
@@ -170,6 +171,37 @@ describe('B2 on the Log screen', () => {
     await typeIt('1 plate zarda');
     expect(addLabel()).not.toContain('320');
     expect(textOf(r)).toContain('not counted');
+  });
+});
+
+describe('Designer copy (rg8 F-4 items in scope)', () => {
+  test('a disabled Add over the ceiling says why under it', async () => {
+    await boot(<Log />);
+    const input = r.root.findAll((n) => n.type === TextInput && n.props.accessibilityLabel === 'What did you eat?')[0];
+    await act(async () => { input.props.onChangeText('100 roti'); }); await tick();
+    const pick = r.root.findAll((n) => typeof n.props.onPress === 'function' && /100 pieces/.test(String(n.props.accessibilityLabel ?? '')));
+    if (pick.length) await act(async () => { pick[pick.length - 1].props.onPress(); }); // a big count asks first: "Looks right"
+    await tick();
+    const add = r.root.findAll((n) => typeof n.type === 'string' && n.props.accessibilityRole === 'button' && /^Add 11,000 kcal/.test(String(n.props.accessibilityLabel ?? '')));
+    expect(add.length).toBeGreaterThan(0);
+    expect(add[add.length - 1].props.accessibilityState?.disabled).toBe(true);
+    const why = r.root.findAll((n) => n.props.testID === 'add-blocked' && typeof n.type !== 'string');
+    expect(why.length).toBeGreaterThan(0);
+    expect(textOf(r)).toContain('That’s too much for one entry. Try a smaller amount.');
+    await act(async () => { input.props.onChangeText('2 roti'); }); await tick();
+    expect(r.root.findAll((n) => n.props.testID === 'add-blocked')).toHaveLength(0);
+  });
+  test('"Read as" shows the amount once, and a Check card doesn’t repeat "check"', async () => {
+    const { ConfirmCard } = require('../src/components/ConfirmCard');
+    const it = { ...parser.unknown('x'), dish_id: 'kodo_khichdi', name: '1 katori kodo khichdi', matched_text: '1 katori kodo khichdi', quantity: 1, unit: 'katori', source: 'table', ai_estimate: false,
+      kcal: { low: 200, best: 250, high: 300 }, needs_confirmation: true } as Item;
+    let t!: ReactTestRenderer;
+    await act(async () => { t = create(<ConfirmCard it={it} onResolve={() => {}} onRemove={() => {}} />); });
+    const txt = textOf(t);
+    expect(txt).toContain('Read as: kodo khichdi · 1 katori');
+    expect(txt).not.toContain('1 katori kodo khichdi ·');
+    expect(texts(t).filter((x) => x.trim().toLowerCase() === 'check')).toHaveLength(1); // the badge only
+    await act(async () => { t.unmount(); });
   });
 });
 

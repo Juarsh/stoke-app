@@ -82,7 +82,8 @@ export function DecisionCard({ it, onPick, onEdit, onRemove }: { it: Item; onPic
     helper = ''; opts = [{ value: 'use', label: 'Use estimate' }, { value: 'own', label: 'Enter my own' }]; value = 'use';
     choose = (v) => (v === 'use' ? ok() : setSheet(true));
   } else {
-    helper = `Read as ${displayName(it.name, it.dish_id)} · ${reasonWord(it)}`;
+    const why = reasonWord(it); // 'check' would repeat the Check badge ("CHECK check")
+    helper = why === 'check' ? `Read as ${displayName(it.name, it.dish_id)}` : `Read as ${displayName(it.name, it.dish_id)} · ${why}`;
     opts = [{ value: 'ok', label: 'Looks right' }, { value: 'change', label: 'Change' }]; value = 'ok';
     choose = (v) => (v === 'ok' ? ok() : setSheet(true));
   }

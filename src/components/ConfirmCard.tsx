@@ -23,7 +23,7 @@ export function ConfirmCard({ it, onResolve, onRemove }: { it: Item; onResolve: 
   return (
     <Pressable onPress={() => setEdit(true)} style={s.card} accessibilityRole="button" accessibilityLabel={`Check: read as ${displayName(it.name, it.dish_id)}, ${portionLabel(it.quantity, it.unit)}, ${it.kcal.best} calories. Double-tap to edit.`}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <Row style={{ flex: 1 }}><Badge kind="check" label="Check" /><T v="caption" tone="muted">{reasonWord(it)}</T></Row>
+        <Row style={{ flex: 1 }}><Badge kind="check" label="Check" />{reasonWord(it) !== 'check' ? <T v="caption" tone="muted">{reasonWord(it)}</T> : null}</Row>
         <T v="number">{it.kcal.best.toLocaleString('en-IN')}</T>
       </Row>
       <T>
