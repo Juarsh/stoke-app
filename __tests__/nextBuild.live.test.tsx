@@ -28,9 +28,10 @@ const raw = (method: string, url: string, headers: Record<string, string>, body?
 });
 const forced: { id: string; method: string; status: number; body: unknown; n: number }[] = [];
 const log: string[] = [];
+const sent: { m: string; path: string; body: Record<string, unknown> }[] = [];
 (global as { fetch: unknown }).fetch = async (url: string, o: { method?: string; headers?: Record<string, string>; body?: string } = {}) => {
   const m = o.method || 'GET';
-  log.push(`${m} ${url.replace(BASE, '')}`);
+  log.push(`${m} ${url.replace(BASE, '')}`); sent.push({ m, path: url.replace(BASE, ''), body: o.body ? JSON.parse(o.body) : {} });
   const f = forced.find((x) => x.n > 0 && m === x.method && url.includes(`/v1/entries/${x.id}`));
   if (f) { f.n--; const t = JSON.stringify(f.body); return { ok: false, status: f.status, headers: { get: () => null }, text: async () => t, json: async () => JSON.parse(t) }; }
   const r = await raw(m, url, o.headers || {}, o.body);
@@ -64,7 +65,7 @@ async function boot(user: string, entries: FoodEntry[], queue: unknown[]) {
 const saved = () => JSON.parse(mockMem['app-state-v1']) as { entries: FoodEntry[]; queue: unknown[] };
 const run = BASE ? test : test.skip;
 jest.setTimeout(120_000);
-beforeEach(() => { forced.length = 0; log.length = 0; });
+beforeEach(() => { forced.length = 0; log.length = 0; sent.length = 0; });
 
 run('edge (a): older-build row with a queued edit, DELETE 5xx x3: counted at the server’s copy (GET), phone == server == summary', async () => {
   const user = `nb-a-${Date.now() % 1e6}`;
@@ -145,6 +146,8 @@ run('rg10 5xx path: T2 auto retry, N4 other-device edit while flagged, T3b edit 
   await settle(20_000, () => !F()?.sync_error && st.queue.length === 0);
   expect(F().sync_error).toBeUndefined(); expect(F().server_failed).toBeUndefined();
   expect(log.slice(n0).some((l) => l === 'PATCH /v1/entries/nF')).toBe(true);
+  // CEO (versioned retries): the retry carried the edit's base version, the other device's 4 roti stand, the note says so
+  expect(F().qty).toBe(4); expect(F().server_note).toBe(editNotSaved('3 pieces'));
   const t3 = await totals(user); expect(t3.phone).toBe(t3.server); expect(t3.server).toBe(t3.summary); expect(t3.ids).toEqual(['nF', 'nG', 'nH']);
   // T3b: nG's delete is flagged (DELETE 503 x3); the user edits nG to 2 katori: live, no delete flag, no DELETE sent after it
   forced.push({ id: 'nG', method: 'DELETE', status: 503, body: { error: 'unavailable' }, n: 1000 });
@@ -160,3 +163,39 @@ run('rg10 5xx path: T2 auto retry, N4 other-device edit while flagged, T3b edit 
   expect(t5.server).toBeGreaterThan(t3.server); // 2 katori dal now
   await act(async () => { r.unmount(); });
 }, 240_000);
+
+// CEO (next build), versioned retries, live: device A's edit (3 roti) is flagged after 3x 5xx; device B saves 4 roti (with its
+// version); A's automatic retry (no other request, the backoff alone) sends A's base version -> B1's 409 with the locked row ->
+// A takes B's row (4 roti) and shows "Your change to 3 pieces wasn’t saved…". phone == server == summary; B's edit stands.
+run('versioned retries: B edits while A’s edit is flagged; A auto-retries: B wins, A shows the note, phone == server == summary', async () => {
+  const user = `nb-6-${Date.now() % 1e6}`;
+  const H = { Authorization: `Bearer dev:${user}`, 'content-type': 'application/json' };
+  const r = await boot(user, [tab('nA', '2 roti'), tab('nG', '1 katori dal')], [tab('nA', '2 roti'), tab('nG', '1 katori dal')].map((e) => ({ kind: 'upsert', entry: e, tries: 0 })));
+  const t0 = await totals(user); expect(t0.phone).toBe(t0.server); expect(t0.server).toBe(t0.summary);
+  const A = () => st.entries.find((x) => x.id === 'nA')!;
+  const base = A().server_version; expect(typeof base).toBe('number');
+  forced.push({ id: 'nA', method: 'PATCH', status: 503, body: { error: 'unavailable' }, n: 1000 });
+  const three = tab('nA', '3 roti');
+  await act(async () => { st.updateEntry({ ...A(), qty: three.qty, unit: three.unit, kcal: three.kcal, protein_g: three.protein_g, carbs_g: three.carbs_g, fat_g: three.fat_g, raw_text: '3 roti' }); });
+  await settle(40_000, () => A()?.sync_error === 'server_error');
+  expect(A()).toMatchObject({ sync_error: 'server_error', server_failed: true });
+  // device B: reads the row, saves 4 roti on its version
+  const cur = JSON.parse((await raw('GET', `${BASE}/v1/entries/nA`, H)).text); expect(cur.version).toBe(base);
+  const b = await raw('PATCH', `${BASE}/v1/entries/nA`, H, JSON.stringify({ slot: 'breakfast', local_date: DATE, dish_id: 'roti', qty: 4, unit: 'count', oil_level: '', confirmed: true, state: 'confirmed', remember: false, version: cur.version }));
+  expect(b.status).toBe(200); const bRow = JSON.parse(b.text);
+  forced.length = 0; const n0 = sent.length;
+  // nothing else happens on A: the automatic retry (30 s after the flag) must do it
+  await settle(60_000, () => !A()?.sync_error && !!A()?.server_note);
+  const retries = sent.slice(n0).filter((x) => x.m === 'PATCH' && x.path === '/v1/entries/nA');
+  expect(retries.length).toBeGreaterThanOrEqual(1); expect(retries.every((x) => x.body.version === base)).toBe(true);
+  expect(A()).toMatchObject({ qty: 4, unit: 'count', server_version: bRow.version, server_note: editNotSaved('3 pieces') });
+  expect(A().sync_error).toBeUndefined(); expect(A().server_failed).toBeUndefined();
+  const after = JSON.parse((await raw('GET', `${BASE}/v1/entries/nA`, H)).text);
+  expect(after).toMatchObject({ qty: 4, version: bRow.version }); // B's edit stands, untouched
+  expect(Math.round(A().kcal.best)).toBe(Math.round(after.kcal_best));
+  const t1 = await totals(user); expect(t1.phone).toBe(t1.server); expect(t1.server).toBe(t1.summary); expect(t1.ids).toEqual(['nA', 'nG']);
+  expect(texts(r)).toContain(editNotSaved('3 pieces'));
+  await settle(3000, () => false);
+  expect(sent.slice(n0).filter((x) => x.m === 'PATCH' && x.path === '/v1/entries/nA')).toHaveLength(retries.length); // not re-sent
+  await act(async () => { r.unmount(); });
+}, 180_000);

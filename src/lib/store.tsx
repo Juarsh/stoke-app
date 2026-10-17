@@ -51,7 +51,7 @@ const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : (o as { id: string }
 const unchangedSince = (cur: FoodEntry | undefined, sent: FoodEntry) => !!cur && cur.updated_at === sent.updated_at && !cur.deleted_at;
 /** After a flush: server versions recorded (a synced entry loses its sync error); refused / failed ops are handled ONLY when
  * the user has not changed the entry since it was sent, so a refusal never swallows a later typed value. Pure (testable). */
-export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'> & Pick<Partial<FlushResult>, 'rows' | 'kept'>): P {
+export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'> & Pick<Partial<FlushResult>, 'rows' | 'kept' | 'stale'>): P {
   const now = new Date();
   // deleted on another device (a save got 404): the delete wins. The local row is dropped (a tombstone: not counted, not
   // shown, no sync error) and every op still queued for it goes, so nothing re-creates or retries it.
@@ -72,6 +72,7 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   // remaining ones and replace their same-id op; a late result for a job the backstop converted is ignored (dropLate / dropLateOps)
   const queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
   const kept = new Map((r.kept ?? []).map((k) => [k.id, k]));
+  const stale = new Map((r.stale ?? []).map((x) => [x.id, x]));
   const failedIds = new Set([...r.failed.map((f) => f.id), ...kept.keys()]);
   const deletedOk = new Set(sent.filter((o) => o.kind === 'delete' && !r.rest.includes(o) && !r.rest.some((x) => x.kind === 'delete' && x.id === (o as { id: string }).id) && !failedIds.has((o as { id: string }).id)).map((o) => (o as { id: string }).id));
   const entries = mergeEntries(p.entries, dropLate(p.entries, r.resolved)).map((x) => {
@@ -96,6 +97,16 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     // rg10: the server refused the delete (4xx other than 404): it still has the row, so the phone has it too
     const k = kept.get(x.id);
     if (k && n.deleted_at) n = restoreKept(n, k);
+    // CEO (next build): an edit based on a version the server moved on from (another device saved since) is never re-applied:
+    // the row is the server's (qty, unit, numbers, version; shown == counted == server) and says the edit wasn't saved. A
+    // server row that already has exactly that edit is simply adopted. A newer edit made since keeps its own op.
+    const sx = stale.get(x.id);
+    if (sx && unchangedSince(x, sx.sent)) {
+      const same = sx.row.state !== 'needs_review' && (sx.row.qty ?? sx.sent.qty) === sx.sent.qty && (sx.row.unit ?? sx.sent.unit) === sx.sent.unit
+        && Math.abs((sx.row.kcal_best ?? sx.sent.kcal.best) - sx.sent.kcal.best) <= 0.5;
+      n = { ...serverCopy(n, sx.row), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, amount_unknown: undefined, kept_on_server: undefined,
+        server_note: same ? n.server_note : editNotSaved(editWhat(sx.sent)) };
+    }
     // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
     if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
@@ -212,9 +223,9 @@ export function queueAutoRetry<P extends { entries: FoodEntry[]; queue: Op[] }>(
   return q === p.queue ? p : { ...p, queue: q };
 }
 /** did this flush get any op through (the server answered it 2xx)? */
-export function anyOk(sent: Op[], r: Pick<FlushResult, 'rest' | 'failed' | 'rejected'> & Partial<Pick<FlushResult, 'kept' | 'gone'>>): boolean {
+export function anyOk(sent: Op[], r: Pick<FlushResult, 'rest' | 'failed' | 'rejected'> & Partial<Pick<FlushResult, 'kept' | 'gone' | 'stale'>>): boolean {
   const left = new Set(r.rest.map(opKey));
-  const bad = new Set([...r.failed.map((f) => f.id), ...r.rejected.map((x) => x.entry.id), ...(r.kept ?? []).map((k) => k.id), ...(r.gone ?? [])]);
+  const bad = new Set([...r.failed.map((f) => f.id), ...r.rejected.map((x) => x.entry.id), ...(r.kept ?? []).map((k) => k.id), ...(r.gone ?? []), ...(r.stale ?? []).map((x) => x.id)]);
   return sent.some((o) => !left.has(opKey(o)) && !((o.kind === 'upsert' || o.kind === 'delete') && bad.has(opId(o))));
 }
 
@@ -226,6 +237,11 @@ export function anyOk(sent: Op[], r: Pick<FlushResult, 'rest' | 'failed' | 'reje
  * - the edit replaces a delete that is still queued or flagged (its op is replaced by the upsert): the row is live again and
  *   delete_failed / unsynced_edit go, so what it shows, what it counts, what is queued and what the server gets agree;
  * - a row whose delete already went through (deleted, nothing queued, not flagged) stays deleted: nothing is queued. */
+/** the row is deleted for good on the phone (deleted, its delete not flagged, nothing queued): an edit can't bring it back */
+export function editGone(p: { entries: FoodEntry[]; queue: Op[] }, id: string): boolean {
+  const old = p.entries.find((x) => x.id === id);
+  return !!old && !!old.deleted_at && !old.delete_failed && !p.queue.some((o) => (o.kind === 'upsert' || o.kind === 'delete') && opId(o) === id);
+}
 export function editedState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, e: FoodEntry): P {
   const old = p.entries.find((x) => x.id === e.id);
   if (!old) return p;
@@ -399,7 +415,13 @@ function useStoreValue() {
   useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
-  const updateEntry = (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => editedState(p, e)); return null; };
+  const queueRef = useRef(s.queue); queueRef.current = s.queue;
+  const updateEntry = (e: FoodEntry): string | null => {
+    // a row whose delete already went through (e.g. deleted on another device while the sheet was open): the server's state
+    // is shown (the sheet says it was deleted), never a silent drop
+    if (editGone({ entries: entriesRef.current, queue: queueRef.current }, e.id)) return DELETED_ELSEWHERE;
+    const reason = entryRefusal(e); if (reason) return reason; upd((p) => editedState(p, e)); return null;
+  };
   return {
     notice, dismissNotice,
     ready, ...s, api, sync, expireAi,

@@ -121,7 +121,13 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   gone?: string[];
   /** rg10: deletes the server refused with a 4xx other than 404 (403, 400, 409, 410, 422, …): the row stays on the server, so
    * the phone restores it, counted as the server has it, with the server's reason. `row` is the server's copy when it sent one. */
-  kept?: { id: string; code: string; reason?: string; row?: ServerRow; /** the delete replaced an edit the server never got */ edited?: boolean }[] };
+  kept?: { id: string; code: string; reason?: string; row?: ServerRow; /** the delete replaced an edit the server never got */ edited?: boolean }[];
+  /** CEO (next build): edits sent with a version the server's row has moved on from (409 version_conflict with its locked row,
+   * or a version-less row whose copy changed): never re-applied; the phone takes `row` and says the edit wasn't saved */
+  stale?: { id: string; row: ServerRow; sent: FoodEntry }[] };
+/** a 409 version_conflict carrying the server's row, on an edit */
+export const isStaleEdit = (e: unknown, op: Op) => op.kind === 'upsert' && statusOf(e) === 409 && codeOf(e) === 'version_conflict'
+  && !!(e as { entry?: unknown })?.entry && typeof (e as { entry?: unknown }).entry === 'object';
 export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
   const rest = [...q];
   const versions: Record<string, number> = {};
@@ -135,6 +141,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
   // per-id order holds while rows on other ids still reach the server in this flush. No connection at all still stops.
   const parked = new Set<string>();
   const kept: NonNullable<FlushResult['kept']> = [];
+  const stale: NonNullable<FlushResult['stale']> = [];
   /** delete ids already retried once after a 409 (their server copy, when the 409 carried one) */
   const conflicted = new Map<string, { row?: ServerRow; reason?: string }>();
   let i = 0;
@@ -174,6 +181,8 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
       // 404 on a save: the row was deleted on the server (another device). The delete wins: never re-created, never retried.
       if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.splice(i, 1); continue; }
+      // CEO: the edit was based on a version the server has moved on from (another device saved since): never re-applied
+      if (op.kind === 'upsert' && isStaleEdit(e, op)) { stale.push({ id: op.entry.id, row: (e as { entry: ServerRow }).entry, sent: op.entry }); rest.splice(i, 1); continue; }
       // rg10 (CEO): a DELETE refused with a 4xx other than 404 (404 = already gone: the delete wins, see api.deleteEntry) means
       // the row stays on the server. 401/408/429 are retried as before. A 409 (e.g. version_conflict with the server's copy;
       // e461c87 never sends one on DELETE) is retried once at once, then kept with the copy it sent.
@@ -226,7 +235,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       break; // no connection (or a wait the server asked for): everything waits
     }
   }
-  return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows, kept };
+  return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows, kept, stale };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */

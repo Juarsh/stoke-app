@@ -104,19 +104,19 @@ describe('api', () => {
   });
   test('AI save sends parse_job_id; its PATCH says source ai_estimate', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { duplicates: [{}] })).mockResolvedValueOnce(reply(200, {}));
-    await api.upsertEntry(aiEntry());
+    await api.upsertEntry({ ...aiEntry(), server_version: 1 }); // an edit of a row it has (version known: no read first)
     const post = JSON.parse(fetchMock.mock.calls[0][1].body), patch = JSON.parse(fetchMock.mock.calls[1][1].body);
     expect(post.items[0]).toMatchObject({ source: 'ai_estimate', parse_job_id: 'j1' });
     expect(patch).toMatchObject({ source: 'ai_estimate', parse_job_id: 'j1' });
   });
   test('typed kcal on the same row: source custom without the job (no AI provenance), never ai_estimate', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { duplicates: [{}] })).mockResolvedValueOnce(reply(200, {}));
-    await api.upsertEntry({ ...aiEntry(), source: 'custom', custom_name: 'kombucha', kcal: { low: 90, best: 90, high: 90 } });
+    await api.upsertEntry({ ...aiEntry(), server_version: 1, source: 'custom', custom_name: 'kombucha', kcal: { low: 90, best: 90, high: 90 } });
     const post = JSON.parse(fetchMock.mock.calls[0][1].body).items[0], patch1 = JSON.parse(fetchMock.mock.calls[1][1].body);
     expect(post).toMatchObject({ source: 'custom', kcal: 90 }); expect(post.parse_job_id).toBeUndefined();
     expect(patch1.source).toBeUndefined(); expect(patch1.parse_job_id).toBeUndefined(); expect(patch1.if_unmodified_since).toBeUndefined();
     fetchMock.mockClear().mockResolvedValueOnce(reply(200, { duplicates: [{}] })).mockResolvedValueOnce(reply(200, {}));
-    await api.upsertEntry({ ...aiEntry(), job_id: undefined });
+    await api.upsertEntry({ ...aiEntry(), server_version: 1, job_id: undefined });
     const patch = JSON.parse(fetchMock.mock.calls[1][1].body);
     expect(patch.source).toBeUndefined(); expect(patch.parse_job_id).toBeUndefined();
   });

@@ -28,8 +28,8 @@ const DAY = '2026-10-17';
 type Row = { client_id: string; version: number; kcal: number; state: string; source: string; custom_name: string; deleted: boolean; job?: string };
 type Hold = { release: () => void };
 const server = {
-  rows: new Map<string, Row>(), abandoned: new Set<string>(), held: [] as Hold[], holdNext: 0, foreignBump: 0, alwaysConflict: new Set<string>(), log: [] as string[], offline: false,
-  reset() { this.rows.clear(); this.abandoned.clear(); this.held = []; this.holdNext = 0; this.foreignBump = 0; this.alwaysConflict.clear(); this.log = []; this.offline = false; },
+  rows: new Map<string, Row>(), abandoned: new Set<string>(), held: [] as Hold[], holdNext: 0, foreignBump: 0, alwaysConflict: new Set<string>(), refuse: new Set<string>(), log: [] as string[], offline: false,
+  reset() { this.rows.clear(); this.abandoned.clear(); this.held = []; this.holdNext = 0; this.foreignBump = 0; this.alwaysConflict.clear(); this.refuse.clear(); this.log = []; this.offline = false; },
   /** device 2 deletes the row */
   remoteDelete(id: string) { const r = this.rows.get(id)!; r.deleted = true; r.version++; },
   summary() { return [...this.rows.values()].filter((r) => !r.deleted && r.state === 'confirmed').reduce((s, r) => s + r.kcal, 0); },
@@ -59,6 +59,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
   if (init.method === 'DELETE') { r.deleted = true; r.version++; return reply(204); }
   // PATCH
   if (server.foreignBump > 0) { server.foreignBump--; r.version++; } // another write landed on the server first
+  if (server.refuse.has(r.client_id)) return reply(403, { error: { code: 'forbidden', message: 'locked' } });
   if (server.alwaysConflict.has(r.client_id) || (b.version != null && b.version !== r.version)) return reply(409, { error: { code: 'version_conflict', version: r.version }, entry: view(r) });
   const state = b.state ?? r.state; const src = b.kcal != null ? 'custom' : r.source;
   if ((b.source === 'ai_estimate' || (src === 'ai_estimate' && b.kcal == null && state !== 'needs_review')) && server.abandoned.has(b.parse_job_id ?? r.job ?? '')) return reply(409, { error: { code: 'job_abandoned' } });
@@ -130,40 +131,40 @@ describe.each([['clock right', 0], ['phone clock 60 s slow', -60_000], ['phone c
   });
 });
 
-test('another write moved the server version: the user\'s edit is re-applied on it once and wins', async () => {
+test('CEO (next build): another write moved the server version: never re-applied; the phone takes the server’s row and says the edit wasn’t saved', async () => {
   await boot();
-  server.foreignBump = 1;
+  server.foreignBump = 1; // another device saved C (still 300) since the phone last saw it
   await act(async () => { U(610)(st); });
   await settle();
-  expect(server.rows.get('C')).toMatchObject({ kcal: 610 });
+  expect(server.rows.get('C')).toMatchObject({ kcal: 300 }); // the other write stands
+  expect(server.log.filter((l) => l === 'PATCH /v1/entries/C')).toHaveLength(1); // no re-apply
+  expect(ent('C').kcal.best).toBe(300); expect(ent('C').server_note).toBe('Your change to 610 kcal wasn’t saved. Edit it again if you still want it.');
+  expectInSync();
+  // editing again (now on the server's version) saves
+  await act(async () => { U(640)(st); }); await settle();
+  expect(server.rows.get('C')).toMatchObject({ kcal: 640 }); expect(ent('C').server_note).toBeUndefined();
   expectInSync();
 });
 
-test('a conflict that never clears: only that row shows it, later ops keep flowing; tap to retry syncs it', async () => {
+test('a stale version every time: only that row is affected (the server’s row + the note), later ops keep flowing, nothing jammed', async () => {
   await boot();
   server.alwaysConflict.add('C');
   await act(async () => { U(700)(st); st.confirmReviewKcal('R', 250); });
   await settle();
-  expect(st.queue).toEqual([]);                     // nothing jammed
-  expect(ent('C').sync_error).toBe('sync_conflict'); // shown on that row
-  expect(ent('R').sync_error).toBeUndefined();
-  expect(server.rows.get('R')).toMatchObject({ kcal: 250, state: 'confirmed' }); // the later op went through
-  const patches = server.log.filter((l) => l === 'PATCH /v1/entries/C').length;
-  expect(patches).toBe(2); // first try + exactly ONE re-apply
-  server.alwaysConflict.clear();
-  await act(async () => { st.retrySync('C'); });
-  await settle();
-  expect(ent('C').sync_error).toBeUndefined();
+  expect(st.queue).toEqual([]);
+  expect(ent('C').sync_error).toBeUndefined(); expect(ent('C').kcal.best).toBe(300);
+  expect(ent('C').server_note).toBe('Your change to 700 kcal wasn’t saved. Edit it again if you still want it.');
+  expect(server.rows.get('R')).toMatchObject({ kcal: 250, state: 'confirmed' });
+  expect(server.log.filter((l) => l === 'PATCH /v1/entries/C')).toHaveLength(1);
   expectInSync();
-  expect(server.rows.get('C')!.kcal).toBe(700);
 });
 
 test('retry spinner (Designer Oct 17): retrying while the op is in flight, the kcal still counts; cleared when it syncs or fails again', async () => {
   await boot();
-  server.alwaysConflict.add('C');
+  server.refuse.add('C');
   await act(async () => { U(700)(st); });
   await settle();
-  expect(ent('C')).toMatchObject({ sync_error: 'sync_conflict' });
+  expect(ent('C')).toMatchObject({ sync_error: 'forbidden' });
   const phoneKcal = () => dayTotals(st.entries.filter((e) => e.local_date === DAY && counted(e))).kcal;
   expect(phoneKcal()).toBe(700); // the failed row still counts on the phone
   // retry that fails again: retrying while in flight, then back to the failed state (no spinner)
@@ -177,10 +178,10 @@ test('retry spinner (Designer Oct 17): retrying while the op is in flight, the k
   expect(st.queue.filter((o) => o.kind === 'upsert')).toHaveLength(1);
   await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
   await settle();
-  expect(ent('C').sync_retrying).toBeUndefined(); expect(ent('C').sync_error).toBe('sync_conflict');
+  expect(ent('C').sync_retrying).toBeUndefined(); expect(ent('C').sync_error).toBe('forbidden');
   expect(phoneKcal()).toBe(700);
   // retry that succeeds: spinner while in flight, then a normal synced row
-  server.alwaysConflict.clear(); server.holdNext = 1;
+  server.refuse.clear(); server.holdNext = 1;
   await act(async () => { st.retrySync('C'); });
   await tick(4);
   expect(ent('C').sync_retrying).toBe(true);

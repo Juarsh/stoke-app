@@ -137,8 +137,11 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       return parseJobBody(await req<JobBody>('GET', `/v1/parse/jobs/${encodeURIComponent(jobId)}`), jobId);
     },
     /** POST with client_id (idempotent). If the server already has it (an edit), PATCH by client_id with the row version the
-     * phone last saw (never its clock). On 409 version_conflict the user's edit is re-applied on the server's current version
-     * and retried ONCE; still refused -> ApiError(409, sync_conflict). Returns the server's new version. */
+     * edit was based on (never the phone's clock). CEO (next build): every send of an edit is versioned and a stale version is
+     * NEVER re-applied: the 409 version_conflict (with the server's locked row, B1) is thrown as is (isStaleEdit), and the
+     * store shows the server's row with "Your change to … wasn’t saved." A row with no known version (older builds, a lost
+     * POST answer): the server's copy is read first; if it moved on from what the phone last saw (server_counts) that is the
+     * same 409, else the PATCH carries the version just read. Returns the server's new version. */
     /** PE: the server's supported units per dish, from its dish table (GET /v1/dishes supported_units) and that table's
      * version. null when the server doesn't send them (older build): the phone keeps what it has. */
     async getDishUnits(): Promise<DishUnits | null> {
@@ -163,17 +166,24 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       type Saved = ServerRow;
       const patch = (body: Record<string, unknown>, known?: number) => patch0(body, known).catch((err) => { if (err instanceof ApiError) err.patch = true; throw err; });
       const saved = (row?: Saved) => ({ version: row?.version, ...(row && typeof row === 'object' ? { row } : {}) });
+      const path = `/v1/entries/${encodeURIComponent(e.id)}`;
+      const stale = (row: ServerRow) => new ApiError(409, JSON.stringify({ error: { code: 'version_conflict', version: row.version }, entry: row }));
       const patch0 = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number; row?: ServerRow }> => {
-        const path = `/v1/entries/${encodeURIComponent(e.id)}`;
-        try { return saved(await req<Saved>('PATCH', path, { ...body, ...(known ? { version: known } : {}) })); }
+        let base = known;
+        if (!base) {
+          // no version known for this row: the server's copy decides (404 -> deleted elsewhere, the delete wins)
+          const cur = await req<Saved>('GET', path);
+          const sc = e.server_counts;
+          if (sc && cur.state && (cur.state === 'needs_review' ? sc.kcal !== 0
+            : Math.abs((cur.kcal_best ?? sc.kcal) - sc.kcal) > 0.5 || Math.abs((cur.protein_best ?? sc.protein) - sc.protein) > 0.05)) throw stale(cur);
+          base = cur.version;
+        }
+        try { return saved(await req<Saved>('PATCH', path, { ...body, ...(base ? { version: base } : {}) })); }
         catch (err) {
-          if (!(err instanceof ApiError && err.status === 409 && err.code === 'version_conflict')) throw err;
-          const cur = err.entry?.version; // the server's row: our body (the user's latest values) goes on top of it
-          try { return saved(await req<Saved>('PATCH', path, { ...body, ...(cur ? { version: cur } : {}) })); }
-          catch (err2) {
-            if (err2 instanceof ApiError && err2.status === 409 && err2.code === 'version_conflict') throw new ApiError(409, JSON.stringify({ error: { code: SYNC_CONFLICT } }));
-            throw err2;
-          }
+          if (!(err instanceof ApiError && err.status === 409 && err.code === 'version_conflict') || err.entry) throw err;
+          // an older server's 409 without its row: read it, so the phone can show what the server has
+          let cur: Saved | null = null; try { cur = await req<Saved>('GET', path); } catch { /* unknown: the 409 as is */ }
+          throw cur ? stale(cur) : err;
         }
       };
       type Posted = { duplicates?: unknown[]; entries?: Saved[] };
@@ -195,7 +205,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
         const send = async (id: Record<string, unknown>, clear: Record<string, unknown> = {}) => {
           const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text,
             items: [{ ...id, source, state: 'needs_review', client_id: e.id, ...(e.span ? { span: e.span } : {}), ...job }] });
-          if (r?.duplicates?.length) return patch({ slot: e.slot, local_date: e.local_date, ...clear, ...id, remember: false }, e.server_version ?? r.entries?.[0]?.version);
+          if (r?.duplicates?.length) return patch({ slot: e.slot, local_date: e.local_date, ...clear, ...id, remember: false }, e.server_version);
           return { version: r?.entries?.[0]?.version };
         };
         if (!dish) return send(name, e.dish_id ? { dish_id: '' } : {});
@@ -223,7 +233,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
         // only an AI reading says so; a typed (custom) save is plain custom, without the job's AI provenance
         // (a typed kcal on a custom row is custom on the server by itself)
         ...(source === 'ai_estimate' && e.job_id ? { parse_job_id: e.job_id, source } : {}),
-      }, e.server_version ?? r.entries?.[0]?.version);
+      }, e.server_version);
     },
     /** Remembered foods (per user). */
     async getRemembered(): Promise<RememberedRow[]> { if (config.mock) return []; return (await req<{ remembered: RememberedRow[] }>('GET', '/v1/remembered')).remembered ?? []; },
