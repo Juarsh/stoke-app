@@ -38,7 +38,7 @@ describe('Review bulk ("All look right") uses the Log batch rule', () => {
   });
   test('review.tsx uses reviewBulk for the button and its kcal', () => {
     const src = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
-    expect(src).toMatch(/const sum = reviewSummary\(rows\);/); expect(src).toMatch(/sum\.bulk\.forEach\(\(e\) => st\.confirmReview/);
+    expect(src).toMatch(/const sum = reviewSummary\(rows\);/); expect(src).toMatch(/sum\.bulk\.forEach\(\(e\) => tried\(e\.id, st\.confirmReview/);
   });
 });
 
@@ -51,7 +51,7 @@ describe('store.confirmReview guard (canConfirm) + variant_dish_id only when pic
     const r = parseLocal('thoda rice').items[0];
     expect(canConfirm(r)).toBe(false); expect(canConfirm(pickVague(vagueChoices(r, scaleItem)[1].item))).toBe(true);
     expect(canConfirm(parser.unknown('zorbali'))).toBe(false);
-    expect(fs.readFileSync(path.join(__dirname, '../src/lib/store.tsx'), 'utf8')).toMatch(/if \(!hasKcal\(it\) \|\| !canConfirm\(it\)\) return p;/);
+    expect(fs.readFileSync(path.join(__dirname, '../src/lib/store.tsx'), 'utf8')).toMatch(/if \(!canConfirm\(it\)\) return \{ reason: CHOOSE_FIRST_REASON \};\n\s+if \(!hasKcal\(it\)\) return \{ reason: NO_KCAL_REASON \};/); // refused: the row stays in Review with the reason
   });
   test('variant_dish_id: sent for a pick or a named variant, never for the default guess', () => {
     const b = parseLocal('biryani').items[0];

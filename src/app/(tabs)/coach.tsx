@@ -30,7 +30,9 @@ export default function Coach() {
     // instant save only for a one_tap_ok row; anything else opens Log prefilled so the user sees and confirms it
     if (!it || it.one_tap_ok !== true) { router.push({ pathname: '/log', params: { prefill: p.label } }); return; }
     const id = st.newId();
-    st.addEntries([entryFromItem(it, { id, slot: slotFor(new Date()), raw_text: p.label, local_date: localDate(), tableVersion: DISH_TABLE_VERSION })]);
+    const no = st.addEntries([entryFromItem(it, { id, slot: slotFor(new Date()), raw_text: p.label, local_date: localDate(), tableVersion: DISH_TABLE_VERSION })]) ?? [];
+    // refused by the store guard: never dropped silently, the row opens in Log for the user to see and fix
+    if (no.length) { router.push({ pathname: '/log', params: { prefill: p.label } }); return; }
     setToast({ id, name: p.dish.name.charAt(0).toUpperCase() + p.dish.name.slice(1), kcal: Math.round(it.kcal.best) });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), 5000);

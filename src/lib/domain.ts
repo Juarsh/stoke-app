@@ -222,14 +222,19 @@ export function validTypedKcal(k: unknown): boolean {
   const n = typeof k === 'string' ? (k.trim() === '' ? NaN : Number(k)) : typeof k === 'number' ? k : NaN;
   return Number.isFinite(n) && n >= 1 && n <= KCAL_MAX;
 }
-/** Store guard for every saved entry: a counted one carries a number the server accepts (typed kcal 1-5000; others
- * 0-5000). needs_review entries carry no counted number. */
-export function savableEntry(e: FoodEntry): boolean {
-  if (e.needs_review || e.pending || e.deleted_at) return true;
+export const TYPED_KCAL_REASON = 'Enter between 1 and 5,000 kcal.';
+export const NO_KCAL_REASON = 'This has no calories yet. Check it and add it again.';
+/** Store guard for every saved entry. The 1-5000 rule is ONLY for kcal the user typed (custom / manual); a table, dish or
+ * confirmed row saves whatever its size (60 roti = 6,600 kcal), like the server. Any counted row needs a real number.
+ * needs_review entries carry no counted number. Returns why it is refused, or null. The caller keeps a refused row open
+ * with this reason: a row is never dropped silently. */
+export function entryRefusal(e: FoodEntry): string | null {
+  if (e.needs_review || e.pending || e.deleted_at) return null;
   const k = e.kcal?.best;
-  if (e.source === 'custom' || e.source === 'manual') return validTypedKcal(k);
-  return typeof k === 'number' && Number.isFinite(k) && k >= 0 && k <= KCAL_MAX;
+  if (e.source === 'custom' || e.source === 'manual') return validTypedKcal(k) ? null : TYPED_KCAL_REASON;
+  return typeof k === 'number' && Number.isFinite(k) && k >= 0 ? null : NO_KCAL_REASON;
 }
+export const savableEntry = (e: FoodEntry): boolean => entryRefusal(e) === null;
 
 export function reopenRejected(e: FoodEntry, code = '', now = new Date(), serverOptions?: FoodEntry['variant_options']): FoodEntry {
   if (serverOptions?.length) e = { ...e, variant_options: serverOptions };

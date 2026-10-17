@@ -63,6 +63,7 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
 export default function Progress() {
   const st = useStore(); const d = useDay(); const s = useStyles(); const t = useTheme();
   const [editing, setEditing] = useState<FoodEntry | null>(null);
+  const [editError, setEditError] = useState('');
   const [slot, setSlot] = useState<Slot>('lunch');
   const today = localDate();
   const days = useMemo<Day[]>(() => {
@@ -122,13 +123,14 @@ export default function Progress() {
       <FlatList data={days} keyExtractor={(x) => x.date} renderItem={({ item, index }) => <DayRow day={item} today={today} target={d.kcalTarget} first={index === 0} last={index === days.length - 1} onPick={onPick} />}
         ListHeaderComponent={header} contentContainerStyle={s.list} style={{ flex: 1 }} removeClippedSubviews windowSize={5} />
       {editing ? (
-        <EditSheet visible it={asItem(editing)} slot={slot} onSlotChange={setSlot} onClose={() => setEditing(null)}
+        <EditSheet visible it={asItem(editing)} slot={slot} onSlotChange={setSlot} onClose={() => { setEditing(null); setEditError(''); }} error={editError}
           onDelete={() => { st.deleteEntry(editing.id); setEditing(null); }}
           onSave={(n) => {
             // explicit user edit: new snapshot, stamped with the current table version
-            st.updateEntry({ ...editing, slot, qty: n.quantity, unit: n.unit, oil_level: n.oil_level, dish_id: editing.dish_id ? n.dish_id : null,
+            const why = st.updateEntry({ ...editing, slot, qty: n.quantity, unit: n.unit, oil_level: n.oil_level, dish_id: editing.dish_id ? n.dish_id : null,
               kcal: n.kcal, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g, dish_table_version: editing.dish_id ? DISH_TABLE_VERSION : editing.dish_table_version });
-            setEditing(null);
+            if (why) { setEditError(why); return; } // refused: the sheet stays open with the reason
+            setEditError(''); setEditing(null);
           }} />
       ) : null}
     </SafeAreaView></View>

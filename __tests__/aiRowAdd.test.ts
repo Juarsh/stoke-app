@@ -41,13 +41,13 @@ describe('AI estimate row: own one-tap "Add · N kcal"', () => {
     expect(p.add).toHaveLength(0); expect(p.primary).toBe(false);
     const log = src('src/app/(tabs)/log.tsx');
     expect(log).toMatch(/onAdd=\{\(n\) => addOne\(d, n\)\}/);
-    expect(log).toMatch(/const addOne = \(d: Draft, n: Item\) => \{\n\s+if \(!canAddEstimate\(n\)\) return;\n\s+st\.addEntries\(\[(?:withJob\()?entryFromItem/);
+    expect(log).toMatch(/const addOne = \(d: Draft, n: Item\) => \{\n\s+if \(!canAddEstimate\(n\)\) return;\n\s+const no = st\.addEntries\(\[(?:withJob\()?entryFromItem/);
     expect(log).toMatch(/remove\(d\);\n\s+\};/);
   });
   test('styling: outlined, em (darker coral in light), never accentFill for this button', () => {
     const rows = src('src/components/LogRows.tsx');
     const i = rows.indexOf("kind === 'estimate' && canAddEstimate(it)"); const seg = rows.slice(i, rows.indexOf(') : (', i));
     expect(seg).toMatch(/borderColor: t\.c\.em/); expect(seg).toMatch(/tone="em"/); expect(seg).not.toMatch(/t\.c\.accentFill/);
-    expect(src('src/app/review.tsx')).toMatch(/kind === 'estimate'\n\s+\? <OpenRow it=\{it\} kind="estimate"[^\n]*onAdd=\{\(n\) => st\.confirmReview\(e\.id, n\)\}/);
+    expect(src('src/app/review.tsx')).toMatch(/kind === 'estimate'\n\s+\? <OpenRow it=\{it\} kind="estimate"[^\n]*onAdd=\{\(n\) => tried\(e\.id, st\.confirmReview\(e\.id, n\)\)\}/);
   });
 });

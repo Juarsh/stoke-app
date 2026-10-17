@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NoticeToast } from '@/components/NoticeToast';
 import { StoreProvider, useStore } from '@/lib/store';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -35,6 +36,7 @@ function Gate() {
         <Stack.Screen name="remembered" />
         <Stack.Screen name="review" />
       </Stack>
+      <NoticeToast />
     </>
   );
 }

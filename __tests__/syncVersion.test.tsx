@@ -10,8 +10,13 @@ let mockSaved: string | null = null;
 jest.mock('../src/lib/kv', () => ({ kv: { get: async () => mockSaved, set: async (_k: string, v: string) => { mockSaved = v; } } }));
 let mockN = 0;
 jest.mock('expo-crypto', () => ({ randomUUID: () => `id${++mockN}` }));
+jest.mock('react-native-safe-area-context', () => {
+  const { View } = jest.requireActual('react-native');
+  return { SafeAreaView: View, useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) };
+});
 
-import { applyFlush, StoreProvider, Store, useStore } from '../src/lib/store';
+import { applyFlush, DELETED_ELSEWHERE, StoreProvider, Store, useStore } from '../src/lib/store';
+import { NoticeToast } from '../src/components/NoticeToast';
 import type { Op } from '../src/lib/syncQueue';
 import { counted, dayTotals, FoodEntry, reviewEntry, savableEntry, validTypedKcal } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION } from '../src/parser';
@@ -23,8 +28,10 @@ const DAY = '2026-10-17';
 type Row = { client_id: string; version: number; kcal: number; state: string; source: string; custom_name: string; deleted: boolean; job?: string };
 type Hold = { release: () => void };
 const server = {
-  rows: new Map<string, Row>(), abandoned: new Set<string>(), held: [] as Hold[], holdNext: 0, foreignBump: 0, alwaysConflict: new Set<string>(), log: [] as string[],
-  reset() { this.rows.clear(); this.abandoned.clear(); this.held = []; this.holdNext = 0; this.foreignBump = 0; this.alwaysConflict.clear(); this.log = []; },
+  rows: new Map<string, Row>(), abandoned: new Set<string>(), held: [] as Hold[], holdNext: 0, foreignBump: 0, alwaysConflict: new Set<string>(), log: [] as string[], offline: false,
+  reset() { this.rows.clear(); this.abandoned.clear(); this.held = []; this.holdNext = 0; this.foreignBump = 0; this.alwaysConflict.clear(); this.log = []; this.offline = false; },
+  /** device 2 deletes the row */
+  remoteDelete(id: string) { const r = this.rows.get(id)!; r.deleted = true; r.version++; },
   summary() { return [...this.rows.values()].filter((r) => !r.deleted && r.state === 'confirmed').reduce((s, r) => s + r.kcal, 0); },
 };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
@@ -32,6 +39,7 @@ const view = (r: Row) => ({ client_id: r.client_id, version: r.version, kcal_bes
 async function fakeFetch(url: string, init: { method: string; body?: string }) {
   const path = url.replace('http://api.test', ''); const b = init.body ? JSON.parse(init.body) : {};
   if (init.method !== 'GET' && server.holdNext > 0) { server.holdNext--; await new Promise<void>((res) => server.held.push({ release: res })); } // a slow request
+  if (server.offline) throw new TypeError('Network request failed');
   server.log.push(`${init.method} ${path}`);
   if (b.if_unmodified_since !== undefined) throw new Error('the phone clock must never be sent as a precondition');
   if (path === '/v1/remembered') return reply(200, { remembered: [] });
@@ -86,7 +94,7 @@ let r!: ReactTestRenderer;
 async function boot() {
   server.reset(); mockN = 0;
   mockSaved = JSON.stringify({ user: { id: 'u', name: 'A', email: 'a@x', idToken: 't', mock: false }, entries: [], queue: [], aiQuota: { used: 0 } });
-  await act(async () => { r = create(<StoreProvider><Probe /></StoreProvider>); });
+  await act(async () => { r = create(<StoreProvider><Probe /><NoticeToast /></StoreProvider>); });
   await tick();
   await act(async () => { st.addEntries([custom('C', 300), failedRow('R')]); });
   await settle(); expectInSync();
@@ -192,6 +200,81 @@ test('retry spinner on a delete (no version comes back): cleared when the delete
   // a flush that did not send this row's op (still queued) keeps the spinner
   const other = { kind: 'delete', id: 'X', tries: 0 } as Op;
   expect(applyFlush({ entries: [e], queue: [other, del] }, [other], { ...none, rest: [] }).entries[0].sync_retrying).toBe(true);
+});
+
+describe('the delete wins: a save that gets 404 (deleted on another device) drops the local row (CEO N2)', () => {
+  const noticeShown = () => r.root.findAll((n) => n.props.children === DELETED_ELSEWHERE && typeof n.type === 'string').length;
+  /** after: phone == server == summary, the row is gone from the phone (not counted, not a sync-failed row), nothing retries */
+  async function expectDropped(id: string) {
+    expect(ent(id).deleted_at).toBeTruthy();
+    expect(counted(ent(id))).toBe(false);
+    expect(ent(id).sync_error).toBeUndefined(); expect(ent(id).sync_retrying).toBeUndefined();
+    expectInSync();
+    expect(server.rows.get(id)!.deleted).toBe(true); // never re-created
+    expect(st.notice).toBe(DELETED_ELSEWHERE);
+    expect(noticeShown()).toBe(1);
+    const n = server.log.length;
+    await tick(20); await settle();
+    expect(server.log.length).toBe(n); // no retry, ever
+    await act(async () => { st.dismissNotice(); });
+    expect(noticeShown()).toBe(0); // shown once
+  }
+  test('an edit in flight when device 2 deletes the row', async () => {
+    await boot();
+    server.holdNext = 1;
+    await act(async () => { U(480)(st); });
+    await tick(4);
+    expect(server.held).toHaveLength(1);
+    server.remoteDelete('C');
+    await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+    await settle();
+    expect(server.log.filter((l) => l === 'PATCH /v1/entries/C')).toHaveLength(1);
+    await expectDropped('C');
+    expect(dayTotals(st.entries.filter((e) => e.local_date === DAY && counted(e))).kcal).toBe(server.summary());
+  });
+  test('confirmReviewKcal in flight when device 2 deletes the review row', async () => {
+    await boot();
+    server.holdNext = 1;
+    await act(async () => { K(300)(st); });
+    await tick(4);
+    server.remoteDelete('R');
+    await act(async () => { server.held.splice(0).forEach((h) => h.release()); });
+    await settle();
+    await expectDropped('R');
+    expect(server.summary()).toBe(server.rows.get('C')!.kcal); // R never counts
+  });
+  test('an edit queued while offline, then device 2 deletes the row, then back online', async () => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'clearTimeout', 'clearInterval', 'queueMicrotask', 'nextTick'] });
+    await boot();
+    server.offline = true;
+    await act(async () => { U(480)(st); });
+    await settle(); await tick(6);
+    expect(st.queue).toHaveLength(1); // waiting in its backoff
+    expect(ent('C').kcal.best).toBe(480);
+    server.remoteDelete('C');
+    server.offline = false;
+    jest.setSystemTime(Date.now() + 60_000); // the backoff is over
+    await act(async () => { st.addEntries([custom('Z', 120)]); }); // the next sync runs the queue
+    await settle();
+    await expectDropped('C');
+    expect(server.rows.get('Z')).toMatchObject({ kcal: 120, deleted: false });
+  });
+  test('a delete that gets 404 (already deleted elsewhere) is still done, without a notice', async () => {
+    await boot();
+    server.remoteDelete('C');
+    await act(async () => { D('C')(st); });
+    await settle();
+    expectInSync();
+    expect(st.notice).toBeNull();
+  });
+  test('applyFlush: a gone row drops its queued ops too (a later edit never re-creates it)', () => {
+    const c = custom('C', 300);
+    const later = { kind: 'upsert', entry: { ...c, kcal: { low: 500, best: 500, high: 500 } }, tries: 0 } as Op;
+    const sent = [{ kind: 'upsert', entry: c, tries: 0 } as Op];
+    const out = applyFlush({ entries: [c], queue: [...sent, later] }, sent, { rest: [], resolved: [], rejected: [], versions: {}, failed: [], gone: ['C'] });
+    expect(out.queue).toEqual([]);
+    expect(out.entries[0].deleted_at).toBeTruthy();
+  });
 });
 
 describe('typed kcal after a late AI save got 409 job_abandoned (Tester item 6)', () => {

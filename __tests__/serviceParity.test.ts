@@ -44,7 +44,7 @@ describe('review rows never show or confirm 0 kcal', () => {
   test('UI and store guards', () => {
     const rv = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
     expect(fs.readFileSync(path.join(__dirname, '../src/components/KcalRow.tsx'), 'utf8')).toMatch(/— kcal · needs review/); expect(rv).toMatch(/const sum = reviewSummary\(rows\);/);
-    expect(fs.readFileSync(path.join(__dirname, '../src/lib/store.tsx'), 'utf8')).toMatch(/if \(!hasKcal\(it\) \|\| !canConfirm\(it\)\) return p;/);
+    expect(fs.readFileSync(path.join(__dirname, '../src/lib/store.tsx'), 'utf8')).toMatch(/if \(!canConfirm\(it\)\) return \{ reason: CHOOSE_FIRST_REASON \};\n\s+if \(!hasKcal\(it\)\) return \{ reason: NO_KCAL_REASON \};/); // refused: the row stays in Review with the reason
   });
 });
 

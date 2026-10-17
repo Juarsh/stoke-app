@@ -6,7 +6,7 @@ import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, hasKcal, FoodEntry, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected, savableEntry, validTypedKcal } from './domain';
+import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -27,12 +27,37 @@ const EMPTY: Persisted = { profileError: null, user: null, profile: null, entrie
 const KEY = 'app-state-v1';
 /** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
 /** The phone's entry is still the one that op sent (the user has not changed it since). */
+export const DELETED_ELSEWHERE = 'This entry was deleted on another device.';
+export type Refused = { id: string; reason: string };
+export const CHOOSE_FIRST_REASON = 'Choose the type or amount first.';
+/** A review entry confirmed with this item, or why not (the row stays in Review with the reason). */
+function confirmedFromReview(old: FoodEntry, it: Item): { entry?: FoodEntry; reason?: string } {
+  // never confirm 0 kcal, an unpicked variant/portion/unit, or a placeholder
+  if (!canConfirm(it)) return { reason: CHOOSE_FIRST_REASON };
+  if (!hasKcal(it)) return { reason: NO_KCAL_REASON };
+  const n = { ...entryFromItem({ ...it, needs_confirmation: false }, { id: old.id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id }),
+    ...(old.server_version ? { server_version: old.server_version } : {}),
+    // an AI reading keeps its job, so a late AI save for an abandoned job is refused (job_abandoned), never counted
+    ...(old.job_id && it.ai_estimate ? { job_id: old.job_id } : {}) };
+  const reason = entryRefusal(n);
+  return reason ? { reason } : { entry: n };
+}
 const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : (o as { id: string }).id);
 const unchangedSince = (cur: FoodEntry | undefined, sent: FoodEntry) => !!cur && cur.updated_at === sent.updated_at && !cur.deleted_at;
 /** After a flush: server versions recorded (a synced entry loses its sync error); refused / failed ops are handled ONLY when
  * the user has not changed the entry since it was sent, so a refusal never swallows a later typed value. Pure (testable). */
-export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed'>): P {
+export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'>): P {
   const now = new Date();
+  // deleted on another device (a save got 404): the delete wins. The local row is dropped (a tombstone: not counted, not
+  // shown, no sync error) and every op still queued for it goes, so nothing re-creates or retries it.
+  const gone = new Set(r.gone ?? []);
+  if (gone.size) {
+    const at = now.toISOString();
+    const q = { ...p, entries: p.entries.map((x) => (gone.has(x.id) ? { ...x, deleted_at: x.deleted_at ?? at, sync_error: undefined, sync_retrying: undefined } : x)) };
+    const keep = (o: Op) => !gone.has(opId(o));
+    return applyFlush({ ...q, queue: q.queue.filter(keep) }, sent, { ...r, gone: [], rest: r.rest.filter(keep),
+      rejected: r.rejected.filter((x) => !gone.has(x.entry.id)), failed: r.failed.filter((f) => !gone.has(f.id)) });
+  }
   const live = (e: FoodEntry) => p.entries.find((x) => x.id === e.id);
   const reopened = r.rejected.filter((x) => unchangedSince(live(x.entry), x.entry))
     // job_abandoned: the AI reading is refused for good; the row goes back to the failed row (typed kcal only)
@@ -87,6 +112,9 @@ function useStoreValue() {
     upsertEntry: (e: FoodEntry) => { const v = entriesRef.current.find((x) => x.id === e.id)?.server_version; return api.upsertEntry(v && v > (e.server_version ?? 0) ? { ...e, server_version: v } : e); }, deleteEntry: api.deleteEntry, deleteRemembered: api.deleteRemembered,
     resolvePending: (f: PendingFood) => resolvePending(api, f),
   }), [api]);
+  /** One-time notice (not persisted), e.g. "This entry was deleted on another device." */
+  const [notice, setNotice] = useState<string | null>(null);
+  const dismissNotice = useCallback(() => setNotice(null), []);
   const syncing = useRef(false);
   const entriesRef = useRef(s.entries);
   useEffect(() => { entriesRef.current = s.entries; }, [s.entries]);
@@ -103,6 +131,8 @@ function useStoreValue() {
       const r = await flush(sent, sender);
       const { rest, profileRejected } = r;
       setS((p) => applyFlush({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}) }, sent, r));
+      // shown once (not persisted): the row is already gone from the phone
+      if (r.gone?.length) setNotice(DELETED_ELSEWHERE);
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
@@ -122,6 +152,7 @@ function useStoreValue() {
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
   return {
+    notice, dismissNotice,
     ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),
@@ -129,14 +160,19 @@ function useStoreValue() {
     /** Saved on the phone at once; the server copy goes through the queue, so it is sent after sign-in too. */
     setProfile: (profile: Profile) => upd((p) => ({ ...p, profile, profileError: null, queue: enqueue(p.queue, { kind: 'profile', id: 'profile', payload: profilePayload(profile), tries: 0 }) })),
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
-    /** Store guard (savableEntry): a counted entry outside what the server accepts (typed kcal 1-5000) is refused. */
-    addEntries: (all: FoodEntry[]) => upd((p) => { const es = all.filter(savableEntry); return es.length ? { ...p, entries: [...p.entries, ...es], queue: es.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue) } : p; }),
-    /** Explicit user edit: the only way saved numbers change (same store guard). */
-    updateEntry: (e: FoodEntry) => upd((p) => {
-      if (!savableEntry(e)) return p;
+    /** Store guard (entryRefusal): typed kcal outside 1-5000, or a counted row with no real number, is refused. Returns the
+     * refused ones with the reason; the caller keeps them open and shows it (never dropped silently). */
+    addEntries: (all: FoodEntry[]): Refused[] => {
+      const refused = all.flatMap((e) => { const reason = entryRefusal(e); return reason ? [{ id: e.id, reason }] : []; });
+      const es = all.filter((e) => !refused.some((r) => r.id === e.id));
+      if (es.length) upd((p) => ({ ...p, entries: [...p.entries, ...es], queue: es.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue) }));
+      return refused;
+    },
+    /** Explicit user edit: the only way saved numbers change (same store guard). Returns the refusal reason, or null. */
+    updateEntry: (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
       const n = { ...e, sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
-    }),
+    }); return null; },
     deleteEntry: (id: string) => upd((p) => ({
       ...p, entries: p.entries.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),
       queue: enqueue(p.queue, { kind: 'delete', id, tries: 0 }),
@@ -156,19 +192,19 @@ function useStoreValue() {
     }),
     /** Foods added before their numbers were known: queued, never saved with a number. */
     /** Confirm a review entry with the (possibly corrected) item: it becomes a normal entry and syncs. */
-    confirmReview: (id: string, it: Item) => upd((p) => {
-      const old = p.entries.find((e) => e.id === id); if (!old) return p;
-      if (!hasKcal(it) || !canConfirm(it)) return p; // never confirm 0 kcal, an unpicked variant/portion/unit, or a placeholder
-      const n = { ...entryFromItem({ ...it, needs_confirmation: false }, { id, slot: old.slot, raw_text: old.raw_text, local_date: old.local_date, tableVersion: DISH_TABLE_VERSION, remember: !!it.dish_id }),
-        ...(old.server_version ? { server_version: old.server_version } : {}),
-        // an AI reading keeps its job, so a late AI save for an abandoned job is refused (job_abandoned), never counted
-        ...(old.job_id && it.ai_estimate ? { job_id: old.job_id } : {}) };
-      if (!savableEntry(n)) return p;
-      return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
-    }),
+    /** Returns why it was refused (the row stays in Review, showing this), or null. */
+    confirmReview: (id: string, it: Item): string | null => {
+      const old0 = entriesRef.current.find((e) => e.id === id);
+      upd((p) => {
+        const old = p.entries.find((e) => e.id === id); if (!old) return p;
+        const r = confirmedFromReview(old, it); if (!r.entry) return p;
+        return { ...p, entries: p.entries.map((e) => (e.id === id ? r.entry! : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: r.entry, tries: 0 }) };
+      });
+      return old0 ? confirmedFromReview(old0, it).reason ?? null : null;
+    },
     /** Placeholder / failed review row: the user's own typed kcal makes it a custom entry (never the placeholder number). */
-    confirmReviewKcal: (id: string, kcal: number) => upd((p) => {
-      // store guard: 1-5000 only (empty, 0, negatives, NaN, > 5000 refused), like the server
+    confirmReviewKcal: (id: string, kcal: number): string | null => { if (!validTypedKcal(kcal)) return TYPED_KCAL_REASON; upd((p) => {
+      // store guard: 1-5000 only (empty, 0, negatives, NaN, > 5000 refused), like the server; the row stays with the reason
       const old = p.entries.find((e) => e.id === id); if (!old || !validTypedKcal(kcal)) return p;
       const k = Math.round(kcal), z = { low: 0, best: 0, high: 0 };
       // typed: plain custom, without the AI job's provenance (job_abandoned never refuses it)
@@ -176,7 +212,7 @@ function useStoreValue() {
         carbs_g: 0, fat_g: 0, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, variant_dish_id: undefined, job_id: undefined,
         sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() } as FoodEntry;
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
-    }),
+    }); return null; },
     /** "Couldn’t sync this. Tap to retry": the entry's current state goes through the queue again. */
     retrySync: (id: string) => upd((p) => {
       const e = p.entries.find((x) => x.id === id); if (!e?.sync_error) return p;

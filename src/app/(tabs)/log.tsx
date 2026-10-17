@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConfirmCard } from '@/components/ConfirmCard';
@@ -42,12 +42,14 @@ export default function Log() {
   const [ai, setAi] = useState<Draft[]>([]);
   const [customs, setCustoms] = useState<Custom[]>([]);
   const [msg, setMsg] = useState('');
+  /** rows the store guard refused (draft / custom key -> why): they stay open on screen with the reason, never dropped */
+  const [refused, setRefused] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (prefill) setText(String(prefill)); }, [prefill]);
 
   // Offline table parse on every keystroke (<100 ms).
   const parsed = useMemo(() => parseLocal(text), [text]);
-  useEffect(() => { setEdits({}); setOkd({}); setAi([]); setCustoms([]); setMsg(''); }, [text]);
+  useEffect(() => { setEdits({}); setOkd({}); setAi([]); setCustoms([]); setMsg(''); setRefused({}); }, [text]);
   // placeholders for unknown text are handled by the AI / custom-item flow below
   // remembered readings are applied first, so the same text never asks again
   const learnedItems = useMemo(() => applyLearned(parsed.items.filter((it) => !isPlaceholder(it)), st.learned), [parsed, st.learned]);
@@ -196,16 +198,24 @@ export default function Log() {
       const t0 = estStart.current.get(id);
       return { id, span, slot, local_date: date, raw_text: text, ...(offline.includes(span) ? {} : { at: 0 }), ...(t0 ? { queued_at: t0 } : {}) };
     }));
+    const keyOf = new Map(es.map((e, i) => [e.id, adding[i].key]));
     for (const c of addedCustoms) {
       const k = Number(c.kcal) || 0, p = Number(c.protein) || 0, now = new Date().toISOString();
-      es.push({ id: st.newId(), local_date: date, slot, raw_text: text, dish_id: null, custom_name: c.name, qty: 1, unit: 'count', oil_level: '',
+      const id = st.newId(); keyOf.set(id, c.key);
+      es.push({ id, local_date: date, slot, raw_text: text, dish_id: null, custom_name: c.name, qty: 1, unit: 'count', oil_level: '',
         kcal: { low: k, best: k, high: k }, protein_g: { low: p, best: p, high: p }, source: 'custom', source_note: 'Your entry',
         confirmed: true, dish_table_version: DISH_TABLE_VERSION, created_at: now, updated_at: now, deleted_at: null });
     }
-    st.addEntries(es);
+    const no = Object.fromEntries((st.addEntries(es) ?? []).map((r) => [keyOf.get(r.id)!, r.reason]));
     // remember every reading the user confirmed or corrected (table items with a known dish only)
-    st.remember(adding.filter((d) => learn(d) && d.it.dish_id && !d.it.ai_estimate)
+    st.remember(adding.filter((d) => !no[d.key] && learn(d) && d.it.dish_id && !d.it.ai_estimate)
       .map((d) => [learnKey(d.it.matched_text), readingOf(d.it)] as [string, ReturnType<typeof readingOf>]));
+    if (Object.keys(no).length) { // refused by the store guard: those rows stay open here with the reason; the rest is saved
+      for (const d of adding) if (!no[d.key]) remove(d);
+      setCustoms((cs) => cs.filter((c) => !(failedCounts(c) && !no[c.key])).map((c) => (no[c.key] ? { ...c, added: false } : c)));
+      setRefused(no);
+      return;
+    }
     if (!leave && (nOpen || openFailed) && adding.length + addedCustoms.length > 0) { // open rows stay on screen with their own controls; the rest is saved
       for (const d of adding) remove(d);
       setCustoms((cs) => cs.filter((c) => !failedCounts(c)));
@@ -247,7 +257,8 @@ export default function Log() {
   /** AI estimate row 'Add · N kcal': saves just this row now, at its shown kcal; the footer never adds it. */
   const addOne = (d: Draft, n: Item) => {
     if (!canAddEstimate(n)) return;
-    st.addEntries([withJob(entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)]);
+    const no = st.addEntries([withJob(entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)]) ?? [];
+    if (no.length) { setRefused((r) => ({ ...r, [d.key]: no[0].reason })); return; } // stays open with the reason
     remove(d);
   };
   const confirm = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, ok: true } : x))) : setOkd((o) => ({ ...o, [d.key]: true }));
@@ -265,21 +276,30 @@ export default function Log() {
           {listDrafts.length ? (
             <Group>
               {listDrafts.map((d) => (
-                <ItemRow key={d.key} it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'}
-                  tableMatch={kindByKey.get(d.key) === 'batch'} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+                <Fragment key={d.key}>
+                  <ItemRow it={d.it} state={d.it.remembered || d.it.learned ? 'remembered' : d.it.ai_estimate ? 'estimate' : 'plain'}
+                    tableMatch={kindByKey.get(d.key) === 'batch'} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+                  <Refusal why={refused[d.key]} name={d.it.name} />
+                </Fragment>
               ))}
             </Group>
           ) : null}
           {openDrafts.length ? (
             <Group>
               {openDrafts.map((d) => (
-                <OpenRow key={d.key} text={text} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
-                  onConfirm={(n) => { setItem(d, n); confirm(d); }} onAdd={(n) => addOne(d, n)} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+                <Fragment key={d.key}>
+                  <OpenRow text={text} it={d.it} kind={kindByKey.get(d.key) as 'unit' | 'estimate' | 'unverified'}
+                    onConfirm={(n) => { setItem(d, n); confirm(d); }} onAdd={(n) => addOne(d, n)} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+                  <Refusal why={refused[d.key]} name={d.it.name} />
+                </Fragment>
               ))}
             </Group>
           ) : null}
           {decisionDrafts.map((d) => (
-            <DecisionCard key={d.key} it={d.it} onPick={(x) => { setItem(d, x); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+            <Fragment key={d.key}>
+              <DecisionCard it={d.it} onPick={(x) => { setItem(d, x); confirm(d); }} onEdit={(n) => setItem(d, n)} onRemove={() => remove(d)} />
+              <Refusal why={refused[d.key]} name={d.it.name} />
+            </Fragment>
           ))}
           {pendingUnmatched.length ? (
             <Group>
@@ -290,8 +310,11 @@ export default function Log() {
           {customs.length ? (
             <Group>
               {customs.map((c) => (
-                <FailedAiRow key={c.key} row={c} onKcal={(v) => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, kcal: v } : x)))}
-                  onAdd={() => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, added: true } : x)))} />
+                <Fragment key={c.key}>
+                  <FailedAiRow row={c} onKcal={(v) => { setRefused((r) => ({ ...r, [c.key]: '' })); setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, kcal: v } : x))); }}
+                    onAdd={() => setCustoms((cs) => cs.map((x) => (x.key === c.key ? { ...x, added: true } : x)))} />
+                  <Refusal why={refused[c.key]} name={c.name} />
+                </Fragment>
               ))}
             </Group>
           ) : null}
@@ -316,3 +339,9 @@ const useStyles = makeStyles((t) => ({
   dock: { position: 'absolute', left: 0, right: 0, bottom: t.sizes.nav + 16, gap: 8, paddingHorizontal: t.space.md, paddingTop: 10, paddingBottom: 12, backgroundColor: t.c.bg, borderTopWidth: 1, borderTopColor: t.c.lineSoft },
   pill: { paddingVertical: 10, borderRadius: t.radius.full },
 }));
+
+/** A row the store guard refused stays on screen with why (warn token, polite live region). */
+function Refusal({ why, name }: { why?: string; name: string }) {
+  if (!why) return null;
+  return <T v="caption" tone="warn" accessibilityLiveRegion="polite" accessibilityLabel={`${name}: not saved. ${why}`} testID="refusal">Not saved: {why}</T>;
+}

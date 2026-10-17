@@ -60,8 +60,9 @@ export function ItemCard({ it, slot, confirmed, remembered, plain, onEdit, onCon
   );
 }
 
-export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlotChange }: {
+export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlotChange, error }: {
   visible: boolean; it: Item; onClose: () => void; onSave: (it: Item) => void; onDelete: () => void; slot?: Slot; onSlotChange?: (s: Slot) => void;
+  /** why the store guard refused the save: the sheet stays open with it */ error?: string;
 }) {
   const [qty, setQty] = useState(it.quantity);
   const [unit, setUnit] = useState(it.unit);
@@ -98,6 +99,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
         <T v="displayM" tone="emChip">{preview.kcal.best} kcal</T>
         {rangeLines(preview).map((l, i) => <T key={i} v="caption" tone="primaryText">{l}</T>)}
       </Card>
+      {error ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {error}</T> : null}
       <Button title="Save changes" onPress={() => onSave(preview)} />
       <Button kind="danger" title="Delete item" onPress={onDelete} />
     </Sheet>

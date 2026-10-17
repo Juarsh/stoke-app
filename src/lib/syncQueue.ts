@@ -67,11 +67,14 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   /** entry id -> the server's row version after this flush */
   versions: Record<string, number>;
   /** entry ops that could not be applied (surfaced on the entry); `sent` is the op's entry snapshot (undefined for a delete) */
-  failed: { id: string; code: string; sent?: FoodEntry }[] };
+  failed: { id: string; code: string; sent?: FoodEntry }[];
+  /** entries whose PATCH got 404: deleted on the server (another device). The delete wins: the phone drops them. */
+  gone?: string[] };
 export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
   const rest = [...q];
   const versions: Record<string, number> = {};
   const failed: FlushResult['failed'] = [];
+  const gone: string[] = [];
   const resolved: FoodEntry[] = [];
   const rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[] = [];
   let profileRejected: string | undefined;
@@ -102,6 +105,8 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
     } catch (e) {
       // refused save: not dropped, it goes back to the user as an item to review (the store re-queues it as needs_review)
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
+      // 404 on a save: the row was deleted on the server (another device). The delete wins: never re-created, never retried.
+      if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.shift(); continue; }
       if (isRejection(e, op)) {
         if (op.kind === 'profile') profileRejected = codeOf(e) || 'unknown';
         else if (op.kind === 'upsert' && !op.entry.needs_review) {
@@ -120,7 +125,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       break;
     }
   }
-  return { rest, resolved, rejected, profileRejected, versions, failed };
+  return { rest, resolved, rejected, profileRejected, versions, failed, gone };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */
