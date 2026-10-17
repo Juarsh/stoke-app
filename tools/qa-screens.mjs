@@ -107,9 +107,10 @@ for (const theme of ['light', 'dark']) {
   const chips = await g.getByTestId('unit-chips').innerText();
   if (/piece|glass|count/.test(chips)) throw new Error(`dal sheet offers units it doesn't come in: ${chips}`);
   await shot(g, `edit-sheet-units-dal-${theme}`);
-  // next build: a count row for roti (g5, 2 pieces) shows ONE piece chip, selected: no "count", no second "pieces" chip
+  // next build: a past day's roti row ("2 roti dal sabzi", saved in count) shows ONE piece chip, selected: no "count", no
+  // second "pieces" chip (Progress lists past days, collapsed)
   await g.goto(BASE + '/progress'); await wait(g, 2000);
-  if ((await g.getByRole('button', { name: /^Edit roti/i }).count()) < 1) { await g.getByRole('button', { name: /^Today, \d+ items?,/ }).first().click(); await wait(g, 800); }
+  await g.getByRole('button', { name: /, \d+ items?, [\d,]+ calories/ }).first().click(); await wait(g, 800);
   await g.getByRole('button', { name: /^Edit roti/i }).first().click(); await wait(g, 1200);
   const rc = (await g.getByTestId('unit-chips').innerText()).split(/\s+/).filter(Boolean);
   if (rc.filter((w) => /^(piece|pieces|count)$/.test(w)).join() !== 'piece') throw new Error(`roti sheet chips: ${rc.join(' ')}`);
