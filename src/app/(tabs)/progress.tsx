@@ -11,7 +11,7 @@ import { PendingRow } from '@/components/PendingRow';
 import { AMOUNT_CHECK_COPY, AMOUNT_CHECK_LABEL, AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { kc } from '@/lib/format';
 import { Icon } from '@/components/Icon';
-import { SYNC_FAILED_COPY, SYNC_RETRYING_COPY, syncFailedLabel } from '@/components/SyncFailedRow';
+import { SyncFailedRow, SYNC_FAILED_COPY, SYNC_RETRYING_COPY, syncFailedLabel } from '@/components/SyncFailedRow';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
@@ -56,15 +56,24 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
         const name = `${SLOT_LABEL[e.slot]} · ${displayName(e.custom_name || '', e.dish_id)}`;
         // rg10 + Designer: a row whose tap retries (a flagged delete; a 5xx-flagged edit, which also shows Today's warn line)
         // says so, and so does a "—" row (its tap reads the server's copy again); every other row opens the editor
+        // CEO + Designer (next build): a flagged delete looks as it does on Today: Today's row component and copy (name
+        // "(deleted)", "Couldn’t sync this. Tap to retry" in warn, the reason "Not deleted on the server yet." muted), the kcal
+        // it counts (the server's), a tap retries; label (ee954dd) and "Retrying…" (fb92c66) are the component's own
+        if (e.delete_failed) return (
+          <View key={e.id} style={s.entryBox} testID="progress-deleted-row">
+            <SyncFailedRow title={`${name} (deleted)`} kcal={countedNums(e).kcal} notCounted={!!e.server_failed && !e.server_counts}
+              retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => onPick(e)} />
+          </View>
+        );
         const failedEdit = !e.deleted_at && (e.sync_error === SERVER_ERROR || (!!e.sync_retrying && !!e.server_failed));
-        const retryRow = !!e.delete_failed || failedEdit;
-        const label = retryRow ? syncFailedLabel(e.delete_failed ? `${name} (deleted)` : name, { retrying: !!e.sync_retrying, reason: e.sync_reason })
+        const retryRow = failedEdit;
+        const label = retryRow ? syncFailedLabel(name, { retrying: !!e.sync_retrying, reason: e.sync_reason })
           : e.amount_unknown ? AMOUNT_CHECK_LABEL : `Edit ${entryLabel(e)}`;
         return (
           <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" style={s.entryBox} accessibilityLabel={label}
             accessibilityState={retryRow && e.sync_retrying ? { busy: true } : undefined}>
             <View style={s.entry}>
-              <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{name}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
+              <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{name} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
               <T v="number">{fmt(countedNums(e).kcal)}</T>
             </View>
             {failedEdit ? <T v="caption" tone="warn" testID="progress-sync-line">{e.sync_retrying ? SYNC_RETRYING_COPY : SYNC_FAILED_COPY}</T>

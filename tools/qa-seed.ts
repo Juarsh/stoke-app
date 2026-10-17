@@ -92,6 +92,11 @@ if (process.argv[3] === 'rg7') {
   entries.push({ ...h11, local_date: y, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, sync_error: 'server_error' } as never);
   const h12 = t('h12', 'roti', 3, 'count', 'dinner');
   entries.push({ ...h12, local_date: y, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, kept_on_server: true } as never);
+  // next build (CEO + Designer): yesterday in Progress, a flagged delete looks as on Today: "Breakfast · roti (deleted)", the
+  // kcal it counts (the server's 220, not the phone's 3 pieces), "Couldn’t sync this. Tap to retry" (warn), the muted reason
+  const h13 = t('h13', 'roti', 3, 'count', 'breakfast');
+  entries.push({ ...h13, local_date: y, deleted_at: new Date().toISOString(), server_version: 1, sync_error: 'server_error', server_failed: true, delete_failed: true,
+    server_counts: { kcal: 220, protein: 7 }, sync_reason: 'Not deleted on the server yet.' } as never);
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },

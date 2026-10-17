@@ -172,6 +172,21 @@ for (const theme of ['light', 'dark']) {
   if ((await h.getByText('Tap to check again', { exact: true }).count()) !== 1) throw new Error('no "Tap to check again" line');
   await h.getByText('Tap to check again', { exact: true }).scrollIntoViewIfNeeded(); await wait(h, 400);
   await shot(h, `progress-retry-check-${theme}`);
+  // CEO + Designer: the flagged delete (yesterday) looks as on Today: name "(deleted)", the counted kcal (the server's 220),
+  // "Couldn’t sync this. Tap to retry" in warn, then "Not deleted on the server yet." muted; label as on Today (ee954dd)
+  const del = h.getByTestId('progress-deleted-row');
+  if ((await del.count()) !== 1) throw new Error(`flagged-delete rows in Progress: ${await del.count()}`);
+  const delTxt = await del.innerText();
+  if (!/^Breakfast · roti \(deleted\)\s*220 kcal\s*Couldn’t sync this\. Tap to retry\s*Not deleted on the server yet\.\s*$/.test(delTxt)) throw new Error(`flagged-delete row text/order: ${JSON.stringify(delTxt)}`);
+  if ((await h.getByRole('button', { name: 'Breakfast · roti (deleted): couldn’t sync this. Tap to retry. Not deleted on the server yet.', exact: true }).count()) !== 1) throw new Error('flagged-delete label in Progress');
+  const col = async (txt) => del.getByText(txt, { exact: true }).evaluate((n) => getComputedStyle(n).color);
+  const todayWarn = await col('Couldn’t sync this. Tap to retry');
+  const muted = await col('Not deleted on the server yet.'), kcalCol = await col('220 kcal');
+  if (todayWarn === muted) throw new Error(`warn line not in warn: ${todayWarn}`);
+  if (muted !== kcalCol) throw new Error(`reason not muted: ${muted} vs ${kcalCol}`);
+  if ((await h.getByText('(deleted)', { exact: false }).count()) < 1) throw new Error('no (deleted)');
+  await del.scrollIntoViewIfNeeded(); await wait(h, 400);
+  await shot(h, `progress-deleted-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
     if ((await h.getByText(t, { exact: false }).count()) < 1) throw new Error(`Review lacks: ${t}`);
