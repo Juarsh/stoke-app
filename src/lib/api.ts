@@ -16,7 +16,7 @@ export class ApiError extends Error {
   /** set when the error came from the PATCH of an upsert (an edit of a row the server has): never rewrites the row */
   patch?: boolean;
   /** the server's human reason ({"error":"..."} or {"error":{"message"}}) */
-  get reason(): string { const d = errorDetail(this.message); return d.message ?? (d.code.includes(' ') ? d.code : ''); }
+  get reason(): string { const d = errorDetail(this.message); return (d.message ?? (d.code.includes(' ') ? d.code : '')).replace(/^item \d+: /, ''); }
   /** Server error code from the body: {"error":{"code":"..."}} (or legacy {"error":"..."}); '' if none. */
   get code(): string { return errorCode(this.message); }
   /** variant_required: the server's options at the sent portion */
@@ -26,6 +26,9 @@ export class ApiError extends Error {
     try { const j = JSON.parse(this.message) as { entry?: { version?: number } }; return j?.entry && typeof j.entry === 'object' ? j.entry : undefined; } catch { return undefined; }
   }
 }
+/** The server's copy of a saved row (POST entries[i] / PATCH body): what it stored and counts (rg6 F1). */
+export type ServerRow = { version?: number; state?: string; dish_id?: string | null; name?: string; qty?: number; unit?: string; oil_level?: string;
+  kcal_best?: number; kcal_low?: number; kcal_high?: number; protein_best?: number; protein_low?: number; protein_high?: number; carbs_g?: number; fat_g?: number };
 /** A PATCH still refused after the one version-conflict retry: surfaced on the entry ("Couldn’t sync this"). */
 export const SYNC_CONFLICT = 'sync_conflict';
 /** Extra fields of a 422 {error:{code,item,dish_id,message,variant_options,fields}}; {} for the plain {error:"string"} shape. */
@@ -120,17 +123,18 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     /** POST with client_id (idempotent). If the server already has it (an edit), PATCH by client_id with the row version the
      * phone last saw (never its clock). On 409 version_conflict the user's edit is re-applied on the server's current version
      * and retried ONCE; still refused -> ApiError(409, sync_conflict). Returns the server's new version. */
-    async upsertEntry(e: FoodEntry): Promise<{ version?: number }> {
+    async upsertEntry(e: FoodEntry): Promise<{ version?: number; row?: ServerRow }> {
       if (config.mock) return {};
-      type Saved = { version?: number };
+      type Saved = ServerRow;
       const patch = (body: Record<string, unknown>, known?: number) => patch0(body, known).catch((err) => { if (err instanceof ApiError) err.patch = true; throw err; });
-      const patch0 = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number }> => {
+      const saved = (row?: Saved) => ({ version: row?.version, ...(row && typeof row === 'object' ? { row } : {}) });
+      const patch0 = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number; row?: ServerRow }> => {
         const path = `/v1/entries/${encodeURIComponent(e.id)}`;
-        try { return { version: (await req<Saved>('PATCH', path, { ...body, ...(known ? { version: known } : {}) }))?.version }; }
+        try { return saved(await req<Saved>('PATCH', path, { ...body, ...(known ? { version: known } : {}) })); }
         catch (err) {
           if (!(err instanceof ApiError && err.status === 409 && err.code === 'version_conflict')) throw err;
           const cur = err.entry?.version; // the server's row: our body (the user's latest values) goes on top of it
-          try { return { version: (await req<Saved>('PATCH', path, { ...body, ...(cur ? { version: cur } : {}) }))?.version }; }
+          try { return saved(await req<Saved>('PATCH', path, { ...body, ...(cur ? { version: cur } : {}) })); }
           catch (err2) {
             if (err2 instanceof ApiError && err2.status === 409 && err2.code === 'version_conflict') throw new ApiError(409, JSON.stringify({ error: { code: SYNC_CONFLICT } }));
             throw err2;
@@ -172,7 +176,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
           ...variantField(e), ...job } as ItemIn
         : { custom_name: serverName(e.custom_name), source, confirmed: true, client_id: e.id, ...nums, ...span, ...job };
       const r = await req<Posted>('POST', '/v1/entries', { local_date: e.local_date, slot: e.slot, text: e.raw_text, items: [item] });
-      if (!r?.duplicates?.length) return { version: r?.entries?.[0]?.version };
+      if (!r?.duplicates?.length) return saved(r?.entries?.[0]);
       // PATCH has no dish_table_version/range fields yet (API.md @ ea9dd85); best + identity only. No phone-clock precondition:
       // the version is the server's own, from its last response for this entry (else the POST's copy of the row).
       return patch({

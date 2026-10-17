@@ -85,6 +85,24 @@ for (const theme of ['light', 'dark']) {
   await sfRow.scrollIntoViewIfNeeded(); await wait(sf, 500);
   await shot(sf, `today-sync-retry-${theme}`);
   await sf.context().close();
+  // rg6 F1 / F4: the server's version on the row (review + reason, "Saved as …"), "Pick a type to save this." -> the types,
+  // and the edit sheet offering only the dish's own units (dal: katori, spoon, plate, gram)
+  const g = await page(theme, 'rg6');
+  await g.goto(BASE + '/'); await wait(g, 3000);
+  const pick = g.getByRole('button', { name: /: Pick a type to save this\.$/ });
+  if ((await pick.count()) !== 1) throw new Error(`expected 1 pick-a-type row, got ${await pick.count()}`);
+  if ((await g.getByText('Not counted yet: this dish doesn’t come in piece.', { exact: false }).count()) < 1) throw new Error('no server review note on Today');
+  await pick.scrollIntoViewIfNeeded(); await wait(g, 500);
+  await shot(g, `today-server-version-${theme}`, { fullPage: true });
+  await pick.click(); await wait(g, 1200);
+  await shot(g, `today-pick-type-${theme}`);
+  await g.goto(BASE + '/review'); await wait(g, 2000);
+  await shot(g, `review-server-note-${theme}`, { fullPage: true });
+  await g.getByRole('button', { name: /^Check: read as dal/ }).first().click(); await wait(g, 1200);
+  const chips = await g.getByTestId('unit-chips').innerText();
+  if (/piece|glass|count/.test(chips)) throw new Error(`dal sheet offers units it doesn't come in: ${chips}`);
+  await shot(g, `edit-sheet-units-dal-${theme}`);
+  await g.context().close();
   // step 2 at 360x800: 'Start logging' must be fully above the fold (fails QA otherwise)
   const o2 = await page(theme, 'noprofile', { width: 360, height: 800 });
   await o2.goto(BASE + '/onboarding'); await wait(o2, 2000);

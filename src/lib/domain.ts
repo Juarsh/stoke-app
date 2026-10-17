@@ -56,6 +56,9 @@ export interface FoodEntry {
   sync_reason?: string;
   /** the user tapped retry and that op has not come back yet: the row shows a spinner (never changes what is counted) */
   sync_retrying?: boolean;
+  /** rg6 F1: the server saved this row differently from what the phone sent (needs_review, or other qty / unit / kcal). The
+   * row now shows the server's version and this readable note says why (Review / Today); cleared by the next user edit. */
+  server_note?: string;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
@@ -147,6 +150,12 @@ export function computeStreak(loggedDates: Iterable<string>, today: string): Str
  * without a variant_choice flag. A bare "biryani" always carries variant_choice, so it never counts as a pick. */
 let groupOf: ((id: string) => unknown) | null = null;
 export function setVariantGroupLookup(f: (id: string) => unknown) { groupOf = f; }
+/** parser.unitSupported (set by src/parser/index.ts, like the variant lookup): the units a table dish can be saved in */
+let unitOk: ((dishId: string, unit: string) => boolean) | undefined;
+export function setUnitLookup(f: (dishId: string, unit: string) => boolean) { unitOk = f; }
+/** rg6 F1: a table row in a unit the server can't save it in (it would store it needs_review and count nothing) */
+export const unitReason = (unit: string) => `This dish doesn’t come in ${unit === 'count' ? 'that unit' : unit}. Pick another unit.`;
+export const unitSupportedFor = (dishId: string, unit: string) => !unitOk || unitOk(dishId, unit);
 function namedVariant(it: Item): boolean {
   if (!it.dish_id || it.ai_estimate || (it.flags ?? []).includes('variant_choice') || (it as { variant_options?: unknown[] }).variant_options?.length) return false;
   return !!groupOf?.(it.dish_id);
@@ -247,7 +256,11 @@ export function entryRefusal(e: FoodEntry): string | null {
   const src = serverSource(e);
   if (src === 'custom') return validTypedKcal(k) ? macroReason(e, true) : TYPED_KCAL_REASON;
   const finite = typeof k === 'number' && Number.isFinite(k);
-  if (e.dish_id && src !== 'ai_estimate') return !qtyInRange(e.qty) ? amountReason(e.unit) : finite && k >= 0 ? null : NO_KCAL_REASON;
+  if (e.dish_id && src !== 'ai_estimate') {
+    if (!qtyInRange(e.qty)) return amountReason(e.unit);
+    if (e.unit && !unitSupportedFor(e.dish_id, e.unit)) return unitReason(e.unit);
+    return finite && k >= 0 ? null : NO_KCAL_REASON;
+  }
   if (!finite || k <= 0) return NO_KCAL_REASON;
   // an AI reading (x the amount the user chose) over the server's 5000 / protein 300 per item: too much for one entry
   return limitReason({ kcal: e.kcal, protein_g: e.protein_g, carbs_g: e.carbs_g, fat_g: e.fat_g });

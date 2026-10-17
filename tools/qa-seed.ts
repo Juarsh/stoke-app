@@ -1,6 +1,7 @@
 // Builds a demo app state (mock user, profile, 10 days of logs) for QA screenshots.
 import { addDays, entryFromItem, localDate, reviewEntry, Slot } from '../src/lib/domain';
 import { DISH_TABLE_VERSION, parser } from '../src/parser';
+import { adoptServer } from '../src/lib/serverRow';
 
 const today = localDate();
 const meals: [number, Slot, string][] = [
@@ -23,6 +24,18 @@ if (process.argv[3] === 'aireview') {
 if (process.argv[3] === 'syncfail') {
   const i = entries.findIndex((e) => e.local_date === today && e.slot === 'lunch' && e.dish_id === 'rajma');
   entries[i] = { ...entries[i], sync_error: 'sync_conflict' };
+}
+// 'rg6': rows the server saved differently (F1) and an edit that needs a type (F4): a review row with the server's reason
+// (dal sent in piece by an older build), a counted row with "Saved as …", and "Pick a type to save this." (veg biryani)
+if (process.argv[3] === 'rg6') {
+  const t = (id: string, dish: string, qty: number, unit: string, slot: Slot) => ({ ...entryFromItem({ ...parser.recompute(dish, qty, unit, ''), needs_confirmation: false },
+    { id, slot, raw_text: `${qty} ${unit} ${parser.dishById(dish)!.name}`, local_date: today, tableVersion: DISH_TABLE_VERSION }), qty, unit });
+  const dal = parser.recompute('dal', 1, 'katori', '');
+  entries.push(adoptServer(t('g1', 'dal', 1, 'piece', 'dinner'), { version: 1, state: 'needs_review', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best }));
+  entries.push(adoptServer(t('g2', 'dal', 2, 'katori', 'snacks'), { version: 1, state: 'corrected', dish_id: 'dal', qty: 1, unit: 'katori', kcal_best: dal.kcal.best, kcal_low: dal.kcal.low, kcal_high: dal.kcal.high,
+    protein_best: dal.protein_g.best, protein_low: dal.protein_g.low, protein_high: dal.protein_g.high }));
+  entries.push({ ...t('g3', 'veg_biryani', 1, 'plate', 'dinner'), variant_dish_id: 'veg_biryani', server_version: 1, sync_error: 'variant_required', sync_reason: 'Pick a type to save this.',
+    variant_options: parser.variantGroup('veg_biryani', 1, 'plate') ?? [] });
 }
 process.stdout.write(JSON.stringify({
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },

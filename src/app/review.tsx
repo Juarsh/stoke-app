@@ -61,7 +61,7 @@ export default function Review() {
           <Card key={e.id}>
             {e.reject_code ? <T v="caption" tone="muted">You typed: {e.raw_text}</T> : null}
             {body}
-            {e.reject_code ? <T v="caption" tone="muted">{rejectCopy(e.reject_code)}</T> : null}
+            {e.reject_code ? <T v="caption" tone={e.server_note ? 'warn' : 'muted'} testID={e.server_note ? 'server-note' : undefined}>{e.server_note ?? rejectCopy(e.reject_code)}</T> : null}
             {no[e.id] ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {no[e.id]}</T> : null}
             {/* the server refused this item's sync (4xx): kept here with its reason, never dropped (rg5 G1) */}
             {e.sync_error || e.sync_retrying ? <SyncFailedRow title={e.raw_text || it.name} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} /> : null}

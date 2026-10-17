@@ -7,7 +7,8 @@ import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
 import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
-import { DISH_TABLE_VERSION, Item } from '../parser';
+import { DISH_TABLE_VERSION, Item, parser } from '../parser';
+import { adoptServer } from './serverRow';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
@@ -46,7 +47,7 @@ const opId = (o: Op) => (o.kind === 'upsert' ? o.entry.id : (o as { id: string }
 const unchangedSince = (cur: FoodEntry | undefined, sent: FoodEntry) => !!cur && cur.updated_at === sent.updated_at && !cur.deleted_at;
 /** After a flush: server versions recorded (a synced entry loses its sync error); refused / failed ops are handled ONLY when
  * the user has not changed the entry since it was sent, so a refusal never swallows a later typed value. Pure (testable). */
-export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'>): P {
+export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, sent: Op[], r: Pick<FlushResult, 'rest' | 'resolved' | 'rejected' | 'versions' | 'failed' | 'gone'> & Pick<Partial<FlushResult>, 'rows'>): P {
   const now = new Date();
   // deleted on another device (a save got 404): the delete wins. The local row is dropped (a tombstone: not counted, not
   // shown, no sync error) and every op still queued for it goes, so nothing re-creates or retries it.
@@ -71,7 +72,11 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     const v = r.versions[x.id];
     if (typeof v === 'number') n = { ...n, server_version: v, ...(n.sync_error && !failed.has(x.id) ? { sync_error: undefined, sync_reason: undefined } : {}) };
     const f = failed.get(x.id);
-    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason };
+    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason, ...(f.options?.length ? { variant_options: f.options } : {}) };
+    // rg6 F1: the server stored this save differently (needs_review, or other numbers / amount): the row shows the server's
+    // version, so the phone counts exactly what the server counts. Only when the user hasn't changed it since it was sent.
+    const sv = r.rows?.[x.id];
+    if (sv && !f && !reopened.some((e) => e.id === x.id) && unchangedSince(x, sv.sent)) n = adoptServer(n, sv.row);
     // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
     if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
@@ -152,6 +157,10 @@ function useStoreValue() {
   useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
+  const updateEntry = (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
+      const n = { ...e, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, updated_at: new Date().toISOString() };
+      return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
+    }); return null; };
   return {
     notice, dismissNotice,
     ready, ...s, api, sync, expireAi,
@@ -170,10 +179,18 @@ function useStoreValue() {
       return refused;
     },
     /** Explicit user edit: the only way saved numbers change (same store guard). Returns the refusal reason, or null. */
-    updateEntry: (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
-      const n = { ...e, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() };
-      return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
-    }); return null; },
+    updateEntry,
+    /** rg6 F4: a row the server refused for a type pick (variant_required): the picked type's numbers at the row's amount,
+     * re-saved. Returns the refusal reason (row unchanged) if the pick can't be saved. */
+    pickVariant: (id: string, dishId: string): string | null => {
+      const e = entriesRef.current.find((x) => x.id === id); if (!e) return 'Not found.';
+      let it: Item;
+      try { it = parser.recompute(dishId, e.qty, parser.unitSupported(dishId, e.unit) ? e.unit : parser.dishById(dishId)?.unit ?? e.unit, e.oil_level || ''); } catch { return 'Pick another type.'; }
+      return updateEntry({ ...e, dish_id: dishId, qty: it.quantity, unit: it.unit, kcal: it.kcal, protein_g: it.protein_g, carbs_g: it.carbs_g, fat_g: it.fat_g,
+        variant_dish_id: dishId, variant_options: undefined, confirmed: true, needs_review: false } as FoodEntry);
+    },
+    /** dismiss the "Saved as …" note on a row the server stored with other numbers */
+    clearServerNote: (id: string) => upd((p) => ({ ...p, entries: p.entries.map((x) => (x.id === id && x.server_note && !x.needs_review ? { ...x, server_note: undefined } : x)) })),
     deleteEntry: (id: string) => upd((p) => ({
       ...p, entries: p.entries.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),
       queue: enqueue(p.queue, { kind: 'delete', id, tries: 0 }),

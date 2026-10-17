@@ -159,6 +159,17 @@ export class Parser {
   }
 
   dishById(id: string): Dish | undefined { return this.byID.get(id); }
+  /** Go parser.UnitSupported: a table dish can be SAVED in this unit as it is (one of UNITS, the dish comes in it, and the
+   * recompute keeps it: fats only in spoon / gram). Any other unit the server stores needs_review. Parity:
+   * src/data/supported-units.json is the backend's testdata/supported_units.json. */
+  unitSupported(dishId: string, unit: string): boolean {
+    const d = this.dishById(dishId);
+    if (!d || !UNITS.includes(unit)) return false;
+    if (this.fat.has(d.id)) return unit === 'spoon' || unit === 'gram';
+    return this.unitFits(d, unit, false);
+  }
+  /** the unit chips the edit sheet offers for a dish (UNITS order) */
+  supportedUnits(dishId: string): string[] { return UNITS.filter((u) => this.unitSupported(dishId, u)); }
   allDishes(): Dish[] { return this.table; }
 
   private transliterate(s: string): string {

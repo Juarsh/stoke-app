@@ -5,6 +5,7 @@
 // on the server's version, retried once); what still can't be applied (409, other 4xx, or a 409 keep-and-retry
 // after MAX_TRIES) is surfaced on its entry ("Couldn’t sync this. Tap to retry") and later ops keep flowing.
 import type { FoodEntry, Slot } from './domain';
+import type { ServerRow } from './api';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
 export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued (0 = straight to items to review) */ at?: number;
@@ -22,7 +23,7 @@ export type Op =
   | ({ kind: 'profile'; id: 'profile'; payload: import('./domain').ProfilePayload } & Retry);
 export interface Sender {
   /** returns the server's row version for the entry, when the server sent one */
-  upsertEntry(e: FoodEntry): Promise<void | { version?: number }>; deleteEntry(id: string): Promise<void>;
+  upsertEntry(e: FoodEntry): Promise<void | { version?: number; row?: ServerRow }>; deleteEntry(id: string): Promise<void>;
   /** Resolve a pending food into entries, or null if still unknown (stays queued). */
   /** entries, null (still unknown) or { job_id } (server is working on it: poll that job next time) */
   resolvePending(f: PendingFood): Promise<FoodEntry[] | null | { job_id: string }>;
@@ -47,6 +48,8 @@ export function enqueue(q: Op[], op: Op): Op[] {
 /** The server asks the user to pick (variant / amount) and says which: the one 4xx on a NEW confirmed row that goes back to
  * Review with its choices (the app only confirms after a pick, so this is an old-build / table-drift case). */
 export const CHOICE_CODES = ['variant_required', 'quantity_required'];
+/** the row's line for a pick the server asks for (PE, rg6 F4) */
+export const choiceCopy = (code: string) => (code === 'quantity_required' ? 'Pick how much to save this.' : 'Pick a type to save this.');
 export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((op.kind === 'profile'
   || (op.kind === 'upsert' && !op.entry.pending && !op.entry.needs_review && (e as { patch?: unknown })?.patch !== true && CHOICE_CODES.includes(codeOf(e))))
   && typeof (e as { status?: unknown })?.status === 'number' && [400, 422].includes((e as { status: number }).status));
@@ -81,12 +84,16 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   /** entry id -> the server's row version after this flush */
   versions: Record<string, number>;
   /** entry ops that could not be applied (surfaced on the entry); `sent` is the op's entry snapshot (undefined for a delete) */
-  failed: { id: string; code: string; sent?: FoodEntry; reason?: string }[];
+  failed: { id: string; code: string; sent?: FoodEntry; reason?: string; options?: FoodEntry['variant_options'] }[];
+  /** entry id -> the server's copy of the row this flush saved, and the snapshot that was sent (rg6 F1: a row the server
+   * stored differently, e.g. needs_review for a unit the dish doesn't come in, is shown as the server has it) */
+  rows?: Record<string, { row: ServerRow; sent: FoodEntry }>;
   /** entries whose PATCH got 404: deleted on the server (another device). The delete wins: the phone drops them. */
   gone?: string[] };
 export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
   const rest = [...q];
   const versions: Record<string, number> = {};
+  const rows: NonNullable<FlushResult['rows']> = {};
   const failed: FlushResult['failed'] = [];
   const gone: string[] = [];
   const resolved: FoodEntry[] = [];
@@ -100,6 +107,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
         const known = versions[op.entry.id] ?? op.entry.server_version;
         const r = await s.upsertEntry(known === op.entry.server_version ? op.entry : { ...op.entry, server_version: known });
         if (r && typeof r.version === 'number') versions[op.entry.id] = r.version;
+        if (r && r.row) rows[op.entry.id] = { row: r.row, sent: op.entry };
       }
       else if (op.kind === 'delete') await s.deleteEntry(op.id);
       else if (op.kind === 'forget') await s.deleteRemembered(op.id);
@@ -129,7 +137,11 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       // the server kept its copy, so the phone's row is NEVER rewritten (no 0-kcal review row). It keeps the user's value,
       // shows "Couldn't sync this. Tap to retry" with the server's reason, and the rest of the queue keeps flowing.
       if (op.kind === 'upsert' && (isPatchRefusal(e) || isRefusal(e, op))) {
-        failed.push({ id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry, reason: reasonOf(e) });
+        // a pick the server asks for on an EDIT (variant_required): the row says so in plain words and tapping it opens the
+        // choices (Today); the server's developer message is never shown
+        const pick = CHOICE_CODES.includes(codeOf(e));
+        const vo = (e as { variantOptions?: FoodEntry['variant_options'] })?.variantOptions;
+        failed.push({ id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry, reason: pick ? choiceCopy(codeOf(e)) : reasonOf(e), ...(pick && vo?.length ? { options: vo } : {}) });
         rest.shift(); continue;
       }
       if (isRejection(e, op)) {
@@ -150,7 +162,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       break;
     }
   }
-  return { rest, resolved, rejected, profileRejected, versions, failed, gone };
+  return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */

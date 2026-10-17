@@ -10,5 +10,7 @@ export const parser = new Parser(DISHES, rulesJson as unknown as Rules);
 export const RULES = rulesJson as unknown as Rules;
 
 // entries record variant_dish_id only for a variant the user picked or named (see domain.namedVariant)
-import { setVariantGroupLookup } from '../lib/domain';
+import { setUnitLookup, setVariantGroupLookup } from '../lib/domain';
 setVariantGroupLookup((id) => parser.variantGroup(id));
+// the store guard refuses a table row in a unit the server can't save it in (rg6 F1)
+setUnitLookup((id, unit) => parser.unitSupported(id, unit));

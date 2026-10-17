@@ -1,6 +1,6 @@
 // v3.2 Today (frame 3): greeting + streak chip, review card, ring hero, protein/steps rows, Fill card, Today's plate rows.
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FoodIcon, SLOT_ICON } from '@/components/FoodIcon';
@@ -11,6 +11,7 @@ import { PendingRow } from '@/components/PendingRow';
 import { ReviewLink } from '@/components/ReviewLink';
 import { RingHero } from '@/components/RingHero';
 import { SyncFailedRow } from '@/components/SyncFailedRow';
+import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet';
 import { Card, Row, T } from '@/components/ui';
 import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
@@ -57,6 +58,11 @@ export default function Today() {
   const reviewSlot = reviewSlots.size === 1 ? SLOT_LABEL[[...reviewSlots][0]] : undefined;
   const rows = useMemo(() => plateRows(d.entries, nameOf), [d.entries]);
   const stepsK = Math.round((d.profile?.stepsTarget ?? 8000) / 1000);
+  // rg6 F4: the row the user is picking a type for (variant_required on a sync)
+  const [picking, setPicking] = useState<string | null>(null);
+  const pickRow = picking ? st.entries.find((e) => e.id === picking && e.sync_error === 'variant_required') ?? null : null;
+  // rg6 F1: rows the server saved with other numbers than the phone sent; they show (and count) the server's version
+  const notes = d.entries.filter((e) => e.server_note && !e.needs_review && !e.deleted_at);
   return (
     <View style={{ flex: 1 }}>
       <Glows />
@@ -94,14 +100,28 @@ export default function Today() {
           </Row>
           {d.reviews.map((e) => (
             <Pressable key={e.id} onPress={() => router.push({ pathname: '/review', params: { date: d.date } })} style={s.reviewRow} accessibilityRole="button"
-              accessibilityLabel={`${nameOf(e)}, needs review, not counted`}>
-              <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.review_item?.name ?? nameOf(e)}</T>
-              <T v="caption" tone="muted">— kcal · needs review</T>
+              accessibilityLabel={`${nameOf(e)}, needs review, not counted${e.server_note ? `. ${e.server_note}` : ''}`}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Row style={{ gap: 10 }}>
+                  <T style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {e.review_item?.name ?? nameOf(e)}</T>
+                  <T v="caption" tone="muted">— kcal · needs review</T>
+                </Row>
+                {e.server_note ? <T v="caption" tone="warn" testID="server-note">{e.server_note}</T> : null}
+              </View>
             </Pressable>
           ))}
           {d.syncFailed.map((e) => (
             <SyncFailedRow key={`sync-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.deleted_at ? ' (deleted)' : ''}`}
-              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} />
+              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} reason={e.sync_reason}
+              line={e.sync_error === 'variant_required' && !e.deleted_at ? PICK_TYPE_COPY : undefined}
+              onRetry={() => (e.sync_error === 'variant_required' && !e.deleted_at ? setPicking(e.id) : st.retrySync(e.id))} />
+          ))}
+          {notes.map((e) => (
+            <Pressable key={`note-${e.id}`} onPress={() => st.clearServerNote(e.id)} style={s.reviewRow} accessibilityRole="button"
+              accessibilityLabel={`${nameOf(e)}: ${e.server_note} Tap to dismiss`}>
+              <T style={{ flex: 1 }} numberOfLines={2}>{SLOT_LABEL[e.slot]} · {nameOf(e)} <T v="caption" tone="warn" testID="server-note">{e.server_note}</T></T>
+              <T v="caption" tone="muted">OK</T>
+            </Pressable>
           ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>
@@ -123,6 +143,7 @@ export default function Today() {
           </View>
           {d.entries.length || d.pending.length || d.reviewCount ? null : <Card><T tone="muted">Nothing logged yet. Tap Log and type it the way you say it.</T></Card>}
         </ScrollView>
+        <VariantPickSheet entry={pickRow} onPick={(dish) => st.pickVariant(pickRow!.id, dish)} onClose={() => setPicking(null)} />
       </SafeAreaView>
     </View>
   );

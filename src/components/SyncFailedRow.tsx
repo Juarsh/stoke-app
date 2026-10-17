@@ -9,12 +9,14 @@ import { Row, T } from './ui';
 export const SYNC_FAILED_COPY = 'Couldn’t sync this. Tap to retry';
 export const SYNC_RETRYING_COPY = 'Retrying…';
 
-export function SyncFailedRow({ title, kcal, retrying, onRetry, reason }: { title: string; kcal?: number; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string }) {
+export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line }: { title: string; kcal?: number; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string;
+  /** replaces the retry line when the fix is a pick, not a retry (rg6 F4: "Pick a type to save this."; the tap opens the choices) */ line?: string }) {
   const t = useTheme(); const s = useStyles();
+  const main = line ?? SYNC_FAILED_COPY;
   return (
     <Pressable onPress={retrying ? undefined : onRetry} disabled={retrying} style={s.row} accessibilityRole="button"
       accessibilityState={{ busy: retrying, disabled: retrying }}
-      accessibilityLabel={`${title}: ${retrying ? 'retrying sync' : `couldn’t sync this. Tap to retry${reason ? `. ${reason}` : ''}`}`}>
+      accessibilityLabel={`${title}: ${retrying ? 'retrying sync' : line ? line : `couldn’t sync this. Tap to retry${reason ? `. ${reason}` : ''}`}`}>
       <View style={{ flex: 1, gap: 2 }}>
         <Row style={{ gap: 10, justifyContent: 'space-between' }}>
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
@@ -22,9 +24,9 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry, reason }: { titl
         </Row>
         <Row style={{ gap: 6 }}>
           {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} /> : <Icon name="sync" color={t.c.warn} size={14} />}
-          <T v="caption" tone="warn" style={s.line}>{retrying ? SYNC_RETRYING_COPY : SYNC_FAILED_COPY}</T>
+          <T v="caption" tone="warn" style={s.line}>{retrying ? SYNC_RETRYING_COPY : main}</T>
         </Row>
-        {reason && !retrying ? <T v="caption" tone="muted" testID="sync-reason">{reason}</T> : null}
+        {reason && !retrying && !line ? <T v="caption" tone="muted" testID="sync-reason">{reason}</T> : null}
       </View>
     </Pressable>
   );

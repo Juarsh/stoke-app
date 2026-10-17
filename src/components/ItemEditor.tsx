@@ -1,8 +1,8 @@
 // Item card with editable chips + range popover, and the Edit bottom sheet.
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { DISHES, Item, OilLevel, parser, UNITS } from '../parser';
-import { amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
+import { DISHES, Item, OilLevel, parser } from '../parser';
+import { unitReason, amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -75,7 +75,11 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   const preview: Item = !table ? scaleAi(it, qty) : amountOff ? it : safeEdit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined });
   // an AI reading scaled past the server's per-item limits (kcal > 5000, protein > 300): refused here, nothing is sent
   const tooMuch = !table ? limitReason(preview) : null;
-  const blocked = amountOff || !!tooMuch;
+  // rg6 F1: only the units this dish can be saved in (the server's own list, parity-tested); a reading in any other unit
+  // (e.g. "1 glass roti") must pick one first
+  const units = table ? parser.supportedUnits(dishId) : [];
+  const unitOff = table && !units.includes(unit);
+  const blocked = amountOff || !!tooMuch || unitOff;
   const step = qtyStep(unit);
   // Save = the amount the user chose: a confirmed reading, so the "unusual amount" options recompute attaches for a big
   // quantity (12 katori, 24 pieces) are the choice already made, never a new one (F3)
@@ -85,7 +89,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
     <Sheet visible={visible} onClose={onClose} title={preview.name}>
       <T v="caption" tone="muted">Matched dish · {table ? 'from our table' : 'AI estimate'}</T>
       {table ? <Field placeholder="Change dish…" value={search} onChangeText={setSearch} accessibilityLabel="Change dish" /> : null}
-      {matches.map((d) => <Chip key={d.id} kind="neutral" label={d.name} onPress={() => { setDishId(d.id); setUnit(d.unit); setQty(1); setSearch(''); }} />)}
+      {matches.map((d) => <Chip key={d.id} kind="neutral" label={d.name} onPress={() => { setDishId(d.id); setUnit(parser.supportedUnits(d.id).includes(unit) ? unit : d.unit); setQty(1); setSearch(''); }} />)}
       <T v="bodyStrong">How many?</T>
       <Row>
         <Button kind="soft" title="−" onPress={() => setQty((q) => Math.max(step, Math.round((q - step) * 100) / 100))} accessibilityLabel="Decrease" />
@@ -93,7 +97,8 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
         <Button kind="soft" title="+" onPress={() => setQty((q) => Math.min(QTY_MAX, Math.round((q + step) * 100) / 100))} accessibilityLabel="Increase" />
       </Row>
       {amountOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="amount-range">{amountReason(unit)}</T> : null}
-      {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }}>{UNITS.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={u} onPress={() => setUnit(u)} />)}</Row> : null}
+      {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }} testID="unit-chips">{units.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={u} onPress={() => setUnit(u)} />)}</Row> : null}
+      {unitOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="unit-off">{unitReason(unit)}</T> : null}
       {preview.oil_level !== '' || oil ? (
         <>
           <T v="bodyStrong">Oil / ghee</T>
