@@ -84,7 +84,7 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 
 | Route | What |
 |---|---|
-| `GET /v1/dishes` | Full dish table (public; same file the app ships offline) |
+| `GET /v1/dishes` | Full dish table (public; same file the app ships offline). Header `X-Dish-Table-Version`. Every dish carries `supported_units` (the units the server saves it in, for that same version; see Units a dish comes in) |
 | `POST /v1/entries` | Save chips: `{local_date?, slot?, text?, items:[{dish_id, qty, unit, oil_level, source, confirmed}] or [{custom_name, kcal, protein_g, source, confirmed}]}` (see Saving rules). Dish rows are recomputed server-side from the table. Slot defaults by time: <11 breakfast, 11-16 lunch, 16-19 snacks, else dinner. With only `text`, saves what the table recognised and returns `unmatched`. 201 → `{entries, unmatched, summary}` |
 | `GET /v1/entries?date=` | Day's entries + `total` |
 | `GET/PATCH/DELETE /v1/entries/{id}` | Edit a chip (`qty, unit, oil_level, dish_id, slot, local_date, custom_name, kcal, protein_g, version`); a stale `version` → 409 `version_conflict` with the server copy (see "Entry versions"). `if_unmodified_since` is accepted and ignored. A PATCH on a deleted row (also racing the delete) → 404, never 500. Delete is soft (204) |
@@ -362,7 +362,10 @@ these routes don't exist (404).
   version wins.
 - To keep the repo and the app's offline copy canonical, run
   `go run ./cmd/dishes-pull > internal/dishes/dishes.json` and commit the
-  result. Until you do, a server built from an older `dishes.json` still
+  result. Each pulled dish carries `supported_units` computed for that table
+  version (derived from the dish + rules, not part of the stored snapshot, so
+  the version's sha256 is unchanged); the app's unit chips come from these.
+  `go run ./cmd/dishes-pull -repo` adds them to the repo's own table without a DB. Until you do, a server built from an older `dishes.json` still
   starts and uses the newer published table.
 
 ## Default portions (`strict_require_stated_quantity: false`)
@@ -579,8 +582,9 @@ and `adjacent_split`, are never confident, and the whole phrase goes to the AI. 
   `count, piece, katori, spoon, plate, glass, gram` (in that order), the units in the dish's `units`
   list or that fit it by the rules' `unit_fits`; fat dishes (ghee, butter, oil) only `spoon` and
   `gram`. The full list per dish is `internal/parser/testdata/supported_units.json` (golden,
-  `UPDATE_GOLDEN=1 go test ./internal/parser -run TestSupportedUnitsGolden` to refresh); the app
-  ships a byte-identical copy and tests its own rule against it, so its unit chips are exactly this.
+  `UPDATE_GOLDEN=1 go test ./internal/parser -run TestSupportedUnitsGolden` to refresh). The same
+  lists come down with the table: `supported_units` on every dish of `GET /v1/dishes` and of
+  `cmd/dishes-pull` / `internal/dishes/dishes.json`. The app's unit chips are exactly these.
 - **Amount must be above 0.** A confirmed table item with an explicit `qty` of 0 or less is a 400
   `"item N: Enter an amount above 0."` (negative qty: 400 on any item). `PATCH` with `qty` <= 0:
   400 `"Enter an amount above 0."`. Nothing is saved. A table item with no `qty` still means 1.

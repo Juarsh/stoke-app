@@ -86,6 +86,9 @@ func (d Dish) Allowed(diet string) bool {
 	return true
 }
 
+// Raw: the embedded dishes.json bytes as committed.
+func Raw() []byte { return append([]byte(nil), raw...) }
+
 // Load returns the embedded dish table.
 func Load() ([]Dish, error) {
 	var ds []Dish

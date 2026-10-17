@@ -1141,7 +1141,7 @@ func (s *Service) handleParse(w http.ResponseWriter, r *http.Request) {
 func (s *Service) handleDishes(w http.ResponseWriter, r *http.Request) {
 	p := s.parser()
 	w.Header().Set("X-Dish-Table-Version", strconv.Itoa(p.TableVersion()))
-	httpx.JSON(w, 200, p.Table())
+	httpx.JSON(w, 200, WithUnits(p)) // each dish with supported_units for this version
 }
 
 func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
