@@ -137,7 +137,7 @@ for (const theme of ['light', 'dark']) {
   await kept.first().scrollIntoViewIfNeeded(); await wait(h, 400);
   await shot(h, `today-delete-kept-${theme}`);
   // next build: a refused delete that had replaced an unsynced edit says what happened to the edit; rows show what they count
-  for (const [txt, kc] of [['Your change to 3 pieces is kept.', 330], ['Your change to 3 pieces wasn’t saved. Edit it again if you need it.', 440]]) {
+  for (const [txt, kc] of [['Your change to 3 pieces is kept.', 330], ['Your change to 3 pieces wasn’t saved. Edit it again if you still want it.', 440]]) {
     const row = h.getByTestId('server-note-row').filter({ hasText: txt });
     if ((await row.count()) !== 1) throw new Error(`no row with: ${txt}`);
     if (!new RegExp(`Dinner · Roti\\s*${kc} kcal`).test(await row.innerText())) throw new Error(`edit-note row lacks its kcal ${kc}: ${await row.innerText()}`);

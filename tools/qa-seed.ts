@@ -77,7 +77,7 @@ if (process.argv[3] === 'rg7') {
     server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces is kept.' });
   const h9 = t('h9', 'roti', 4, 'count', 'dinner');
   entries.push({ ...h9, server_version: 5, server_counts: { kcal: h9.kcal.best, protein: h9.protein_g.best }, kept_on_server: true,
-    server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you need it.' });
+    server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' });
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },

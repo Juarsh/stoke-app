@@ -660,7 +660,10 @@ describe('dropped edit: a refused delete re-sends the edit it had replaced (or s
     expect(row.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
     expect(st.queue).toHaveLength(0);
     expect(dayTotals(st.entries).kcal).toBe(440); expect(serverTotal()).toBe(440);
-    expect(textOf(r)).toContain('Your change to 3 pieces wasn’t saved.');
+    // Designer copy (exact, curly apostrophe), on the same warn note line after the reason; the app's unit words, never "3 count"
+    expect(row.server_note).toBe('Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.');
+    expect(textOf(r)).toContain('Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.');
+    expect(textOf(r)).not.toMatch(/\d count\b/); expect(row.server_note).not.toContain("'");
   });
   test('no queued edit: a refused delete reads no copy and changes nothing else (rg10 behaviour unchanged)', async () => {
     server.rows.set('F', { kcal: 220, qty: 2, unit: 'count', version: 1 });
@@ -700,5 +703,16 @@ describe('dropped edit: a refused delete re-sends the edit it had replaced (or s
     const out3: { requeue?: boolean } = {};
     const c = restoreKept(del(c0), { id: 'C', code: 'forbidden', edited: true }, out3);
     expect(out3.requeue).toBeUndefined(); expect(c.server_failed).toBe(true); expect(dayTotals([c]).kcal).toBe(220); expect(c.server_note).toBe(`${KEPT_COPY} ${editNotSaved('0 kcal')}`);
+  });
+});
+
+describe('dropped edit copy (Designer): exact words, the app’s unit words for the amount', () => {
+  test.each([
+    ['roti', 3, 'count', '3 pieces'], ['roti', 1, 'count', '1 piece'], ['dal', 2, 'katori', '2 katori'], ['rice', 150, 'gram', '150 g'],
+  ] as [string, number, string, string][])('%s %d %s -> "%s"', (dish, qty, unit, words) => {
+    const e = { ...tableEntry('W', dish, qty, unit), server_version: 2, server_counts: { kcal: 100, protein: 1 }, deleted_at: '2026-10-17T05:00:00Z', unsynced_edit: true } as FoodEntry;
+    const n = restoreKept(e, { id: 'W', code: 'forbidden', reason: 'This entry is locked.', edited: true, row: { version: 3, state: 'confirmed', qty: 1, unit, kcal_best: 100, protein_best: 1 } });
+    expect(n.server_note).toBe(`Not deleted: the server kept this entry. This entry is locked. Your change to ${words} wasn’t saved. Edit it again if you still want it.`);
+    expect(n.server_note).not.toMatch(/\d count\b/);
   });
 });

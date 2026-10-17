@@ -115,7 +115,7 @@ export const keptNote = (reason?: string) => (reason && sentence(reason) ? `${KE
 /** next build: on a refused delete, the edit the delete had replaced (the server never got it). Re-sent: */
 export const editKept = (what: string) => `Your change to ${what} is kept.`;
 /** ... or, when the server's copy changed since (another device) or the edit can't be saved, not re-sent: */
-export const editNotSaved = (what: string) => `Your change to ${what} wasn’t saved. Edit it again if you need it.`;
+export const editNotSaved = (what: string) => `Your change to ${what} wasn’t saved. Edit it again if you still want it.`;
 const editWhat = (e: FoodEntry) => (e.dish_id ? portionLabel(e.qty, e.unit) : `${Math.round(e.kcal.best).toLocaleString('en-IN')} kcal`);
 /** the row as the server's copy has it: its amount and numbers (what it counts), its version */
 function serverCopy(n: FoodEntry, row: ServerRow): FoodEntry {

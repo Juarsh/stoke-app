@@ -7,7 +7,7 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 1. [x] Edge (a): phone counts 0 and server 220, but the row only says "not counted". Make the phone count and show the server's numbers.
    Done: a flagged row (5xx save or delete) the server has stored but whose numbers the phone never knew is fetched with GET /v1/entries/{id} and counted at the server's copy, still flagged. A failed GET leaves it "not counted" and it is asked again at the next sync / app start.
 2. [x] Edit dropped when a delete is refused: an edit still queued at that point is lost with no message, and the row shows the phone's qty while counting the server's 220. Restore qty and unit from the server row, or re-queue the edit.
-   Done: a delete that replaced an unsynced edit (queued, or flagged 5xx) is marked; if the server refuses it, the server's copy is read (GET) and the edit is re-sent when the copy is the one it was made on (note: "… Your change to 3 pieces is kept."). If the server's copy moved on (another device) the row takes the server's qty, unit and numbers (shown == counted) and the note says "Your change to 3 pieces wasn’t saved. Edit it again if you need it."
+   Done: a delete that replaced an unsynced edit (queued, or flagged 5xx) is marked; if the server refuses it, the server's copy is read (GET) and the edit is re-sent when the copy is the one it was made on (note: "… Your change to 3 pieces is kept."). If the server's copy moved on (another device) the row takes the server's qty, unit and numbers (shown == counted) and the note says "Your change to 3 pieces wasn’t saved. Edit it again if you still want it."
 
 ## rg10 notes (Tester)
 - "Saved as 2 count" reads badly. Needs pieces wording.
