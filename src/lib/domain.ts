@@ -69,6 +69,9 @@ export interface FoodEntry {
   delete_failed?: boolean;
   /** rg10: a delete the server refused (4xx other than 404): the row was restored and counts as the server has it */
   kept_on_server?: boolean;
+  /** next build: local only. Deleted while an edit to it had not reached the server (still queued, or flagged 5xx): the
+   * phone's numbers are that edit, not the server's. If the server refuses the delete, the edit is re-sent or named. */
+  unsynced_edit?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 /** live on the server: not deleted, or deleted on the phone but the delete was flagged (rg9 B3: the server still counts it) */

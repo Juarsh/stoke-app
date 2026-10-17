@@ -16,7 +16,8 @@ type Retry = { tries: number; nextAt?: number; fives?: number;
   /** the wait is for no connection (or a wait the server asked for), not a 5xx: everything behind it waits too (rg8 B3) */ net?: boolean };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)
-  | ({ kind: 'delete'; id: string } & Retry)
+  /** edited: the row had an edit the server never got (FoodEntry.unsynced_edit): a refusal fetches the server's copy */
+  | ({ kind: 'delete'; id: string; edited?: boolean } & Retry)
   | ({ kind: 'pending'; food: PendingFood } & Retry)
   | ({ kind: 'forget'; id: number } & Retry)
   | ({ kind: 'forgetAll'; id: 'all' } & Retry)
@@ -27,6 +28,8 @@ export type Op =
 export interface Sender {
   /** returns the server's row version for the entry, when the server sent one */
   upsertEntry(e: FoodEntry): Promise<void | { version?: number; row?: ServerRow }>; deleteEntry(id: string): Promise<void>;
+  /** GET /v1/entries/{id}: the server's copy of a row, null on 404 (next build: a refused delete of an edited row) */
+  getEntry?(id: string): Promise<ServerRow | null>;
   /** Resolve a pending food into entries, or null if still unknown (stays queued). */
   /** entries, null (still unknown) or { job_id } (server is working on it: poll that job next time) */
   resolvePending(f: PendingFood): Promise<FoodEntry[] | null | { job_id: string }>;
@@ -117,7 +120,7 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   gone?: string[];
   /** rg10: deletes the server refused with a 4xx other than 404 (403, 400, 409, 410, 422, …): the row stays on the server, so
    * the phone restores it, counted as the server has it, with the server's reason. `row` is the server's copy when it sent one. */
-  kept?: { id: string; code: string; reason?: string; row?: ServerRow }[] };
+  kept?: { id: string; code: string; reason?: string; row?: ServerRow; /** the delete replaced an edit the server never got */ edited?: boolean }[] };
 export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
   const rest = [...q];
   const versions: Record<string, number> = {};
@@ -176,7 +179,10 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       if (op.kind === 'delete' && (isRefusalStatus(statusOf(e)) || statusOf(e) === 409)) {
         const row = (e as { entry?: ServerRow })?.entry;
         if (statusOf(e) === 409 && !conflicted.has(op.id)) { conflicted.set(op.id, { row, reason: reasonOf(e) }); continue; }
-        kept.push({ id: op.id, code: codeOf(e) || `http_${statusOf(e)}`, reason: reasonOf(e) ?? conflicted.get(op.id)?.reason, row: row ?? conflicted.get(op.id)?.row });
+        let copy = row ?? conflicted.get(op.id)?.row;
+        // next build: the row had an edit the server never got: its own copy (qty, unit, numbers) decides what the phone shows
+        if (!copy && op.edited && s.getEntry) { try { copy = (await s.getEntry(op.id)) ?? undefined; } catch { /* unknown: restoreKept falls back */ } }
+        kept.push({ id: op.id, code: codeOf(e) || `http_${statusOf(e)}`, reason: reasonOf(e) ?? conflicted.get(op.id)?.reason, row: copy, ...(op.edited ? { edited: true } : {}) });
         rest.splice(i, 1); continue;
       }
       // any other 4xx on the PATCH of a row the server already has (409 = the version / abandon flows; 401/408/429 retry):
