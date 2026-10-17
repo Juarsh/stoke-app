@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgconn"
 	"log"
 	"math"
 	"net/http"
@@ -28,6 +29,24 @@ import (
 
 type Rebuilder interface {
 	Rebuild(ctx context.Context, userID int64, day time.Time) (summary.Day, error)
+	// RebuildTx: the same inside the entry write's own transaction (all or nothing, H1)
+	RebuildTx(ctx context.Context, tx pgx.Tx, userID int64, day time.Time) (summary.Day, error)
+}
+
+// TooMuchDayReason: a day whose totals no column can hold (defense in depth; the
+// per-entry ceiling makes this practically unreachable). Nothing is saved.
+const TooMuchDayReason = "That’s too much for one day. Try a smaller amount."
+
+// writeErr answers a failed entry / summary write inside the save transaction
+// (rolled back, so nothing is half-saved): a numeric overflow is the client's
+// input (400 with a reason), anything else a 500.
+func writeErr(w http.ResponseWriter, err error, reason, fallback string) {
+	var pe *pgconn.PgError
+	if errors.As(err, &pe) && (pe.Code == "22003" || pe.Code == "23514") { // numeric_value_out_of_range, check_violation
+		httpx.Error(w, 400, reason)
+		return
+	}
+	httpx.Error(w, 500, fallback)
 }
 
 type Service struct {
@@ -861,6 +880,16 @@ func (in *ItemIn) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// TooMuchReason (H1): a table row computed above TableKcalMax kcal or
+// TableProteinMax g protein for one entry (e.g. 5000 plates) is refused.
+const TooMuchReason = "That’s too much for one entry. Try a smaller amount."
+
+// Per-entry ceiling on table rows (CEO, rg7 H1). Typed kcal (1-5000) and AI rows keep their own limits.
+const (
+	TableKcalMax    = 10000
+	TableProteinMax = 500
+)
+
 // QtyReason: a table row's quantity must be above 0 (shown to the user as is).
 const QtyReason = "Enter an amount above 0."
 
@@ -937,9 +966,21 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 		} else if in.DishTableVersion != nil && *in.DishTableVersion != ver {
 			return e, 409, &unknownVersion{got: *in.DishTableVersion, server: ver}
 		}
+		if _, ok := tp.Dish(in.DishID); !ok {
+			// a dish added after the client's table version (an import the phone hasn't
+			// pulled yet): saved against the current table, which has it (rg7 B3)
+			if cur := s.parser(); cur != tp {
+				if _, ok := cur.Dish(in.DishID); ok {
+					tp, ver = cur, cur.TableVersion()
+				}
+			}
+		}
 		it, err := tp.Recompute(in.DishID, in.Qty, in.Unit, in.OilLevel)
 		if err != nil {
 			return bad(400, err.Error())
+		}
+		if it.Kcal.Best > TableKcalMax || it.Protein.Best > TableProteinMax {
+			return bad(400, TooMuchReason) // H1: never a row no day can hold
 		}
 		needs := in.Source != "table" || it.NeedsConfirmation
 		if needs && !in.Confirmed {
@@ -1100,6 +1141,15 @@ func (s *Service) scan(row pgx.Row) (Entry, error) {
 }
 
 func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handler) {
+	// every food response says which dish table the server is on, so a phone on an
+	// older table knows to pull (rg7 B4); /v1/dishes sets its own
+	in := wrap
+	wrap = func(h http.Handler) http.Handler {
+		return in(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Dish-Table-Version", strconv.Itoa(s.parser().TableVersion()))
+			h.ServeHTTP(w, r)
+		}))
+	}
 	mux.Handle("POST /v1/parse", wrap(http.HandlerFunc(s.handleParse)))
 	mux.Handle("GET /v1/parse/jobs/{id}", wrap(http.HandlerFunc(s.handleJob)))
 	mux.Handle("POST /v1/parse/jobs/{id}/abandon", wrap(http.HandlerFunc(s.handleAbandon)))
@@ -1194,33 +1244,28 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid := httpx.UserID(r)
-	tx, err := s.DB.Begin(r.Context())
-	if err != nil {
-		httpx.Error(w, 500, "db")
-		return
+	stored := func(q interface {
+		QueryRow(context.Context, string, ...any) pgx.Row
+	}, cid string) (Entry, bool, error) {
+		ex, err := s.scan(q.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND client_id=$2`, uid, cid))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ex, false, nil
+		}
+		return ex, err == nil, err
 	}
-	defer tx.Rollback(r.Context())
-	out := []Entry{}
-	dups := []string{}
-	created := 0
-	spanParts := map[string]int{} // item index within each span (multi-item remembered foods)
+	// 1. check and resolve every item first, outside the write transaction: these
+	// reads use their own pool connections, which must never be taken while
+	// holding the user's lock (a full pool would deadlock)
+	resolved := make([]*Entry, len(items))
 	for i, it := range items {
 		if it.ClientID != "" {
 			// idempotent: a repeat client_id returns the stored entry unchanged
-			ex, err := s.scan(tx.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND client_id=$2`, uid, it.ClientID))
-			if err == nil {
-				out, dups = append(out, ex), append(dups, it.ClientID)
-				continue
-			}
-			if !errors.Is(err, pgx.ErrNoRows) {
+			if _, dup, err := stored(s.DB, it.ClientID); err != nil {
 				httpx.Error(w, 500, "db")
 				return
+			} else if dup {
+				continue
 			}
-		}
-		part := 0
-		if k := Normalize(it.Span); k != "" {
-			part = spanParts[k]
-			spanParts[k]++
 		}
 		if body := s.choiceCheck(in.Text, it, i); body != nil {
 			httpx.JSON(w, 422, body)
@@ -1240,6 +1285,47 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			httpx.Error(w, code, "item "+strconv.Itoa(i)+": "+err.Error())
 			return
 		}
+		resolved[i] = &e
+	}
+	// 2. write: the user's summary lock first, then the rows and the day's summary
+	// in this one transaction, one writer of this user at a time (G4, H1)
+	tx, err := s.DB.Begin(r.Context())
+	if err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	defer tx.Rollback(context.WithoutCancel(r.Context()))
+	if err := summary.LockUser(r.Context(), tx, uid); err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	out := []Entry{}
+	dups := []string{}
+	created := 0
+	spanParts := map[string]int{} // item index within each span (multi-item remembered foods)
+	for i, it := range items {
+		if it.ClientID != "" {
+			ex, dup, err := stored(tx, it.ClientID) // also a same client_id saved meanwhile
+			if err != nil {
+				httpx.Error(w, 500, "db")
+				return
+			}
+			if dup {
+				out, dups = append(out, ex), append(dups, it.ClientID)
+				continue
+			}
+		}
+		if resolved[i] == nil {
+			// stored when checked, gone now (not possible: rows are soft-deleted); retry
+			httpx.Error(w, 409, "entry changed while saving; retry")
+			return
+		}
+		e := *resolved[i]
+		part := 0
+		if k := Normalize(it.Span); k != "" {
+			part = spanParts[k]
+			spanParts[k]++
+		}
 		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
 			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE(NULLIF($23,''),'confirmed'),$24,NULLIF($25,''),NULLIF($26,'')) RETURNING `+cols,
@@ -1247,7 +1333,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
 			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span), e.State, part, it.jobID(), it.ClientItemID))
 		if err != nil {
-			httpx.Error(w, 500, "save failed")
+			writeErr(w, err, "item "+strconv.Itoa(i)+": "+TooMuchReason, "save failed")
 			return
 		}
 		out = append(out, saved)
@@ -1260,13 +1346,14 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	_, _ = tx.Exec(r.Context(), `INSERT INTO events(user_id,name,props) VALUES ($1,'log',jsonb_build_object('items',$2::int))`, uid, len(out))
-	if err := tx.Commit(r.Context()); err != nil {
-		httpx.Error(w, 500, "save failed")
+	// the day's summary in the SAME transaction: if it can't be written nothing is saved (H1)
+	sum, err := s.Summary.RebuildTx(r.Context(), tx, uid, day)
+	if err != nil {
+		writeErr(w, err, TooMuchDayReason, "summary failed")
 		return
 	}
-	sum, err := s.Summary.Rebuild(r.Context(), uid, day)
-	if err != nil {
-		httpx.Error(w, 500, "summary failed")
+	if err := tx.Commit(r.Context()); err != nil {
+		httpx.Error(w, 500, "save failed")
 		return
 	}
 	if unmatched == nil {
@@ -1516,7 +1603,19 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, code, err.Error())
 		return
 	}
-	saved, err := s.scan(s.DB.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
+	// the row, its job link, the remembered reading and the summaries of both days
+	// in ONE transaction under the user's summary lock: all or nothing (H1)
+	tx, err := s.DB.Begin(r.Context())
+	if err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	defer tx.Rollback(context.WithoutCancel(r.Context()))
+	if err := summary.LockUser(r.Context(), tx, uid); err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	saved, err := s.scan(tx.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
 		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
 		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
 		WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND ($21::int IS NULL OR version=$21) RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
@@ -1525,6 +1624,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		// Another write landed between the load and this update (the update is atomic on
 		// version and deleted_at): a delete wins (404, the same as a PATCH after the delete);
 		// a newer version is a 409 with the current row. Never a 500.
+		_ = tx.Rollback(r.Context()) // release the lock and connection before reading again
 		cur, code, lerr := s.load(r.Context(), uid, r)
 		if lerr != nil {
 			httpx.Error(w, code, lerr.Error())
@@ -1538,14 +1638,14 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		httpx.Error(w, 500, "save failed")
+		writeErr(w, err, TooMuchReason, "save failed")
 		return
 	}
 	if in.ParseJobID == nil {
 		in.ParseJobID = in.JobID
 	}
 	if in.ParseJobID != nil || in.ClientItemID != nil {
-		_ = s.DB.QueryRow(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
+		_ = tx.QueryRow(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
 			WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL RETURNING version`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID)).Scan(&saved.Version)
 		saved.ParseJobID, saved.ClientItemID = orPtr(in.ParseJobID, saved.ParseJobID), orPtr(in.ClientItemID, saved.ClientItemID)
 	}
@@ -1555,19 +1655,23 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	corrected := in.DishID != nil || in.Qty != nil || in.Unit != nil || in.OilLevel != nil || in.CustomName != nil || in.Kcal != nil || in.ProteinG != nil
 	if corrected && span != "" && saved.State == "confirmed" && (in.Remember == nil || *in.Remember) {
-		if err := remember(r.Context(), s.DB, uid, span, e.SpanPart, false, saved); err != nil {
+		if err := remember(r.Context(), tx, uid, span, e.SpanPart, false, saved); err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
 		}
 	}
 	if !day.Equal(oldDay) {
-		if _, err := s.Summary.Rebuild(r.Context(), uid, oldDay); err != nil {
-			httpx.Error(w, 500, "summary failed")
+		if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, oldDay); err != nil {
+			writeErr(w, err, TooMuchDayReason, "summary failed")
 			return
 		}
 	}
-	if _, err := s.Summary.Rebuild(r.Context(), uid, day); err != nil {
-		httpx.Error(w, 500, "summary failed")
+	if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, day); err != nil {
+		writeErr(w, err, TooMuchDayReason, "summary failed")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		httpx.Error(w, 500, "save failed")
 		return
 	}
 	httpx.JSON(w, 200, saved)
@@ -1586,13 +1690,27 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, code, err.Error())
 		return
 	}
-	if _, err := s.DB.Exec(r.Context(), `UPDATE food_entries SET deleted_at=now(), updated_at=now() WHERE id=$1 AND user_id=$2`, e.ID, uid); err != nil {
+	tx, err := s.DB.Begin(r.Context())
+	if err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	defer tx.Rollback(context.WithoutCancel(r.Context()))
+	if err := summary.LockUser(r.Context(), tx, uid); err != nil {
+		httpx.Error(w, 500, "db")
+		return
+	}
+	if _, err := tx.Exec(r.Context(), `UPDATE food_entries SET deleted_at=now(), updated_at=now() WHERE id=$1 AND user_id=$2`, e.ID, uid); err != nil {
 		httpx.Error(w, 500, "delete failed")
 		return
 	}
 	day, _ := time.Parse("2006-01-02", e.LocalDate)
-	if _, err := s.Summary.Rebuild(r.Context(), uid, day); err != nil {
+	if _, err := s.Summary.RebuildTx(r.Context(), tx, uid, day); err != nil {
 		httpx.Error(w, 500, "summary failed")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		httpx.Error(w, 500, "delete failed")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -51,22 +51,39 @@ func lockUser(ctx context.Context, tx pgx.Tx, userID int64) error {
 	return err
 }
 
-// Rebuild recomputes the summary row for a day and the user's streak.
-// Call it after any entry on that day changes (after its write committed).
-// It reads the entries and writes the row in ONE transaction holding the
-// user's advisory lock, so concurrent rebuilds run one after the other and
-// each reads after every write that came before it: the last one to write
-// has seen every committed change, and a stale rebuild can never win (G4).
+// Rebuild recomputes the summary row for a day and the user's streak in its
+// own transaction (holding the user's advisory lock): for writers whose
+// change is already committed (activity). Entry writes use RebuildTx inside
+// their own transaction instead (H1: all or nothing).
 func (s *Service) Rebuild(ctx context.Context, userID int64, day time.Time) (Day, error) {
-	// the entry write already committed: finish the rebuild even if the client went away
+	// the write already committed: finish the rebuild even if the client went away
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 	defer cancel()
-	d := Day{LocalDate: day, Date: day.Format("2006-01-02")}
 	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		return Day{LocalDate: day, Date: day.Format("2006-01-02")}, err
+	}
+	defer tx.Rollback(ctx)
+	d, err := s.RebuildTx(ctx, tx, userID, day)
 	if err != nil {
 		return d, err
 	}
-	defer tx.Rollback(ctx)
+	return d, tx.Commit(ctx)
+}
+
+// LockUser takes the user's summary lock in tx (transaction-scoped,
+// re-entrant). Entry writes take it FIRST, before touching any row, so
+// writers of one user run one after another and can't deadlock (G4, H1).
+func LockUser(ctx context.Context, tx pgx.Tx, userID int64) error { return lockUser(ctx, tx, userID) }
+
+// RebuildTx recomputes the day's summary row and the streak inside the
+// caller's transaction, under the user's advisory lock: the entry write and
+// its summary commit together or not at all (H1: a summary that can't be
+// written rolls the entry back, so a day is never left with list != summary).
+// Reads see every write that committed before the lock was granted plus the
+// caller's own (G4).
+func (s *Service) RebuildTx(ctx context.Context, tx pgx.Tx, userID int64, day time.Time) (Day, error) {
+	d := Day{LocalDate: day, Date: day.Format("2006-01-02")}
 	if err := lockUser(ctx, tx, userID); err != nil {
 		return d, err
 	}
@@ -75,7 +92,7 @@ func (s *Service) Rebuild(ctx context.Context, userID int64, day time.Time) (Day
 			return d, err
 		}
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO daily_summaries(user_id,local_date,kcal_in,protein_in,kcal_out,steps,water_ml,logged,updated_at)
+	_, err := tx.Exec(ctx, `INSERT INTO daily_summaries(user_id,local_date,kcal_in,protein_in,kcal_out,steps,water_ml,logged,updated_at)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now())
 		ON CONFLICT (user_id,local_date) DO UPDATE SET kcal_in=$3,protein_in=$4,kcal_out=$5,steps=$6,water_ml=$7,logged=$8,updated_at=now()`,
 		userID, day, d.KcalIn, d.ProteinIn, d.KcalOut, d.Steps, d.WaterML, d.Logged)
@@ -92,7 +109,7 @@ func (s *Service) Rebuild(ctx context.Context, userID int64, day time.Time) (Day
 	if _, err = tx.Exec(ctx, `UPDATE daily_summaries SET streak_day=$3 WHERE user_id=$1 AND local_date=$2`, userID, day, d.StreakDay); err != nil {
 		return d, err
 	}
-	return d, tx.Commit(ctx)
+	return d, nil
 }
 
 // Get returns the stored summary (zero row if none).

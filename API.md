@@ -218,6 +218,13 @@ before this server), it returns **409**:
 The client should keep the entry and retry later. This replaces the earlier
 rule that returned 409 for any version that wasn't the current one.
 
+**A dish newer than the client's version** (imported after the phone's table): if the version the
+entry sends doesn't have the `dish_id` but the current table does, the entry is checked and stored
+against the current table (its `dish_table_version` is the current one), never a 400 "unknown dish_id".
+Every food response (`/v1/parse*`, `/v1/entries*`, `/v1/sync/entries`, `/v1/remembered*`, `/v1/dishes`)
+carries **`X-Dish-Table-Version`**: the server's current table. A client whose table is older pulls
+`GET /v1/dishes` (each dish with its `supported_units`).
+
 ## Entry state and streaks
 
 Each entry has a `state` (migration 007):
@@ -588,6 +595,15 @@ and `adjacent_split`, are never confident, and the whole phrase goes to the AI. 
 - **Amount must be above 0.** A confirmed table item with an explicit `qty` of 0 or less is a 400
   `"item N: Enter an amount above 0."` (negative qty: 400 on any item). `PATCH` with `qty` <= 0:
   400 `"Enter an amount above 0."`. Nothing is saved. A table item with no `qty` still means 1.
+- **Per-entry ceiling on table rows (H1).** A table item whose computed numbers are above
+  **10,000 kcal or 500 g protein** (e.g. 5000 plates) is a 400 `"item N: That’s too much for one entry.
+  Try a smaller amount."` (`PATCH`: the same text without `item N: `). Nothing is saved. Typed kcal
+  (1-5000) and AI rows keep their own limits.
+- **All or nothing (H1).** `POST`, `PATCH` and `DELETE` write the row(s) and the day's summary (both days
+  for a move) in ONE transaction under the user's lock: if the summary can't be written nothing is saved,
+  so a day can never be left with list != summary. Numeric columns are wide (migration 018: per-entry
+  NUMERIC(12,1), summaries NUMERIC(14,1)); a value no column can hold is a 400 (`"That’s too much for one
+  entry…"` / `"That’s too much for one day. Try a smaller amount."`), never a 500.
 - `kcal_per_unit` on any non-`ai_estimate` item (including table items): 400.
 
 ### GET /version
