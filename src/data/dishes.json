@@ -41,6 +41,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -78,6 +84,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -118,6 +130,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -157,6 +175,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -196,6 +220,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -237,6 +267,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -277,6 +313,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -317,6 +359,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -356,6 +404,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -396,6 +450,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -437,6 +497,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -477,6 +543,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -526,6 +598,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -570,6 +648,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -615,6 +699,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -661,6 +751,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -701,6 +797,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -742,6 +843,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -781,6 +887,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -820,6 +931,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -865,6 +981,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -910,6 +1032,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -954,6 +1082,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -993,6 +1127,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1044,6 +1183,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1088,6 +1233,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1133,6 +1284,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1177,6 +1334,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1222,6 +1385,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1267,6 +1436,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1315,6 +1490,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1360,6 +1541,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1405,6 +1592,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1449,6 +1642,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1500,6 +1699,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1548,6 +1753,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1593,6 +1804,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1640,6 +1857,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1686,6 +1909,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1730,6 +1959,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1775,6 +2010,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1819,6 +2060,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1863,6 +2110,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1908,6 +2161,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -1952,6 +2211,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2008,6 +2273,14 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2052,6 +2325,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2098,6 +2377,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2142,6 +2427,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2187,6 +2478,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2231,6 +2528,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2275,6 +2578,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2320,6 +2629,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2364,6 +2679,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2410,6 +2731,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2454,6 +2781,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2500,6 +2833,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2545,6 +2884,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2593,6 +2938,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2643,6 +2995,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2683,6 +3042,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2729,6 +3093,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2775,6 +3145,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2821,6 +3197,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2866,6 +3248,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2912,6 +3300,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2956,6 +3350,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -2999,6 +3399,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3044,6 +3450,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3084,6 +3496,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3124,6 +3541,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3165,6 +3587,12 @@
     "grams": 80.0,
     "source": "1 plate = 2 idli (Product Engineer decision, common South Indian menu serving) x 40 g per piece (table piece weight)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3206,6 +3634,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3245,6 +3679,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3285,6 +3725,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3326,6 +3772,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3370,6 +3822,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3416,6 +3874,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3457,6 +3921,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3496,6 +3966,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3542,6 +4018,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3587,6 +4069,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3635,6 +4123,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3679,6 +4173,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3719,6 +4219,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3759,6 +4265,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3811,6 +4323,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3850,6 +4368,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3889,6 +4413,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3938,6 +4468,13 @@
     "grams": 70.0,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -3979,6 +4516,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4019,6 +4561,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4064,6 +4611,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4104,6 +4657,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4156,6 +4715,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4206,6 +4772,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4246,6 +4819,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4285,6 +4864,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4328,6 +4913,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4367,6 +4958,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4406,6 +5003,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4446,6 +5048,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4500,6 +5108,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4541,7 +5156,12 @@
     "source": "generic katori size (rules.json units: 150 g)"
    }
   ],
-  "estimate_unverified": true
+  "estimate_unverified": true,
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
+  ]
  },
  {
   "id": "sev_puri",
@@ -4591,6 +5211,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4641,6 +5268,13 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4681,6 +5315,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4732,6 +5371,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4784,6 +5428,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4836,6 +5485,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4887,6 +5541,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4940,6 +5599,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -4980,6 +5644,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5027,6 +5696,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5072,6 +5747,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5112,6 +5793,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5154,6 +5840,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5195,6 +5886,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5234,6 +5930,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5276,6 +5977,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5316,6 +6023,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5355,6 +6068,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5394,6 +6113,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5433,6 +6157,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5475,6 +6204,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5516,6 +6251,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5555,6 +6295,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5596,6 +6341,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5643,6 +6393,13 @@
     "grams": 300.0,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -5684,6 +6441,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5724,6 +6487,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5763,6 +6532,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5807,6 +6582,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5847,6 +6628,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5891,6 +6678,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5935,6 +6728,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -5974,6 +6773,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6014,6 +6819,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6060,6 +6871,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6099,6 +6916,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6144,6 +6967,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6189,6 +7018,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6235,6 +7070,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6280,6 +7121,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6331,6 +7178,14 @@
     "grams": 30.0,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6373,6 +7228,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6419,6 +7280,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6459,6 +7326,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6499,6 +7372,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6544,6 +7423,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6591,6 +7476,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6633,6 +7524,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6673,6 +7570,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6718,6 +7621,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -6752,6 +7661,10 @@
     "grams": 5.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6787,6 +7700,10 @@
     "grams": 5.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6822,6 +7739,10 @@
     "grams": 5.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6858,6 +7779,10 @@
     "grams": 5.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6893,6 +7818,10 @@
     "grams": 10.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6927,6 +7856,10 @@
     "grams": 7.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -6963,6 +7896,10 @@
     "grams": 15.0,
     "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -7003,6 +7940,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7039,6 +7982,10 @@
     "grams": 15.0,
     "source": "default portion (estimate): Our estimate: home-style recipe (ingredient grams + oil), not lab-measured"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -7073,6 +8020,10 @@
     "grams": 16.0,
     "source": "default portion (usda_fdc): NEEDS VERIFICATION: generic USDA FoodData Central values recalled from memory, scaled to p"
    }
+  ],
+  "supported_units": [
+   "spoon",
+   "gram"
   ]
  },
  {
@@ -7122,6 +8073,14 @@
     "grams": 100,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7172,6 +8131,14 @@
     "grams": 100,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7213,6 +8180,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7254,6 +8227,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7304,6 +8283,14 @@
     "grams": 150,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7349,6 +8336,13 @@
     "grams": 200,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -7389,6 +8383,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7434,6 +8434,13 @@
     "grams": 70,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7484,6 +8491,14 @@
     "grams": 50,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values (Open Food Fac)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7527,6 +8542,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7567,6 +8588,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7607,6 +8634,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7649,6 +8682,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -7687,6 +8725,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7725,6 +8769,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7763,6 +8813,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7801,6 +8857,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7839,6 +8901,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7877,6 +8945,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7917,6 +8991,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7957,6 +9037,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -7997,6 +9083,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8037,6 +9129,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8077,6 +9174,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8116,6 +9218,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8155,6 +9263,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8197,6 +9311,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8243,6 +9363,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8283,6 +9409,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8324,6 +9455,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8366,6 +9503,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8405,6 +9548,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -8449,6 +9597,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8488,6 +9642,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8528,6 +9688,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8570,6 +9736,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8618,6 +9790,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8658,6 +9836,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8698,6 +9882,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8735,6 +9925,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8772,6 +9968,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8812,6 +10014,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8856,6 +10063,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8896,6 +10109,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8936,6 +10155,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -8977,6 +10202,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9022,6 +10253,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9068,6 +10305,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9109,6 +10352,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9154,6 +10403,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9193,6 +10448,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9237,6 +10498,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9281,6 +10548,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9326,6 +10599,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9365,6 +10644,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9409,6 +10694,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9456,6 +10747,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9501,6 +10798,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9548,6 +10851,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9587,6 +10896,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9627,6 +10942,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9667,6 +10987,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9707,6 +11033,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9746,6 +11077,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9787,6 +11124,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9832,6 +11174,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9877,6 +11225,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9922,6 +11276,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -9964,6 +11324,12 @@
     "grams": 5,
     "source": "generic spoon size (rules.json units: 5 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "spoon",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10004,6 +11370,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10048,6 +11420,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10088,6 +11465,11 @@
     "grams": 150,
     "source": "generic katori size (rules.json units: 150 g)"
    }
+  ],
+  "supported_units": [
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -10128,6 +11510,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10170,6 +11558,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10212,6 +11606,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10254,6 +11654,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10294,6 +11700,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10334,6 +11746,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10376,6 +11794,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10421,6 +11845,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10461,6 +11891,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10504,6 +11940,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10544,6 +11986,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10586,6 +12034,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10633,6 +12087,13 @@
     "grams": 250,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values for this categ)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -10673,6 +12134,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10721,6 +12188,13 @@
     "grams": 250,
     "source": "1 pack = default portion (packaged product, NEEDS VERIFICATION: typical pack-label values for this categ)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "katori",
+   "glass",
+   "gram"
   ]
  },
  {
@@ -10763,6 +12237,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10803,6 +12283,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10842,6 +12328,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10882,6 +12374,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10922,6 +12420,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -10964,6 +12468,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  },
  {
@@ -11002,6 +12512,12 @@
     "grams": 300,
     "source": "generic plate size (rules.json units: 300 g)"
    }
+  ],
+  "supported_units": [
+   "count",
+   "piece",
+   "plate",
+   "gram"
   ]
  }
 ]

@@ -150,12 +150,17 @@ export function computeStreak(loggedDates: Iterable<string>, today: string): Str
  * without a variant_choice flag. A bare "biryani" always carries variant_choice, so it never counts as a pick. */
 let groupOf: ((id: string) => unknown) | null = null;
 export function setVariantGroupLookup(f: (id: string) => unknown) { groupOf = f; }
-/** parser.unitSupported (set by src/parser/index.ts, like the variant lookup): the units a table dish can be saved in */
-let unitOk: ((dishId: string, unit: string) => boolean) | undefined;
-export function setUnitLookup(f: (dishId: string, unit: string) => boolean) { unitOk = f; }
+/** parser.unitsFor / dish names (set by src/parser/index.ts, like the variant lookup): the units a table dish can be saved
+ * in, from the server's data; null = the phone doesn't have them */
+let unitLook: { units: (dishId: string) => string[] | null; name: (dishId: string) => string | undefined } | undefined;
+export function setUnitLookup(f: typeof unitLook) { unitLook = f; }
+export const unitsKnown = (dishId: string) => !unitLook || unitLook.units(dishId) !== null;
+export const unitSupportedFor = (dishId: string, unit: string) => !unitLook || !!unitLook.units(dishId)?.includes(unit);
+export const dishName = (dishId: string) => unitLook?.name(dishId) ?? 'this dish';
 /** rg6 F1: a table row in a unit the server can't save it in (it would store it needs_review and count nothing) */
-export const unitReason = (unit: string) => `This dish doesn’t come in ${unit === 'count' ? 'that unit' : unit}. Pick another unit.`;
-export const unitSupportedFor = (dishId: string, unit: string) => !unitOk || unitOk(dishId, unit);
+export const unitReason = (unit: string, dishId = '') => (void dishId, `This dish doesn’t come in ${unit === 'count' ? 'that unit' : unit}. Pick another unit.`);
+/** PE: a dish whose units the phone doesn't have yet: not counted until they come down with the dish table */
+export const UNITS_UNKNOWN = 'Check amount';
 function namedVariant(it: Item): boolean {
   if (!it.dish_id || it.ai_estimate || (it.flags ?? []).includes('variant_choice') || (it as { variant_options?: unknown[] }).variant_options?.length) return false;
   return !!groupOf?.(it.dish_id);
@@ -258,7 +263,8 @@ export function entryRefusal(e: FoodEntry): string | null {
   const finite = typeof k === 'number' && Number.isFinite(k);
   if (e.dish_id && src !== 'ai_estimate') {
     if (!qtyInRange(e.qty)) return amountReason(e.unit);
-    if (e.unit && !unitSupportedFor(e.dish_id, e.unit)) return unitReason(e.unit);
+    if (!unitsKnown(e.dish_id)) return UNITS_UNKNOWN;
+    if (e.unit && !unitSupportedFor(e.dish_id, e.unit)) return unitReason(e.unit, e.dish_id);
     return finite && k >= 0 ? null : NO_KCAL_REASON;
   }
   if (!finite || k <= 0) return NO_KCAL_REASON;

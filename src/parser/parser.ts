@@ -159,17 +159,35 @@ export class Parser {
   }
 
   dishById(id: string): Dish | undefined { return this.byID.get(id); }
-  /** Go parser.UnitSupported: a table dish can be SAVED in this unit as it is (one of UNITS, the dish comes in it, and the
-   * recompute keeps it: fats only in spoon / gram). Any other unit the server stores needs_review. Parity:
-   * src/data/supported-units.json is the backend's testdata/supported_units.json. */
-  unitSupported(dishId: string, unit: string): boolean {
+  /** The rule behind Go parser.UnitSupported (one of UNITS, the dish comes in it, the recompute keeps it: fats only in
+   * spoon / gram). Only for parity tests: what the phone USES is the server's data (unitsFor). */
+  unitRule(dishId: string, unit: string): boolean {
     const d = this.dishById(dishId);
     if (!d || !UNITS.includes(unit)) return false;
     if (this.fat.has(d.id)) return unit === 'spoon' || unit === 'gram';
     return this.unitFits(d, unit, false);
   }
-  /** the unit chips the edit sheet offers for a dish (UNITS order) */
-  supportedUnits(dishId: string): string[] { return UNITS.filter((u) => this.unitSupported(dishId, u)); }
+  private pulledUnits: Record<string, string[]> | null = null;
+  private seedUnits: Record<string, string[]> = {};
+  /** units pulled from the server with its dish table (GET /v1/dishes supported_units, stored on the phone) */
+  setPulledUnits(m: Record<string, string[]> | null) { this.pulledUnits = m; }
+  /** seed only (bundled golden copy), used when neither pulled data nor the bundled table has the dish's units */
+  setSeedUnits(m: Record<string, string[]>) { this.seedUnits = m; }
+  /** PE: the units the server saves this dish in, from the server's data: pulled units, else the bundled (pulled) dish
+   * table's supported_units, else the seed. null = the phone doesn't know them: the row shows 'Check amount' and isn't
+   * counted. Never all 7. */
+  unitsFor(dishId: string): string[] | null {
+    const p = this.pulledUnits?.[dishId];
+    if (p?.length) return p;
+    const d = this.dishById(dishId) as (Dish & { supported_units?: string[] }) | undefined;
+    if (d?.supported_units?.length) return d.supported_units;
+    const s = this.seedUnits[dishId];
+    return s?.length ? s : null;
+  }
+  /** a table dish can be SAVED (confirmed, counted) in this unit; any other unit the server stores needs_review */
+  unitSupported(dishId: string, unit: string): boolean { return !!this.unitsFor(dishId)?.includes(unit); }
+  /** the unit chips the edit sheet offers for a dish (the server's order); [] when the phone has no units for it */
+  supportedUnits(dishId: string): string[] { return [...(this.unitsFor(dishId) ?? [])]; }
   allDishes(): Dish[] { return this.table; }
 
   private transliterate(s: string): string {

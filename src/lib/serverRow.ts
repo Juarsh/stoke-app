@@ -4,7 +4,7 @@
 // so. Phone == server == /v1/summary after every sync. Pure (testable).
 import { parser, type Item } from '../parser';
 import type { ServerRow } from './api';
-import { unitSupportedFor, type FoodEntry } from './domain';
+import { serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
 
 const near = (a: number | undefined, b: number) => typeof a !== 'number' || Math.abs(a - b) <= 0.5;
 const fmt = (n: number) => n.toLocaleString('en-IN');
@@ -42,4 +42,18 @@ export function adoptServer(e: FoodEntry, row: ServerRow): FoodEntry {
     kcal: { low: row.kcal_low ?? k, best: k, high: row.kcal_high ?? k }, protein_g: { low: row.protein_low ?? p, best: p, high: row.protein_high ?? p },
     carbs_g: row.carbs_g ?? e.carbs_g, fat_g: row.fat_g ?? e.fat_g,
     server_note: dishRow ? `Saved as ${fmt(qty)} ${unit} · ${fmt(k)} kcal.` : `Saved as ${fmt(k)} kcal.` };
+}
+
+export const UNITS_HELD = 'units_unknown';
+/** PE: a table row for a dish the phone has no units for (never all 7): held as a review row, not counted, 'Check amount'.
+ * It is saved on the server as needs_review (not counted there either) and checked in Review once the units come down. */
+export function needsUnits(e: FoodEntry): boolean {
+  return !!e.dish_id && !e.needs_review && !e.pending && !e.deleted_at && serverSource(e) !== 'ai_estimate' && serverSource(e) !== 'custom' && !unitsKnown(e.dish_id);
+}
+export function holdForUnits(e: FoodEntry): FoodEntry {
+  const z = { low: 0, best: 0, high: 0 };
+  const row: ServerRow = { qty: e.qty, unit: e.unit, dish_id: e.dish_id, kcal_best: e.kcal.best, kcal_low: e.kcal.low, kcal_high: e.kcal.high,
+    protein_best: e.protein_g.best, protein_low: e.protein_g.low, protein_high: e.protein_g.high, carbs_g: e.carbs_g, fat_g: e.fat_g };
+  return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: itemOf(e, row),
+    reject_code: UNITS_HELD, server_note: UNITS_UNKNOWN };
 }

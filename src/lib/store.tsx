@@ -5,10 +5,10 @@ import { abandonedEntry, dropLate, dropLateOps, expirePending, stampPending } fr
 import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
-import { createApi } from './api';
+import { createApi, type DishUnits } from './api';
 import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
-import { adoptServer } from './serverRow';
+import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
@@ -23,6 +23,8 @@ interface Persisted {
   queue: Op[]; themePref: ThemePref; challenge: Challenge | null;
   /** the app's own per-user AI count; resets at the server's next_reset_at */
   aiQuota: AiQuota; learned: Learned;
+  /** PE: supported units per dish pulled with the server's dish table (the bundled table's are only the start) */
+  dishUnits?: DishUnits | null;
 }
 const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {} };
 const KEY = 'app-state-v1';
@@ -139,6 +141,11 @@ function useStoreValue() {
       setS((p) => applyFlush({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}) }, sent, r));
       // shown once (not persisted): the row is already gone from the phone
       if (r.gone?.length) setNotice(DELETED_ELSEWHERE);
+      // a row held for its dish's units ('Check amount'): pull them again with the dish table
+      if (entriesRef.current.some((e) => e.reject_code === UNITS_HELD && !e.deleted_at)) {
+        const t = await (api.getDishUnits?.() ?? Promise.resolve(null)).catch(() => null);
+        if (t) { parser.setPulledUnits(t.units); setS((p) => ({ ...p, dishUnits: t })); }
+      }
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
@@ -153,6 +160,12 @@ function useStoreValue() {
     const t = setTimeout(() => { sync(); }, Math.max(0, headAt - Date.now()) + 50);
     return () => clearTimeout(t);
   }, [ready, s.user, headAt, sync]);
+  // PE: the dish units come down with the server's dish table and are kept on the phone (applied before any save)
+  useEffect(() => { parser.setPulledUnits(s.dishUnits?.units ?? null); }, [s.dishUnits]);
+  useEffect(() => {
+    if (!ready || !s.user || api.mock) return;
+    (api.getDishUnits?.() ?? Promise.resolve(null)).then((t) => { if (t) { parser.setPulledUnits(t.units); setS((p) => ({ ...p, dishUnits: t })); } }).catch(() => {});
+  }, [ready, s.user, api]);
   // refresh Remembered foods from the server when signed in
   useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
@@ -172,7 +185,9 @@ function useStoreValue() {
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
     /** Store guard (entryRefusal): typed kcal outside 1-5000, or a counted row with no real number, is refused. Returns the
      * refused ones with the reason; the caller keeps them open and shows it (never dropped silently). */
-    addEntries: (all: FoodEntry[]): Refused[] => {
+    addEntries: (all0: FoodEntry[]): Refused[] => {
+      // a dish the phone has no units for: held for review ('Check amount', not counted) until they come down
+      const all = all0.map((e) => (needsUnits(e) ? holdForUnits(e) : e));
       const refused = all.flatMap((e) => { const reason = entryRefusal(e); return reason ? [{ id: e.id, reason }] : []; });
       const es = all.filter((e) => !refused.some((r) => r.id === e.id));
       if (es.length) upd((p) => ({ ...p, entries: [...p.entries, ...es], queue: es.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue) }));

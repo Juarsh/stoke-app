@@ -1,7 +1,7 @@
 // Builds a demo app state (mock user, profile, 10 days of logs) for QA screenshots.
 import { addDays, entryFromItem, localDate, reviewEntry, Slot } from '../src/lib/domain';
 import { DISH_TABLE_VERSION, parser } from '../src/parser';
-import { adoptServer } from '../src/lib/serverRow';
+import { adoptServer, holdForUnits } from '../src/lib/serverRow';
 
 const today = localDate();
 const meals: [number, Slot, string][] = [
@@ -36,6 +36,10 @@ if (process.argv[3] === 'rg6') {
     protein_best: dal.protein_g.best, protein_low: dal.protein_g.low, protein_high: dal.protein_g.high }));
   entries.push({ ...t('g3', 'veg_biryani', 1, 'plate', 'dinner'), variant_dish_id: 'veg_biryani', server_version: 1, sync_error: 'variant_required', sync_reason: 'Pick a type to save this.',
     variant_options: parser.variantGroup('veg_biryani', 1, 'plate') ?? [] });
+  // PE: a dish the phone has no units for yet (new on the server, not pulled): held, 'Check amount', not counted
+  const k = { ...parser.unknown('kodo khichdi'), dish_id: 'kodo_khichdi', name: 'kodo khichdi', source: 'table', data_source: 'table', ai_estimate: false, quantity: 1, unit: 'katori',
+    kcal: { low: 170, best: 210, high: 260 }, protein_g: { low: 4.5, best: 6, high: 7.5 }, carbs_g: 34, fat_g: 5, needs_confirmation: false } as never;
+  entries.push(holdForUnits(entryFromItem(k, { id: 'g4', slot: 'breakfast', raw_text: '1 katori kodo khichdi', local_date: today, tableVersion: DISH_TABLE_VERSION })));
 }
 process.stdout.write(JSON.stringify({
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },

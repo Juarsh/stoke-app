@@ -29,6 +29,8 @@ export class ApiError extends Error {
 /** The server's copy of a saved row (POST entries[i] / PATCH body): what it stored and counts (rg6 F1). */
 export type ServerRow = { version?: number; state?: string; dish_id?: string | null; name?: string; qty?: number; unit?: string; oil_level?: string;
   kcal_best?: number; kcal_low?: number; kcal_high?: number; protein_best?: number; protein_low?: number; protein_high?: number; carbs_g?: number; fat_g?: number };
+/** Units pulled with the server's dish table (stored on the phone). */
+export type DishUnits = { version: number; units: Record<string, string[]> };
 /** A PATCH still refused after the one version-conflict retry: surfaced on the entry ("Couldn’t sync this"). */
 export const SYNC_CONFLICT = 'sync_conflict';
 /** Extra fields of a 422 {error:{code,item,dish_id,message,variant_options,fields}}; {} for the plain {error:"string"} shape. */
@@ -123,6 +125,21 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     /** POST with client_id (idempotent). If the server already has it (an edit), PATCH by client_id with the row version the
      * phone last saw (never its clock). On 409 version_conflict the user's edit is re-applied on the server's current version
      * and retried ONCE; still refused -> ApiError(409, sync_conflict). Returns the server's new version. */
+    /** PE: the server's supported units per dish, from its dish table (GET /v1/dishes supported_units) and that table's
+     * version. null when the server doesn't send them (older build): the phone keeps what it has. */
+    async getDishUnits(): Promise<DishUnits | null> {
+      if (config.mock) return null;
+      const rows = await req<{ id?: string; version?: number; supported_units?: unknown }[]>('GET', '/v1/dishes');
+      if (!Array.isArray(rows)) return null;
+      const units: Record<string, string[]> = {};
+      let version = 1;
+      for (const d of rows) {
+        if (typeof d?.id !== 'string') continue;
+        version = Math.max(version, d.version ?? 1);
+        if (Array.isArray(d.supported_units) && d.supported_units.every((u) => typeof u === 'string') && d.supported_units.length) units[d.id] = d.supported_units as string[];
+      }
+      return Object.keys(units).length ? { version, units } : null;
+    },
     async upsertEntry(e: FoodEntry): Promise<{ version?: number; row?: ServerRow }> {
       if (config.mock) return {};
       type Saved = ServerRow;

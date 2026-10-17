@@ -20,7 +20,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider, Store, useStore, applyFlush } from '../src/lib/store';
-import { counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, localDate, unitReason } from '../src/lib/domain';
+import { counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, localDate, unitReason, UNITS_UNKNOWN } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item, UNITS } from '../src/parser';
 import { ApiError } from '../src/lib/api';
 import { adoptServer } from '../src/lib/serverRow';
@@ -37,7 +37,9 @@ const QTY = 'Enter an amount above 0.';
 type Row = { client_id: string; version: number; kcal: number; protein: number; state: string; dish_id: string; qty: number; unit: string; deleted: boolean };
 const server = {
   rows: new Map<string, Row>(), log: [] as { method: string; path: string; body: Record<string, unknown> }[], force: [] as { status: number; body: unknown }[],
-  reset() { this.rows.clear(); this.log = []; this.force = []; },
+  /** GET /v1/dishes rows (id, version, supported_units) */
+  dishes: [] as { id: string; version: number; supported_units: string[] }[],
+  reset() { this.rows.clear(); this.log = []; this.force = []; this.dishes = []; },
   summary() { return [...this.rows.values()].filter((r) => !r.deleted && r.state !== 'needs_review').reduce((s, r) => s + r.kcal, 0); },
 };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
@@ -45,7 +47,7 @@ const view = (r: Row) => ({ client_id: r.client_id, id: 1, version: r.version, s
 function save(it: { dish_id: string; qty?: number; unit?: string; state?: string }, prefix: string): Omit<Row, 'client_id' | 'version' | 'deleted'> | { status: number; msg: string } {
   if (it.qty !== undefined && it.qty <= 0) return { status: 400, msg: `${prefix}${QTY}` };
   const qty = it.qty ?? 1; const d = parser.dishById(it.dish_id)!;
-  if (it.state === 'needs_review' || !parser.unitSupported(it.dish_id, it.unit ?? '')) {
+  if (it.state === 'needs_review' || !parser.unitRule(it.dish_id, it.unit ?? '')) { // the server's own rule
     const r = parser.recompute(it.dish_id, qty, d.unit, ''); // draft: the dish's own unit numbers, not counted
     return { kcal: r.kcal.best, protein: r.protein_g.best, state: 'needs_review', dish_id: it.dish_id, qty, unit: d.unit };
   }
@@ -56,6 +58,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
   const path = url.replace('http://api.test', ''); const b = init.body ? JSON.parse(init.body) : {};
   server.log.push({ method: init.method, path, body: b });
   if (path === '/v1/remembered') return reply(200, { remembered: [] });
+  if (path === '/v1/dishes') return reply(200, server.dishes);
   const dup = init.method === 'POST' && server.rows.has(b.items?.[0]?.client_id);
   if (server.force.length && /^\/v1\/entries/.test(path) && !dup) { const x = server.force.shift()!; return reply(x.status, x.body); }
   if (init.method === 'POST' && path === '/v1/entries') {
@@ -140,18 +143,18 @@ describe('F1 (a): only the units the dish comes in', () => {
     await act(async () => { t.unmount(); });
   });
   test('store guard: a table row in an unsupported unit (or litre) is refused with the reason, nothing sent', async () => {
-    expect(entryRefusal(tableEntry('x', 'dal', 1, 'piece'))).toBe(unitReason('piece'));
+    expect(entryRefusal(tableEntry('x', 'dal', 1, 'piece'))).toBe('This dish doesn’t come in piece. Pick another unit.');
     expect(entryRefusal({ ...tableEntry('x', 'dal', 1, 'katori'), unit: 'litre' })).toBe('This dish doesn’t come in litre. Pick another unit.');
     expect(entryRefusal(tableEntry('x', 'dal', 2, 'katori'))).toBeNull();
     await boot();
     let refused: unknown;
     await act(async () => { refused = st.addEntries([tableEntry('P', 'dal', 1, 'piece')]); });
-    expect(refused).toEqual([{ id: 'P', reason: unitReason('piece') }]);
+    expect(refused).toEqual([{ id: 'P', reason: unitReason('piece', 'dal') }]);
     await settle(); expect(server.log.filter((l) => l.path.startsWith('/v1/entries'))).toHaveLength(0);
     await act(async () => { st.addEntries([tableEntry('K', 'dal', 2, 'katori')]); }); await settle();
     let why: string | null = null;
     await act(async () => { why = st.updateEntry({ ...ent('K'), unit: 'glass' }); });
-    expect(why).toBe(unitReason('glass')); await settle();
+    expect(why).toBe('This dish doesn’t come in glass. Pick another unit.'); await settle();
     expect(ent('K')).toMatchObject({ unit: 'katori', qty: 2 }); expectInSync();
   });
 });
@@ -206,8 +209,9 @@ describe('F1 (b): the phone shows (and counts) what the server saved', () => {
     const kept = applyFlush({ entries: [changed], queue: [op] }, [op], base).entries[0];
     expect(kept).toMatchObject({ unit: 'katori' }); expect(kept.needs_review).toBeFalsy(); expect(kept.server_note).toBeUndefined();
     // same numbers back: unchanged
-    const same = { ...base, rows: { A: { row: { version: 1, state: 'confirmed', dish_id: 'dal', qty: 2, unit: 'katori', kcal_best: 300, protein_best: tableEntry('B', 'dal', 2, 'katori').protein_g.best }, sent: tableEntry('B', 'dal', 2, 'katori') } } };
-    expect(adoptServer(tableEntry('B', 'dal', 2, 'katori'), same.rows.A.row)).toEqual(tableEntry('B', 'dal', 2, 'katori'));
+    const B = tableEntry('B', 'dal', 2, 'katori'); // one instance (its timestamps)
+    const sameRow = { version: 1, state: 'confirmed', dish_id: 'dal', qty: 2, unit: 'katori', kcal_best: 300, protein_best: B.protein_g.best };
+    expect(adoptServer(B, sameRow)).toBe(B);
   });
 });
 
@@ -243,5 +247,45 @@ describe('F4 (PE): variant_required on an edit', () => {
     expect(server.rows.get('V')).toMatchObject({ dish_id: 'chicken_biryani', state: 'confirmed' });
     expectInSync();
     expect(r.root.findAll((n) => n.props.testID === 'variant-pick')).toHaveLength(0);
+  });
+});
+
+describe('PE: units come down with the dish table; a dish with none on the phone is "Check amount", not counted', () => {
+  // dal as if the phone's table had no units for it (no pulled data, no supported_units, no seed)
+  let saved: string[] | undefined;
+  const dal = () => parser.dishById('dal') as unknown as { supported_units?: string[] };
+  beforeEach(() => { saved = dal().supported_units; delete dal().supported_units; parser.setSeedUnits({}); parser.setPulledUnits(null); });
+  afterEach(() => { dal().supported_units = saved; parser.setSeedUnits(require('../src/data/supported-units.json')); parser.setPulledUnits(null); });
+
+  test('sheet: no unit chips at all (never the 7), "Check amount", Save off', async () => {
+    const onSave = jest.fn(); let t!: ReactTestRenderer;
+    const it = { ...parser.recompute('dal', 1, 'katori', ''), needs_confirmation: false } as Item;
+    await act(async () => { t = create(<EditSheet visible it={it} onClose={() => {}} onSave={onSave} onDelete={() => {}} />); });
+    const chips = t.root.find((n) => n.props.testID === 'unit-chips' && typeof n.type !== 'string');
+    expect(chips.findAll((n) => typeof n.props.label === 'string' && typeof n.props.onPress === 'function')).toHaveLength(0);
+    expect(textOf(t)).toContain(UNITS_UNKNOWN); expect(UNITS_UNKNOWN).toBe('Check amount');
+    await act(async () => { t.root.findAll((n) => n.props.title === 'Save changes')[0].props.onPress(); });
+    expect(onSave).not.toHaveBeenCalled();
+    await act(async () => { t.unmount(); });
+  });
+  test('store: held for review (not counted, here or on the server) until the units are pulled; then checked and counted', async () => {
+    await boot([], [], <><Today /><Review /></>);
+    await act(async () => { st.addEntries([tableEntry('H', 'dal', 2, 'katori')]); }); await settle();
+    expect(ent('H')).toMatchObject({ needs_review: true, reject_code: 'units_unknown', server_note: 'Check amount' });
+    expect(counted(ent('H'))).toBe(false);
+    expect(server.rows.get('H')).toMatchObject({ state: 'needs_review' }); expectInSync();
+    expect(textOf(r)).toContain('Check amount');
+    expect(entryRefusal({ ...ent('H'), needs_review: false, confirmed: true })).toBe(UNITS_UNKNOWN); // can't be confirmed yet
+    // the server's table now has dal's units; the next sync pulls them (the held row asks for it)
+    server.dishes = [{ id: 'dal', version: 3, supported_units: ['katori', 'spoon', 'plate', 'gram'] }];
+    await act(async () => { st.addEntries([tableEntry('R', 'roti', 2, 'count')]); }); await settle(); await tick();
+    expect(server.log.some((l) => l.path === '/v1/dishes')).toBe(true);
+    expect(st.dishUnits?.units.dal).toEqual(['katori', 'spoon', 'plate', 'gram']);
+    expect(parser.supportedUnits('dal')).toEqual(['katori', 'spoon', 'plate', 'gram']);
+    let why: string | null = null;
+    await act(async () => { why = st.confirmReview('H', { ...ent('H').review_item!, needs_confirmation: false }); });
+    expect(why).toBeNull(); await settle();
+    expect(counted(ent('H'))).toBe(true); expect(ent('H').kcal.best).toBe(parser.recompute('dal', 2, 'katori', '').kcal.best);
+    expect(server.rows.get('H')).toMatchObject({ state: 'confirmed', unit: 'katori', qty: 2 }); expectInSync();
   });
 });

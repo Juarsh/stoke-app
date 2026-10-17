@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser } from '../parser';
-import { unitReason, amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
+import { unitReason, UNITS_UNKNOWN, amountReason, limitReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -75,10 +75,11 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   const preview: Item = !table ? scaleAi(it, qty) : amountOff ? it : safeEdit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined });
   // an AI reading scaled past the server's per-item limits (kcal > 5000, protein > 300): refused here, nothing is sent
   const tooMuch = !table ? limitReason(preview) : null;
-  // rg6 F1: only the units this dish can be saved in (the server's own list, parity-tested); a reading in any other unit
-  // (e.g. "1 glass roti") must pick one first
+  // rg6 F1 / PE: only the units this dish can be saved in (the server's data, pulled with its dish table); a reading in any
+  // other unit (e.g. "1 glass roti") must pick one first. No units on the phone: 'Check amount', never all 7.
   const units = table ? parser.supportedUnits(dishId) : [];
   const unitOff = table && !units.includes(unit);
+  const unitLine = !unitOff ? '' : units.length ? unitReason(unit, dishId) : UNITS_UNKNOWN;
   const blocked = amountOff || !!tooMuch || unitOff;
   const step = qtyStep(unit);
   // Save = the amount the user chose: a confirmed reading, so the "unusual amount" options recompute attaches for a big
@@ -98,7 +99,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
       </Row>
       {amountOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="amount-range">{amountReason(unit)}</T> : null}
       {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }} testID="unit-chips">{units.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={u} onPress={() => setUnit(u)} />)}</Row> : null}
-      {unitOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="unit-off">{unitReason(unit)}</T> : null}
+      {unitOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="unit-off">{unitLine}</T> : null}
       {preview.oil_level !== '' || oil ? (
         <>
           <T v="bodyStrong">Oil / ghee</T>

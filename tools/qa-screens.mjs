@@ -96,8 +96,10 @@ for (const theme of ['light', 'dark']) {
   await shot(g, `today-server-version-${theme}`, { fullPage: true });
   await pick.click(); await wait(g, 1200);
   await shot(g, `today-pick-type-${theme}`);
+  if ((await g.getByText('Check amount', { exact: true }).count()) < 1) throw new Error('no Check amount row on Today');
   await g.goto(BASE + '/review'); await wait(g, 2000);
   await shot(g, `review-server-note-${theme}`, { fullPage: true });
+  if ((await g.getByText('Check amount', { exact: true }).count()) < 1) throw new Error('no Check amount row in Review');
   await g.getByRole('button', { name: /^Check: read as dal/ }).first().click(); await wait(g, 1200);
   const chips = await g.getByTestId('unit-chips').innerText();
   if (/piece|glass|count/.test(chips)) throw new Error(`dal sheet offers units it doesn't come in: ${chips}`);
