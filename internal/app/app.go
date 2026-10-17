@@ -54,6 +54,10 @@ type Config struct {
 	AdminToken string
 	// Dishes overrides the embedded table (tests simulate table updates).
 	Dishes []dishes.Dish
+	// QueueCtx bounds the AI queue worker (default: runs for the process's
+	// life). Cancelling it stops the worker like a process exit; pending
+	// jobs stay in ai_parse_jobs for the next start (tests simulate restarts).
+	QueueCtx context.Context
 }
 
 func New(c Config) (http.Handler, error) {
@@ -125,7 +129,11 @@ func New(c Config) (http.Handler, error) {
 	}
 	q := food.NewQueue(c.AIPerMinute, c.AIQueueMax)
 	q.SetRequeueMax(c.AIRequeueMax)
-	fs.Start(context.Background(), q)
+	qctx := c.QueueCtx
+	if qctx == nil {
+		qctx = context.Background()
+	}
+	fs.Start(qctx, q)
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{

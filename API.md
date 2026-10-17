@@ -275,8 +275,16 @@ parse is included in the prompt only as a hint. Every AI item comes back with
 - The queue runs in the server process and drains at `AI_PER_MINUTE`
   (default 8). A queue that is full (500 jobs) ends the meal as failed
   (`fallback: "busy"`, `fallback_reason: "error"`, `ai_state: "failed"`).
-  Pending jobs are lost on restart; the app should save the meal as
-  `needs_review` and parse it again later.
+  Jobs are stored in Postgres (`ai_parse_jobs`), so they survive a restart
+  or a sleeping server: the same `job_id` keeps polling (202 while pending,
+  then 200), and a pending job resumes when the server starts again. A job
+  whose `AI_REQUEUE_MAX_MINUTES` window ran out while the server was down
+  (counted from its first try, or from when it was queued if it never got
+  one) ends as failed with `fallback_reason: "gave_up"` on the next start,
+  with no AI call. A meal queued but never tried that gives up this way gets
+  its reserved AI call back. The app should still save the meal as
+  `needs_review` (as today) and keep polling; a 404 only means the job
+  finished more than an hour ago or belongs to someone else.
 - AI not configured, or `use_ai: false`: 200 with `answer: "generic"`. This is
   the rule-based guess with every item set to `needs_confirmation`, plus
   placeholder cards for unknown text.
@@ -588,7 +596,7 @@ A later attempt that reaches Gemini is charged against the caps (see above); a 4
 leaves is not. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
 reason) and `next_attempt_at` (RFC 3339). When the window runs out the job ends as failed with
 `fallback: "gave_up"`, `fallback_reason: "gave_up"`. A finished job stays pollable for an hour after it
-finishes (so a job that used the full window is still there).
+finishes (so a job that used the full window is still there), including across server restarts.
 
 **Failed means the user types the calories.** Only `daily_limit`, `user_limit`, `error` and `gave_up` end a meal as
 failed: `ai_state: "failed"`, `status: "done"`, `answer: "none"`. Confident table items stay in `items` as

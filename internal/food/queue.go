@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
 )
@@ -69,9 +71,10 @@ func requeueDelay(n int) time.Duration {
 
 // Queue drains AI jobs at a fixed rate (the per-minute cap) on one worker,
 // so bursts wait instead of hitting the provider's rate limit. A job whose
-// call came back busy goes back in with a later NotBefore. In-memory:
-// pending jobs are lost on restart, and the app then falls back to its
-// needs_review flow and re-parses later.
+// call came back busy goes back in with a later NotBefore. With a DB (set
+// by Service.Start) jobs are durable in ai_parse_jobs: a restart resumes
+// pending jobs (see resume) and polls read the row, so they work across
+// restarts and instances. Without one the queue is memory-only.
 type Queue struct {
 	mu       sync.Mutex
 	jobs     map[string]*Job
@@ -86,6 +89,10 @@ type Queue struct {
 	ttl         time.Duration
 	requeueMax  time.Duration // give-up window from the first try
 	callTimeout time.Duration
+	db          *pgxpool.Pool
+	// release gives back the reserved call of a job that gave up on resume
+	// without ever being tried.
+	release func(*Job)
 }
 
 // NewQueue: perMinute calls a minute (<=0 means no spacing), at most max waiting.
@@ -148,6 +155,15 @@ func (q *Queue) Add(uid int64, text, key string, hint []parser.Item, generic Par
 		q.mu.Unlock()
 		return nil, false
 	}
+	if q.db != nil {
+		// stored before it can run or be polled; a job that can't be stored
+		// is refused like a full queue (the meal ends failed, never lost)
+		if err := q.insertJob(j); err != nil {
+			q.mu.Unlock()
+			log.Printf("ai job store failed: job=%s err=%v", j.ID, err)
+			return nil, false
+		}
+	}
 	q.jobs[j.ID] = j
 	q.waiting = append(q.waiting, j)
 	q.mu.Unlock()
@@ -198,15 +214,27 @@ func (q *Queue) Run(ctx context.Context) {
 				return
 			}
 		}
-		last = time.Now()
-		q.mu.Lock()
-		if j.FirstTry.IsZero() {
-			j.FirstTry = last
+		start := time.Now()
+		if q.db != nil {
+			if !q.claimJob(j, start) {
+				continue // another instance moved it on; no call made
+			}
+		} else {
+			q.mu.Lock()
+			if j.FirstTry.IsZero() {
+				j.FirstTry = start
+			}
+			q.mu.Unlock()
 		}
-		q.mu.Unlock()
+		last = start
 		cctx, cancel := context.WithTimeout(ctx, q.callTimeout)
 		res, requeue := q.run(cctx, j)
 		cancel()
+		if ctx.Err() != nil {
+			// shutting down mid-attempt: leave the job pending in the DB (its
+			// lease runs out) so the next process resumes it, as after a crash
+			return
+		}
 		now := time.Now()
 		var at time.Time
 		if requeue {
@@ -226,16 +254,39 @@ func (q *Queue) Run(ctx context.Context) {
 			j.Result, j.Status, j.Finished = res, "done", now
 			j.Hint = nil
 		}
+		snap := *j
 		q.mu.Unlock()
+		if q.db != nil {
+			if requeue {
+				q.saveRequeue(snap)
+			} else if !q.saveDone(snap, false) {
+				log.Printf("ai job result not stored (finished elsewhere or db error): job=%s", j.ID)
+			}
+		}
 	}
 }
 
-// Get returns a copy of the job if the user owns it.
+// Get returns a copy of the job if the user owns it. With a DB the row is
+// the answer (any instance, any restart); a finished job expires ttl after
+// it finished. A DB error falls back to this process's copy.
 func (q *Queue) Get(uid int64, id string) (Job, bool) {
+	if q.db != nil {
+		j, ok, err := q.loadJob(uid, id)
+		if err == nil {
+			if !ok || (j.Status == "done" && time.Since(j.Finished) > q.ttl) {
+				return Job{}, false
+			}
+			return j, true
+		}
+		log.Printf("ai job load failed, using memory: job=%s err=%v", id, err)
+	}
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	j, ok := q.jobs[id]
 	if !ok || j.UserID != uid {
+		return Job{}, false
+	}
+	if j.Status == "done" && time.Since(j.Finished) > q.ttl {
 		return Job{}, false
 	}
 	return *j, true
@@ -261,7 +312,32 @@ func (s *Service) Start(ctx context.Context, q *Queue) {
 		c, sp := j.failSplit()
 		return s.failedResponse(c, sp, j.Slot, "gave_up", "gave_up")
 	}
+	q.release = func(j *Job) {
+		// only on the quota day it was reserved; a later day's counter never held it
+		if s.DB != nil && s.Quota != nil && s.Quota.Day(j.Created) == s.Quota.Day(httpx.Now()) {
+			s.releaseAI(context.Background(), j.UserID)
+		}
+	}
+	q.db = s.DB
 	s.Queue = q
+	if q.db != nil {
+		if err := q.resume(); err != nil {
+			log.Printf("ai jobs resume failed: %v", err)
+		}
+		q.sweepDone()
+		go func() {
+			t := time.NewTicker(10 * time.Minute)
+			defer t.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-t.C:
+					q.sweepDone()
+				}
+			}
+		}()
+	}
 	go q.Run(ctx)
 }
 
