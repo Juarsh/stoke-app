@@ -185,7 +185,7 @@ for (const theme of ['light', 'dark']) {
   if (todayWarn === muted) throw new Error(`warn line not in warn: ${todayWarn}`);
   if (muted !== kcalCol) throw new Error(`reason not muted: ${muted} vs ${kcalCol}`);
   if ((await h.getByText('(deleted)', { exact: false }).count()) < 1) throw new Error('no (deleted)');
-  await del.scrollIntoViewIfNeeded(); await wait(h, 400);
+  await del.evaluate((n) => n.scrollIntoView({ block: 'center' })); await wait(h, 600); // clear of the floating tab bar
   await shot(h, `progress-deleted-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
