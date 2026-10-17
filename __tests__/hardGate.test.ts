@@ -38,7 +38,7 @@ describe('Review bulk ("All look right") uses the Log batch rule', () => {
   });
   test('review.tsx uses reviewBulk for the button and its kcal', () => {
     const src = fs.readFileSync(path.join(__dirname, '../src/app/review.tsx'), 'utf8');
-    expect(src).toMatch(/const sum = reviewSummary\(rows\);/); expect(src).toMatch(/sum\.bulk\.forEach\(\(e\) => tried\(e\.id, st\.confirmReview/);
+    expect(src).toMatch(/const sum = reviewSummary\(rows\);/); expect(src).toMatch(/sum\.bulk\.forEach\(\(e\) => confirmIt\(e\.id, e\.review_item!\)\)/);
   });
 });
 

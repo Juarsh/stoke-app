@@ -11,7 +11,8 @@ import { Button, Card, Row, Screen, T } from '@/components/ui';
 import { hasKcal, toReview } from '@/lib/domain';
 import { itemKind } from '@/lib/itemKind';
 import { reviewHeader } from '@/lib/reviewMode';
-import { useStore } from '@/lib/store';
+import { CHOOSE_FIRST_REASON, useStore } from '@/lib/store';
+import type { Item } from '@/parser';
 import { isStale, pendingFor } from '@/lib/syncQueue';
 import { failedCopy } from '@/lib/aiRows';
 import { useBackstopTick } from '@/lib/useBackstop';
@@ -30,6 +31,13 @@ export default function Review() {
   /** entry id -> why the store guard refused the save: the row stays here with it (never dropped silently) */
   const [no, setNo] = useState<Record<string, string>>({});
   const tried = (id: string, why: string | null | void) => setNo((m) => ({ ...m, [id]: why || '' }));
+  /** entry id -> the reading that still needs a pick: its choices are shown (the message never points to a hidden one) */
+  const [choice, setChoice] = useState<Record<string, Item>>({});
+  const confirmIt = (id: string, n: Item) => {
+    const why = st.confirmReview(id, n);
+    setChoice((m) => { const c = { ...m }; if (why === CHOOSE_FIRST_REASON) c[id] = n; else delete c[id]; return c; });
+    tried(id, why);
+  };
   return (
     <Screen title="To review" right={<Button kind="ghost" title="Done" onPress={() => router.back()} />}>
       {rows.length === 0 && waiting.length === 0 ? <T tone="muted">All checked.</T> : null}
@@ -37,15 +45,17 @@ export default function Review() {
       {rows.map((e) => {
         const it = e.review_item!;
         const kind = reviewRowKind(it);
-        const body = kind === 'kcal'
+        const body = choice[e.id]
+          ? <OpenRow it={choice[e.id]} kind="unit" text={e.raw_text} onConfirm={(n) => confirmIt(e.id, n)} onEdit={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />
+          : kind === 'kcal'
           ? <KcalRow name={e.raw_text || it.name} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason, resetsAt: e.ai_resets_at }) : undefined} onAdd={(k) => tried(e.id, st.confirmReviewKcal(e.id, k))} onRemove={() => st.dropReview(e.id)} />
           : kind === 'estimate'
-            ? <OpenRow it={it} kind="estimate" text={e.raw_text} onAdd={(n) => tried(e.id, st.confirmReview(e.id, n))} onConfirm={(n) => tried(e.id, st.confirmReview(e.id, n))} onEdit={(n) => tried(e.id, st.confirmReview(e.id, n))} onRemove={() => st.dropReview(e.id)} />
+            ? <OpenRow it={it} kind="estimate" text={e.raw_text} onAdd={(n) => confirmIt(e.id, n)} onConfirm={(n) => confirmIt(e.id, n)} onEdit={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'chips'
-            ? <OpenRow it={it} kind="unit" text={e.raw_text} onConfirm={(n) => tried(e.id, st.confirmReview(e.id, n))} onEdit={(n) => tried(e.id, st.confirmReview(e.id, n))} onRemove={() => st.dropReview(e.id)} />
+            ? <OpenRow it={it} kind="unit" text={e.raw_text} onConfirm={(n) => confirmIt(e.id, n)} onEdit={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />
             : itemKind(it) === 'ai_estimate' || !it.dish_id
-              ? <ItemCard it={it} slot={e.slot} confirmed={false} onEdit={(n) => tried(e.id, st.confirmReview(e.id, n))} onConfirm={() => tried(e.id, st.confirmReview(e.id, it))} onRemove={() => st.dropReview(e.id)} onSlot={() => {}} />
-              : <ConfirmCard it={it} onResolve={(n) => tried(e.id, st.confirmReview(e.id, n))} onRemove={() => st.dropReview(e.id)} />;
+              ? <ItemCard it={it} slot={e.slot} confirmed={false} onEdit={(n) => confirmIt(e.id, n)} onConfirm={() => confirmIt(e.id, it)} onRemove={() => st.dropReview(e.id)} onSlot={() => {}} />
+              : <ConfirmCard it={it} onResolve={(n) => confirmIt(e.id, n)} onRemove={() => st.dropReview(e.id)} />;
         return (
           <Card key={e.id}>
             {e.reject_code ? <T v="caption" tone="muted">You typed: {e.raw_text}</T> : null}
@@ -63,7 +73,7 @@ export default function Review() {
       ) : null}
       {sum.stillText ? <T tone="muted">{sum.stillText}</T> : null}
       {sum.button ? (
-        <Row><Button title={sum.button} onPress={() => sum.bulk.forEach((e) => tried(e.id, st.confirmReview(e.id, e.review_item!)))} /></Row>
+        <Row><Button title={sum.button} onPress={() => sum.bulk.forEach((e) => confirmIt(e.id, e.review_item!))} /></Row>
       ) : null}
     </Screen>
   );

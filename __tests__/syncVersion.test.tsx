@@ -48,7 +48,8 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
     const it = b.items[0]; const ex = server.rows.get(it.client_id);
     if (ex) return reply(200, { entries: [view(ex)], duplicates: [it.client_id] });
     if (it.source === 'ai_estimate' && it.parse_job_id && server.abandoned.has(it.parse_job_id)) return reply(409, { error: { code: 'job_abandoned' } });
-    if (it.state !== 'needs_review' && !(it.kcal >= 0 && it.kcal <= 5000)) return reply(400, { error: 'kcal 0-5000' });
+    // food.go resolve: a table row (dish_id, not AI / typed) at any size; every other row 0-5000
+    if (it.state !== 'needs_review' && !(it.dish_id && it.source !== 'ai_estimate' && it.source !== 'custom') && !(it.kcal >= 0 && it.kcal <= 5000)) return reply(400, { error: 'this item needs kcal (0-5000)' });
     const r: Row = { client_id: it.client_id, version: 1, kcal: it.state === 'needs_review' ? 0 : it.kcal, state: it.state ?? 'confirmed', source: it.source,
       custom_name: it.custom_name ?? '', deleted: false, job: it.parse_job_id };
     server.rows.set(r.client_id, r); return reply(201, { entries: [view(r)] });
@@ -61,7 +62,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
   if (server.alwaysConflict.has(r.client_id) || (b.version != null && b.version !== r.version)) return reply(409, { error: { code: 'version_conflict', version: r.version }, entry: view(r) });
   const state = b.state ?? r.state; const src = b.kcal != null ? 'custom' : r.source;
   if ((b.source === 'ai_estimate' || (src === 'ai_estimate' && b.kcal == null && state !== 'needs_review')) && server.abandoned.has(b.parse_job_id ?? r.job ?? '')) return reply(409, { error: { code: 'job_abandoned' } });
-  if (b.kcal != null && !(b.kcal >= 0 && b.kcal <= 5000)) return reply(400, { error: 'kcal 0-5000' });
+  if (b.kcal != null && !b.dish_id && !(b.kcal >= 0 && b.kcal <= 5000)) return reply(400, { error: 'this item needs kcal (0-5000)' });
   Object.assign(r, { kcal: state === 'needs_review' ? 0 : (b.kcal ?? r.kcal), state, source: src, custom_name: b.custom_name ?? r.custom_name, version: r.version + 1 });
   return reply(200, view(r));
 }
@@ -200,6 +201,55 @@ test('retry spinner on a delete (no version comes back): cleared when the delete
   // a flush that did not send this row's op (still queued) keeps the spinner
   const other = { kind: 'delete', id: 'X', tries: 0 } as Op;
   expect(applyFlush({ entries: [e], queue: [other, del] }, [other], { ...none, rest: [] }).entries[0].sync_retrying).toBe(true);
+});
+
+const aiRow = (id: string, kcal: number): FoodEntry => ({ ...custom(id, kcal), custom_name: 'wedding plate', raw_text: 'wedding plate', source: 'ai', source_note: 'AI estimate', qty: 1 });
+describe('F1 (rg4): the app refuses up front what the server would refuse; a PATCH refusal never rewrites the row', () => {
+  test('AI 2000 x3 = 6000 is refused with the message and nothing is sent; x2 = 4000 saves and syncs equal', async () => {
+    await boot();
+    await act(async () => { st.addEntries([aiRow('W', 2000)]); });
+    await settle(); expectInSync();
+    const n = server.log.length;
+    let why: string | null = null;
+    await act(async () => { why = st.updateEntry({ ...ent('W'), qty: 3, kcal: { low: 6000, best: 6000, high: 6000 } }); });
+    expect(why).toBe('Enter between 1 and 5,000 kcal.');
+    await settle();
+    expect(server.log.length).toBe(n); // nothing sent
+    expect(ent('W').kcal.best).toBe(2000);
+    expect(st.queue).toEqual([]);
+    await act(async () => { why = st.updateEntry({ ...ent('W'), qty: 2, kcal: { low: 4000, best: 4000, high: 4000 } }); });
+    expect(why).toBeNull();
+    await settle();
+    expect(server.rows.get('W')).toMatchObject({ kcal: 4000, state: 'confirmed' });
+    expectInSync(); // phone == server == summary
+  });
+  test('the exact F1 sequence (a 6000 edit queued by 36624fa reaches the server): 400 keeps the phone value, flags the row with the reason, the queue flows', async () => {
+    await boot();
+    await act(async () => { st.addEntries([aiRow('W', 2000)]); });
+    await settle(); expectInSync();
+    // what 36624fa queued for "Edit -> Increase to x3 -> Save changes" (its guard let it through)
+    const edited = { ...ent('W'), qty: 3, kcal: { low: 6000, best: 6000, high: 6000 }, updated_at: new Date().toISOString() };
+    await act(async () => { r.unmount(); });
+    mockSaved = JSON.stringify({ ...JSON.parse(mockSaved!), entries: st.entries.map((e) => (e.id === 'W' ? edited : e)), queue: [{ kind: 'upsert', entry: edited, tries: 0 }] });
+    await act(async () => { r = create(<StoreProvider><Probe /><NoticeToast /></StoreProvider>); });
+    await settle();
+    expect(server.log.filter((l) => l === 'PATCH /v1/entries/W')).toHaveLength(1); // refused once, never retried
+    expect(server.rows.get('W')!.kcal).toBe(2000);                                  // the server kept its copy
+    // the phone's row is NOT rewritten: no 0-kcal review row, no reject_code; the user's value stays and the row says so
+    expect(ent('W')).toMatchObject({ kcal: { best: 6000 }, qty: 3, source: 'ai', sync_error: 'this item needs kcal (0-5000)', sync_reason: 'this item needs kcal (0-5000)' });
+    expect(ent('W').needs_review).toBeFalsy(); expect(ent('W').reject_code).toBeUndefined(); expect(ent('W').review_item).toBeUndefined();
+    expect(st.queue).toEqual([]);
+    // the rest of the queue keeps flowing
+    await act(async () => { st.addEntries([custom('Z', 120)]); });
+    await settle();
+    expect(server.rows.get('Z')).toMatchObject({ kcal: 120 });
+    expect(ent('W').sync_error).toBeTruthy();
+    // the user fixes it (x2): synced, the flag goes
+    await act(async () => { st.updateEntry({ ...ent('W'), qty: 2, kcal: { low: 4000, best: 4000, high: 4000 } }); });
+    await settle();
+    expect(ent('W').sync_error).toBeUndefined(); expect(ent('W').sync_reason).toBeUndefined();
+    expectInSync();
+  });
 });
 
 describe('the delete wins: a save that gets 404 (deleted on another device) drops the local row (CEO N2)', () => {

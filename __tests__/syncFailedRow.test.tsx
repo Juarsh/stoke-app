@@ -73,3 +73,13 @@ test('the sync-failed row is at least 44 px tall and the 13 px line uses the war
   expect([palette.light.warn, palette.dark.warn]).toContain(st.color);
   act(() => { r.unmount(); });
 });
+test('rg4 (a): a refused PATCH shows the server\'s reason under the retry line, and in the label', () => {
+  const { SyncFailedRow } = jest.requireActual('../src/components/SyncFailedRow');
+  let r!: ReactTestRenderer;
+  act(() => { r = create(<SyncFailedRow title="Lunch · wedding plate" kcal={6000} retrying={false} onRetry={() => {}} reason="this item needs kcal (0-5000)" />); });
+  expect(r.root.find((n) => n.props.testID === 'sync-reason').props.children).toBe('this item needs kcal (0-5000)');
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Lunch · wedding plate: couldn’t sync this. Tap to retry. this item needs kcal (0-5000)').length).toBeGreaterThan(0);
+  act(() => { r.update(<SyncFailedRow title="Lunch · wedding plate" kcal={6000} retrying onRetry={() => {}} reason="this item needs kcal (0-5000)" />); });
+  expect(r.root.findAll((n) => n.props.testID === 'sync-reason')).toHaveLength(0);
+  act(() => { r.unmount(); });
+});

@@ -52,6 +52,8 @@ export interface FoodEntry {
   server_version?: number;
   /** this entry's change could not be synced (error code): its row says "Couldn’t sync this. Tap to retry" */
   sync_error?: string;
+  /** the server's reason for that refusal (shown under the retry line), when it gave one */
+  sync_reason?: string;
   /** the user tapped retry and that op has not come back yet: the row shows a spinner (never changes what is counted) */
   sync_retrying?: boolean;
 }
@@ -224,15 +226,30 @@ export function validTypedKcal(k: unknown): boolean {
 }
 export const TYPED_KCAL_REASON = 'Enter between 1 and 5,000 kcal.';
 export const NO_KCAL_REASON = 'This has no calories yet. Check it and add it again.';
-/** Store guard for every saved entry. The 1-5000 rule is ONLY for kcal the user typed (custom / manual); a table, dish or
- * confirmed row saves whatever its size (60 roti = 6,600 kcal), like the server. Any counted row needs a real number.
+/** The source the server sees for this entry (api.ts sends it): custom / ai_estimate / the table item's own source. */
+export const serverSource = (e: Pick<FoodEntry, 'source' | 'item_source'>): string =>
+  e.source === 'custom' || e.source === 'manual' ? 'custom' : e.source === 'ai' ? 'ai_estimate' : (e.item_source ?? 'table');
+/** Quantity range of a table chip (parser.recompute / Go Recompute: > 0 and <= 5000). */
+export const QTY_MAX = 5000;
+export const qtyInRange = (q: unknown): boolean => typeof q === 'number' && Number.isFinite(q) && q > 0 && q <= QTY_MAX;
+/** Smallest amount the edit sheet sets for a unit (its − step). */
+export const qtyStep = (unit: string): number => (unit === 'gram' ? 10 : 0.5);
+export const amountReason = (unit: string): string => `Enter an amount between ${qtyStep(unit).toLocaleString('en-IN')} and ${QTY_MAX.toLocaleString('en-IN')}.`;
+/** Store guard for every saved entry: the server's own rule (food.go resolve), so nothing is refused after it is sent.
+ * - typed kcal (custom / manual): 1 to 5000 (TYPED_KCAL_REASON);
+ * - a table row (dish_id, not AI): kcal at any size (60 roti = 6,600) but a quantity the table accepts (> 0, <= 5000);
+ * - any other computed row (AI estimate x qty, no dish): over 0 and at most 5000 kcal (food.go:969).
  * needs_review entries carry no counted number. Returns why it is refused, or null. The caller keeps a refused row open
  * with this reason: a row is never dropped silently. */
 export function entryRefusal(e: FoodEntry): string | null {
   if (e.needs_review || e.pending || e.deleted_at) return null;
   const k = e.kcal?.best;
-  if (e.source === 'custom' || e.source === 'manual') return validTypedKcal(k) ? null : TYPED_KCAL_REASON;
-  return typeof k === 'number' && Number.isFinite(k) && k >= 0 ? null : NO_KCAL_REASON;
+  const src = serverSource(e);
+  if (src === 'custom') return validTypedKcal(k) ? null : TYPED_KCAL_REASON;
+  const finite = typeof k === 'number' && Number.isFinite(k);
+  if (e.dish_id && src !== 'ai_estimate') return !qtyInRange(e.qty) ? amountReason(e.unit) : finite && k >= 0 ? null : NO_KCAL_REASON;
+  if (!finite || k <= 0) return NO_KCAL_REASON;
+  return k <= KCAL_MAX ? null : TYPED_KCAL_REASON;
 }
 export const savableEntry = (e: FoodEntry): boolean => entryRefusal(e) === null;
 

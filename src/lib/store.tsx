@@ -53,7 +53,7 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   const gone = new Set(r.gone ?? []);
   if (gone.size) {
     const at = now.toISOString();
-    const q = { ...p, entries: p.entries.map((x) => (gone.has(x.id) ? { ...x, deleted_at: x.deleted_at ?? at, sync_error: undefined, sync_retrying: undefined } : x)) };
+    const q = { ...p, entries: p.entries.map((x) => (gone.has(x.id) ? { ...x, deleted_at: x.deleted_at ?? at, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined } : x)) };
     const keep = (o: Op) => !gone.has(opId(o));
     return applyFlush({ ...q, queue: q.queue.filter(keep) }, sent, { ...r, gone: [], rest: r.rest.filter(keep),
       rejected: r.rejected.filter((x) => !gone.has(x.entry.id)), failed: r.failed.filter((f) => !gone.has(f.id)) });
@@ -62,15 +62,16 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   const reopened = r.rejected.filter((x) => unchangedSince(live(x.entry), x.entry))
     // job_abandoned: the AI reading is refused for good; the row goes back to the failed row (typed kcal only)
     .map((x) => (x.code === 'job_abandoned' ? abandonedEntry(x.entry, now) : reopenRejected(x.entry, x.code, now, x.variant_options)));
-  const failed = new Map(r.failed.filter((f) => { const cur = p.entries.find((x) => x.id === f.id); return !f.sent || unchangedSince(cur, f.sent); }).map((f) => [f.id, f.code]));
+  const failed = new Map(r.failed.filter((f) => { const cur = p.entries.find((x) => x.id === f.id); return !f.sent || unchangedSince(cur, f.sent); }).map((f) => [f.id, f]));
   // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
   // remaining ones and replace their same-id op; a late result for a job the backstop converted is ignored (dropLate / dropLateOps)
   const queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
   const entries = mergeEntries(p.entries, dropLate(p.entries, r.resolved)).map((x) => {
     let n = reopened.find((e) => e.id === x.id) ?? x;
     const v = r.versions[x.id];
-    if (typeof v === 'number') n = { ...n, server_version: v, ...(n.sync_error && !failed.has(x.id) ? { sync_error: undefined } : {}) };
-    if (failed.has(x.id)) n = { ...n, sync_error: failed.get(x.id) };
+    if (typeof v === 'number') n = { ...n, server_version: v, ...(n.sync_error && !failed.has(x.id) ? { sync_error: undefined, sync_reason: undefined } : {}) };
+    const f = failed.get(x.id);
+    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason };
     // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
     if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
@@ -170,7 +171,7 @@ function useStoreValue() {
     },
     /** Explicit user edit: the only way saved numbers change (same store guard). Returns the refusal reason, or null. */
     updateEntry: (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
-      const n = { ...e, sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() };
+      const n = { ...e, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }); return null; },
     deleteEntry: (id: string) => upd((p) => ({
@@ -210,13 +211,13 @@ function useStoreValue() {
       // typed: plain custom, without the AI job's provenance (job_abandoned never refuses it)
       const n: FoodEntry = { ...old, dish_id: null, custom_name: old.raw_text || old.review_item?.name || 'item', source: 'custom', kcal: { low: k, best: k, high: k }, protein_g: z,
         carbs_g: 0, fat_g: 0, confirmed: true, needs_review: false, review_item: undefined, reject_code: undefined, variant_dish_id: undefined, job_id: undefined,
-        sync_error: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() } as FoodEntry;
+        sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, updated_at: new Date().toISOString() } as FoodEntry;
       return { ...p, entries: p.entries.map((e) => (e.id === id ? n : e)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }); return null; },
     /** "Couldn’t sync this. Tap to retry": the entry's current state goes through the queue again. */
     retrySync: (id: string) => upd((p) => {
       const e = p.entries.find((x) => x.id === id); if (!e?.sync_error) return p;
-      const n = { ...e, sync_error: undefined, sync_retrying: true };
+      const n = { ...e, sync_error: undefined, sync_reason: undefined, sync_retrying: true };
       return { ...p, entries: p.entries.map((x) => (x.id === id ? n : x)),
         queue: enqueue(p.queue, n.deleted_at ? { kind: 'delete', id, tries: 0 } : { kind: 'upsert', entry: n, tries: 0 }) };
     }),

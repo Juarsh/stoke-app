@@ -3,7 +3,7 @@
 // TS parser and writes resolve immediately (data stays on the device).
 import { DISH_TABLE_VERSION, parser } from '../parser';
 import { config } from './config';
-import type { FoodEntry } from './domain';
+import { serverSource, type FoodEntry } from './domain';
 
 export * from './parseLocal';
 import { ItemIn, ParseResponse, parseLocal } from './parseLocal';
@@ -13,6 +13,10 @@ export interface RememberedRow { id: number; span: string; dish_id: string | nul
 
 export class ApiError extends Error {
   constructor(public status: number, msg: string) { super(msg); }
+  /** set when the error came from the PATCH of an upsert (an edit of a row the server has): never rewrites the row */
+  patch?: boolean;
+  /** the server's human reason ({"error":"..."} or {"error":{"message"}}) */
+  get reason(): string { const d = errorDetail(this.message); return d.message ?? (d.code.includes(' ') ? d.code : ''); }
   /** Server error code from the body: {"error":{"code":"..."}} (or legacy {"error":"..."}); '' if none. */
   get code(): string { return errorCode(this.message); }
   /** variant_required: the server's options at the sent portion */
@@ -112,7 +116,8 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     async upsertEntry(e: FoodEntry): Promise<{ version?: number }> {
       if (config.mock) return {};
       type Saved = { version?: number };
-      const patch = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number }> => {
+      const patch = (body: Record<string, unknown>, known?: number) => patch0(body, known).catch((err) => { if (err instanceof ApiError) err.patch = true; throw err; });
+      const patch0 = async (body: Record<string, unknown>, known?: number): Promise<{ version?: number }> => {
         const path = `/v1/entries/${encodeURIComponent(e.id)}`;
         try { return { version: (await req<Saved>('PATCH', path, { ...body, ...(known ? { version: known } : {}) }))?.version }; }
         catch (err) {
@@ -126,7 +131,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
         }
       };
       type Posted = { duplicates?: unknown[]; entries?: Saved[] };
-      const source = e.source === 'custom' || e.source === 'manual' ? 'custom' : e.source === 'ai' ? 'ai_estimate' : (e.item_source ?? 'table');
+      const source = serverSource(e);
       const nums = { kcal: e.kcal.best, kcal_low: e.kcal.low, kcal_high: e.kcal.high, protein_g: e.protein_g.best, protein_low: e.protein_g.low,
         protein_high: e.protein_g.high, carbs_g: e.carbs_g, fat_g: e.fat_g };
       // span => the server remembers this confirmed reading for the user (Remembered foods)

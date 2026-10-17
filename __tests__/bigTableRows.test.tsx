@@ -29,6 +29,10 @@ import { DISH_TABLE_VERSION, parser } from '../src/parser';
 import Log from '../src/app/(tabs)/log';
 import Today from '../src/app/(tabs)/index';
 import Review from '../src/app/review';
+import { EditSheet } from '../src/components/ItemEditor';
+
+// F5 (rg4): real screens + real store; never flake on a busy box
+jest.setTimeout(30_000);
 
 let st!: Store;
 const live: ReactTestRenderer[] = [];
@@ -113,4 +117,80 @@ test('typed 5001 is still refused: the review row stays visible with the reason,
   await act(async () => { field().props.onAdd(5000); });
   expect(saved().map((e) => e.kcal.best)).toEqual([5000]);
   await act(async () => { r.unmount(); });
+});
+
+describe('F2 (rg4): an amount the table can\'t take shows the range on the row; nothing throws', () => {
+  test.each(['0 roti', '5001 roti', '6000 roti'])('the edit sheet for %s draws, says the range and does not save', (txt) => {
+    const it = parser.parse(txt).items[0];
+    const onSave = jest.fn();
+    let r!: ReactTestRenderer;
+    act(() => { r = create(<EditSheet visible it={it} onClose={() => {}} onSave={onSave} onDelete={() => {}} />); });
+    expect(textOf(r)).toContain('Enter an amount between 0.5 and 5,000.');
+    const save = r.root.findAll((n) => n.props.title === 'Save changes')[0];
+    expect(save.props.disabled).toBe(true);
+    act(() => { save.props.onPress?.(); });
+    expect(onSave).not.toHaveBeenCalled();
+    act(() => { r.unmount(); });
+  });
+  test('Log "0 roti": no crash, the row says the range, nothing counted', async () => {
+    const r = await mount(<Log />);
+    await say(r, '0 roti');
+    expect(textOf(r)).toContain('Enter an amount between 0.5 and 5,000.');
+    // 0 kcal: the batch holds it as a choice (no one-tap Add), nothing is counted
+    expect(r.root.findAll((n) => typeof n.props.onPress === 'function' && /^Add/.test(String(n.props.accessibilityLabel ?? '')))).toHaveLength(0);
+    expect(saved()).toEqual([]);
+  });
+  test('Log "5001 roti" -> pick 5001: no crash, the range on the row, nothing saved', async () => {
+    mockNav.mockClear();
+    const r = await mount(<Log />);
+    await say(r, '5001 roti');
+    expect(textOf(r)).toMatch(/5001|5,001/);
+    await press(r, /5,?001 pieces/, true);
+    expect(textOf(r)).toContain('Enter an amount between 0.5 and 5,000.');
+    expect(saved()).toEqual([]);
+  });
+  test('store guard mirrors Recompute: a table row with qty 0 or > 5000 is refused with the range', () => {
+    const [roti] = parser.parse('2 roti').items;
+    const e = entryFromItem({ ...roti, needs_confirmation: false }, { id: 'q', slot: 'lunch', raw_text: 'roti', local_date: today, tableVersion: DISH_TABLE_VERSION });
+    expect(entryRefusal({ ...e, qty: 0 })).toBe('Enter an amount between 0.5 and 5,000.');
+    expect(entryRefusal({ ...e, qty: 5001 })).toBe('Enter an amount between 0.5 and 5,000.');
+    expect(entryRefusal({ ...e, qty: 5000, kcal: { low: 550000, best: 550000, high: 550000 } })).toBeNull();
+    // AI rows: the server's 0-5000 (food.go:969); typed rows 1-5000
+    const ai = { ...e, dish_id: null, source: 'ai' as const, custom_name: 'wedding plate' };
+    expect(entryRefusal({ ...ai, kcal: { low: 6000, best: 6000, high: 6000 } })).toBe(TYPED_KCAL_REASON);
+    expect(entryRefusal({ ...ai, kcal: { low: 5000, best: 5000, high: 5000 } })).toBeNull();
+  });
+});
+
+describe('F3 (rg4): Review saves a confirmed 12 katori / 24 pieces; a needed choice is always shown', () => {
+  async function reviewOf(text: string) {
+    mockSaved = null;
+    const r = await mount(<Review />);
+    const items = parser.parse(text).items;
+    await act(async () => { st.addEntries(items.map((it, i) => reviewEntry(it, { id: `rv${i}`, slot: 'lunch', raw_text: text, local_date: today, tableVersion: DISH_TABLE_VERSION }))); });
+    return r;
+  }
+  const openAndSave = async (r: ReactTestRenderer, name: string) => {
+    await press(r, new RegExp(`^Check: read as ${name},`));
+    const sheet = r.root.findAll((n) => n.type === EditSheet && n.props.visible === true)[0];
+    const save = sheet.findAll((n) => n.props.title === 'Save changes' && typeof n.props.onPress === 'function')[0];
+    await act(async () => { save.props.onPress(); });
+  };
+  test('12 plate chole bhature: tap each card -> Save changes saves 12 katori (2,760) and 24 pieces (6,960)', async () => {
+    const r = await reviewOf('12 plate chole bhature');
+    await openAndSave(r, 'chole');
+    expect(textOf(r)).not.toContain('Choose the type or amount first');
+    await openAndSave(r, 'bhatura');
+    expect(saved().map((e) => [e.dish_id, e.qty, e.unit, e.kcal.best]).sort()).toEqual([['bhatura', 24, 'count', 6960], ['chole', 12, 'katori', 2760]]);
+  });
+  test('a reading that truly needs a pick: the message comes with the choices on screen', async () => {
+    const r = await reviewOf('12 plate chole bhature');
+    const it = st.entries.find((e) => e.id === 'rv0')!.review_item!;
+    const needsPick = { ...it, quantity: 12, unit: 'plate', needs_confirmation: false, unit_options: [{ qty: 12, unit: 'katori', kcal: 2760 }, { qty: 1, unit: 'katori', kcal: 230 }] } as never;
+    const card = r.root.findAll((n) => typeof n.props.onResolve === 'function')[0];
+    await act(async () => { card.props.onResolve(needsPick); });
+    expect(textOf(r)).toContain('Not saved: Choose the type or amount first.');
+    expect(textOf(r)).toMatch(/1 katori/); // the choice it points to is shown
+    expect(saved()).toEqual([]);
+  });
 });

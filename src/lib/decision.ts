@@ -9,7 +9,8 @@ export const unitKey = (it: { quantity: number; unit: string }) => `${it.quantit
 /** Item recomputed for a quantity/unit from the dish table (parser.edit), keeping source + alternatives. */
 export function withUnit(it: Item, quantity: number, unit: string): Item {
   if (it.quantity === quantity && it.unit === unit) return it;
-  return { ...parser.edit(it, { quantity, unit }), source: it.source, alternatives: it.alternatives };
+  // never throws while drawing (F2): a choice the table can't compute keeps the parsed numbers (its row says the range)
+  try { return { ...parser.edit(it, { quantity, unit }), source: it.source, alternatives: it.alternatives }; } catch { return it; }
 }
 
 export type Choice = { key: string; label: string; item: Item };

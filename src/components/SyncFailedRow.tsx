@@ -9,12 +9,12 @@ import { Row, T } from './ui';
 export const SYNC_FAILED_COPY = 'Couldn’t sync this. Tap to retry';
 export const SYNC_RETRYING_COPY = 'Retrying…';
 
-export function SyncFailedRow({ title, kcal, retrying, onRetry }: { title: string; kcal?: number; retrying: boolean; onRetry: () => void }) {
+export function SyncFailedRow({ title, kcal, retrying, onRetry, reason }: { title: string; kcal?: number; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string }) {
   const t = useTheme(); const s = useStyles();
   return (
     <Pressable onPress={retrying ? undefined : onRetry} disabled={retrying} style={s.row} accessibilityRole="button"
       accessibilityState={{ busy: retrying, disabled: retrying }}
-      accessibilityLabel={`${title}: ${retrying ? 'retrying sync' : 'couldn’t sync this. Tap to retry'}`}>
+      accessibilityLabel={`${title}: ${retrying ? 'retrying sync' : `couldn’t sync this. Tap to retry${reason ? `. ${reason}` : ''}`}`}>
       <View style={{ flex: 1, gap: 2 }}>
         <Row style={{ gap: 10, justifyContent: 'space-between' }}>
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
@@ -24,6 +24,7 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry }: { title: strin
           {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} /> : <Icon name="sync" color={t.c.warn} size={14} />}
           <T v="caption" tone="warn" style={s.line}>{retrying ? SYNC_RETRYING_COPY : SYNC_FAILED_COPY}</T>
         </Row>
+        {reason && !retrying ? <T v="caption" tone="muted" testID="sync-reason">{reason}</T> : null}
       </View>
     </Pressable>
   );

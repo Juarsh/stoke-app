@@ -48,6 +48,12 @@ export const isRejection = (e: unknown, op: Op) => isAbandonedSave(e, op) || ((o
 export const isAbandonedSave = (e: unknown, op: Op) => op.kind === 'upsert' && (e as { status?: unknown })?.status === 409 && codeOf(e) === 'job_abandoned';
 const codeOf = (e: unknown) => { const c = (e as { code?: unknown })?.code; return typeof c === 'string' ? c : ''; };
 
+const reasonOf = (e: unknown) => { const r = (e as { reason?: unknown })?.reason; return typeof r === 'string' && r ? r : undefined; };
+/** A 4xx on an upsert's PATCH, other than 404 (delete wins), 409 (version / abandon) and the retryable 401/408/429. */
+export const isPatchRefusal = (e: unknown) => {
+  const s = statusOf(e);
+  return (e as { patch?: unknown })?.patch === true && s >= 400 && s < 500 && ![401, 404, 408, 409, 429].includes(s);
+};
 const statusOf = (e: unknown) => { const s = (e as { status?: unknown })?.status; return typeof s === 'number' ? s : 0; };
 /** Tries before a 409 that asks to keep-and-retry (e.g. an unknown dish table version) is surfaced instead. */
 export const MAX_TRIES = 5;
@@ -67,7 +73,7 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   /** entry id -> the server's row version after this flush */
   versions: Record<string, number>;
   /** entry ops that could not be applied (surfaced on the entry); `sent` is the op's entry snapshot (undefined for a delete) */
-  failed: { id: string; code: string; sent?: FoodEntry }[];
+  failed: { id: string; code: string; sent?: FoodEntry; reason?: string }[];
   /** entries whose PATCH got 404: deleted on the server (another device). The delete wins: the phone drops them. */
   gone?: string[] };
 export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<FlushResult> {
@@ -107,6 +113,13 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
       // 404 on a save: the row was deleted on the server (another device). The delete wins: never re-created, never retried.
       if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.shift(); continue; }
+      // any other 4xx on the PATCH of a row the server already has (409 = the version / abandon flows; 401/408/429 retry):
+      // the server kept its copy, so the phone's row is NEVER rewritten (no 0-kcal review row). It keeps the user's value,
+      // shows "Couldn't sync this. Tap to retry" with the server's reason, and the rest of the queue keeps flowing.
+      if (op.kind === 'upsert' && isPatchRefusal(e)) {
+        failed.push({ id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry, reason: reasonOf(e) });
+        rest.shift(); continue;
+      }
       if (isRejection(e, op)) {
         if (op.kind === 'profile') profileRejected = codeOf(e) || 'unknown';
         else if (op.kind === 'upsert' && !op.entry.needs_review) {

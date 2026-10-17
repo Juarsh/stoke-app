@@ -101,7 +101,7 @@ export default function Today() {
           ))}
           {d.syncFailed.map((e) => (
             <SyncFailedRow key={`sync-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.deleted_at ? ' (deleted)' : ''}`}
-              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} onRetry={() => st.retrySync(e.id)} />
+              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => st.retrySync(e.id)} />
           ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>

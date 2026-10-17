@@ -48,6 +48,6 @@ describe('AI estimate row: own one-tap "Add · N kcal"', () => {
     const rows = src('src/components/LogRows.tsx');
     const i = rows.indexOf("kind === 'estimate' && canAddEstimate(it)"); const seg = rows.slice(i, rows.indexOf(') : (', i));
     expect(seg).toMatch(/borderColor: t\.c\.em/); expect(seg).toMatch(/tone="em"/); expect(seg).not.toMatch(/t\.c\.accentFill/);
-    expect(src('src/app/review.tsx')).toMatch(/kind === 'estimate'\n\s+\? <OpenRow it=\{it\} kind="estimate"[^\n]*onAdd=\{\(n\) => tried\(e\.id, st\.confirmReview\(e\.id, n\)\)\}/);
+    expect(src('src/app/review.tsx')).toMatch(/kind === 'estimate'\n\s+\? <OpenRow it=\{it\} kind="estimate"[^\n]*onAdd=\{\(n\) => confirmIt\(e\.id, n\)\}/);
   });
 });

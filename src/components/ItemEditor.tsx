@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser, UNITS } from '../parser';
-import type { Slot } from '../lib/domain';
+import { amountReason, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
 import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -70,8 +70,13 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
   const [dishId, setDishId] = useState(it.dish_id);
   const [search, setSearch] = useState('');
   const table = !!parser.dishById(dishId) && !it.ai_estimate;
-  const preview: Item = table ? parser.edit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined }) : scaleAi(it, qty);
-  const step = unit === 'gram' ? 10 : 0.5;
+  // never throws while drawing (F2): an amount the table can't take (0, > 5000) keeps the last good numbers and says why
+  const amountOff = table && !qtyInRange(qty);
+  const preview: Item = !table ? scaleAi(it, qty) : amountOff ? it : safeEdit(it, { dishId: dishId !== it.dish_id ? dishId : undefined, quantity: qty, unit, oil: oil || undefined });
+  const step = qtyStep(unit);
+  // Save = the amount the user chose: a confirmed reading, so the "unusual amount" options recompute attaches for a big
+  // quantity (12 katori, 24 pieces) are the choice already made, never a new one (F3)
+  const save = () => { if (!amountOff) onSave(chosen(preview)); };
   const matches = search.length > 1 ? DISHES.filter((d) => d.name.includes(search.toLowerCase())).slice(0, 5) : [];
   return (
     <Sheet visible={visible} onClose={onClose} title={preview.name}>
@@ -82,8 +87,9 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
       <Row>
         <Button kind="soft" title="−" onPress={() => setQty((q) => Math.max(step, Math.round((q - step) * 100) / 100))} accessibilityLabel="Decrease" />
         <T v="displayM" style={{ minWidth: 64, textAlign: 'center' }}>{qty}</T>
-        <Button kind="soft" title="+" onPress={() => setQty((q) => Math.round((q + step) * 100) / 100)} accessibilityLabel="Increase" />
+        <Button kind="soft" title="+" onPress={() => setQty((q) => Math.min(QTY_MAX, Math.round((q + step) * 100) / 100))} accessibilityLabel="Increase" />
       </Row>
+      {amountOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="amount-range">{amountReason(unit)}</T> : null}
       {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }}>{UNITS.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={u} onPress={() => setUnit(u)} />)}</Row> : null}
       {preview.oil_level !== '' || oil ? (
         <>
@@ -100,7 +106,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
         {rangeLines(preview).map((l, i) => <T key={i} v="caption" tone="primaryText">{l}</T>)}
       </Card>
       {error ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="refusal">Not saved: {error}</T> : null}
-      <Button title="Save changes" onPress={() => onSave(preview)} />
+      <Button title="Save changes" disabled={amountOff} onPress={save} />
       <Button kind="danger" title="Delete item" onPress={onDelete} />
     </Sheet>
   );
@@ -113,3 +119,15 @@ function scaleAi(it: Item, qty: number): Item {
     protein_g: { low: r(it.protein_g.low, 1), best: r(it.protein_g.best, 1), high: r(it.protein_g.high, 1) } };
 }
 export function SlotCycle(s: Slot): Slot { return SLOTS[(SLOTS.indexOf(s) + 1) % SLOTS.length]; }
+
+/** parser.edit that never throws (an out-of-range amount or bad unit keeps the item as it was). */
+export function safeEdit(it: Item, ch: Parameters<typeof parser.edit>[1]): Item {
+  try { return parser.edit(it, ch); } catch { return it; }
+}
+/** The user chose this amount in the sheet: the recompute's own "unusual amount" options (unit_options with this exact
+ * quantity + unit among them) are that choice, already made. A real unit mismatch (flag) stays. */
+export function chosen(it: Item): Item {
+  const o = it.unit_options;
+  if (!o?.length || !o.some((u) => u.qty === it.quantity && u.unit === it.unit)) return it;
+  return { ...it, unit_options: undefined };
+}

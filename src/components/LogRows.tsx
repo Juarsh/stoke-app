@@ -11,7 +11,7 @@ import { FoodTile } from './FoodTile';
 import { choose as chooseUnit, unitChoices, unitKey } from '../lib/decision';
 import { canAddEstimate, estimateAddLabel, isVague, scaleItem, isVariantChoice, pickUnit, pickVague, pickVariant, vagueChoices, vagueWord, variantOptions } from '../lib/confirmBatch';
 import { failedCopy } from '../lib/aiRows';
-import { validTypedKcal } from '../lib/domain';
+import { amountReason, qtyInRange, validTypedKcal } from '../lib/domain';
 import { Icon } from './Icon';
 import { EditSheet } from './ItemEditor';
 import { AddButton, Badge, Row, Segmented, T } from './ui';
@@ -53,6 +53,7 @@ export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, tableMat
           </T>
         ) : <T v="caption" tone="muted">{[portion, extra].filter(Boolean).join(' · ')}</T>}
         {tableMatch ? <T v="caption" tone="text2">✓ Table match</T> : null}
+        <AmountHint it={it} />
       </View>
       <T v="number">{it.kcal.best.toLocaleString('en-IN')}</T>
       {chevron ? <Icon name="chevron" color={t.c.muted} size={18} /> : null}
@@ -248,3 +249,9 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
 const useFailedStyles = makeStyles((t) => ({
   kcalInput: { width: 96, height: 44, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, backgroundColor: t.c.card },
 }));
+
+/** F2: a table amount the table can't take (0, over 5000) says so on the row (the store guard refuses it the same way). */
+export function AmountHint({ it }: { it: Item }) {
+  if (!it.dish_id || it.ai_estimate || qtyInRange(it.quantity)) return null;
+  return <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="amount-range">{amountReason(it.unit)}</T>;
+}
