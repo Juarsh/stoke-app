@@ -122,6 +122,7 @@ for (const theme of ['light', 'dark']) {
   await shot(h, `review-pulled-type-${theme}`, { fullPage: true });
   await h.goto(BASE + '/log'); await wait(h, 2000);
   await h.getByLabel('What did you eat?').fill('100 roti'); await wait(h, 1500);
+  await h.getByRole('button', { name: /^100 pieces, 11,000 calories$/ }).click(); await wait(h, 1000); // the user means 100: Add can't save it
   await shot(h, `log-too-much-${theme}`);
   await h.getByRole('button', { name: /Double-tap to edit$/ }).first().click(); await wait(h, 1200);
   if ((await h.getByTestId('too-much').count()) < 1) throw new Error('no too-much line in the edit sheet');
