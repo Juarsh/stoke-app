@@ -27,7 +27,7 @@ import { CHECK_AMOUNT_LINE, counted, dayTotals, entryFromItem, entryRefusal, Foo
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 import { ApiError, headerVersion } from '../src/lib/api';
 import { adoptServer, reviewNote } from '../src/lib/serverRow';
-import { flush, MAX_FIVES, Op, SERVER_ERROR } from '../src/lib/syncQueue';
+import { flush, MAX_FIVES, NOT_DELETED_REASON, Op, SERVER_ERROR } from '../src/lib/syncQueue';
 import { reviewRowKind } from '../src/lib/confirmBatch';
 import { EditSheet } from '../src/components/ItemEditor';
 import Review from '../src/app/review';
@@ -79,16 +79,20 @@ describe('H1: 3 consecutive 5xx -> flagged on the row, off the queue head', () =
     // 500, offline (resets), 500, 500, 500 -> flagged on the 5th try, not before
     expect(runs.slice(0, 4).every((r) => r.failed.length === 0 && r.rest[0]?.kind === 'upsert' && (r.rest[0] as { entry: FoodEntry }).entry.id === 'BIG')).toBe(true);
     expect(runs[4].failed).toEqual([{ id: 'BIG', code: SERVER_ERROR, sent: big }]);
-    expect(runs[4].rest).toEqual([]); // NEXT went through in the same flush
-    expect(s.upsertEntry.mock.calls.map((c) => c[0].id)).toEqual(['BIG', 'BIG', 'BIG', 'BIG', 'BIG', 'NEXT']);
+    expect(runs[4].rest).toEqual([]);
+    // rg8 B3: NEXT (another id) never waits behind BIG's 5xx: it went through in the first flush
+    expect(runs[0].rest.map((o) => (o as { entry: FoodEntry }).entry.id)).toEqual(['BIG']);
+    expect(s.upsertEntry.mock.calls.map((c) => c[0].id)).toEqual(['BIG', 'NEXT', 'BIG', 'BIG', 'BIG', 'BIG']);
   });
-  test('a delete answered 5xx three times goes behind the other ops (nothing to flag on a deleted row)', async () => {
+  test('a delete answered 5xx three times is flagged on its row and leaves the queue; other ids never wait for it (rg8 B3)', async () => {
     const e = () => new ApiError(503, 'x'); const s = sender({ D: [e(), e(), e()] });
     const other = tableEntry('O', 'roti', 1, 'count');
     let q: Op[] = [{ kind: 'delete', id: 'D', tries: 0 }, { kind: 'upsert', entry: other, tries: 0 }]; let now = 1;
-    for (let i = 0; i < 3; i++) { const r = await flush(q, s, now); q = r.rest; now += 60 * 60_000; }
+    const fl: unknown[] = [];
+    for (let i = 0; i < 3; i++) { const r = await flush(q, s, now); fl.push(...r.failed); q = r.rest; now += 60 * 60_000; }
     expect(s.upsertEntry).toHaveBeenCalledTimes(1);
-    expect(q).toHaveLength(1); expect(q[0]).toMatchObject({ kind: 'delete', id: 'D', fives: 0 });
+    expect(q).toEqual([]);
+    expect(fl).toEqual([{ id: 'D', code: SERVER_ERROR, reason: NOT_DELETED_REASON }]);
   });
   test('the flagged row counts only as the server has it: nothing for a row it never stored, its last copy for an edit', () => {
     const fresh = tableEntry('N', 'roti', 2, 'count');

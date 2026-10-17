@@ -9,6 +9,7 @@ import { isPlaceholder } from './itemKind';
 import { enqueue, FINAL_FAIL_REASONS, Op, PendingFood } from './syncQueue';
 import { aiStatus, failReason, isCapReason, resetOf } from './aiRows';
 import { failedAiEntry } from './aiBackstop';
+import { amountDiffers, flagAmount } from './spanAmount';
 
 /** Entries for a resolved span, or null while it is still unknown (cap reached, AI off, placeholder only). Ids derive from the
  * pending id, so a retried resolve is idempotent on the server (client_id). */
@@ -33,7 +34,8 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
   // only a confident table match is saved; anything uncertain becomes a 'needs review' entry (no unwarned number)
   return got.map((it, i) => {
     const o = { id: i === 0 ? f.id : `${f.id}-${i}`, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION };
-    const e = autoSavable(it) ? entryFromItem(it, o) : reviewEntry(it, o);
+    // a table answer whose amount isn't the one typed (rg8 B2) is never saved as counted
+    const e = autoSavable(it) && !amountDiffers(it, f.amount) ? entryFromItem(it, o) : reviewEntry(flagAmount(it, f.amount), o);
     return f.job_id ? { ...e, job_id: f.job_id } : e;
   });
 }

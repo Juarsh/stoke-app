@@ -81,15 +81,18 @@ export interface Item {
 }
 export type ItemSource = 'table' | 'did_you_mean' | 'generic' | 'ai_estimate';
 /** leftover: words/numbers the parser could not use (incl. short/stopword leftovers that never become placeholders). */
-export interface ParseResult { items: Item[]; unmatched: string[]; leftover: number }
+/** The amount the phone read in front of an unmatched span: `text` is the span WITH its amount words ("1 plate zarda"),
+ * which is what goes to the server; qty/unit are the phone's reading of them (rg8 B2: "1 zarda" lost the plate). */
+export interface SpanAmount { text: string; qty: number; unit: string }
+export interface ParseResult { items: Item[]; unmatched: string[]; leftover: number; /** unmatched span -> its amount (only spans that had one) */ amounts?: Record<string, SpanAmount> }
 
 type It = Item & { explicit?: boolean; generic?: boolean; clause?: number; joined?: boolean; pens?: string[]; everyday?: boolean; eggExtra?: number };
 /** Go Item.pen: add a confidence deduction once (copy-on-write). */
 const pen = (it: It, f: string) => { if (!it.pens?.includes(f)) it.pens = [...(it.pens ?? []), f]; };
 interface Token { w: string; num: number; isN: boolean; sep: boolean; mult: number }
 const tok = (p: Partial<Token>): Token => ({ w: '', num: 0, isN: false, sep: false, mult: 0, ...p });
-interface Pending { style: string[]; qty: number; hasQty: boolean; unit: string; factor: number; oil: string; small: boolean }
-const emptyPending = (): Pending => ({ style: [], qty: 0, hasQty: false, unit: '', factor: 0, oil: '', small: false });
+interface Pending { style: string[]; qty: number; hasQty: boolean; unit: string; factor: number; oil: string; small: boolean; /** the amount words as typed ("1 plate", "half katori") */ words: string[] }
+const emptyPending = (): Pending => ({ style: [], qty: 0, hasQty: false, unit: '', factor: 0, oil: '', small: false, words: [] });
 
 /** Go's math.Round (half away from zero) to d decimals. */
 export function round(f: number, d: number): number {
@@ -313,15 +316,18 @@ export class Parser {
     const toks = this.tokenize(text);
     const items: It[] = [];
     const unmatched: string[] = [];
+    const amounts: Record<string, SpanAmount> = {};
     let pd = emptyPending();
     let unk: string[] = [];
+    let unkAmt: SpanAmount | null = null; // the amount whose qty leads unk
     let clause = 0;
     let joined = false;
     let leftover = 0;
     const flushUnk = () => {
       if (unk.length === 0) return;
       const span = unk.join(' ');
-      unk = [];
+      const amt = unkAmt;
+      unk = []; unkAmt = null;
       leftover++;
       const g = this.genericProtein(span, clause);
       if (g) { items.push(g); return; }
@@ -332,7 +338,10 @@ export class Parser {
         if (runes(w).length >= this.r.min_placeholder_len && !this.stop.has(w)) keep.push(w);
       });
       if (keep.length === 0 || (keep.length === 1 && goParseFloat(keep[0]) !== null)) return;
-      unmatched.push(keep.join(' '));
+      const u = keep.join(' ');
+      unmatched.push(u);
+      // the server reads the span with its amount words; the phone keeps its own reading of them to compare
+      if (amt && goParseFloat(keep[0]) !== null) amounts[u] = { ...amt, text: [amt.text, ...keep.slice(1)].join(' ') };
     };
     const last = (): It | undefined => items[items.length - 1];
     const setLast = (x: It) => { items[items.length - 1] = x; };
@@ -356,7 +365,7 @@ export class Parser {
             const it = items[k];
             if (!li.from_combo || it.from_combo !== li.from_combo || it.matched_text !== li.matched_text) break;
           }
-        } else { pd.qty = t.mult; pd.hasQty = true; }
+        } else { pd.qty = t.mult; pd.hasQty = true; pd.words.push(this.word(t)); }
         continue;
       }
       if (has(this.r.protein_words, t.w) && this.attachProtein(t.w, items)) continue;
@@ -456,16 +465,17 @@ export class Parser {
         if (t.w !== '' && (i + 1 >= toks.length || toks[i + 1].sep)) continue;
         if (pd.hasQty) leftover++; // two numbers in a row: one is unused
         if (pd.hasQty) pd.qty *= t.num; else { pd.qty = t.num; pd.hasQty = true; }
+        pd.words.push(this.word(t));
         continue;
       }
       const w = t.w;
       const [u, f] = this.unitFor(w);
       if (u !== '') {
         if (!pd.hasQty) { pd.qty = 1; pd.hasQty = true; }
-        pd.unit = u; pd.factor = f;
+        pd.unit = u; pd.factor = f; pd.words.push(w);
         continue;
       }
-      if (this.small.has(w)) { pd.small = true; continue; }
+      if (this.small.has(w)) { pd.small = true; pd.words.push(w); continue; }
       const lvl = this.oilOf.get(w);
       if (lvl !== undefined) {
         const li = last();
@@ -505,7 +515,10 @@ export class Parser {
       }
       if (this.connector.has(w)) { flushUnk(); joined = true; continue; }
       if (this.filler.has(w) || this.oilSuf.has(w) || this.genitive.has(w) || this.stuffing.has(w)) continue;
-      if (pd.hasQty && unk.length === 0) unk.push(fmt(pd.qty));
+      if (pd.hasQty && unk.length === 0) {
+        unk.push(fmt(pd.qty));
+        unkAmt = { text: pd.words.join(' ') || fmt(pd.qty), qty: pd.qty * (pd.factor === 0 ? 1 : pd.factor), unit: pd.unit };
+      }
       pd = emptyPending();
       // unknown word right after a bare protein word ("paneer lababdar"): the protein goes into the span (-> generic item).
       if (unk.length === 0) {
@@ -541,7 +554,7 @@ export class Parser {
     this.assignSpans(items, text); // before finish strips the internal `everyday` marker (Go keeps it)
     const out: Item[] = items.map((x) => this.finish(x));
     this.adjacency(out, unmatched, text);
-    return { items: out, unmatched, leftover };
+    return { items: out, unmatched, leftover, ...(Object.keys(amounts).length ? { amounts } : {}) };
   }
 
   private applyForm(li: It, form: string): It | null {

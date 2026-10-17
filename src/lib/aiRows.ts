@@ -109,13 +109,13 @@ export function lateAnswer(failed: FailedRow | undefined, items: Item[]): { drop
 /** Leaving Log with items still open: nothing is lost. Open items become needs_review entries (streak yes, calories no);
  * estimating spans are queued as pending (they become review items when the answer lands); unfilled failed rows
  * become review placeholders. Review entries never auto-count: only an explicit confirm counts them. */
-export function leaveLog(o: { open: Item[]; failed: FailedRow[]; estimating: { id: string; span: string }[]; slot: Slot; text: string; date: string; newId: () => string; now?: Date }) {
+export function leaveLog(o: { open: Item[]; failed: FailedRow[]; estimating: { id: string; span: string; amount?: { qty: number; unit: string } }[]; slot: Slot; text: string; date: string; newId: () => string; now?: Date }) {
   const base = { slot: o.slot, raw_text: o.text, local_date: o.date, tableVersion: DISH_TABLE_VERSION, now: o.now };
   const reviews: FoodEntry[] = [
     ...o.open.map((it) => reviewEntry({ ...it, needs_confirmation: true }, { ...base, id: o.newId() })),
     ...o.failed.filter((f) => !failedCounts(f)).map((f) => ({ ...reviewEntry(parser.unknown(f.name), { ...base, id: f.id }), ...(f.reason ? { ai_fail_reason: f.reason } : {}),
       ...(f.resetsAt ? { ai_resets_at: f.resetsAt } : {}) })),
   ];
-  const pending: PendingFood[] = o.estimating.map((e) => ({ id: e.id, span: e.span, slot: o.slot, local_date: o.date, raw_text: o.text, at: 0 }));
+  const pending: PendingFood[] = o.estimating.map((e) => ({ id: e.id, span: e.span, slot: o.slot, local_date: o.date, raw_text: o.text, at: 0, ...(e.amount ? { amount: e.amount } : {}) }));
   return { reviews, pending };
 }

@@ -9,9 +9,11 @@ import type { ServerRow } from './api';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
 export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued (0 = straight to items to review) */ at?: number;
-  /** ms when its AI job started (Log estimate start, else when queued): the 35-minute backstop (aiBackstop) runs from here */ queued_at?: number }
+  /** ms when its AI job started (Log estimate start, else when queued): the 35-minute backstop (aiBackstop) runs from here */ queued_at?: number;
+  /** rg8 B2: the amount the phone read in `span` (which carries its amount words): a table answer that differs is saved for review */ amount?: { qty: number; unit: string } }
 /** fives: consecutive 5xx answers for this op (rg7 H1: 3 in a row -> flagged on the row, off the queue head) */
-type Retry = { tries: number; nextAt?: number; fives?: number };
+type Retry = { tries: number; nextAt?: number; fives?: number;
+  /** the wait is for no connection (or a wait the server asked for), not a 5xx: everything behind it waits too (rg8 B3) */ net?: boolean };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)
   | ({ kind: 'delete'; id: string } & Retry)
@@ -82,9 +84,27 @@ export function isStuck(e: unknown, op: Op, tries: number): boolean {
  * to retry", tapping retries) and leaves the queue head so later ops proceed; a delete goes to the back of the queue. */
 export const MAX_FIVES = 3;
 export const SERVER_ERROR = 'server_error';
+/** would flush send anything now? (same skipping rules as flush; the store never flushes a queue with nothing due) */
+export function hasDue(q: Op[], now = Date.now()): boolean {
+  const parked = new Set<string>();
+  for (const op of q) {
+    const k = opKey(op);
+    if (parked.has(k)) continue;
+    if (op.nextAt && op.nextAt > now) { if (op.net) return false; parked.add(k); continue; }
+    return true;
+  }
+  return false;
+}
+/** when the next op's wait is over (the store's wake-up timer) */
+export const nextDueAt = (q: Op[]): number | undefined => { const ts = q.flatMap((o) => (o.nextAt ? [o.nextAt] : [])); return ts.length ? Math.min(...ts) : undefined; };
+/** a delete the server answered 5xx three times: the row is flagged and says the server still has it (rg8 B3) */
+export const NOT_DELETED_REASON = 'Not deleted on the server yet.';
+/** ordering key: ops on one id stay in order; ops on other ids never wait behind a parked one (rg8 B3) */
+export const opKey = (o: Op): string => (o.kind === 'upsert' ? `e:${o.entry.id}` : o.kind === 'delete' ? `e:${o.id}` : o.kind === 'pending' ? `e:${o.food.id}`
+  : o.kind === 'forget' || o.kind === 'forgetAll' ? 'forget' : o.kind === 'profile' ? 'profile' : `${o.kind}:${(o as { id?: unknown }).id ?? ''}`);
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
-/** Sends ops in order; stops at the first failure or backoff wait. Returns the remaining queue and entries resolved from pending foods. */
+/** Sends ops in order per id: a parked (5xx / backing-off) op holds back only its own id; no connection stops the flush. Returns the remaining queue and entries resolved from pending foods. */
 export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[]; profileRejected?: string;
   /** entry id -> the server's row version after this flush */
   versions: Record<string, number>;
@@ -104,9 +124,15 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
   const resolved: FoodEntry[] = [];
   const rejected: { entry: FoodEntry; code: string; variant_options?: FoodEntry['variant_options'] }[] = [];
   let profileRejected: string | undefined;
-  while (rest.length) {
-    const op = rest[0];
-    if (op.nextAt && op.nextAt > now) break; // keep order: wait for the head's backoff
+  // rg8 B3: an op the server keeps answering 5xx is parked (backoff) and only the ops on the SAME id wait behind it, so
+  // per-id order holds while rows on other ids still reach the server in this flush. No connection at all still stops.
+  const parked = new Set<string>();
+  let i = 0;
+  while (i < rest.length) {
+    const op = rest[i];
+    const k = opKey(op);
+    if (parked.has(k)) { i++; continue; }
+    if (op.nextAt && op.nextAt > now) { if (op.net) break; parked.add(k); i++; continue; } // a 5xx backing off: later ops on other ids go on
     try {
       if (op.kind === 'upsert') {
         const known = versions[op.entry.id] ?? op.entry.server_version;
@@ -121,7 +147,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       else if (op.kind === 'abandon') { if (s.abandonJob) await s.abandonJob(op.id); }
       else {
         const es = await s.resolvePending(op.food);
-        if (es && 'job_id' in es) { rest[0] = { ...op, food: { ...op.food, job_id: es.job_id || undefined } }; throw new Error(es.job_id ? 'job running' : 'job lost'); }
+        if (es && 'job_id' in es) { rest[i] = { ...op, food: { ...op.food, job_id: es.job_id || undefined } }; throw new Error(es.job_id ? 'job running' : 'job lost'); }
         if (!es) throw new Error('still pending');
         resolved.push(...es);
         // review entries stay on the device until confirmed
@@ -132,12 +158,12 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
         const job = op.food.job_id;
         if (job && es.some((x) => FINAL_FAIL_REASONS.includes(x.ai_fail_reason ?? '')) && !rest.some((o) => o.kind === 'abandon' && o.id === job)) rest.push({ kind: 'abandon', id: job, tries: 0 });
       }
-      rest.shift();
+      rest.splice(i, 1);
     } catch (e) {
       // refused save: not dropped, it goes back to the user as an item to review (the store re-queues it as needs_review)
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
       // 404 on a save: the row was deleted on the server (another device). The delete wins: never re-created, never retried.
-      if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.shift(); continue; }
+      if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.splice(i, 1); continue; }
       // any other 4xx on the PATCH of a row the server already has (409 = the version / abandon flows; 401/408/429 retry):
       // the server kept its copy, so the phone's row is NEVER rewritten (no 0-kcal review row). It keeps the user's value,
       // shows "Couldn't sync this. Tap to retry" with the server's reason, and the rest of the queue keeps flowing.
@@ -147,7 +173,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
         const pick = CHOICE_CODES.includes(codeOf(e));
         const vo = (e as { variantOptions?: FoodEntry['variant_options'] })?.variantOptions;
         failed.push({ id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry, reason: pick ? choiceCopy(codeOf(e)) : reasonOf(e), ...(pick && vo?.length ? { options: vo } : {}) });
-        rest.shift(); continue;
+        rest.splice(i, 1); continue;
       }
       if (isRejection(e, op)) {
         if (op.kind === 'profile') profileRejected = codeOf(e) || 'unknown';
@@ -155,25 +181,27 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
           const vo = (e as { variantOptions?: FoodEntry['variant_options'] })?.variantOptions;
           rejected.push({ entry: op.entry, code: codeOf(e), ...(vo?.length ? { variant_options: vo } : {}) });
         }
-        rest.shift(); continue;
+        rest.splice(i, 1); continue;
       }
       // can't be applied (e.g. still a conflict after the one re-apply): shown on the entry, never jams the queue
       if (isStuck(e, op, op.tries + 1)) {
         failed.push(op.kind === 'upsert' ? { id: op.entry.id, code: codeOf(e) || `http_${statusOf(e)}`, sent: op.entry } : { id: (op as { id: string }).id, code: codeOf(e) || `http_${statusOf(e)}` });
-        rest.shift(); continue;
+        rest.splice(i, 1); continue;
       }
-      const cur = rest[0];
+      const cur = rest[i];
       // offline (no status) resets the 5xx run; a 5xx adds to it
       const fives = statusOf(e) >= 500 ? (op.fives ?? 0) + 1 : 0;
       if (fives >= MAX_FIVES && op.kind === 'upsert') {
         failed.push({ id: op.entry.id, code: SERVER_ERROR, sent: op.entry });
-        rest.shift(); continue;
+        rest.splice(i, 1); continue;
       }
-      if (fives >= MAX_FIVES && op.kind === 'delete') { // nothing to flag on a deleted row: retried after the others
-        rest.shift(); rest.push({ ...cur, tries: op.tries + 1, fives: 0, nextAt: now + backoffMs(op.tries + 1) } as Op); continue;
+      if (fives >= MAX_FIVES && op.kind === 'delete') { // flagged on the (deleted) row: "Couldn’t sync this. Tap to retry"
+        failed.push({ id: op.id, code: SERVER_ERROR, reason: NOT_DELETED_REASON });
+        rest.splice(i, 1); continue;
       }
-      rest[0] = { ...cur, tries: op.tries + 1, fives, nextAt: now + backoffMs(op.tries + 1) } as Op;
-      break;
+      rest[i] = { ...cur, tries: op.tries + 1, fives, nextAt: now + backoffMs(op.tries + 1), net: statusOf(e) < 500 } as Op;
+      if (statusOf(e) >= 500) { parked.add(k); i++; continue; } // the server is up: other ids go on
+      break; // no connection (or a wait the server asked for): everything waits
     }
   }
   return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows };

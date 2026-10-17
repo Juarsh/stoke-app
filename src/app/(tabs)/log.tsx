@@ -23,6 +23,7 @@ import { portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { parseLocal } from '@/lib/parseLocal';
 import { useStore } from '@/lib/store';
 import { config } from '@/lib/config';
+import { flagAmount, sentText } from '@/lib/spanAmount';
 import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
 import { makeStyles } from '@/theme';
 
@@ -61,6 +62,8 @@ export default function Log() {
   const isHeld = (d: Draft) => !!d.it.dish_id && !d.it.ai_estimate && !unitsKnown(d.it.dish_id);
   const held = [...table, ...ai].filter(isHeld);
   const drafts = [...table, ...ai].filter((d) => !isHeld(d));
+  /** what the server reads for an unmatched span: the span with its amount words ("1 plate zarda") */
+  const sent = (u: string) => sentText(u, parsed.amounts);
   const pendingUnmatched = parsed.unmatched.filter((u) => !customs.some((c) => c.key === u) && !ai.some((a) => a.key.startsWith(`ai:${u}:`)));
 
   // AI-first: unknown spans go to the AI automatically (debounced, one batched call). Each span gets a STABLE id up front,
@@ -125,7 +128,7 @@ export default function Log() {
       const got = r.items.filter((x) => x.ai_estimate || (!!x.dish_id && !parser.dishById(x.dish_id)));
       spans.forEach((u, k) => {
         if (expired.current.has(ids[k])) return; // backstop already made this a failed row: ignore the late answer
-        const its = splitBySpan(got, spans)[k];
+        const its = splitBySpan(got, spans.map(sent))[k].map((it) => flagAmount(it, parsed.amounts?.[u])); // the phone's amount differs: unit check, not counted
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
         if (!its.length) { toCustom([u], '', { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: resetOf(r) }); return; }
         setCustoms((cs) => {
@@ -156,7 +159,7 @@ export default function Log() {
     };
     try {
       st.useAi();
-      land(await st.api.parse(spans.join(', '), true));
+      land(await st.api.parse(spans.map(sent).join(', '), true)); // each span with its amount words (rg8 B2)
     } catch (e) {
       if (e instanceof ParsePending) void poll(e);
       else {
@@ -205,7 +208,8 @@ export default function Log() {
     if (pendingUnmatched.length) st.addPending(pendingUnmatched.map((span) => {
       const id = idFor(span); handedOff.current.add(id);
       const t0 = estStart.current.get(id);
-      return { id, span, slot, local_date: date, raw_text: text, ...(offline.includes(span) ? {} : { at: 0 }), ...(t0 ? { queued_at: t0 } : {}) };
+      const a = parsed.amounts?.[span];
+      return { id, span: sent(span), slot, local_date: date, raw_text: text, ...(a ? { amount: { qty: a.qty, unit: a.unit } } : {}), ...(offline.includes(span) ? {} : { at: 0 }), ...(t0 ? { queued_at: t0 } : {}) };
     }));
     const keyOf = new Map(es.map((e, i) => [e.id, adding[i].key]));
     for (const c of addedCustoms) {
@@ -244,7 +248,7 @@ export default function Log() {
     // held rows: saved as the confirmed reading; the store holds them for review ('Check amount') until the units come down
     if (held.length) st.addEntries(held.map((d) => withJob(entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)));
     for (const d of held) remove(d);
-    const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => ({ id: idFor(u), span: u })), slot, text, date: localDate(), newId: st.newId });
+    const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => { const a = parsed.amounts?.[u]; return { id: idFor(u), span: sent(u), ...(a ? { amount: { qty: a.qty, unit: a.unit } } : {}) }; }), slot, text, date: localDate(), newId: st.newId });
     for (const f of failed) handedOff.current.add(f.id);
     for (const p of pending) handedOff.current.add(p.id);
     if (reviews.length) st.addEntries(reviews);

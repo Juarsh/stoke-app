@@ -6,13 +6,13 @@ import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi, type DishUnits } from './api';
-import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
+import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, seedServerCounts, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
-import { enqueue, flush, FlushResult, Op, PendingFood, SERVER_ERROR } from './syncQueue';
+import { enqueue, flush, FlushResult, hasDue, nextDueAt, Op, PendingFood, SERVER_ERROR } from './syncQueue';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
@@ -124,7 +124,9 @@ function useStoreValue() {
     kv.get(KEY).then((raw) => {
       if (!raw) return;
       const p: Persisted = { ...EMPTY, ...JSON.parse(raw) };
-      setS(expireState({ ...p, queue: stampPending(p.queue, p.entries) })); // older queues get a start time; app start runs the backstop
+      // rows an older build synced and nothing is queued for: the server has them as they are (rg8 F-1)
+      const entries = p.entries.map((e) => (p.queue.some((o) => opId(o) === e.id) ? e : seedServerCounts(e)));
+      setS(expireState({ ...p, entries, queue: stampPending(p.queue, entries) })); // older queues get a start time; app start runs the backstop
     }).finally(() => setReady(true));
   }, []);
   /** Backstop: app start, foreground, before each sync (the job poll) and on the Log / Review timer. */
@@ -153,7 +155,7 @@ function useStoreValue() {
     if (expirePending(entriesRef.current, s.queue).converted.length) { expireAi(); return; }
     // head still in its backoff (offline): the headAt timer wakes us. Flushing now would only rewrite the queue, which
     // re-creates sync and re-runs the effect below: a hot re-render loop while offline (also in aaf1555)
-    if ((s.queue[0]?.nextAt ?? 0) > Date.now()) return;
+    if (!hasDue(s.queue, Date.now())) return; // rg8 B3: only ops on a parked op's id wait; others are due
     syncing.current = true;
     try {
       const sent = s.queue;
@@ -172,7 +174,7 @@ function useStoreValue() {
   }, [api, sender, s.queue, expireAi, pullUnits]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
   // retry with backoff: wake up when the head op's wait is over
-  const headAt = s.queue[0]?.nextAt;
+  const headAt = nextDueAt(s.queue);
   useEffect(() => {
     if (!ready || !s.user || headAt === undefined) return;
     const t = setTimeout(() => { sync(); }, Math.max(0, headAt - Date.now()) + 50);
@@ -189,7 +191,10 @@ function useStoreValue() {
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
   const updateEntry = (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
-      const n = { ...e, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, updated_at: new Date().toISOString() };
+      // before the edit: what the server has for a synced row nothing is queued for (rg8 F-1)
+      const old = p.entries.find((x) => x.id === e.id);
+      const was = old && !p.queue.some((o) => opId(o) === e.id) ? seedServerCounts(old) : old;
+      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, updated_at: new Date().toISOString() };
       return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
     }); return null; };
   return {

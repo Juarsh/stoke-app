@@ -1,6 +1,6 @@
 // Pure (no React Native imports) so the Tester CLI can use it under Node.
 import { oneTap } from '../parser';
-import { Item, parser, totals } from '../parser';
+import { Item, parser, totals, type SpanAmount } from '../parser';
 import type { Slot } from './domain';
 import { slotFor } from './domain';
 
@@ -10,6 +10,8 @@ export interface ParseTotal { kcal: number; kcal_low: number; kcal_high: number;
 export interface ParseResponse {
   items: Item[]; unmatched: string[]; total: ParseTotal; used_ai: boolean; needs_confirmation: boolean; fallback: Fallback;
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
+  /** phone only (rg8 B2): unmatched span -> the amount the phone read in front of it (sent with the span) */
+  amounts?: Record<string, SpanAmount>;
   /** why there is no AI answer: user_limit, daily_limit, rate_limited, unavailable, timeout, error */
   fallback_reason?: string; user_daily_limit?: number; ai_resets_at?: string;
   /** when the daily AI caps next reset (RFC 3339; every parse response / job poll) */
@@ -88,7 +90,7 @@ export function parseLocal(text: string, now = new Date()): ParseResponse {
     custom_items.push({ custom_name: u, needs_input: true });
   }
   return {
-    items, unmatched: r.unmatched, total: totalOf(items), used_ai: false, needs_confirmation: items.some((i) => i.needs_confirmation),
+    items, unmatched: r.unmatched, ...(r.amounts ? { amounts: r.amounts } : {}), total: totalOf(items), used_ai: false, needs_confirmation: items.some((i) => i.needs_confirmation),
     fallback: 'none', custom_items, slot: slotFor(now),
   };
 }
