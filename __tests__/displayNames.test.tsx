@@ -1,6 +1,8 @@
 // Designer (Oct 17): a pulled dish showed its raw id on Today ("Lunch · zarda_pulao") while Review showed its name. Every
 // surface now uses ONE display-name source (domain.displayName / displayLabel): the dish table's name (bundled, else pulled),
-// else the id as words ("Zarda pulao"). No rendered label (text, accessibility label, chip label, sheet title) has a '_'.
+// else the id as words ("Zarda pulao"). No dish label (text, accessibility label, chip label, sheet title) has a '_'.
+// rg8 F-2 (CEO + Designer): custom names stay EXACTLY as typed ('akarsh_special_shake', 'iPhone shake'): excluded from the
+// '_' check and asserted verbatim.
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
@@ -37,8 +39,18 @@ function entries(): FoodEntry[] {
     { ...entryFromItem(zarda(), o('f', 'dinner')), custom_name: '', sync_error: 'server_error', server_failed: true }, // 5xx flag on Today
     reopenRejected({ ...entryFromItem(zarda(), o('v')), raw_text: '' }, 'variant_required', new Date(), opts), // Today review row + Review chips
     adoptServer({ ...entryFromItem(zarda(), o('n', 'snacks')), unit: 'glass' }, { state: 'needs_review', dish_id: 'zarda_pulao', qty: 1, unit: 'katori', kcal_best: 390 }), // unit note
+    ...CUSTOM.map((name, i) => custom(`c${i}`, name)),
   ];
 }
+const CUSTOM = ['akarsh_special_shake', 'iPhone shake'];
+function custom(id: string, name: string): FoodEntry {
+  const now = new Date().toISOString();
+  return { id, local_date: DAY, slot: 'breakfast', raw_text: name, dish_id: null, custom_name: name, qty: 1, unit: 'count', oil_level: '', kcal: { low: 150, best: 150, high: 150 },
+    protein_g: { low: 5, best: 5, high: 5 }, source: 'custom', source_note: 'Your entry', confirmed: true, dish_table_version: DISH_TABLE_VERSION, created_at: now, updated_at: now, deleted_at: null,
+    ...(name.includes('_') ? { sync_error: 'server_error', server_failed: true, server_counts: { kcal: 150, protein: 5 } } : {}) } as FoodEntry;
+}
+/** custom names are the user's own: never rewritten, so they are left out of the no-'_' check */
+const notCustom = (x: string) => !CUSTOM.some((c) => x.includes(c));
 /** every string the screen renders or announces */
 function labels(r: ReactTestRenderer): string[] {
   const out: string[] = [];
@@ -60,6 +72,9 @@ async function screen(ui: React.ReactElement, pulled: boolean) {
 afterEach(() => parser.setPulledUnits(null));
 
 describe('one display-name source', () => {
+  test('rg8 F-2: custom names are returned exactly as typed', () => {
+    for (const n of CUSTOM) { expect(entryLabel({ custom_name: n, dish_id: null })).toBe(n); expect(displayName(n, null)).toBe(n); expect(displayLabel(n, null)).toBe(n); }
+  });
   test('name present (pulled) and fallback (id as words); a slug never comes back', () => {
     parser.setPulledUnits(PULLED.units, PULLED.version, PULLED.names);
     expect(displayName('zarda_pulao', 'zarda_pulao')).toBe('zarda pulao');
@@ -69,7 +84,7 @@ describe('one display-name source', () => {
     parser.setPulledUnits(null); // no name has arrived: the id as words, first letter capitalised
     expect(displayLabel('zarda_pulao', 'zarda_pulao')).toBe('Zarda pulao');
     expect(displayName('', 'kodo_millet_khichdi')).toBe('kodo millet khichdi');
-    expect(entryLabel({ custom_name: 'my thali', dish_id: null })).toBe('My thali'); // the user's own name stands
+    expect(entryLabel({ custom_name: 'my thali', dish_id: null })).toBe('my thali'); // rg8 F-2: the user's own name, verbatim
     expect(notMeasured('zarda_pulao', 'piece')).toBe('zarda pulao isn’t measured in pieces');
   });
   for (const pulled of [true, false]) {
@@ -93,7 +108,11 @@ describe('one display-name source', () => {
       expect(sheets.some((x) => x.startsWith('zarda pulao · 390 kcal'))).toBe(true);
       expect(sheets.some((x) => x.startsWith('Zarda pulao, 1 katori'))).toBe(true);
       all.push(...sheets); await act(async () => { s.unmount(); });
-      expect(all.filter((x) => x.includes('_'))).toEqual([]);
+      expect(all.filter(notCustom).filter((x) => x.includes('_'))).toEqual([]);
+      // custom names verbatim: no underscore rewrite, no capitalisation
+      expect(today.some((x) => x.includes('Breakfast · akarsh_special_shake'))).toBe(true); // its 5xx row title
+      expect(today.some((x) => x.includes('iPhone shake'))).toBe(true); // the plate summary
+      expect(today.some((x) => /akarsh special shake|Akarsh|IPhone/.test(x))).toBe(false);
     });
   }
 });

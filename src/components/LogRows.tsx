@@ -17,6 +17,8 @@ import { EditSheet } from './ItemEditor';
 import { AddButton, Badge, Row, Segmented, T } from './ui';
 
 export type RowState = 'plain' | 'remembered' | 'check' | 'estimate';
+/** a row's title: a dish's display name; an AI reading capitalised (as before); a typed name verbatim (rg8 F-2) */
+const rowTitle = (it: Item) => (!it.dish_id && it.ai_estimate ? cap(it.name) : displayLabel(it.name, it.dish_id));
 const chipOf = (it: Item, state: RowState): { label: string; kind: 'brand' | 'check' | 'ai' } | null => {
   if (state === 'remembered') return { label: 'Remembered', kind: 'brand' };
   if (state === 'check') return { label: 'Check', kind: 'check' };
@@ -44,7 +46,7 @@ export const ItemRow = memo(function ItemRow({ it, state, chevron, sub, tableMat
       accessibilityLabel={`${displayName(it.name, it.dish_id)}, ${portion}, ${it.kcal.best} calories${chip ? `, ${chip.label}` : ''}. Double-tap to edit`}>
       <FoodTile seed={it.dish_id || it.name} category={parser.dishById(it.dish_id)?.category} size={40} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Row style={{ gap: 6, flexWrap: 'wrap' }}><T v="bodyStrong">{displayLabel(it.name, it.dish_id)}</T>{chip ? <Badge kind={chip.kind} label={chip.label} /> : null}</Row>
+        <Row style={{ gap: 6, flexWrap: 'wrap' }}><T v="bodyStrong">{rowTitle(it)}</T>{chip ? <Badge kind={chip.kind} label={chip.label} /> : null}</Row>
         {it.default_portion && !it.ai_estimate ? (
           <T v="caption" tone="muted">
             <T v="caption" tone="text" style={s.dotted} onPress={() => setSheet(true)}>{portion}</T>
@@ -127,7 +129,7 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
   const lastWord = (x: string) => x.trim().split(/\s+/).slice(-1)[0] ?? '';
   const shared = variants.length > 1 && variants.every((o) => lastWord(o.name).toLowerCase() === lastWord(variants[0].name).toLowerCase()) ? lastWord(variants[0].name) : '';
   const varBase = shared || (lastWord(it.matched_text || displayName(it.name, it.dish_id)) || displayName(it.name, it.dish_id));
-  const nm = displayLabel(it.name, it.dish_id);
+  const nm = rowTitle(it);
   const title = isVar ? (it.matched_text ? cap(it.matched_text) : nm) : nm;
   const isVg = kind === 'unit' && !isVar && !it.unit_options?.length && isVague(it); const vw = isVg ? vagueWord(it, text) : '';
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);
@@ -226,7 +228,7 @@ const useOpenStyles = makeStyles((t) => ({
 export function HeldRow({ it, onRemove }: { it: Item; onRemove: () => void }) {
   const s = { ...useStyles(), ...useOpenStyles() };
   const portion = portionLabel(it.quantity, it.unit);
-  const nm = displayLabel(it.name, it.dish_id);
+  const nm = rowTitle(it);
   return (
     <View style={s.open} testID="held-row">
       <View style={s.row} accessible accessibilityLabel={`${nm}, ${portion}, ${UNITS_UNKNOWN}, not counted`}>
@@ -256,7 +258,7 @@ export function FailedAiRow({ row, onKcal, onAdd }: { row: { name: string; kcal:
       <View style={s.row}>
         <FoodTile seed={row.name} size={40} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Row style={{ gap: 6 }}><T v="bodyStrong">{cap(row.name)}</T><Badge kind="brand" label="Custom" /></Row>
+          <Row style={{ gap: 6 }}><T v="bodyStrong">{row.name}</T><Badge kind="brand" label="Custom" /></Row>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <T v="number">{row.added && ok ? Math.round(k).toLocaleString('en-IN') : '—'}</T>

@@ -175,21 +175,21 @@ export const unitsKnown = (dishId: string) => !unitLook || unitLook.units(dishId
 export const unitSupportedFor = (dishId: string, unit: string) => !unitLook || !!unitLook.units(dishId)?.includes(unit);
 /** A dish id as words, never a slug: zarda_pulao -> "zarda pulao" (until the dish's own name has arrived). */
 export const prettyId = (dishId: string) => dishId.replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
-const slug = (s: string) => /_/.test(s);
 export const dishName = (dishId: string) => unitLook?.name(dishId) ?? (dishId ? prettyId(dishId) : 'this dish');
-/** THE display name of a food (Today, Review, Log, edit sheet, notes): the dish table's name (bundled, else pulled), else the
- * name it carries if that isn't a slug, else the id as words. Display only. */
+/** THE display name of a food (Today, Review, Log, edit sheet, notes). A dish: the dish table's name (bundled, else
+ * pulled), else its id as words (never a slug, and never the typed span: "1 katori kodo khichdi" doubled the amount).
+ * Anything else (a custom / typed name): EXACTLY as it came (CEO + Designer, rg8 F-2: 'akarsh_special_shake', 'iPhone shake'). */
 export function displayName(name: string | null | undefined, dishId?: string | null): string {
-  const known = dishId ? unitLook?.name(dishId) : undefined;
-  if (known) return known;
-  if (name && !slug(name)) return name;
-  if (dishId) return prettyId(dishId);
-  return name ? prettyId(name) : 'item';
+  if (dishId) return unitLook?.name(dishId) ?? prettyId(dishId);
+  return name || 'item';
 }
-/** displayName with its first letter capitalised (a row's title: "Zarda pulao"). */
-export const displayLabel = (name: string | null | undefined, dishId?: string | null) => { const n = displayName(name, dishId); return n.charAt(0).toUpperCase() + n.slice(1); };
-/** an entry's title: what the user named it (custom), else its dish's display name */
-export const entryLabel = (e: { custom_name?: string; dish_id?: string | null }) => displayLabel(e.custom_name || '', e.dish_id);
+/** a row's title: a dish's display name with its first letter capitalised ("Zarda pulao"); any other name as it came */
+export const displayLabel = (name: string | null | undefined, dishId?: string | null) => {
+  const n = displayName(name, dishId);
+  return dishId ? n.charAt(0).toUpperCase() + n.slice(1) : n;
+};
+/** an entry's title: what the user named it (custom, verbatim), else its dish's display name */
+export const entryLabel = (e: { custom_name?: string; dish_id?: string | null }) => (e.custom_name ? e.custom_name : displayLabel('', e.dish_id));
 /** Designer (rg6): unit plurals in the 'isn’t measured in' copy */
 const PLURAL: Record<string, string> = { katori: 'katoris', spoon: 'spoons', plate: 'plates', gram: 'grams', piece: 'pieces', glass: 'glasses', litre: 'litres' };
 export const unitPlural = (unit: string) => PLURAL[unit] ?? (unit.endsWith('s') ? unit : `${unit}s`);

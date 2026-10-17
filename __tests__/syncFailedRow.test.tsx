@@ -22,7 +22,7 @@ test('Today: the failed row says so and retries on tap; the synced one does not'
   await act(async () => { r = create(<Today />); });
   const rows = r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /couldn’t sync this/i.test(n.props.accessibilityLabel) && typeof n.props.onPress === 'function');
   expect(rows).toHaveLength(1);
-  expect(rows[0].props.accessibilityLabel).toBe('Lunch · Poha: couldn’t sync this. Tap to retry');
+  expect(rows[0].props.accessibilityLabel).toBe('Lunch · poha: couldn’t sync this. Tap to retry');
   const texts = r.root.findAll((n) => n.props.children === 'Couldn’t sync this. Tap to retry');
   expect(texts.length).toBeGreaterThan(0); // no ⚠ glyph: the sync icon instead
   expect(r.root.findAll((n) => typeof n.props.children === 'string' && n.props.children.includes('⚠'))).toHaveLength(0);
@@ -38,7 +38,7 @@ test('Today: while retrying the row shows a spinner, is busy and not tappable; i
   (mockStore.retrySync as jest.Mock).mockClear();
   let r!: ReactTestRenderer;
   await act(async () => { r = create(<Today />); });
-  const row = r.root.find((n) => n.props.accessibilityLabel === 'Lunch · Poha: retrying sync' && n.props.accessibilityRole === 'button');
+  const row = r.root.find((n) => n.props.accessibilityLabel === 'Lunch · poha: retrying sync' && n.props.accessibilityRole === 'button');
   expect(row.props.accessibilityState).toMatchObject({ busy: true, disabled: true });
   expect(r.root.findAll((n) => n.props.testID === 'sync-retry-spinner').length).toBeGreaterThan(0);
   expect(r.root.findAll((n) => n.props.children === 'Retrying…').length).toBeGreaterThan(0);
@@ -57,7 +57,7 @@ test('Today: a failed row still counts in the totals (ring + plate), a failed de
   mockStore.entries = [{ ...e('a', 'poha', 300, 'http_403'), deleted_at: '2026-10-17T05:00:00Z' } as never, e('b', 'dal', 200)];
   await act(async () => { r = create(<Today />); });
   expect(ringEaten(r)).toBe(200);
-  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Lunch · Poha (deleted): couldn’t sync this. Tap to retry').length).toBeGreaterThan(0);
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === 'Lunch · poha (deleted): couldn’t sync this. Tap to retry').length).toBeGreaterThan(0);
   await act(async () => { r.unmount(); });
 });
 test('the sync-failed row is at least 44 px tall and the 13 px line uses the warn token', () => {
