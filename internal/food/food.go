@@ -3,6 +3,7 @@
 package food
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -764,6 +765,9 @@ type Entry struct {
 // ItemIn is one chip the client confirms. Either dish_id (values recomputed
 // from our table) or custom_name with the user's/AI's numbers.
 type ItemIn struct {
+	// qtySent: the request carried "qty" (an explicit 0 is refused for a
+	// table row; a missing qty still means 1)
+	qtySent     bool
 	DishID      string   `json:"dish_id"`
 	Qty         float64  `json:"qty"`
 	Unit        string   `json:"unit"`
@@ -828,6 +832,28 @@ func f(p *float64, d float64) float64 {
 
 var saveSources = map[string]bool{"table": true, "did_you_mean": true, "generic": true, "ai_estimate": true, "custom": true, "manual": true}
 
+// UnmarshalJSON decodes an item strictly (unknown fields refused, as the
+// request decoder does) and notes whether qty was sent.
+func (in *ItemIn) UnmarshalJSON(b []byte) error {
+	type plain ItemIn
+	var p plain
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&p); err != nil {
+		return err
+	}
+	var probe struct {
+		Qty json.RawMessage `json:"qty"`
+	}
+	_ = json.Unmarshal(b, &probe)
+	*in = ItemIn(p)
+	in.qtySent = len(probe.Qty) > 0 && string(probe.Qty) != "null"
+	return nil
+}
+
+// QtyReason: a table row's quantity must be above 0 (shown to the user as is).
+const QtyReason = "Enter an amount above 0."
+
 // resolve validates one item and turns it into column values.
 //   - source is required
 //   - anything that needs confirmation (not a confident table match, or a
@@ -845,6 +871,13 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	}
 	if len(in.ClientID) > 100 {
 		return bad(400, "client_id too long")
+	}
+	// a confirmed table row is saved at the amount the phone shows: a quantity of
+	// 0 or below is refused with a reason (never stored as 1; F5). Other rows keep
+	// the old default of 1 for a missing quantity.
+	tableRow := in.DishID != "" && in.Source != "ai_estimate" && in.Source != "custom" && in.Source != "manual" && in.State != "needs_review"
+	if in.Qty < 0 || (in.Qty == 0 && in.qtySent && tableRow) {
+		return bad(400, QtyReason)
 	}
 	if in.Qty == 0 {
 		in.Qty = 1
@@ -865,11 +898,12 @@ func (s *Service) resolve(ctx context.Context, in ItemIn) (Entry, int, error) {
 	if in.State == "needs_review" {
 		return s.draft(in, cid)
 	}
-	// a table dish in a unit it doesn't come in (poha plate sent as
-	// "piece"): never confirmed at the client's numbers; saved needs_review
-	// with the server's numbers for its default unit, flagged unit_mismatch
+	// a table dish in a unit it can't be saved in (poha plate sent as
+	// "piece", dal as "litre"; parser.UnitSupported, the app's unit chips):
+	// never confirmed at the client's numbers; saved needs_review with the
+	// server's numbers for its default unit (the app shows it in Review)
 	if in.DishID != "" && in.Source != "ai_estimate" && in.Source != "custom" && in.Source != "manual" &&
-		in.Unit != "" && !s.parser().ValidUnit(in.DishID, in.Unit) {
+		in.Unit != "" && !s.parser().UnitSupported(in.DishID, in.Unit) {
 		if _, ok := s.parser().Dish(in.DishID); ok {
 			d := in
 			d.Unit, d.Kcal, d.KcalLow, d.KcalHigh, d.ProteinG, d.ProteinLow, d.ProteinHigh, d.CarbsG, d.FatG = "", nil, nil, nil, nil, nil, nil, nil, nil
@@ -1398,6 +1432,10 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		if *in.DishID != "" && in.Unit == nil {
 			it.Unit = "" // use the new dish's default unit
 		}
+	}
+	if in.Qty != nil && *in.Qty <= 0 {
+		httpx.Error(w, 400, QtyReason) // never stored as 1 (F5)
+		return
 	}
 	if in.Qty != nil {
 		// custom items scale their numbers with quantity

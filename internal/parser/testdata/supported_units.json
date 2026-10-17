@@ -1,0 +1,1518 @@
+{
+  "almonds": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "aloo_gobi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "aloo_matar": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "aloo_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "aloo_posto": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "aloo_sabzi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "aloo_tikki": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "amul_high_protein_paneer": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "amul_masti_dahi": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "amul_paneer": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "amul_protein_lassi": [
+    "count",
+    "piece",
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "appam": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "apple": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "avial": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "baingan_bharta": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "banana": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "banana_shake": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "barfi": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "batata_vada": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "besan_chilla": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bhakri": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bhatura": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bhel_puri": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "bhindi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "biscuit": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bisi_bele_bath": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "black_coffee": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "boiled_egg": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bread": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "bread_butter": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "brown_bread": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "brown_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "burger": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "butter": [
+    "spoon",
+    "gram"
+  ],
+  "butter_chicken": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "butter_naan": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "buttermilk_packet": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "cabbage_sabzi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "cake_slice": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chaas": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "chaat": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chai": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chana_dal": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chicken_biryani": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chicken_breast": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chicken_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chicken_momos": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chicken_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chicken_shawarma": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chicken_tikka": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chikki": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chilli_chicken": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chilli_paneer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chingri_malai_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chocolate_bar": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "chole": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "chole_bhature": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chole_chawal": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chole_kulche": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chowmein": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "chutney": [
+    "spoon",
+    "gram"
+  ],
+  "coconut_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "coconut_water": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "coffee": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "cola": [
+    "count",
+    "piece",
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "cold_coffee": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "cornflakes": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "cream_biscuit": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "cup_noodles": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "curd_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "curd_vada": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "dabeli": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "dahi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "dahi_puri": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "dal": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "dal_baati": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "dal_chawal": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "dal_makhani": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "daliya": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "dhokla": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "dosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "dum_aloo": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "egg_bhurji": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "egg_biryani": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "egg_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "egg_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "egg_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "energy_drink": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "epigamia_greek_yogurt": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "fish_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "fish_fry": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "fried_rice": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "fruit_yogurt": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "gajar_matar": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "garlic_naan": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_chicken_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_egg_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_fish_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_mutton_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_paneer_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_soya_chaap_dish": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "generic_wrap": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "ghee": [
+    "spoon",
+    "gram"
+  ],
+  "ghugni": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "gobi_manchurian": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "gobi_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "grapes": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "guava": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "gulab_jamun": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "halwa": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "honey": [
+    "spoon",
+    "gram"
+  ],
+  "ice_cream": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "idiyappam": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "idli": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "jaggery": [
+    "spoon",
+    "gram"
+  ],
+  "jalebi": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "jeera_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "jhal_muri": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "juice": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "kachori": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "kadai_paneer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kadala_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kadhi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kadhi_chawal": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "kanda_bhaji": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "keema": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kellogg_muesli": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kerala_parotta": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "khakhra": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "kheer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "khichdi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kosha_mangsho": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "kulcha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "kurkure": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "ladoo": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "lassi": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "lauki_sabzi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "lemon_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "litti_chokha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "luchi": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "macher_jhol": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "maggi": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "makhana": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "malted_milk": [
+    "count",
+    "piece",
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "mango": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "mango_drink": [
+    "count",
+    "piece",
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "masala_dosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "masoor_dal": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "matar_paneer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "mcaloo_tikki": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "mcchicken": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "mcveggie": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "methi_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "milk": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "misal_pav": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "mishti_doi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "modak": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "momos": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "mooli_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "moong_chilla": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "moong_dal": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "muesli": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "muscleblaze_whey": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "mushroom_masala": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "mutton_biryani": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "mutton_curry": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "naan": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "namkeen": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "neer_dosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "nimbu_pani": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "oats": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "oil": [
+    "spoon",
+    "gram"
+  ],
+  "omelette": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "onion_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "orange": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "pakora": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "palak_paneer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "paneer": [
+    "count",
+    "piece",
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "paneer_bhurji": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "paneer_butter_masala": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "paneer_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "paneer_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "paneer_sandwich": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "pani_puri": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "papad": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "papaya": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "pasta": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "pav_bhaji": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "peanut_butter": [
+    "spoon",
+    "gram"
+  ],
+  "peanuts": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "pesarattu": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "pickle": [
+    "spoon",
+    "gram"
+  ],
+  "pizza": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "poha": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "pongal": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "potato_chips": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "protein_atta_roti": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "protein_bar": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "protein_shake": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "puran_poli": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "puri": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "puttu": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "ragda_pattice": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "ragi_mudde": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "raita": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "rajma": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "rajma_chawal": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "rasam": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "rasgulla": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "rava_dosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "roasted_chana": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "roti": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "rusk": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "saag": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "sabudana_khichdi": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "sabzi": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "salad": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "sambar": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "samosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sandesh": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sandwich": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sattu_drink": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "set_dosa": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sev_puri": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "shahi_paneer": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "shrikhand": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "shukto": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "sol_kadhi": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "soya_chaap": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "soya_chaap_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "soya_chunks": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "spring_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sprouts": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "stuffed_paratha": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "sugar": [
+    "spoon",
+    "gram"
+  ],
+  "tamarind_rice": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "tandoori_chicken": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "tandoori_roti": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "thali": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "thalipeeth": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "tinda": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "tofu": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "toned_milk": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "upma": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "uttapam": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "vada": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "vada_pav": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "varan_bhaat": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "veg_biryani": [
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "veg_manchurian": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "veg_pulao": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "veg_roll": [
+    "count",
+    "piece",
+    "plate",
+    "gram"
+  ],
+  "water": [
+    "katori",
+    "glass",
+    "gram"
+  ],
+  "watermelon": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ],
+  "yippee_noodles": [
+    "count",
+    "piece",
+    "katori",
+    "plate",
+    "gram"
+  ],
+  "zunka": [
+    "katori",
+    "spoon",
+    "plate",
+    "gram"
+  ]
+}

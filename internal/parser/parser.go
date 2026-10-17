@@ -1771,6 +1771,36 @@ var ErrUnknownDish = errors.New("unknown dish_id")
 // Units lists the units an item can be expressed in.
 var Units = map[string]bool{"count": true, "piece": true, "katori": true, "spoon": true, "plate": true, "glass": true, "gram": true}
 
+// UnitOrder is Units in the order the app shows its unit chips.
+var UnitOrder = []string{"count", "piece", "katori", "spoon", "plate", "glass", "gram"}
+
+// UnitSupported: a table dish can be SAVED in this unit as it is: the unit is
+// one of Units, the dish comes in it (unitFits, as ValidUnit) and the
+// recompute keeps it (fats are measured in spoon or gram only). Anything
+// else is not a confident save (food.go: needs_review). The app's edit sheet
+// offers exactly SupportedUnits (parity: testdata/supported_units.json).
+func (p *Parser) UnitSupported(dishID, unit string) bool {
+	d := p.dishByID(dishID)
+	if d == nil || !Units[unit] {
+		return false
+	}
+	if p.fat[d.ID] {
+		return unit == "spoon" || unit == "gram"
+	}
+	return p.unitFits(d, unit, false)
+}
+
+// SupportedUnits lists UnitSupported units for a dish, in UnitOrder.
+func (p *Parser) SupportedUnits(dishID string) []string {
+	out := []string{}
+	for _, u := range UnitOrder {
+		if p.UnitSupported(dishID, u) {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
 // Recompute builds an item from an edited chip (dish, quantity, unit, oil level).
 // ValidUnit reports whether a dish comes in this unit (its units list; an
 // empty unit means its own counting unit).

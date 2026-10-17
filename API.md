@@ -570,9 +570,20 @@ and `adjacent_split`, are never confident, and the whole phrase goes to the AI. 
   `source: "ai_estimate"`). `kcal` must equal `kcal_per_unit x qty` (within max(2 kcal, 2%));
   missing kcal is filled in, a mismatch is saved as `kcal_per_unit x qty` with `state: "corrected"`.
 
-- A table dish sent in a unit it doesn't come in (poha or dal with `unit: "piece"`) is never
-  confirmed at the client's numbers: saved `state: "needs_review"` with the server's numbers for its
-  own unit, out of totals until confirmed with a valid unit.
+- A table dish sent in a unit it doesn't come in (poha or dal with `unit: "piece"`, or a unit outside
+  the 7, e.g. `"litre"`) is never confirmed at the client's numbers: saved `state: "needs_review"`
+  with the server's numbers for its own unit, out of totals until confirmed with a valid unit. The
+  response row carries that `state`, `qty`, `unit` and numbers; clients show the row as returned (a
+  review row, not counted) rather than their own copy.
+- **Units a dish comes in** (`parser.SupportedUnits`, the one rule the save uses): of
+  `count, piece, katori, spoon, plate, glass, gram` (in that order), the units in the dish's `units`
+  list or that fit it by the rules' `unit_fits`; fat dishes (ghee, butter, oil) only `spoon` and
+  `gram`. The full list per dish is `internal/parser/testdata/supported_units.json` (golden,
+  `UPDATE_GOLDEN=1 go test ./internal/parser -run TestSupportedUnitsGolden` to refresh); the app
+  ships a byte-identical copy and tests its own rule against it, so its unit chips are exactly this.
+- **Amount must be above 0.** A confirmed table item with an explicit `qty` of 0 or less is a 400
+  `"item N: Enter an amount above 0."` (negative qty: 400 on any item). `PATCH` with `qty` <= 0:
+  400 `"Enter an amount above 0."`. Nothing is saved. A table item with no `qty` still means 1.
 - `kcal_per_unit` on any non-`ai_estimate` item (including table items): 400.
 
 ### GET /version
