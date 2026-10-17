@@ -214,6 +214,7 @@ describe('Import path (zarda_pulao at a newer server table)', () => {
     expect(ent('Z').server_note).toBeUndefined();
     expect(reviewRowKind(ent('Z').review_item!)).toBe('chips');
     expect(textOf(r)).toContain('Pick a type to save this.');
+    expect(textOf(r)).toContain('Zarda · 390 kcal'); expect(textOf(r)).toContain('Veg · 300 kcal'); expect(textOf(r)).not.toContain('zarda_pulao');
     const pick = r.root.findAll((n) => typeof n.props.onPress === 'function' && /^Zarda pulao, 390 calories$/.test(String(n.props.accessibilityLabel ?? '')));
     expect(pick.length).toBeGreaterThan(0);
     await act(async () => { pick[0].props.onPress(); }); await settle();
@@ -237,6 +238,7 @@ describe('H1: the flagged row on Today', () => {
     await boot(<Today />, [n]);
     expect(textOf(r)).toContain('Couldn’t sync this. Tap to retry');
     expect(textOf(r)).not.toContain('save failed');
+    expect(textOf(r)).toContain('— kcal · not counted');
     expect(dayTotals(st.entries).kcal).toBe(0);
     const row = r.root.findAll((x) => typeof x.props.onPress === 'function' && /couldn’t sync this/i.test(String(x.props.accessibilityLabel ?? '')));
     expect(row.length).toBeGreaterThan(0);

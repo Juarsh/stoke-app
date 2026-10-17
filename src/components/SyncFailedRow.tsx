@@ -9,7 +9,8 @@ import { Row, T } from './ui';
 export const SYNC_FAILED_COPY = 'Couldn’t sync this. Tap to retry';
 export const SYNC_RETRYING_COPY = 'Retrying…';
 
-export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line }: { title: string; kcal?: number; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string;
+export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line, notCounted }: { title: string; kcal?: number;
+  /** rg7 H1: the server never stored this row (5xx): it isn't counted, and the row says so */ notCounted?: boolean; retrying: boolean; onRetry: () => void; /** the server's reason, when it gave one */ reason?: string;
   /** replaces the retry line when the fix is a pick, not a retry (rg6 F4: "Pick a type to save this."; the tap opens the choices) */ line?: string }) {
   const t = useTheme(); const s = useStyles();
   const main = line ?? SYNC_FAILED_COPY;
@@ -20,7 +21,7 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line }: 
       <View style={{ flex: 1, gap: 2 }}>
         <Row style={{ gap: 10, justifyContent: 'space-between' }}>
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
-          {kcal !== undefined ? <T v="caption" tone="muted">{Math.round(kcal).toLocaleString('en-IN')} kcal</T> : null}
+          {notCounted ? <T v="caption" tone="muted">— kcal · not counted</T> : kcal !== undefined ? <T v="caption" tone="muted">{Math.round(kcal).toLocaleString('en-IN')} kcal</T> : null}
         </Row>
         <Row style={{ gap: 6 }}>
           {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} /> : <Icon name="sync" color={t.c.warn} size={14} />}

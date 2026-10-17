@@ -334,7 +334,7 @@ export const savableEntry = (e: FoodEntry): boolean => entryRefusal(e) === null;
 export function reopenRejected(e: FoodEntry, code = '', now = new Date(), serverOptions?: FoodEntry['variant_options']): FoodEntry {
   if (serverOptions?.length) e = { ...e, variant_options: serverOptions };
   const it: Item = {
-    dish_id: e.dish_id ?? '', name: e.custom_name || e.dish_id || e.raw_text, matched_text: e.span ?? e.raw_text, quantity: e.qty, unit: e.unit, grams: 0,
+    dish_id: e.dish_id ?? '', name: e.custom_name || (e.dish_id ? unitLook?.name(e.dish_id) ?? e.dish_id : '') || e.raw_text, matched_text: e.span ?? e.raw_text, quantity: e.qty, unit: e.unit, grams: 0,
     oil_level: e.oil_level, kcal: { ...e.kcal }, protein_g: { ...e.protein_g }, carbs_g: e.carbs_g ?? 0, fat_g: e.fat_g ?? 0,
     source: 'did_you_mean', data_source: '', source_note: e.source_note, fuzzy: false, needs_confirmation: true,
     flags: ['server_rejected', ...(code === 'variant_required' ? ['variant_choice'] : code === 'quantity_required' ? ['vague_quantity'] : [])],

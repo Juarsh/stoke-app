@@ -123,7 +123,10 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
   const opts = it.unit_options ?? [];
   const variants = variantOptions(it); const isVar = kind === 'unit' && isVariantChoice(it);
   // an unpicked variant row is titled by what the user typed ('Biryani'), never the default guess
-  const varBase = (it.matched_text || it.name).trim().split(/\s+/).slice(-1)[0] ?? it.name;
+  // the word every type shares ('biryani', 'pulao'): the chips show what differs (Veg / Zarda); else what the user typed
+  const lastWord = (x: string) => x.trim().split(/\s+/).slice(-1)[0] ?? '';
+  const shared = variants.length > 1 && variants.every((o) => lastWord(o.name).toLowerCase() === lastWord(variants[0].name).toLowerCase()) ? lastWord(variants[0].name) : '';
+  const varBase = shared || (lastWord(it.matched_text || it.name) || it.name);
   const title = isVar ? cap(it.matched_text || it.name) : cap(it.name);
   const isVg = kind === 'unit' && !isVar && !it.unit_options?.length && isVague(it); const vw = isVg ? vagueWord(it, text) : '';
   const sameUnit = opts.length > 1 && opts.every((o) => o.unit === opts[0].unit);

@@ -15,7 +15,7 @@ import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet'
 import { Card, Row, T } from '@/components/ui';
 import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
-import { FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
+import { countedNums, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
 import { SLOT_LABEL } from '@/lib/labels';
 import { useStore } from '@/lib/store';
@@ -23,7 +23,7 @@ import { useDay } from '@/lib/useDay';
 import { parser } from '@/parser';
 import { makeStyles, useTheme } from '@/theme';
 
-const nameOf = (e: FoodEntry) => e.custom_name || parser.dishById(e.dish_id ?? '')?.name || 'item';
+const nameOf = (e: FoodEntry) => e.custom_name || parser.dishById(e.dish_id ?? '')?.name || parser.pulledName(e.dish_id ?? '') || 'item';
 
 const FillCard = memo(function FillCard({ kcal, protein, picks, diet }: { kcal: number; protein: number; picks: Suggestion[]; diet: string }) {
   const s = useStyles(); const t = useTheme(); const router = useRouter();
@@ -112,7 +112,7 @@ export default function Today() {
           ))}
           {d.syncFailed.map((e) => (
             <SyncFailedRow key={`sync-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.deleted_at ? ' (deleted)' : ''}`}
-              kcal={e.deleted_at ? undefined : e.kcal.best} retrying={!!e.sync_retrying} reason={e.sync_reason}
+              kcal={e.deleted_at ? undefined : countedNums(e).kcal} notCounted={!e.deleted_at && !!e.server_failed && !e.server_counts} retrying={!!e.sync_retrying} reason={e.sync_reason}
               line={e.sync_error === 'variant_required' && !e.deleted_at ? PICK_TYPE_COPY : undefined}
               onRetry={() => (e.sync_error === 'variant_required' && !e.deleted_at ? setPicking(e.id) : st.retrySync(e.id))} />
           ))}
