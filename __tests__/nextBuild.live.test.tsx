@@ -114,3 +114,49 @@ run('dropped edit: an edit queued (PATCH 503) when the DELETE is refused 403: th
   expect(texts(r)).toContain(editNotSaved('3 pieces'));
   await act(async () => { r.unmount(); });
 });
+
+// rg10 5xx path, live: T2 (a flagged edit retries by itself: here after the next successful request), N4 (an edit made on
+// another device is counted as the server has it while the row is flagged, read on the next sync) and T3b (editing a row
+// whose delete is flagged replaces the delete: no stale flag, no DELETE sent). phone == server == summary at every step.
+run('rg10 5xx path: T2 auto retry, N4 other-device edit while flagged, T3b edit replaces a flagged delete', async () => {
+  const user = `nb-5-${Date.now() % 1e6}`;
+  const H = { Authorization: `Bearer dev:${user}`, 'content-type': 'application/json' };
+  const r = await boot(user, [tab('nF', '2 roti'), tab('nG', '1 katori dal')], [tab('nF', '2 roti'), tab('nG', '1 katori dal')].map((e) => ({ kind: 'upsert', entry: e, tries: 0 })));
+  const t0 = await totals(user); expect(t0.phone).toBe(t0.server); expect(t0.server).toBe(t0.summary);
+  const F = () => st.entries.find((x) => x.id === 'nF')!, G = () => st.entries.find((x) => x.id === 'nG')!;
+  const edit = (e: FoodEntry, t: string) => { const n = tab(e.id, t); return { ...e, qty: n.qty, unit: n.unit, kcal: n.kcal, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g, raw_text: t }; };
+  // the phone's edit to 3 roti: PATCH 503 every time -> flagged after 3, counted at the server's 2 roti
+  forced.push({ id: 'nF', method: 'PATCH', status: 503, body: { error: 'unavailable' }, n: 1000 });
+  await act(async () => { st.updateEntry(edit(F(), '3 roti')); });
+  await settle(40_000, () => F()?.sync_error === 'server_error');
+  expect(F()).toMatchObject({ sync_error: 'server_error', server_failed: true });
+  const t1 = await totals(user); expect(t1.phone).toBe(t0.phone); expect(t1).toEqual(t0);
+  // N4: another device saves 4 roti; the phone's next sync (its automatic retry, 30 s after the flag) reads it
+  const d2 = await raw('PATCH', `${BASE}/v1/entries/nF`, H, JSON.stringify({ slot: 'breakfast', local_date: DATE, dish_id: 'roti', qty: 4, unit: 'count', oil_level: '', confirmed: true, state: 'confirmed', remember: false }));
+  expect(d2.status).toBe(200);
+  const tD = await totals(user); expect(tD.server).not.toBe(t0.server);
+  await settle(45_000, () => log.filter((l) => l === 'GET /v1/entries/nF').length > 0 && st.entries.find((x) => x.id === 'nF')?.server_counts?.kcal !== Math.round(tab('nF', '2 roti').kcal.best));
+  expect(F()).toMatchObject({ sync_error: 'server_error', server_failed: true }); // still flagged
+  const t2 = await totals(user); expect(t2.phone).toBe(t2.server); expect(t2.server).toBe(t2.summary); expect(t2.server).toBe(tD.server);
+  // T2: saves work again; the next successful request (a new entry) retries the flagged row at once -> flag clears
+  forced.length = 0;
+  const n0 = log.length;
+  await act(async () => { st.addEntries([tab('nH', 'chai')]); });
+  await settle(20_000, () => !F()?.sync_error && st.queue.length === 0);
+  expect(F().sync_error).toBeUndefined(); expect(F().server_failed).toBeUndefined();
+  expect(log.slice(n0).some((l) => l === 'PATCH /v1/entries/nF')).toBe(true);
+  const t3 = await totals(user); expect(t3.phone).toBe(t3.server); expect(t3.server).toBe(t3.summary); expect(t3.ids).toEqual(['nF', 'nG', 'nH']);
+  // T3b: nG's delete is flagged (DELETE 503 x3); the user edits nG to 2 katori: live, no delete flag, no DELETE sent after it
+  forced.push({ id: 'nG', method: 'DELETE', status: 503, body: { error: 'unavailable' }, n: 1000 });
+  await act(async () => { st.deleteEntry('nG'); });
+  await settle(40_000, () => !!G()?.delete_failed);
+  const t4 = await totals(user); expect(t4).toEqual(t3); // flagged delete: counted as the server has it
+  const n1 = log.length;
+  await act(async () => { st.updateEntry(edit(G(), '2 katori dal')); });
+  await settle(20_000);
+  expect(G().deleted_at).toBeNull(); expect(G().delete_failed).toBeUndefined(); expect(G().sync_error).toBeUndefined(); expect(G().server_failed).toBeUndefined();
+  expect(log.slice(n1).filter((l) => l.startsWith('DELETE'))).toEqual([]);
+  const t5 = await totals(user); expect(t5.phone).toBe(t5.server); expect(t5.server).toBe(t5.summary); expect(t5.ids).toEqual(['nF', 'nG', 'nH']);
+  expect(t5.server).toBeGreaterThan(t3.server); // 2 katori dal now
+  await act(async () => { r.unmount(); });
+}, 240_000);
