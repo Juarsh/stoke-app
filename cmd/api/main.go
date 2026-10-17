@@ -61,8 +61,9 @@ func main() {
 		AIPerMinute: intEnv("AI_PER_MINUTE", 8), GeminiModel: os.Getenv("GEMINI_MODEL"), GeminiRPM: intEnv("GEMINI_RPM", 10),
 		GeminiThinking: thinking,
 		UserAICap:      int64(intEnv("AI_USER_DAILY_CAP", 3)), QuotaResetTZ: os.Getenv("AI_QUOTA_RESET_TZ"),
-		AIRequeueMax: time.Duration(intEnv("AI_REQUEUE_MAX_MINUTES", 30)) * time.Minute,
-		AdminToken:   adminToken()})
+		AIRequeueMax:  time.Duration(intEnv("AI_REQUEUE_MAX_MINUTES", 30)) * time.Minute,
+		AIMaxAttempts: maxAttempts(),
+		AdminToken:    adminToken()})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,6 +84,15 @@ func globalCap() int64 {
 	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil || n < 0 {
 		log.Fatalf("AI_DAILY_CAP must be a non-negative integer")
+	}
+	return n
+}
+
+// AI_MAX_ATTEMPTS: Gemini attempts per meal (parse job), default 3, at least 1.
+func maxAttempts() int {
+	n := intEnv("AI_MAX_ATTEMPTS", 3)
+	if n < 1 {
+		log.Fatalf("AI_MAX_ATTEMPTS must be at least 1")
 	}
 	return n
 }

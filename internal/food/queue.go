@@ -40,7 +40,10 @@ type Job struct {
 	NotBefore time.Time // the next attempt waits until then
 	LastBusy  string    // fallback_reason of the last busy attempt
 	FirstTry  time.Time // start of the first AI attempt: the give-up window counts from here
-	Finished  time.Time // when the job became done: expiry counts from here
+	// Attempts: AI attempts started (claimed), the one in flight included. Never
+	// more than the queue's maxAttempts (AI_MAX_ATTEMPTS), across restarts too.
+	Attempts int
+	Finished time.Time // when the job became done: expiry counts from here
 }
 
 // Requeue policy: a busy job is tried again after RequeueDelays[n] (the
@@ -52,6 +55,11 @@ var RequeueDelays = []time.Duration{30 * time.Second, time.Minute, 2 * time.Minu
 
 // DefaultRequeueMax is the default give-up window (AI_REQUEUE_MAX_MINUTES).
 const DefaultRequeueMax = 30 * time.Minute
+
+// DefaultMaxAttempts is the default AI_MAX_ATTEMPTS: Gemini attempts per meal
+// (parse job). A job whose last attempt brings no answer (rate_limited,
+// unavailable, timeout, error) ends as gave_up; it is never tried again.
+const DefaultMaxAttempts = 3
 
 // DefaultCallTimeout bounds one AI job attempt (retries included).
 const DefaultCallTimeout = 30 * time.Second
@@ -93,6 +101,7 @@ type Queue struct {
 	ttl         time.Duration
 	requeueMax  time.Duration // give-up window from the first try
 	callTimeout time.Duration
+	maxAttempts int // AI_MAX_ATTEMPTS
 	db          *pgxpool.Pool
 	// release gives back the reserved call of a job that gave up on resume
 	// without ever being tried.
@@ -106,7 +115,42 @@ func NewQueue(perMinute, max int) *Queue {
 		iv = time.Minute / time.Duration(perMinute)
 	}
 	return &Queue{jobs: map[string]*Job{}, max: max, wake: make(chan struct{}, 1), interval: iv, ttl: DoneTTL,
-		requeueMax: DefaultRequeueMax, callTimeout: DefaultCallTimeout}
+		requeueMax: DefaultRequeueMax, callTimeout: DefaultCallTimeout, maxAttempts: DefaultMaxAttempts}
+}
+
+// SetMaxAttempts sets AI_MAX_ATTEMPTS, the AI attempts per job (<=0 keeps the default). Call before Start.
+func (q *Queue) SetMaxAttempts(n int) {
+	if n > 0 {
+		q.maxAttempts = n
+	}
+}
+
+// spent: the job has used all its attempts (no further AI call may start).
+func (q *Queue) spent(j *Job) bool { return j.Attempts >= q.maxAttempts }
+
+// finishSpent ends a job that has no attempt left (e.g. its last attempt died
+// with a process) as gave_up, with no AI call and nothing released (it was
+// tried). With a DB the row is only finished when no attempt is in flight;
+// otherwise this copy is refreshed from the row (the live instance finishes it).
+func (q *Queue) finishSpent(j *Job, now time.Time) {
+	q.mu.Lock()
+	if j.Status != "pending" {
+		q.mu.Unlock()
+		return
+	}
+	j.Result, j.Status, j.Finished, j.Hint = q.gaveUp(j), "done", now, nil
+	snap := *j
+	q.mu.Unlock()
+	log.Printf("ai job out of attempts, gave up: job=%s attempts=%d/%d", j.ID, snap.Attempts, q.maxAttempts)
+	if q.db == nil || q.saveDone(snap, true) {
+		return
+	}
+	q.mu.Lock()
+	j.Result, j.Status, j.Finished = ParseResponse{}, "pending", time.Time{}
+	q.mu.Unlock()
+	ctx, cancel := dbCtx()
+	defer cancel()
+	q.refresh(ctx, j, now)
 }
 
 // SetRequeueMax sets the give-up window (<=0 keeps the default). Call before Start.
@@ -217,6 +261,10 @@ func (q *Queue) Run(ctx context.Context) {
 		if gone {
 			continue // the app gave up on it: no AI call
 		}
+		if q.spent(j) {
+			q.finishSpent(j, time.Now()) // no attempt left: never a further AI call
+			continue
+		}
 		if d := q.interval - time.Since(last); d > 0 {
 			select {
 			case <-time.After(d):
@@ -234,6 +282,7 @@ func (q *Queue) Run(ctx context.Context) {
 			if j.FirstTry.IsZero() {
 				j.FirstTry = start
 			}
+			j.Attempts++
 			q.mu.Unlock()
 		}
 		last = start
@@ -247,12 +296,20 @@ func (q *Queue) Run(ctx context.Context) {
 		}
 		now := time.Now()
 		var at time.Time
-		if requeue {
+		switch {
+		case requeue && q.spent(j):
+			log.Printf("ai busy, gave up: job=%s reason=%s attempts=%d/%d", j.ID, res.FallbackReason, j.Attempts, q.maxAttempts)
+			res, requeue = q.gaveUp(j), false
+		case requeue:
 			var ok bool
 			if at, ok = q.nextTry(j, now); !ok {
 				log.Printf("ai busy, gave up: job=%s reason=%s requeues=%d after=%s", j.ID, res.FallbackReason, j.Requeues, now.Sub(j.FirstTry).Round(time.Second))
 				res, requeue = q.gaveUp(j), false
 			}
+		case res.FallbackReason == "error" && q.spent(j):
+			// the last attempt brought no answer: the job ends as gave_up like a busy one
+			log.Printf("ai error on the last attempt, gave up: job=%s attempts=%d/%d", j.ID, j.Attempts, q.maxAttempts)
+			res = q.gaveUp(j)
 		}
 		q.mu.Lock()
 		if j.Status == "abandoned" {
@@ -426,7 +483,7 @@ func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 	}
 	if j.Status != "done" {
 		body := map[string]any{"status": "pending", "ai_state": "estimating", "job_id": j.ID, "queue_length": s.Queue.Pending(),
-			"requeues": j.Requeues, "entries": links, "next_reset_at": s.nextResetAt()}
+			"requeues": j.Requeues, "attempts": j.Attempts, "max_attempts": s.Queue.maxAttempts, "entries": links, "next_reset_at": s.nextResetAt()}
 		if j.Requeues > 0 {
 			body["busy_reason"] = j.LastBusy // rate_limited | unavailable | timeout: still estimating
 			body["next_attempt_at"] = j.NotBefore.UTC().Format(time.RFC3339)

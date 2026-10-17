@@ -266,7 +266,8 @@ parse is included in the prompt only as a hint. Every AI item comes back with
   `{"status": "pending", "job_id": "...", "fallback": "queued", "items": [], ...}`.
   Poll `GET /v1/parse/jobs/{job_id}`. It returns 202
   `{"status": "pending", "ai_state": "estimating", "queue_length": n, ...}` until the
-  answer is ready (after a requeue it also has `requeues`, `busy_reason`,
+  answer is ready (it carries `attempts`, the AI attempts started so far, and
+  `max_attempts` = `AI_MAX_ATTEMPTS`; after a requeue it also has `requeues`, `busy_reason`,
   `next_attempt_at`), then 200 with the full parse response. The field the app
   reads to tell estimating from failed is **`ai_state`**: `"estimating"` while
   the job is pending, `"answered"` when the AI (or cache) filled the row,
@@ -281,7 +282,10 @@ parse is included in the prompt only as a hint. Every AI item comes back with
   whose `AI_REQUEUE_MAX_MINUTES` window ran out while the server was down
   (counted from its first try, or from when it was queued if it never got
   one) ends as failed with `fallback_reason: "gave_up"` on the next start,
-  with no AI call. A meal queued but never tried that gives up this way gets
+  with no AI call. So does a job that has already started its
+  `AI_MAX_ATTEMPTS`-th attempt (the attempt count is stored when an attempt
+  starts, so an attempt that died with its process, kill -9 or a lost lease,
+  still counts): it never gets another attempt. A meal queued but never tried that gives up this way gets
   its reserved AI call back. The app should still save the meal as
   `needs_review` (as today) and keep polling; a 404 only means the job
   finished more than an hour ago or belongs to someone else.
@@ -586,7 +590,8 @@ Go's embedded VCS info.
 ### Test hook: POST /test/ai/fail (AI_MODE=stub only, same guard as next-answer)
 `{"mode": "error" | "timeout" | "busy" | "unavailable" | "daily_limit" | ""}`: every following AI call fails that way until mode `""` or
 `/test/ai/calls/reset`. `error` ends the job as failed (`fallback: "error"`). `busy`, `unavailable` and `timeout` keep it
-pending (requeued) until the mode is cleared or `AI_REQUEUE_MAX_MINUTES` runs out (`gave_up`). `busy` is a 429 (not
+pending (requeued) until the mode is cleared, the job has used `AI_MAX_ATTEMPTS` attempts, or `AI_REQUEUE_MAX_MINUTES` runs out (`gave_up`).
+An optional `"times": n` makes only the next n AI calls fail, then the stub answers again (e.g. `{"mode": "timeout", "times": 2}`). `busy` is a 429 (not
 charged on a later attempt); `unavailable` is a 503 (charged when it reaches Gemini on a later attempt).
 `daily_limit` ends it as failed (`fallback: "daily_limit"`). Confident table items survive.
 
@@ -597,6 +602,7 @@ Settings (all env vars):
 |---|---|---|
 | `AI_DAILY_CAP` | 20 | Project-wide AI meals per quota day (Gemini free tier: 20 requests/day/model, quotaId `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). 0 = unlimited. `AI_GLOBAL_DAILY_CAP` is still read as the old name. |
 | `AI_USER_DAILY_CAP` | 3 | AI meals per user per quota day (a meal's retries count once), so one user can't use up the day. Below 0 = no per-user limit. |
+| `AI_MAX_ATTEMPTS` | 3 | Gemini attempts per meal (parse job), the first one included; at least 1. When the last one brings no answer (`rate_limited`, `unavailable`, `timeout` or `error`) the meal ends as `gave_up` and is never tried again, also after a restart or lease recovery. Every attempt still counts toward `AI_DAILY_CAP` and logs its `ai_calls` row; `AI_USER_DAILY_CAP` still counts the meal once. HTTP retries inside one attempt (below) are not extra attempts. |
 | `AI_REQUEUE_MAX_MINUTES` | 30 | How long a busy Gemini job (`rate_limited` / `unavailable` / `timeout`) keeps being requeued, from its first try, before it ends as `gave_up`. |
 | `AI_QUOTA_RESET_TZ` | `America/Los_Angeles` | The caps reset at midnight in this zone, when Google resets its daily quota (12:30 PM IST in PDT, 1:30 PM IST in PST). The `ai_usage` / `ai_global_usage` `local_date` is the date in this zone. |
 | `GEMINI_RPM` | 10 | Global limiter: Gemini HTTP attempts (retries included) are spaced to at most this many a minute across the process; queued jobs wait for a slot instead of bursting. A slot that can't come before the job's deadline is not taken (`rate_limited`). |
@@ -628,7 +634,9 @@ allowed. Each **later** attempt (a busy requeue) that fires and reaches Gemini i
 against **`AI_DAILY_CAP` only** (the shared budget counts every attempt): any HTTP response except 429, or no response (timeout),
 counts as reaching Gemini. A 429 means Google rejected the request before running it, so that send is not
 charged. An attempt that never sends (no `GEMINI_RPM` slot before the deadline, etc.) is not charged. When
-`AI_DAILY_CAP` is already used up, a later attempt is not made and the meal ends as `daily_limit`. A meal that
+`AI_DAILY_CAP` is already used up, a later attempt is not made and the meal ends as `daily_limit` (also before its last attempt). A meal
+gets at most **`AI_MAX_ATTEMPTS`** (default 3) attempts: 3 timeouts use 3 of `AI_DAILY_CAP`, 1 of the user's cap, log 3 `ai_calls`
+rows and end as `gave_up`. An attempt that restarts after its process died mid-call (lease recovery) is a new attempt and is charged. A meal that
 ends as failed (error, daily_limit, gave_up) keeps whatever was already charged. Meals answered from the cache,
 the table, or rejected before reserving (`daily_limit` already known) are not counted. A meal rejected because
 our own queue is full (`AI_QUEUE_MAX`) gives its reserved unit back.
@@ -642,8 +650,10 @@ requeued until **`AI_REQUEUE_MAX_MINUTES`** (default **30**) after its first try
 so that it finishes inside that window. A requeued job still respects `GEMINI_RPM` and `AI_PER_MINUTE`.
 A later attempt that reaches Gemini is charged against `AI_DAILY_CAP` (not the per-user cap; see above); a 429 or a send that never
 leaves is not. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
-reason) and `next_attempt_at` (RFC 3339). When the window runs out the job ends as failed with
-`fallback: "gave_up"`, `fallback_reason: "gave_up"`. A finished job stays pollable for an hour after it
+reason) and `next_attempt_at` (RFC 3339). When the job has used its `AI_MAX_ATTEMPTS` attempts (default 3:
+the first try and two requeues, about 1.5 min with the default delays), or when the window runs out, the job ends as failed with
+`fallback: "gave_up"`, `fallback_reason: "gave_up"`. An `error` on the last attempt also ends it as `gave_up` (an `error` on an
+earlier attempt ends it as `error` at once, as before). A finished job stays pollable for an hour after it
 finishes (so a job that used the full window is still there), including across server restarts.
 
 **Failed means the user types the calories.** Only `daily_limit`, `user_limit`, `error` and `gave_up` end a meal as
@@ -661,7 +671,7 @@ failed row; the user types the calories.
 | `rate_limited` | `estimating` | 429 still failing after the retries, or our limiter had no slot in time: the job is requeued (`busy_reason` on the poll) | |
 | `unavailable` | `estimating` | 503 still failing after the retries: the job is requeued | |
 | `timeout` | `estimating` | the call timed out: the job is requeued. `timeout` only ever means busy, still estimating | |
-| `gave_up` | `failed` | the `AI_REQUEUE_MAX_MINUTES` window ran out while Gemini was still busy (`fallback: "gave_up"`) | |
+| `gave_up` | `failed` | the meal used its `AI_MAX_ATTEMPTS` attempts (default 3) without an answer, or the `AI_REQUEUE_MAX_MINUTES` window ran out while Gemini was still busy (`fallback: "gave_up"`) | |
 | `error` | `failed` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers, or our own queue being full (`fallback: "error"`, or `"busy"` when the queue is full) | |
 | `abandoned` | `failed` | job poll only: the app abandoned the job (`status: "abandoned"`, no items) | |
 

@@ -502,13 +502,14 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 // used up (the meal ends as daily_limit).
 func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	fc, fs := j.failSplit()
-	if j.Requeues > 0 && s.globalCapFull(ctx) {
+	later := j.Attempts > 1 || j.Requeues > 0 // not the attempt the meal's reservation covers
+	if later && s.globalCapFull(ctx) {
 		log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, "AI_DAILY_CAP used up before a requeued attempt")
 		return s.failedResponse(fc, fs, j.Slot, "global_cap_reached", "daily_limit"), false
 	}
 	sc := &sendCount{}
 	items, err := s.Fallback.EstimateMeal(withSendCount(ctx, sc), j.Text, j.Spans, j.Hint)
-	if j.Requeues > 0 && sc.n.Load() > 0 {
+	if later && sc.n.Load() > 0 {
 		s.chargeAI(ctx, j.UserID) // one more unit for this later attempt
 	}
 	outcome := "used"

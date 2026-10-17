@@ -37,7 +37,8 @@ Gemini free tier), `AI_USER_DAILY_CAP` the per-user limit (default 3),
 `AI_QUOTA_RESET_TZ` when they reset (default America/Los_Angeles midnight,
 Google's reset), `GEMINI_RPM` the global spacing of Gemini attempts
 (default 10), `AI_REQUEUE_MAX_MINUTES` how long a busy Gemini job keeps
-being requeued before it ends as `gave_up` (default 30), and
+being requeued before it ends as `gave_up` (default 30), `AI_MAX_ATTEMPTS`
+the Gemini attempts per meal before it ends as `gave_up` (default 3), and
 `GEMINI_THINKING_BUDGET` the per-model `thinkingConfig` (`omit`, a number, or
 empty for the model default: budget 0 on `gemini-flash-latest`, omitted on
 Flash-Lite which 400s on `thinkingBudget`). Each requeue attempt that reaches

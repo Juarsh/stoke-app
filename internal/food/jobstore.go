@@ -34,7 +34,7 @@ type jobPayload struct {
 }
 
 const jobCols = `id, user_id, text, cache_key, slot, payload, status, requeues, last_busy,
-	next_attempt_at, lease_until, first_try_at, created_at, finished_at, result`
+	next_attempt_at, lease_until, first_try_at, created_at, finished_at, result, attempts`
 
 func dbCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), dbTimeout)
@@ -66,7 +66,7 @@ func scanJob(row pgx.Row) (j Job, lease time.Time, err error) {
 	var payload, result []byte
 	var next, leaseAt, first, fin *time.Time
 	if err = row.Scan(&j.ID, &j.UserID, &j.Text, &j.Key, &j.Slot, &payload, &j.Status, &j.Requeues, &j.LastBusy,
-		&next, &leaseAt, &first, &j.Created, &fin, &result); err != nil {
+		&next, &leaseAt, &first, &j.Created, &fin, &result, &j.Attempts); err != nil {
 		return
 	}
 	var p jobPayload
@@ -108,21 +108,23 @@ func (q *Queue) loadJob(uid int64, id string) (Job, bool, error) {
 }
 
 // claimJob takes the lease for one attempt. It succeeds only if the row is
-// still pending, due, unleased and at the requeue count this copy knows;
-// it sets first_try_at on the first attempt. ok=false: another instance
+// still pending, due, unleased, at the requeue count this copy knows and has
+// an attempt left (attempts < AI_MAX_ATTEMPTS); it counts the attempt and
+// sets first_try_at on the first one. ok=false: another instance
 // moved the job on (j is then refreshed from the row; done=true if finished
 // or gone). A DB error lets the attempt run anyway (best effort).
 func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 	ctx, cancel := dbCtx()
 	defer cancel()
 	var first time.Time
-	err := q.db.QueryRow(ctx, `UPDATE ai_parse_jobs SET lease_until=$2, first_try_at=COALESCE(first_try_at,$3)
-		WHERE id=$1 AND status='pending' AND requeues=$4 AND (lease_until IS NULL OR lease_until < $3)
+	var attempts int
+	err := q.db.QueryRow(ctx, `UPDATE ai_parse_jobs SET lease_until=$2, first_try_at=COALESCE(first_try_at,$3), attempts=attempts+1
+		WHERE id=$1 AND status='pending' AND requeues=$4 AND attempts < $5 AND (lease_until IS NULL OR lease_until < $3)
 		AND (next_attempt_at IS NULL OR next_attempt_at <= $3)
-		RETURNING first_try_at`, j.ID, now.Add(q.callTimeout+leaseSlack), now, j.Requeues).Scan(&first)
+		RETURNING first_try_at, attempts`, j.ID, now.Add(q.callTimeout+leaseSlack), now, j.Requeues, q.maxAttempts).Scan(&first, &attempts)
 	if err == nil {
 		q.mu.Lock()
-		j.FirstTry = first
+		j.FirstTry, j.Attempts = first, attempts
 		q.mu.Unlock()
 		return true
 	}
@@ -132,10 +134,19 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 		if j.FirstTry.IsZero() {
 			j.FirstTry = now
 		}
+		j.Attempts++
 		q.mu.Unlock()
 		return true
 	}
-	// someone else has it: refresh this copy from the row
+	// someone else has it (or no attempt is left): refresh this copy from the row
+	q.refresh(ctx, j, now)
+	return false
+}
+
+// refresh reloads this copy of a pending job from its row: dropped if it is
+// finished elsewhere, else back in the queue at its next_attempt_at (after a
+// live lease). A copy with no attempt left is finished as gave_up by Run.
+func (q *Queue) refresh(ctx context.Context, j *Job, now time.Time) {
 	cur, lease, err := scanJob(q.db.QueryRow(ctx, `SELECT `+jobCols+` FROM ai_parse_jobs WHERE id=$1`, j.ID))
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -147,7 +158,7 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 		j.NotBefore = now.Add(time.Second)
 		q.waiting = append(q.waiting, j)
 	default:
-		j.Requeues, j.LastBusy, j.FirstTry = cur.Requeues, cur.LastBusy, cur.FirstTry
+		j.Requeues, j.LastBusy, j.FirstTry, j.Attempts = cur.Requeues, cur.LastBusy, cur.FirstTry, cur.Attempts
 		j.NotBefore = cur.NotBefore
 		if lease.After(j.NotBefore) {
 			j.NotBefore = lease
@@ -157,7 +168,6 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 		}
 		q.waiting = append(q.waiting, j)
 	}
-	return false
 }
 
 // saveRequeue records a busy attempt: the job stays pending until NotBefore.
@@ -260,12 +270,13 @@ func (q *Queue) resume() error {
 		if start.IsZero() {
 			start = j.Created
 		}
-		if !now.Before(start.Add(q.requeueMax - q.callTimeout)) {
+		// out of attempts (the last one may have died with its process), or out of time
+		if q.spent(j) || !now.Before(start.Add(q.requeueMax-q.callTimeout)) {
 			untried := j.FirstTry.IsZero()
 			j.Result, j.Status, j.Finished = q.gaveUp(j), "done", now
 			if q.saveDone(*j, true) {
 				gaveUp++
-				log.Printf("ai job gave up on resume: job=%s requeues=%d queued=%s ago", j.ID, j.Requeues, now.Sub(j.Created).Round(time.Second))
+				log.Printf("ai job gave up on resume: job=%s requeues=%d attempts=%d/%d queued=%s ago", j.ID, j.Requeues, j.Attempts, q.maxAttempts, now.Sub(j.Created).Round(time.Second))
 				if untried && q.release != nil {
 					q.release(j) // the reserved call was never made
 				}

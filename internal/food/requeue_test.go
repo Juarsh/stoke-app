@@ -50,6 +50,7 @@ func requeueSvcWin(t *testing.T, window time.Duration, modes ...string) (*Servic
 	if window > 0 {
 		q.SetRequeueMax(window)
 		q.SetCallTimeout(window / 10)
+		q.SetMaxAttempts(1000) // these test the time window, not AI_MAX_ATTEMPTS
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)

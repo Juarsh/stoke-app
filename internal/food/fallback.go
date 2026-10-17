@@ -342,13 +342,25 @@ type Stub struct {
 	calls int
 	next  *[]parser.Item
 	fail  string // "error" | "timeout" | "busy" | "unavailable" | "daily_limit" | "" : every call fails this way until cleared
+	left  int    // >0: only this many more calls fail, then fail clears
 }
 
 // SetFail makes every following call fail ("error", "timeout") until "" is set.
-func (s *Stub) SetFail(mode string) { s.mu.Lock(); defer s.mu.Unlock(); s.fail = mode }
+func (s *Stub) SetFail(mode string) { s.SetFailTimes(mode, 0) }
+
+// SetFailTimes: the next n calls fail that way, then the stub answers again (n<=0: until cleared).
+func (s *Stub) SetFailTimes(mode string, n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.fail, s.left = mode, n
+}
 
 func (s *Stub) Calls() int { s.mu.Lock(); defer s.mu.Unlock(); return s.calls }
-func (s *Stub) Reset()     { s.mu.Lock(); defer s.mu.Unlock(); s.calls, s.next, s.fail = 0, nil, "" }
+func (s *Stub) Reset() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.calls, s.next, s.fail, s.left = 0, nil, "", 0
+}
 func (s *Stub) SetNext(items []parser.Item) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -366,6 +378,14 @@ func (s *Stub) EstimateMeal(ctx context.Context, text string, spans []Span, _ []
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls++
+	if s.fail != "" && s.left > 0 {
+		s.left--
+		defer func(mode string) {
+			if s.left == 0 && s.fail == mode {
+				s.fail = ""
+			}
+		}(s.fail)
+	}
 	// one stub call is one HTTP send for cap counting: busy and daily_limit
 	// are 429s (rejected before running, not counted); everything else counts
 	switch s.fail {

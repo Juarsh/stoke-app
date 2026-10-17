@@ -160,7 +160,10 @@ func TestUserCapOncePerMeal(t *testing.T) {
 	d := food.RequeueDelays
 	food.RequeueDelays = []time.Duration{20 * time.Millisecond}
 	t.Cleanup(func() { food.RequeueDelays = d })
-	srv, pool := setupCfg(t, &fakeAI{}, func(c *Config) { c.AdminToken, c.GlobalAICap, c.UserAICap = testAdmin, 20, 3 })
+	srv, pool := setupCfg(t, &fakeAI{}, func(c *Config) {
+		c.AdminToken, c.GlobalAICap, c.UserAICap = testAdmin, 20, 3
+		c.AIMaxAttempts = 10 // 3 timeouts + the answer: more than the default 3 attempts
+	})
 	call(t, srv, "POST", "/test/ai/calls/reset", "", nil, nil)
 	call(t, srv, "POST", "/test/ai/fail", "", M{"mode": "timeout"}, nil)
 	var p parseOut

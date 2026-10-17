@@ -44,7 +44,10 @@ type Config struct {
 	// AIRequeueMax: how long a busy AI job keeps being requeued, from its
 	// first try, before it ends as gave_up (AI_REQUEUE_MAX_MINUTES, default 30 min).
 	AIRequeueMax time.Duration
-	GeminiModel  string
+	// AIMaxAttempts: Gemini attempts per meal (parse job) before it ends as
+	// gave_up (AI_MAX_ATTEMPTS, default 3; 0 = default).
+	AIMaxAttempts int
+	GeminiModel   string
 	// GeminiRPM spaces Gemini HTTP attempts, retries included (GEMINI_RPM, default 10).
 	GeminiRPM int
 	// GeminiThinking is GEMINI_THINKING_BUDGET: "" = per-model default,
@@ -129,6 +132,7 @@ func New(c Config) (http.Handler, error) {
 	}
 	q := food.NewQueue(c.AIPerMinute, c.AIQueueMax)
 	q.SetRequeueMax(c.AIRequeueMax)
+	q.SetMaxAttempts(c.AIMaxAttempts)
 	qctx := c.QueueCtx
 	if qctx == nil {
 		qctx = context.Background()

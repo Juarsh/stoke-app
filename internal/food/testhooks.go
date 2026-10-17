@@ -47,7 +47,8 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 	// that way until mode "" (or /test/ai/calls/reset)
 	mux.HandleFunc("POST /test/ai/fail", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
-			Mode string `json:"mode"`
+			Mode  string `json:"mode"`
+			Times int    `json:"times"` // >0: only the next n calls fail
 		}
 		if !httpx.Decode(w, r, &in) {
 			return
@@ -56,8 +57,8 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 			httpx.Error(w, 400, "mode must be error, timeout, busy, unavailable, daily_limit or empty")
 			return
 		}
-		stub.SetFail(in.Mode)
-		httpx.JSON(w, 200, map[string]any{"mode": in.Mode})
+		stub.SetFailTimes(in.Mode, in.Times)
+		httpx.JSON(w, 200, map[string]any{"mode": in.Mode, "times": in.Times})
 	})
 	mux.HandleFunc("POST /test/ai/daily-cap", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
