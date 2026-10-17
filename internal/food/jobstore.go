@@ -87,7 +87,7 @@ func scanJob(row pgx.Row) (j Job, lease time.Time, err error) {
 			*x.dst = *x.src
 		}
 	}
-	if j.Status == "done" {
+	if j.Status != "pending" {
 		j.Hint = nil
 	}
 	return
@@ -140,8 +140,8 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	switch {
-	case errors.Is(err, pgx.ErrNoRows) || (err == nil && cur.Status == "done"):
-		delete(q.jobs, j.ID) // finished (or deleted) elsewhere; polls read the row
+	case errors.Is(err, pgx.ErrNoRows) || (err == nil && cur.Status != "pending"):
+		delete(q.jobs, j.ID) // finished, abandoned (or deleted) elsewhere; polls read the row
 	case err != nil:
 		log.Printf("ai job reload failed: job=%s err=%v", j.ID, err)
 		j.NotBefore = now.Add(time.Second)
@@ -193,11 +193,32 @@ func (q *Queue) saveDone(j Job, requireFree bool) bool {
 	return tag.RowsAffected() == 1
 }
 
-// sweepDone deletes finished jobs past the poll TTL.
+// abandonRow marks the user's job abandoned (idempotent). ok=false: no such
+// job. wasPending/untried: its state before (an untried pending job gets its
+// reserved call back).
+func (q *Queue) abandonRow(uid int64, id string, now time.Time) (ok, wasPending, untried bool, created time.Time, err error) {
+	ctx, cancel := dbCtx()
+	defer cancel()
+	var old string
+	err = q.db.QueryRow(ctx, `WITH old AS (SELECT status, first_try_at IS NULL AS untried, created_at FROM ai_parse_jobs WHERE id=$1 AND user_id=$2 FOR UPDATE)
+		UPDATE ai_parse_jobs j SET status='abandoned', result=NULL, lease_until=NULL, next_attempt_at=NULL,
+			finished_at=CASE WHEN old.status='abandoned' THEN j.finished_at ELSE $3 END
+		FROM old WHERE j.id=$1 AND j.user_id=$2 RETURNING old.status, old.untried, old.created_at`, id, uid, now).Scan(&old, &untried, &created)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, false, false, time.Time{}, nil
+	}
+	if err != nil {
+		return false, false, false, time.Time{}, err
+	}
+	return true, old == "pending", untried, created, nil
+}
+
+// sweepDone deletes finished jobs past the poll TTL (abandoned ones after AbandonedTTL).
 func (q *Queue) sweepDone() {
 	ctx, cancel := dbCtx()
 	defer cancel()
-	if _, err := q.db.Exec(ctx, `DELETE FROM ai_parse_jobs WHERE status='done' AND finished_at < $1`, time.Now().Add(-q.ttl)); err != nil {
+	if _, err := q.db.Exec(ctx, `DELETE FROM ai_parse_jobs WHERE (status='done' AND finished_at < $1) OR (status='abandoned' AND finished_at < $2)`,
+		time.Now().Add(-q.ttl), time.Now().Add(-AbandonedTTL)); err != nil {
 		log.Printf("ai job sweep failed: %v", err)
 	}
 }

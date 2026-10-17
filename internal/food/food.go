@@ -83,6 +83,11 @@ type ParseResponse struct {
 	FallbackReason string `json:"fallback_reason,omitempty"`
 	// AIResetsAt (with user_limit / daily_limit): when the caps reset (RFC 3339).
 	AIResetsAt string `json:"ai_resets_at,omitempty"`
+	// NextResetAt: when the daily AI caps (per user and project-wide) next
+	// reset, RFC 3339 (midnight in AI_QUOTA_RESET_TZ: 12:30 PM IST in PDT,
+	// 1:30 PM IST in PST). On every parse response and job poll, so the app's
+	// own per-user count resets at the same instant.
+	NextResetAt string `json:"next_reset_at,omitempty"`
 	// UserDailyLimit (with user_limit): AI_USER_DAILY_CAP.
 	UserDailyLimit int64        `json:"user_daily_limit,omitempty"`
 	CustomItems    []CustomItem `json:"custom_items"`
@@ -547,6 +552,7 @@ func (s *Service) failedResponse(claimed []parser.Item, open []Span, slot, fb, r
 		out.Unmatched = append(out.Unmatched, sp.Text)
 		out.CustomItems = append(out.CustomItems, CustomItem{CustomName: key, NeedsInput: true})
 	}
+	out.NextResetAt = s.nextResetAt()
 	switch reason {
 	case "user_limit":
 		out.AIResetsAt = s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
@@ -597,7 +603,13 @@ func aiFailDetail(err error) string {
 // dailyLimit marks a response whose project-wide daily quota (AI_DAILY_CAP or Google's) is used up.
 func (s *Service) dailyLimit(out ParseResponse, job *Job) (ParseResponse, *Job) {
 	out.FallbackReason, out.AIResetsAt = "daily_limit", s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
+	out.NextResetAt = out.AIResetsAt
 	return out, job
+}
+
+// nextResetAt: the next daily cap reset (RFC 3339), see ParseResponse.NextResetAt.
+func (s *Service) nextResetAt() string {
+	return s.Quota.NextReset(httpx.Now()).Format(time.RFC3339)
 }
 
 // userCap: AI_USER_DAILY_CAP (0 = no per-user limit).
@@ -1041,6 +1053,7 @@ func (s *Service) scan(row pgx.Row) (Entry, error) {
 func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handler) {
 	mux.Handle("POST /v1/parse", wrap(http.HandlerFunc(s.handleParse)))
 	mux.Handle("GET /v1/parse/jobs/{id}", wrap(http.HandlerFunc(s.handleJob)))
+	mux.Handle("POST /v1/parse/jobs/{id}/abandon", wrap(http.HandlerFunc(s.handleAbandon)))
 	mux.Handle("GET /v1/dishes", http.HandlerFunc(s.handleDishes)) // public: the app's offline table
 	mux.Handle("POST /v1/entries", wrap(http.HandlerFunc(s.handleCreate)))
 	mux.Handle("GET /v1/entries", wrap(http.HandlerFunc(s.handleList)))
@@ -1068,6 +1081,7 @@ func (s *Service) handleParse(w http.ResponseWriter, r *http.Request) {
 	}
 	useAI := in.UseAI == nil || *in.UseAI
 	out, job := s.Parse(r.Context(), httpx.UserID(r), in.Text, useAI)
+	out.NextResetAt = s.nextResetAt()
 	if job != nil {
 		httpx.JSON(w, 202, out)
 		return
@@ -1161,6 +1175,11 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 		if body := s.choiceCheck(in.Text, it, i); body != nil {
 			httpx.JSON(w, 422, body)
+			return
+		}
+		// a late AI reading for a job the app abandoned is never saved (the user's typed kcal stands)
+		if it.Source == "ai_estimate" && s.jobAbandoned(r.Context(), uid, it.jobID()) {
+			httpx.JSON(w, 409, abandonedBody(i, it.jobID()))
 			return
 		}
 		e, code, err := s.resolve(r.Context(), it)
@@ -1307,6 +1326,9 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		ParseJobID   *string `json:"parse_job_id"`
 		JobID        *string `json:"job_id"`
 		ClientItemID *string `json:"client_item_id"`
+		// Source (optional) says where the new numbers come from; "ai_estimate"
+		// for an entry tied to an abandoned parse job is refused (job_abandoned).
+		Source *string `json:"source"`
 		// Same checks as POST: variant_dish_id for variant-group dishes,
 		// confirmed=true when the (new) span has a vague amount.
 		VariantDishID *string `json:"variant_dish_id"`
@@ -1323,6 +1345,19 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpx.Error(w, code, err.Error())
 		return
+	}
+	if in.Source != nil && *in.Source == "ai_estimate" {
+		job := deref(in.ParseJobID)
+		if job == "" {
+			job = deref(in.JobID)
+		}
+		if job == "" {
+			job = deref(e.ParseJobID)
+		}
+		if s.jobAbandoned(r.Context(), uid, job) {
+			httpx.JSON(w, 409, abandonedBody(0, job))
+			return
+		}
 	}
 	if in.IfUnmodSince != nil && e.UpdatedAt.After(*in.IfUnmodSince) {
 		httpx.JSON(w, 409, map[string]any{"error": "entry changed on the server", "entry": e})

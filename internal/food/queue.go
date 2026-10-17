@@ -31,7 +31,7 @@ type Job struct {
 	FailSpans   []Span
 	Generic     ParseResponse // claimed items + open spans, used to build the failed state
 	Slot        string
-	Status      string // pending (estimating), done
+	Status      string // pending (estimating), done, abandoned (the app gave up: no more attempts, late results dropped)
 	Result      ParseResponse
 	Created     time.Time
 	// Requeues: times Gemini was still busy (rate_limited / unavailable /
@@ -58,6 +58,10 @@ const DefaultCallTimeout = 30 * time.Second
 
 // DoneTTL: a finished job can be polled this long after it finished.
 const DoneTTL = time.Hour
+
+// AbandonedTTL: an abandoned job is kept this long, so a late AI save that
+// carries its id is still refused (job_abandoned).
+const AbandonedTTL = 7 * 24 * time.Hour
 
 func requeueDelay(n int) time.Duration {
 	if n < 0 {
@@ -207,6 +211,12 @@ func (q *Queue) Run(ctx context.Context) {
 			}
 			continue
 		}
+		q.mu.Lock()
+		gone := j.Status == "abandoned"
+		q.mu.Unlock()
+		if gone {
+			continue // the app gave up on it: no AI call
+		}
 		if d := q.interval - time.Since(last); d > 0 {
 			select {
 			case <-time.After(d):
@@ -245,6 +255,12 @@ func (q *Queue) Run(ctx context.Context) {
 			}
 		}
 		q.mu.Lock()
+		if j.Status == "abandoned" {
+			q.mu.Unlock()
+			// abandoned while this attempt was in flight: the late result is dropped (the DB row is not pending either)
+			log.Printf("ai job abandoned during its attempt, result dropped: job=%s", j.ID)
+			continue
+		}
 		if requeue {
 			j.NotBefore = at
 			j.Requeues++
@@ -299,10 +315,64 @@ func (q *Queue) gc() {
 	for id, j := range q.jobs {
 		// pending jobs are never dropped (they end within the give-up window);
 		// done jobs stay pollable for ttl after they FINISHED, not after creation.
-		if j.Status == "done" && time.Since(j.Finished) > q.ttl {
+		if (j.Status == "done" && time.Since(j.Finished) > q.ttl) || (j.Status == "abandoned" && time.Since(j.Finished) > AbandonedTTL) {
 			delete(q.jobs, id)
 		}
 	}
+}
+
+// Abandon: the app gave up on this job (its 35-minute backstop) and the user
+// types the kcal. The job ends as abandoned: it leaves the queue, no further
+// AI attempt is made, an attempt in flight has its result dropped, and polls
+// say abandoned (no items). Idempotent. ok=false: no such job for this user
+// (or it expired). A job that was never tried gets its reserved call back.
+func (q *Queue) Abandon(uid int64, id string) (ok bool) {
+	now := time.Now()
+	q.mu.Lock()
+	mem, inMem := q.jobs[id]
+	if inMem && mem.UserID != uid {
+		inMem = false
+	}
+	var wasPending, untried bool
+	var snap Job
+	if inMem {
+		wasPending, untried = mem.Status == "pending", mem.FirstTry.IsZero()
+		if mem.Status != "abandoned" {
+			mem.Status, mem.Finished, mem.Result, mem.Hint = "abandoned", now, ParseResponse{}, nil
+		}
+		for i, w := range q.waiting {
+			if w == mem {
+				q.waiting = append(q.waiting[:i:i], q.waiting[i+1:]...)
+				break
+			}
+		}
+		snap = *mem
+	}
+	q.mu.Unlock()
+	if q.db != nil {
+		dbOK, dbPending, dbUntried, created, err := q.abandonRow(uid, id, now)
+		if err != nil {
+			log.Printf("ai job abandon store failed: job=%s err=%v", id, err)
+			if !inMem {
+				return false
+			}
+		} else {
+			if !dbOK && !inMem {
+				return false
+			}
+			if dbOK {
+				wasPending, untried = dbPending, dbUntried
+				snap.ID, snap.UserID, snap.Created = id, uid, created
+			}
+		}
+	} else if !inMem {
+		return false
+	}
+	if wasPending && untried && q.release != nil {
+		q.release(&snap) // the reserved call was never made
+	}
+	log.Printf("ai job abandoned by the app: job=%s was_pending=%v untried=%v", id, wasPending, untried)
+	return true
 }
 
 // Start wires the queue to the service and starts the worker.
@@ -348,9 +418,15 @@ func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	links := s.jobEntries(r.Context(), j.UserID, j.ID)
+	if j.Status == "abandoned" {
+		// the app gave up on this meal: never an AI answer, whatever came back later
+		httpx.JSON(w, 200, map[string]any{"status": "abandoned", "ai_state": "failed", "fallback_reason": "abandoned", "job_id": j.ID,
+			"items": []parser.Item{}, "entries": links, "next_reset_at": s.nextResetAt()})
+		return
+	}
 	if j.Status != "done" {
 		body := map[string]any{"status": "pending", "ai_state": "estimating", "job_id": j.ID, "queue_length": s.Queue.Pending(),
-			"requeues": j.Requeues, "entries": links}
+			"requeues": j.Requeues, "entries": links, "next_reset_at": s.nextResetAt()}
 		if j.Requeues > 0 {
 			body["busy_reason"] = j.LastBusy // rate_limited | unavailable | timeout: still estimating
 			body["next_attempt_at"] = j.NotBefore.UTC().Format(time.RFC3339)
@@ -361,7 +437,39 @@ func (s *Service) handleJob(w http.ResponseWriter, r *http.Request) {
 	out := j.Result
 	out.JobID = j.ID
 	out.Entries = links
+	out.NextResetAt = s.nextResetAt()
 	httpx.JSON(w, 200, out)
+}
+
+// handleAbandon: POST /v1/parse/jobs/{id}/abandon - the app gave up on the
+// meal (see Queue.Abandon). 404 when there is no such job for this user.
+func (s *Service) handleAbandon(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if !s.Queue.Abandon(httpx.UserID(r), id) {
+		httpx.Error(w, 404, "no such job")
+		return
+	}
+	httpx.JSON(w, 200, map[string]any{"job_id": id, "status": "abandoned"})
+}
+
+// jobAbandoned: the app abandoned this parse job (an AI reading saved with its id is refused).
+func (s *Service) jobAbandoned(ctx context.Context, uid int64, job string) bool {
+	if job == "" || s.Queue == nil {
+		return false
+	}
+	if s.Queue.db == nil {
+		j, ok := s.Queue.Get(uid, job)
+		return ok && j.Status == "abandoned"
+	}
+	var n int
+	_ = s.DB.QueryRow(ctx, `SELECT count(*) FROM ai_parse_jobs WHERE id=$1 AND user_id=$2 AND status='abandoned'`, job, uid).Scan(&n)
+	return n > 0
+}
+
+// abandonedBody: 409 for an AI reading saved with an abandoned job's id.
+func abandonedBody(i int, job string) map[string]any {
+	return map[string]any{"error": map[string]any{"code": "job_abandoned", "item": i, "job_id": job,
+		"message": "The app gave up on this AI estimate; the user's own kcal stands. Late AI readings for it are not saved."}}
 }
 
 // JobEntry is an entry saved with this parse job's id (typically a

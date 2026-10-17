@@ -285,6 +285,30 @@ parse is included in the prompt only as a hint. Every AI item comes back with
   its reserved AI call back. The app should still save the meal as
   `needs_review` (as today) and keep polling; a 404 only means the job
   finished more than an hour ago or belongs to someone else.
+- **Abandon** (`POST /v1/parse/jobs/{id}/abandon`, no body): the app gave up
+  on the meal (its 35-minute backstop: the row becomes a failed row and the
+  user types the kcal). 200 `{"job_id", "status": "abandoned"}`; idempotent;
+  404 for an unknown / expired job or someone else's (the app treats 404 as
+  done). The job ends as `abandoned`: it leaves the queue and is never tried
+  again (no quota spent; a job never tried gets its reserved call back), an
+  attempt already in flight has its result dropped, and a restart does not
+  resume it. Polls then return 200
+  `{"status": "abandoned", "ai_state": "failed", "fallback_reason": "abandoned", "items": [], "entries", "next_reset_at"}`
+  (never an AI answer). Abandoned jobs are kept 7 days.
+  The server never writes entries from a job result: only the app saves
+  entries. A save tied to an abandoned job (`parse_job_id`) that carries an
+  AI reading is refused with **409** `{"error": {"code": "job_abandoned", "item", "job_id", "message"}}`:
+  `POST /v1/entries` with `source: "ai_estimate"`, or `PATCH /v1/entries/{id}`
+  with `source: "ai_estimate"` (job from the body or the stored entry). Typed
+  saves (`source: "custom"`) tied to the job are accepted, so the user's kcal
+  stands and is what totals and `/v1/summary` count (`needs_review` entries
+  never count).
+- **`next_reset_at`** (RFC 3339) is on every `POST /v1/parse` response, every
+  job poll (202 and 200) and `GET /admin/ai-quota`: when the daily caps (per
+  user and project-wide) next reset, i.e. midnight in `AI_QUOTA_RESET_TZ`
+  (12:30 PM IST in PDT, 1:30 PM IST from Nov 1 in PST). The app's own per-user
+  count resets at this instant, and its cap copy shows it in the device's
+  local time.
 - AI not configured, or `use_ai: false`: 200 with `answer: "generic"`. This is
   the rule-based guess with every item set to `needs_confirmation`, plus
   placeholder cards for unknown text.
@@ -415,7 +439,9 @@ meal. A remembered whole-meal text, or a remembered unclaimed span, is
 applied before any AI call.
 
 **Linking entries to AI jobs.** `POST /v1/entries` items and `PATCH` accept
-optional `parse_job_id` (alias `job_id`) and `client_item_id`.
+optional `parse_job_id` (alias `job_id`) and `client_item_id`; `PATCH` also
+accepts an optional `source` (only `"ai_estimate"` is acted on: refused with
+409 `job_abandoned` when the entry's job was abandoned).
 `GET /v1/parse/jobs/{id}` lists the entries saved with that job id.
 
 **Overconfidence rules.** These flags always need a decision:
@@ -608,15 +634,20 @@ failed row; the user types the calories.
 
 | fallback_reason | ai_state | When | Extra fields |
 |---|---|---|---|
-| `user_limit` | `failed` | this user's `AI_USER_DAILY_CAP` is used up (`fallback: "cap_reached"`) | `user_daily_limit`, `ai_resets_at` |
-| `daily_limit` | `failed` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at` |
+| `user_limit` | `failed` | this user's `AI_USER_DAILY_CAP` is used up (`fallback: "cap_reached"`) | `user_daily_limit`, `ai_resets_at`, `next_reset_at` |
+| `daily_limit` | `failed` | the project-wide quota is used up: `AI_DAILY_CAP` (`fallback: "global_cap_reached"`) or Google's daily quota (`fallback: "daily_limit"`) | `ai_resets_at`, `next_reset_at` |
 | `rate_limited` | `estimating` | 429 still failing after the retries, or our limiter had no slot in time: the job is requeued (`busy_reason` on the poll) | |
 | `unavailable` | `estimating` | 503 still failing after the retries: the job is requeued | |
 | `timeout` | `estimating` | the call timed out: the job is requeued. `timeout` only ever means busy, still estimating | |
 | `gave_up` | `failed` | the `AI_REQUEUE_MAX_MINUTES` window ran out while Gemini was still busy (`fallback: "gave_up"`) | |
 | `error` | `failed` | anything else: other HTTP errors, bad JSON, implausible or unplaceable answers, or our own queue being full (`fallback: "error"`, or `"busy"` when the queue is full) | |
+| `abandoned` | `failed` | job poll only: the app abandoned the job (`status: "abandoned"`, no items) | |
 
-`ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`). Messages: user_limit "You've used today's {n} AI
+`ai_resets_at` is RFC 3339 (e.g. `2026-10-16T00:00:00-07:00`); `next_reset_at` is the same instant and is also
+sent outside cap failures (read `next_reset_at`; `ai_resets_at` stays for older apps). App copy (Oct 17) for both cap
+reasons: "Today’s free estimates are used up. Add the calories yourself, or try again after {h:mm AM/PM}." (with
+"tomorrow after" when the reset falls on a later local date; "or try again later." only if `next_reset_at` is unknown).
+Server `message` strings: user_limit "You've used today's {n} AI
 estimates. Add the calories yourself.", daily_limit "AI estimates are used up for now. Add the calories yourself.",
 error / gave_up "Couldn't estimate this. Add the calories yourself."
 
@@ -625,7 +656,7 @@ error / gave_up "Couldn't estimate this. Add the calories yourself."
 reason. The API key, the prompt/request body and the answer text are never logged.
 
 ### GET /admin/ai-quota (ADMIN_TOKEN)
-`{"quota_day": "2026-10-15", "reset_zone": "America/Los_Angeles", "resets_at": "2026-10-16T00:00:00-07:00",
+`{"quota_day": "2026-10-15", "reset_zone": "America/Los_Angeles", "resets_at": "2026-10-16T00:00:00-07:00", "next_reset_at": "2026-10-16T00:00:00-07:00",
 "daily_cap": 20, "used": 7, "remaining": 13, "user_daily_cap": 3, "exhausted": false}`; `remaining` is null when
 `daily_cap` is 0 (unlimited) and 0 with `exhausted: true` plus `exhausted_until` after a daily-quota 429.
 

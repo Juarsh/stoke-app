@@ -127,7 +127,7 @@ func (s *Service) handleQuota(w http.ResponseWriter, r *http.Request) {
 	gc := s.GlobalCap.Load()
 	ex, until := s.Quota.Exhausted(now)
 	out := map[string]any{"quota_day": day.Format("2006-01-02"), "reset_zone": s.Quota.loc().String(),
-		"resets_at": s.Quota.NextReset(now).Format(time.RFC3339), "daily_cap": gc, "used": used,
+		"resets_at": s.Quota.NextReset(now).Format(time.RFC3339), "next_reset_at": s.Quota.NextReset(now).Format(time.RFC3339), "daily_cap": gc, "used": used,
 		"user_daily_cap": s.userCap(), "exhausted": ex, "remaining": nil}
 	if gc > 0 {
 		out["remaining"] = max(0, gc-used)
