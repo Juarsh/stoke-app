@@ -15,7 +15,8 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 ## rg10 notes (Tester)
 - [x] "Saved as 2 count" reads badly. Needs pieces wording.
   Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces", "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel).
-- The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.
+- [x] The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.
+  Done: checked first: every kcal in the app is en-IN grouped (ring, plate rows, Progress, Log, Add buttons, format.ts kc), so 1,00,000 is the app's format and the note rows already matched it. They (and the flagged rows, "Saved as", the plate rows and Progress) now all go through the one formatter kc, and "Saved as" kcal is rounded like every other kcal (it could print raw decimals). Switching the whole app to 100,000-style grouping would be a separate, app-wide CEO call.
 - 5xx path: no automatic retry once the server is back.
 - 5xx path: an edit from another device leaves the flagged count stale until a retry (N4).
 - 5xx path: a stale `delete_failed` flag stays after editing a flagged row.

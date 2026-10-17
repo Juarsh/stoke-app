@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { makeStyles, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Row, T } from './ui';
+import { kc } from '../lib/format';
 
 export const SYNC_FAILED_COPY = 'Couldn’t sync this. Tap to retry';
 export const SYNC_RETRYING_COPY = 'Retrying…';
@@ -21,7 +22,7 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line, no
       <View style={{ flex: 1, gap: 2 }}>
         <Row style={{ gap: 10, justifyContent: 'space-between' }}>
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
-          {notCounted ? <T v="caption" tone="muted">— kcal · not counted</T> : kcal !== undefined ? <T v="caption" tone="muted">{Math.round(kcal).toLocaleString('en-IN')} kcal</T> : null}
+          {notCounted ? <T v="caption" tone="muted">— kcal · not counted</T> : kcal !== undefined ? <T v="caption" tone="muted">{kc(kcal)} kcal</T> : null}
         </Row>
         <Row style={{ gap: 6 }}>
           {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} /> : <Icon name="sync" color={t.c.warn} size={14} />}

@@ -11,6 +11,7 @@ import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { kv } from './kv';
 import { portionLabel } from './labels';
+import { kc } from './format';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
 import { enqueue, flush, FlushResult, hasDue, nextDueAt, Op, PendingFood, SERVER_ERROR } from './syncQueue';
@@ -112,7 +113,7 @@ export const keptNote = (reason?: string) => (reason && sentence(reason) ? `${KE
 /** next build (CEO, Oct 17): on a refused delete, the edit the delete had replaced (the server never got it) is never re-sent;
  * the row goes back to the server's copy and this note follows the server's reason. */
 export const editNotSaved = (what: string) => `Your change to ${what} wasn’t saved. Edit it again if you still want it.`;
-const editWhat = (e: FoodEntry) => (e.dish_id ? portionLabel(e.qty, e.unit) : `${Math.round(e.kcal.best).toLocaleString('en-IN')} kcal`);
+const editWhat = (e: FoodEntry) => (e.dish_id ? portionLabel(e.qty, e.unit) : `${kc(e.kcal.best)} kcal`);
 /** the row as the server's copy has it: its amount and numbers (what it counts), its version */
 function serverCopy(n: FoodEntry, row: ServerRow): FoodEntry {
   const rev = row.state === 'needs_review';

@@ -9,6 +9,7 @@ import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
 import { AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
+import { kc } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -24,7 +25,7 @@ function asItem(e: FoodEntry): Item {
 }
 
 type Day = { date: string; kcal: number; protein: number; entries: FoodEntry[]; reviews: number; pending: PendingFood[] };
-const fmt = (n: number) => Math.round(n).toLocaleString('en-IN');
+const fmt = kc;
 const asDate = (iso: string) => new Date(iso + 'T12:00:00');
 const dayLabel = (iso: string, today: string) => iso === today ? 'Today' : asDate(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
 

@@ -5,10 +5,10 @@
 import { parser, type Item } from '../parser';
 import type { ServerRow } from './api';
 import { portionLabel } from './labels';
+import { kc } from './format';
 import { CHECK_AMOUNT_LINE, notMeasured, serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
 
 const near = (a: number | undefined, b: number) => typeof a !== 'number' || Math.abs(a - b) <= 0.5;
-const fmt = (n: number) => n.toLocaleString('en-IN');
 export const SERVER_REVIEW = 'server_review';
 /** The note on a row the server kept for review. Names the unit when the phone's list says the dish doesn't come in it, or
  * when the server stored it in another unit (its own, newer list: an older-table phone, rg7 B4). No unit: no unit clause. */
@@ -47,7 +47,7 @@ export function adoptServer(e: FoodEntry, row: ServerRow): FoodEntry {
   return { ...e, dish_id: dishRow ? row.dish_id ?? e.dish_id : e.dish_id, qty, unit,
     kcal: { low: row.kcal_low ?? k, best: k, high: row.kcal_high ?? k }, protein_g: { low: row.protein_low ?? p, best: p, high: row.protein_high ?? p },
     carbs_g: row.carbs_g ?? e.carbs_g, fat_g: row.fat_g ?? e.fat_g,
-    server_note: dishRow ? `Saved as ${portionLabel(qty, unit)} · ${fmt(k)} kcal.` : `Saved as ${fmt(k)} kcal.` };
+    server_note: dishRow ? `Saved as ${portionLabel(qty, unit)} · ${kc(k)} kcal.` : `Saved as ${kc(k)} kcal.` };
 }
 
 export const UNITS_HELD = 'units_unknown';

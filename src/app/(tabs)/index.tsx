@@ -19,6 +19,7 @@ import { flags } from '@/lib/config';
 import { countedNums, displayLabel, displayName, entryLabel, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
 import { AMOUNT_UNKNOWN, SLOT_LABEL } from '@/lib/labels';
+import { kc } from '@/lib/format';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { parser } from '@/parser';
@@ -134,7 +135,7 @@ export default function Today() {
                 {r.n ? (
                   <>
                     <T tone="muted" numberOfLines={1} style={{ flex: 1 }}>{r.names}</T>
-                    <T v="number">{r.kcal.toLocaleString('en-IN')}</T>
+                    <T v="number">{kc(r.kcal)}</T>
                     <Icon name="chevron" color={t.c.muted} size={18} />
                   </>
                 ) : <T v="bodyStrong" tone="em" style={{ flex: 1 }}>+ add</T>}
