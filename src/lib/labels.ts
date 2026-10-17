@@ -12,3 +12,16 @@ export function portionLabel(qty: number, unit: string, name = '') {
   if (unit === 'gram') return `${qty} g`;
   return `${qty} ${unit}${qty !== 1 && unit !== 'katori' ? 's' : ''}`.trim() + (name ? '' : '');
 }
+
+/** CEO / Designer (next build): the edit sheet's unit chips. A dish that comes in 'piece' doesn't also show 'count': in the
+ * dish table the two are the same thing (equal per-unit kcal, grams and macros for every dish that has both: unit sweep test).
+ * The one piece chip stands for both: it is selected on a count row and tapping it keeps that row's own unit, so a count row
+ * is never converted (nothing changes on the server). Where count is the only option its chip reads "piece" (singular, like
+ * katori / spoon / plate / gram). Display only: the saved units and the server's list are unchanged. Pure. */
+export function unitChips(units: string[], current: string): { unit: string; label: string; selected: boolean }[] {
+  const shared = units.includes('piece') && units.includes('count');
+  return units.filter((u) => !(shared && u === 'count')).map((u) => {
+    const selected = u === current || (shared && u === 'piece' && current === 'count');
+    return { unit: selected ? current : u, label: u === 'count' ? 'piece' : u, selected };
+  });
+}

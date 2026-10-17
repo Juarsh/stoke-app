@@ -43,14 +43,14 @@ import React from 'react';
 import { act, create } from 'react-test-renderer';
 jest.mock('react-native-safe-area-context', () => { const { View } = jest.requireActual('react-native'); return { SafeAreaView: View, useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }; });
 import { EditSheet } from '../src/components/ItemEditor';
-test('edit sheet: roti’s count chip reads "pieces", never "count"', async () => {
+test('edit sheet: roti shows one piece chip (count and piece share it), never "count"', async () => {
   const it = { ...parser.recompute('roti', 2, 'count', ''), needs_confirmation: false } as Item;
   let t!: ReturnType<typeof create>;
   await act(async () => { t = create(<EditSheet visible it={it} onClose={() => {}} onSave={() => {}} onDelete={() => {}} />); });
   const chips = t.root.findAll((n) => n.props.testID === 'unit-chips' && typeof n.type !== 'string');
   const labels = chips.length ? chips[0].findAll((n) => typeof n.props.label === 'string' && typeof n.props.onPress === 'function').map((n) => n.props.label as string) : [];
   expect(labels.length).toBeGreaterThan(0);
-  expect(labels).toContain('pieces'); expect(labels).not.toContain('count');
+  expect(labels.filter((l) => /^(piece|pieces|count)$/.test(l))).toEqual(['piece']); expect(labels).not.toContain('count');
   const all = t.root.findAll((n) => typeof n.type === 'string').flatMap((n) => [n.props.children].flat()).filter((c) => typeof c === 'string').join(' ');
   expect(all).not.toMatch(/\b\d+ count\b|\bcount\b/);
   await act(async () => { t.unmount(); });

@@ -107,6 +107,12 @@ for (const theme of ['light', 'dark']) {
   const chips = await g.getByTestId('unit-chips').innerText();
   if (/piece|glass|count/.test(chips)) throw new Error(`dal sheet offers units it doesn't come in: ${chips}`);
   await shot(g, `edit-sheet-units-dal-${theme}`);
+  // next build: a count row for roti (g5, 2 pieces) shows ONE piece chip, selected: no "count", no second "pieces" chip
+  await g.goto(BASE + '/progress'); await wait(g, 2000);
+  await g.getByRole('button', { name: /^Edit roti/i }).first().click(); await wait(g, 1200);
+  const rc = (await g.getByTestId('unit-chips').innerText()).split(/\s+/).filter(Boolean);
+  if (rc.filter((w) => /^(piece|pieces|count)$/.test(w)).join() !== 'piece') throw new Error(`roti sheet chips: ${rc.join(' ')}`);
+  await shot(g, `edit-sheet-units-roti-${theme}`);
   await g.context().close();
   // rg7: a save the server 500ed three times ("Couldn’t sync this. Tap to retry", not counted); in Review a newly pulled dish's
   // type pick (the server's types), an older-table dal-in-plates note and the empty-unit line; Log + edit sheet refusing

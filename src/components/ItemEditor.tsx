@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { DISHES, Item, OilLevel, parser } from '../parser';
 import { displayName, unitReason, UNITS_UNKNOWN, amountReason, limitReason, tableTooMuch, TOO_MUCH_REASON, QTY_MAX, qtyInRange, qtyStep, type Slot } from '../lib/domain';
-import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL, unitWord } from '../lib/labels';
+import { portionLabel, SLOT_LABEL, SLOTS, SOURCE_LABEL, unitChips } from '../lib/labels';
 import { useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
 import { Icon } from './Icon';
@@ -99,7 +99,7 @@ export function EditSheet({ visible, it, onClose, onSave, onDelete, slot, onSlot
         <Button kind="soft" title="+" onPress={() => setQty((q) => Math.min(QTY_MAX, Math.round((q + step) * 100) / 100))} accessibilityLabel="Increase" />
       </Row>
       {amountOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="amount-range">{amountReason(unit)}</T> : null}
-      {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }} testID="unit-chips">{units.map((u) => <Chip key={u} kind="neutral" selected={u === unit} label={unitWord(u, true)} onPress={() => setUnit(u)} />)}</Row> : null}
+      {table ? <Row style={{ flexWrap: 'wrap', gap: 6 }} testID="unit-chips">{unitChips(units, unit).map((c) => <Chip key={c.label} kind="neutral" selected={c.selected} label={c.label} onPress={() => setUnit(c.unit)} />)}</Row> : null}
       {unitOff ? <T v="caption" tone="warn" accessibilityLiveRegion="polite" testID="unit-off">{unitLine}</T> : null}
       {preview.oil_level !== '' || oil ? (
         <>

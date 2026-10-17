@@ -14,7 +14,7 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 
 ## rg10 notes (Tester)
 - [x] "Saved as 2 count" reads badly. Needs pieces wording.
-  Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces", "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel).
+  Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces" (now one shared "piece" chip, see below), "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel).
 - [x] The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.
   Done: checked first: every kcal in the app is en-IN grouped (ring, plate rows, Progress, Log, Add buttons, format.ts kc), so 1,00,000 is the app's format and the note rows already matched it. They (and the flagged rows, "Saved as", the plate rows and Progress) now all go through the one formatter kc, and "Saved as" kcal is rounded like every other kcal (it could print raw decimals). Switching the whole app to 100,000-style grouping would be a separate, app-wide CEO call.
 - 5xx path: no automatic retry once the server is back.
@@ -31,7 +31,8 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 - Gram hint.
 - Jest timeouts.
 - Unit pluralising ("glasss").
-- Roti showing both count and piece chips.
+- [x] Roti showing both count and piece chips. (CEO Oct 17: hide the count chip on dishes that also have a piece unit.)
+  Done: in the dish table count and piece are the same thing for all 128 dishes that have both (equal kcal, protein, carbs, fat and grams at every amount), so they share ONE chip, labelled "piece" (Designer: singular, like katori / spoon / plate / gram; replaces abb0846's "pieces" chip). It is selected on a count row and tapping it keeps the row's unit, so a count row is never converted and nothing changes on the server. Where count is the only option, its chip reads "piece". Display only (unitChips in labels.ts). Tests: __tests__/pieceChip.test.tsx (roti sheet, count row edit + save kcal, count-only, unit sweep 0 mismatches); QA shot edit-sheet-units-roti.
 - Tiny gram amounts give "refusing to save 0 kcal".
 - The server accepts typed 0 kcal.
 - On a flagged delete of an older-build row with a queued edit, fetch the server row.
