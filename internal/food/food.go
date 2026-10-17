@@ -1470,14 +1470,23 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	saved, err := s.scan(s.DB.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
 		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
 		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
-		WHERE id=$1 AND user_id=$2 AND ($21::int IS NULL OR version=$21) RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
+		WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND ($21::int IS NULL OR version=$21) RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
 		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State, in.Version))
-	if errors.Is(err, pgx.ErrNoRows) && in.Version != nil {
-		// another write landed between the load and this update
-		if cur, _, lerr := s.load(r.Context(), uid, r); lerr == nil {
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Another write landed between the load and this update (the update is atomic on
+		// version and deleted_at): a delete wins (404, the same as a PATCH after the delete);
+		// a newer version is a 409 with the current row. Never a 500.
+		cur, code, lerr := s.load(r.Context(), uid, r)
+		if lerr != nil {
+			httpx.Error(w, code, lerr.Error())
+			return
+		}
+		if in.Version != nil {
 			httpx.JSON(w, 409, versionConflict(cur))
 			return
 		}
+		httpx.Error(w, 409, "entry changed while saving; retry")
+		return
 	}
 	if err != nil {
 		httpx.Error(w, 500, "save failed")
@@ -1488,7 +1497,7 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.ParseJobID != nil || in.ClientItemID != nil {
 		_ = s.DB.QueryRow(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
-			WHERE id=$1 AND user_id=$2 RETURNING version`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID)).Scan(&saved.Version)
+			WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL RETURNING version`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID)).Scan(&saved.Version)
 		saved.ParseJobID, saved.ClientItemID = orPtr(in.ParseJobID, saved.ParseJobID), orPtr(in.ClientItemID, saved.ClientItemID)
 	}
 	span := e.Span

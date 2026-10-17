@@ -87,7 +87,7 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 | `GET /v1/dishes` | Full dish table (public; same file the app ships offline) |
 | `POST /v1/entries` | Save chips: `{local_date?, slot?, text?, items:[{dish_id, qty, unit, oil_level, source, confirmed}] or [{custom_name, kcal, protein_g, source, confirmed}]}` (see Saving rules). Dish rows are recomputed server-side from the table. Slot defaults by time: <11 breakfast, 11-16 lunch, 16-19 snacks, else dinner. With only `text`, saves what the table recognised and returns `unmatched`. 201 → `{entries, unmatched, summary}` |
 | `GET /v1/entries?date=` | Day's entries + `total` |
-| `GET/PATCH/DELETE /v1/entries/{id}` | Edit a chip (`qty, unit, oil_level, dish_id, slot, local_date, custom_name, kcal, protein_g, version`); a stale `version` → 409 `version_conflict` with the server copy (see "Entry versions"). `if_unmodified_since` is accepted and ignored. Delete is soft (204) |
+| `GET/PATCH/DELETE /v1/entries/{id}` | Edit a chip (`qty, unit, oil_level, dish_id, slot, local_date, custom_name, kcal, protein_g, version`); a stale `version` → 409 `version_conflict` with the server copy (see "Entry versions"). `if_unmodified_since` is accepted and ignored. A PATCH on a deleted row (also racing the delete) → 404, never 500. Delete is soft (204) |
 | `GET /v1/sync/entries?since=RFC3339` | Changed entries incl. soft-deleted, for the app's SQLite copy (last-write-wins by `updated_at`) |
 | `GET/PATCH/DELETE /v1/me` | Profile basics, `diet` (veg/egg/nonveg), `steps_in_budget`; DELETE erases account and all data |
 | `PUT /v1/profile` | Onboarding `{sex, birth_year, height_cm, weight_kg, activity_level, goal: fat_loss\|maintain\|muscle_gain}` → computes target (Mifflin-St Jeor ±goal, protein 1.6/1.2 g/kg, fat 25%, carbs rest) |
@@ -448,6 +448,12 @@ The client then re-applies its own edit on top of `entry` and retries once with 
 user's edit wins. A PATCH without `version` is unconditional. `if_unmodified_since` (older apps) is
 accepted and **ignored**: a phone clock is never a precondition (a slow or fast clock used to make
 every edit 409 forever).
+
+**PATCH vs delete: the delete wins.** A PATCH on a deleted row is **404** `entry not found`, also when
+the delete lands between the PATCH's read and its update (the update is atomic on `version` and
+`deleted_at`): a PATCH is only ever 200, 404 or 409, never 500. The app then drops its local copy (it
+stops counting) and does not re-create it. A DELETE of a missing / already deleted row is 404 (the app
+treats it as done).
 
 **Linking entries to AI jobs.** `POST /v1/entries` items and `PATCH` accept
 optional `parse_job_id` (alias `job_id`) and `client_item_id`; `PATCH` also

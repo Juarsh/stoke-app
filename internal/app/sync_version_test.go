@@ -218,3 +218,97 @@ func TestUserCapOncePerMeal(t *testing.T) {
 		t.Errorf("4th meal: %+v, want user_limit", r)
 	}
 }
+
+// Tester rg3 N3: a PATCH (with or without version) racing a soft delete of the same row is
+// 200, 404 or 409, never 500. The update is atomic on version and deleted_at; when it matches
+// no row and the row is gone, the PATCH is 404 (the delete wins). Final state: every raced row
+// is deleted, the list is empty and the summary is 0. Kept rows edited in parallel stay
+// consistent (list == summary == row sum).
+func TestPatchRacingDelete(t *testing.T) {
+	srv, pool := setup(t, nil)
+	day := "2026-10-17"
+	const pairs = 16
+	items := []M{}
+	for i := 0; i < pairs; i++ {
+		items = append(items, M{"custom_name": "r", "source": "custom", "confirmed": true, "kcal": 100, "protein_g": 1, "client_id": "d" + string(rune('a'+i))})
+	}
+	items = append(items, M{"custom_name": "keep", "source": "custom", "confirmed": true, "kcal": 100, "protein_g": 1, "client_id": "keep"})
+	if c := call(t, srv, "POST", "/v1/entries", "rd", M{"local_date": day, "items": items}, nil); c != 201 {
+		t.Fatalf("insert: %d", c)
+	}
+	for round := 0; round < 3; round++ {
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+		got := map[int]int{}
+		for i := 0; i < pairs; i++ {
+			id := "/v1/entries/d" + string(rune('a'+i))
+			body := M{"kcal": 150 + round, "custom_name": "r"}
+			if i%2 == 0 {
+				body["version"] = 1 + round // 0, 1 or more writes before: a stale one is 409
+			}
+			for _, op := range []string{"PATCH", "DELETE", "PATCH"} {
+				wg.Add(1)
+				go func(op string, body M) {
+					defer wg.Done()
+					var b M
+					if op == "PATCH" {
+						b = body
+					}
+					c := call(t, srv, op, id, "rd", b, nil)
+					mu.Lock()
+					got[c]++
+					mu.Unlock()
+				}(op, body)
+			}
+		}
+		// a kept row edited in parallel with the deletes
+		for k := 0; k < 4; k++ {
+			wg.Add(1)
+			go func(k int) {
+				defer wg.Done()
+				c := call(t, srv, "PATCH", "/v1/entries/keep", "rd", M{"kcal": 200 + k, "custom_name": "keep"}, nil)
+				mu.Lock()
+				got[c]++
+				mu.Unlock()
+			}(k)
+		}
+		wg.Wait()
+		for c, n := range got {
+			if c != 200 && c != 204 && c != 404 && c != 409 {
+				t.Errorf("round %d: %d responses with status %d (want only 200/204/404/409)", round, n, c)
+			}
+		}
+		t.Logf("round %d: %v", round, got)
+		var alive, deleted int
+		_ = pool.QueryRow(context.Background(), `SELECT count(*) FILTER (WHERE deleted_at IS NULL), count(*) FILTER (WHERE deleted_at IS NOT NULL)
+			FROM food_entries WHERE client_id LIKE 'd%'`).Scan(&alive, &deleted)
+		if alive != 0 || deleted != pairs {
+			t.Fatalf("round %d: raced rows alive %d deleted %d", round, alive, deleted)
+		}
+		// a PATCH after the delete is 404, never 500
+		if c := call(t, srv, "PATCH", "/v1/entries/da", "rd", M{"version": 99, "kcal": 1, "custom_name": "r"}, nil); c != 404 {
+			t.Fatalf("patch after delete: %d", c)
+		}
+		var l struct {
+			Entries []verEntry
+			Total   struct{ Kcal float64 }
+		}
+		var sum struct {
+			KcalIn float64 `json:"kcal_in"`
+		}
+		call(t, srv, "GET", "/v1/entries?date="+day, "rd", nil, &l)
+		call(t, srv, "GET", "/v1/summary?date="+day, "rd", nil, &sum)
+		var rowSum float64
+		_ = pool.QueryRow(context.Background(), `SELECT COALESCE(sum(kcal_best),0) FROM food_entries WHERE deleted_at IS NULL AND state='confirmed'
+			AND user_id=(SELECT user_id FROM food_entries WHERE client_id='keep')`).Scan(&rowSum)
+		if len(l.Entries) != 1 || l.Total.Kcal != sum.KcalIn || sum.KcalIn != rowSum || rowSum < 200 || rowSum > 203 {
+			t.Fatalf("round %d: list %+v summary %v rows %v", round, l, sum.KcalIn, rowSum)
+		}
+		// re-create the raced rows for the next round (new client ids are not needed: undelete via SQL)
+		if round < 2 {
+			if _, err := pool.Exec(context.Background(), `UPDATE food_entries SET deleted_at=NULL WHERE client_id LIKE 'd%'`); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+}
