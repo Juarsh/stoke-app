@@ -453,7 +453,8 @@ every edit 409 forever).
 optional `parse_job_id` (alias `job_id`) and `client_item_id`; `PATCH` also
 accepts an optional `source`. `job_abandoned` applies to **AI-source writes only**: a PATCH with
 `source: "ai_estimate"`, or one that keeps the row's stored AI reading (e.g. `{"state":"confirmed"}` on an
-`ai_estimate` row, no `kcal`), on an entry whose job was abandoned gets 409 `job_abandoned`. A typed kcal
+`ai_estimate` row, no `kcal`, leaving it counted), on an entry whose job was abandoned gets 409
+`job_abandoned`. An identity-only edit that leaves the row `needs_review` (never counted) is accepted. A typed kcal
 (`source: "custom"`, or any `kcal` on a custom-name row) is always accepted, with or without the job id.
 `GET /v1/parse/jobs/{id}` lists the entries saved with that job id.
 

@@ -135,6 +135,10 @@ func TestTypedKcalAfterAbandonedAISave(t *testing.T) {
 	if c := call(t, srv, "PATCH", "/v1/entries/p3", "tk", M{"state": "confirmed"}, &e409); c != 409 || e409.Error.Code != "job_abandoned" {
 		t.Errorf("confirm of an abandoned AI reading: %d %+v", c, e409)
 	}
+	// an identity-only edit of the still-unchecked row (never counted) is fine
+	if c := call(t, srv, "PATCH", "/v1/entries/p3", "tk", M{"custom_name": "qelto", "remember": false}, nil); c != 200 {
+		t.Errorf("needs_review identity edit: %d", c)
+	}
 	// the user's own number for it is accepted (no source field: kcal makes it custom)
 	if c := call(t, srv, "PATCH", "/v1/entries/p3", "tk", M{"state": "confirmed", "kcal": 200, "protein_g": 0, "custom_name": "qelto"}, &e); c != 200 || e.Source != "custom" {
 		t.Fatalf("typed kcal on the AI row: %d %+v", c, e)

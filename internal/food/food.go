@@ -1431,8 +1431,9 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		it.Kcal, it.ProteinG = nil, nil // edited dish chips are recomputed from the current table
 	}
 	// job_abandoned applies to AI-source writes only: the client says the numbers are an AI
-	// reading, or the row keeps its stored AI numbers. A typed kcal (source custom) always goes through.
-	if (in.Source != nil && *in.Source == "ai_estimate") || (it.Source == "ai_estimate" && in.Kcal == nil) {
+	// reading, or a counted row keeps its stored AI numbers. A typed kcal (source custom) always
+	// goes through, and so does an identity-only edit of a needs_review row (never counted).
+	if (in.Source != nil && *in.Source == "ai_estimate") || (it.Source == "ai_estimate" && in.Kcal == nil && it.State != "needs_review") {
 		job := deref(in.ParseJobID)
 		if job == "" {
 			job = deref(in.JobID)
