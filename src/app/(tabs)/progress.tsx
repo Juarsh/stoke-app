@@ -5,13 +5,13 @@ import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
 import { addDays, counted, countedNums, displayName, onServer, entryLabel, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
-import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
+import { isStale, pendingFor, PendingFood, SERVER_ERROR } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
-import { AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
+import { AMOUNT_CHECK_COPY, AMOUNT_CHECK_LABEL, AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { kc } from '@/lib/format';
 import { Icon } from '@/components/Icon';
-import { syncFailedLabel } from '@/components/SyncFailedRow';
+import { SYNC_FAILED_COPY, SYNC_RETRYING_COPY, syncFailedLabel } from '@/components/SyncFailedRow';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
@@ -52,15 +52,26 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       </Pressable>
       {day.reviews ? <ReviewLink date={day.date} n={day.reviews} /> : null}
       {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
-      {open ? items.map((e) => (
-        <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" style={s.entry}
-          // rg10: a flagged delete's tap retries it, so it says so (Today's "Tap to retry" wording); every other row opens the editor
-          accessibilityLabel={e.delete_failed ? syncFailedLabel(`${SLOT_LABEL[e.slot]} · ${displayName(e.custom_name || '', e.dish_id)} (deleted)`, { retrying: !!e.sync_retrying, reason: e.sync_reason }) : `Edit ${entryLabel(e)}`}
-          accessibilityState={e.delete_failed && e.sync_retrying ? { busy: true } : undefined}>
-          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
-          <T v="number">{fmt(countedNums(e).kcal)}</T>
-        </Pressable>
-      )) : null}
+      {open ? items.map((e) => {
+        const name = `${SLOT_LABEL[e.slot]} · ${displayName(e.custom_name || '', e.dish_id)}`;
+        // rg10 + Designer: a row whose tap retries (a flagged delete; a 5xx-flagged edit, which also shows Today's warn line)
+        // says so, and so does a "—" row (its tap reads the server's copy again); every other row opens the editor
+        const failedEdit = !e.deleted_at && (e.sync_error === SERVER_ERROR || (!!e.sync_retrying && !!e.server_failed));
+        const retryRow = !!e.delete_failed || failedEdit;
+        const label = retryRow ? syncFailedLabel(e.delete_failed ? `${name} (deleted)` : name, { retrying: !!e.sync_retrying, reason: e.sync_reason })
+          : e.amount_unknown ? AMOUNT_CHECK_LABEL : `Edit ${entryLabel(e)}`;
+        return (
+          <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" style={s.entryBox} accessibilityLabel={label}
+            accessibilityState={retryRow && e.sync_retrying ? { busy: true } : undefined}>
+            <View style={s.entry}>
+              <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{name}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
+              <T v="number">{fmt(countedNums(e).kcal)}</T>
+            </View>
+            {failedEdit ? <T v="caption" tone="warn" testID="progress-sync-line">{e.sync_retrying ? SYNC_RETRYING_COPY : SYNC_FAILED_COPY}</T>
+              : e.amount_unknown ? <T v="caption" tone="muted" testID="progress-check-line">{AMOUNT_CHECK_COPY}</T> : null}
+          </Pressable>
+        );
+      }) : null}
     </View></View>
   );
 });
@@ -91,7 +102,8 @@ export default function Progress() {
   const month = asDate(today).toLocaleDateString('en-GB', { month: 'long' });
   // a flagged delete (rg9 B3) is not edited: tapping it retries the delete
   // next build: a row whose amount is unknown ("—") isn't edited from the phone's stale amount: tapping reads the server's copy
-  const onPick = useCallback((e: FoodEntry) => { if (e.delete_failed) { st.retrySync(e.id); return; } if (e.amount_unknown) { void st.refreshServerCopies(); return; } setSlot(e.slot); setEditing(e); }, [st]);
+  // rg10 + Designer: a 5xx-flagged edit's tap retries the sync too (not the editor); once it syncs, a tap edits as usual
+  const onPick = useCallback((e: FoodEntry) => { if (e.sync_retrying) return; if (e.delete_failed || (!e.deleted_at && e.sync_error === SERVER_ERROR)) { st.retrySync(e.id); return; } if (e.amount_unknown) { void st.refreshServerCopies(); return; } setSlot(e.slot); setEditing(e); }, [st]);
   const weekAgo = addDays(today, -6);
   const lastFreeze = [...d.streak.frozenDays].sort().reverse().find((x) => x >= weekAgo);
   const header = (
@@ -153,5 +165,6 @@ const useStyles = makeStyles((t) => ({
   dayCard: { backgroundColor: t.c.card, paddingHorizontal: t.space.cardH, borderLeftWidth: 1, borderRightWidth: 1, borderColor: t.c.cardLine },
   top: { borderTopWidth: 1, borderTopLeftRadius: t.radius.card, borderTopRightRadius: t.radius.card, paddingTop: 4 },
   bottom: { borderBottomWidth: 1, borderBottomLeftRadius: t.radius.card, borderBottomRightRadius: t.radius.card, paddingBottom: 4 },
-  entry: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40, paddingLeft: 8 },
+  entryBox: { minHeight: 40, paddingLeft: 8, justifyContent: 'center', paddingVertical: 2 },
+  entry: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
 }));

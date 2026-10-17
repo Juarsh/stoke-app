@@ -730,10 +730,14 @@ describe('dropped edit (CEO: always restore, never re-send): a refused delete br
     await act(async () => { day[0].props.onPress(); });
     expect(textOf(r)).toContain('Dinner · roti · —'); expect(textOf(r)).not.toContain('3 pieces');
     server.getDown = false;
-    const entry = r.root.findAll((n) => /^Edit /i.test(n.props.accessibilityLabel ?? '') && typeof n.props.onPress === 'function')[0];
+    expect(r.root.findAll((n) => /^Edit /i.test(n.props.accessibilityLabel ?? '') && typeof n.props.onPress === 'function')).toHaveLength(0);
+    const entry = r.root.findAll((n) => n.props.accessibilityLabel === 'Amount not known yet. Tap to check again.' && typeof n.props.onPress === 'function')[0];
+    expect(textOf(r)).toContain('Tap to check again');
     await act(async () => { entry.props.onPress(); }); await tick();
     expect(st.entries.find((x) => x.id === 'U')).toMatchObject({ qty: 2 }); expect(st.entries.find((x) => x.id === 'U')!.amount_unknown).toBeUndefined();
     expect(textOf(r)).toContain('Dinner · roti · 2 pieces'); expect(r.root.findAll((n) => n.props.testID === 'edit-sheet').length).toBe(0);
+    expect(textOf(r)).not.toContain('Tap to check again'); // known now: an ordinary row again
+    expect(r.root.findAll((n) => /^Edit /i.test(n.props.accessibilityLabel ?? '') && typeof n.props.onPress === 'function')).toHaveLength(1);
   });
   test('applyServerCopies (pure), unknown amount: a copy -> the server’s row; 404 -> gone here too; no answer -> unchanged', () => {
     const u = { ...tableEntry('U', 'roti', 3, 'count'), server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, server_note: 'n' } as FoodEntry;

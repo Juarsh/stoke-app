@@ -6,6 +6,9 @@ export const SOURCE_LABEL = (source: string) =>
   source === 'ai' ? 'AI estimate' : source === 'open_food_facts' ? 'label' : source === 'usda_fdc' ? 'USDA estimate' : source === 'manual' || source === 'custom' ? 'your entry' : 'recipe estimate';
 /** next build: the amount of a row whose server amount isn't known yet (a refused delete whose server copy couldn't be read) */
 export const AMOUNT_UNKNOWN = '—';
+/** Designer (next build): a Progress row whose amount is "—" (its tap reads the server's copy again): its line and label */
+export const AMOUNT_CHECK_COPY = 'Tap to check again';
+export const AMOUNT_CHECK_LABEL = 'Amount not known yet. Tap to check again.';
 /** rg10 note: the app's word for a unit in user copy. 'count' is never shown as a word: it reads "piece" / "pieces". */
 /** Designer (next build): the "sources vary" note on a piece reading (count or piece): the kcal for ONE piece (the row's best
  * divided by its amount, in the shared kcal format), replacing "… kcal a piece. Check it matches your piece." */

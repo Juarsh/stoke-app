@@ -273,3 +273,65 @@ describe('N4: an edit from another device is counted as the server has it while 
     expect(server.rows.has('F')).toBe(false); expect(counted(F())).toBe(false); expect(dayTotals(st.entries).kcal).toBe(0);
   });
 });
+
+import { AMOUNT_CHECK_COPY, AMOUNT_CHECK_LABEL } from '../src/lib/labels';
+describe('Designer: Progress rows for a 5xx-flagged edit ("Tap to retry", no editor) and a "—" row ("Tap to check again")', () => {
+  const y = () => new Date(now - 86_400_000).toISOString().slice(0, 10);
+  const openDay = async () => {
+    const day = r.root.findAll((x) => typeof x.props.accessibilityLabel === 'string' && /, \d+ items?, /.test(x.props.accessibilityLabel) && typeof x.props.onPress === 'function');
+    await act(async () => { day[0].props.onPress(); });
+  };
+  const byLabel = (l: string) => r.root.findAll((x) => x.props.accessibilityLabel === l && typeof x.props.onPress === 'function');
+  const warnLine = () => r.root.findAll((x) => x.props.testID === 'progress-sync-line' && x.props.tone !== undefined);
+  const sheetOpen = () => r.root.findAll((x) => x.props.title === 'Save changes').length > 0;
+  test('exact strings', () => {
+    expect(SYNC_FAILED_COPY).toBe('Couldn’t sync this. Tap to retry');
+    expect(AMOUNT_CHECK_LABEL).toBe('Amount not known yet. Tap to check again.');
+    expect(AMOUNT_CHECK_COPY).toBe('Tap to check again');
+    expect(syncFailedLabel('Lunch · roti')).toBe('Lunch · roti: couldn’t sync this. Tap to retry');
+  });
+  test('flagged edit: the warn line under it; a tap retries (no editor); once synced the line goes and a tap edits', async () => {
+    seed220(); server.fail = true;
+    const e = { ...edit(roti2(), 3), local_date: y(), server_failed: true, sync_error: SERVER_ERROR };
+    await boot([e], [], <Progress />);
+    await openDay();
+    const lines = warnLine();
+    expect(lines).toHaveLength(1); expect(lines[0].props.tone).toBe('warn'); expect(lines[0].props.children).toBe('Couldn’t sync this. Tap to retry');
+    const rows = byLabel('Lunch · roti: couldn’t sync this. Tap to retry');
+    expect(rows).toHaveLength(1);
+    expect(r.root.findAll((x) => /^Edit /.test(x.props.accessibilityLabel ?? '') && typeof x.props.onPress === 'function')).toHaveLength(0);
+    server.fail = false; server.log = [];
+    await act(async () => { rows[0].props.onPress(); }); await flushP(80);
+    expect(sheetOpen()).toBe(false);
+    expect(server.log).toContain('POST /v1/entries F');
+    expect(F().sync_error).toBeUndefined(); expect(F().server_failed).toBeUndefined();
+    expect(warnLine()).toHaveLength(0);
+    const ed = byLabel('Edit Roti');
+    expect(ed).toHaveLength(1);
+    await act(async () => { ed[0].props.onPress(); });
+    expect(sheetOpen()).toBe(true);
+    expect(Math.round(dayTotals(st.entries).kcal)).toBe(serverTotal());
+  });
+  test('while that retry runs: "Retrying…" in warn, busy, a tap does nothing', async () => {
+    seed220(); server.fail = true;
+    const e = { ...edit(roti2(), 3), local_date: y(), server_failed: true, sync_retrying: true };
+    await boot([e], [{ kind: 'upsert', entry: e, tries: 1, fives: 1, nextAt: now + 3_600_000 } as Op], <Progress />);
+    await openDay();
+    expect(warnLine()[0].props.children).toBe('Retrying…');
+    const row = byLabel('Lunch · roti: retrying sync');
+    expect(row).toHaveLength(1); expect(row[0].props.accessibilityState).toEqual({ busy: true });
+    await act(async () => { row[0].props.onPress(); });
+    expect(sheetOpen()).toBe(false);
+  });
+  test('"—" row: label exactly "Amount not known yet. Tap to check again.", visible "Tap to check again" (muted); never "Edit …"', async () => {
+    seed220(); server.fail = true;
+    const u = { ...edit(roti2(), 3), local_date: y(), server_failed: true, amount_unknown: true, kept_on_server: true };
+    await boot([u], [], <Progress />);
+    await openDay();
+    expect(byLabel('Amount not known yet. Tap to check again.')).toHaveLength(1);
+    const line = r.root.findAll((x) => x.props.testID === 'progress-check-line' && x.props.tone !== undefined);
+    expect(line).toHaveLength(1); expect(line[0].props.children).toBe('Tap to check again'); expect(line[0].props.tone).toBe('muted');
+    expect(r.root.findAll((x) => /^Edit /.test(x.props.accessibilityLabel ?? '') && typeof x.props.onPress === 'function')).toHaveLength(0);
+    expect(warnLine()).toHaveLength(0);
+  });
+});

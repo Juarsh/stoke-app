@@ -85,6 +85,13 @@ if (process.argv[3] === 'rg7') {
   const h10 = t('h10', 'roti', 3, 'count', 'snacks');
   entries.push({ ...h10, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, kept_on_server: true,
     server_note: 'Not deleted: the server kept this entry. This entry is shared. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' } as never);
+  // next build (Designer): yesterday in Progress: a 5xx-flagged edit (3 pieces, the server's 220 counted) says "Couldn’t sync
+  // this. Tap to retry" under it; a row whose amount is unknown says "Tap to check again"
+  const y = addDays(today, -1);
+  const h11 = t('h11', 'roti', 3, 'count', 'lunch');
+  entries.push({ ...h11, local_date: y, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, sync_error: 'server_error' } as never);
+  const h12 = t('h12', 'roti', 3, 'count', 'dinner');
+  entries.push({ ...h12, local_date: y, server_version: 1, server_counts: { kcal: 220, protein: 7 }, server_failed: true, amount_unknown: true, kept_on_server: true } as never);
 }
 process.stdout.write(JSON.stringify({ ...(dishUnits ? { dishUnits } : {}),
   user: { id: 'qa', name: 'Akarsh Puri', email: 'qa@example.com', idToken: null, mock: true },

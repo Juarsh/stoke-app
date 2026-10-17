@@ -162,6 +162,16 @@ for (const theme of ['light', 'dark']) {
   if (!/Snacks · Roti · —\s*220 kcal/.test(await unk.innerText())) throw new Error(`unknown-amount row: ${await unk.innerText()}`);
   await unk.scrollIntoViewIfNeeded(); await wait(h, 400);
   await shot(h, `today-amount-unknown-${theme}`);
+  // Designer: yesterday in Progress: the 5xx-flagged edit says "Couldn’t sync this. Tap to retry" (its tap retries), the "—"
+  // row says "Tap to check again" (label "Amount not known yet. Tap to check again."); neither says "Edit …"
+  await h.goto(BASE + '/progress'); await wait(h, 2000);
+  await h.getByRole('button', { name: /, \d+ items?, [\d,]+ calories/ }).first().click(); await wait(h, 800);
+  if ((await h.getByRole('button', { name: 'Lunch · roti: couldn’t sync this. Tap to retry', exact: true }).count()) !== 1) throw new Error('no retry label on the flagged Progress row');
+  if ((await h.getByText('Couldn’t sync this. Tap to retry', { exact: true }).count()) < 1) throw new Error('no retry line in Progress');
+  if ((await h.getByRole('button', { name: 'Amount not known yet. Tap to check again.', exact: true }).count()) !== 1) throw new Error('no check-again label on the "—" row');
+  if ((await h.getByText('Tap to check again', { exact: true }).count()) !== 1) throw new Error('no "Tap to check again" line');
+  await h.getByText('Tap to check again', { exact: true }).scrollIntoViewIfNeeded(); await wait(h, 400);
+  await shot(h, `progress-retry-check-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
     if ((await h.getByText(t, { exact: false }).count()) < 1) throw new Error(`Review lacks: ${t}`);
