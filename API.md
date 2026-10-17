@@ -638,13 +638,21 @@ no Gemini calls: parses answer at once as a failed meal (`ai_state: "failed"`, `
 quota day rolls (or when `exhausted_until` is past).
 
 **How attempts are counted.** One meal reserves ONE unit of the per-user and project caps (`AI_USER_DAILY_CAP`,
-`AI_DAILY_CAP`) before it is queued: that covers the first attempt, even if Gemini answers 429. HTTP retries
+`AI_DAILY_CAP`) before it is queued, in one transaction (both or neither: a meal refused by `AI_DAILY_CAP` costs
+its user nothing): that covers the first attempt, even if Gemini answers 429.
+**Charged before the send.** Every attempt writes its `ai_calls` row (`outcome: "in_flight"`) BEFORE its Gemini
+send, and a later attempt takes its `AI_DAILY_CAP` unit in that same transaction with an atomic
+check-and-increment (two concurrent attempts at cap-1: exactly one is sent). The row is then updated with the
+outcome (`used`, `requeue:<reason>`, `error:<reason>`, `daily_limit`) and `sends`. If the process dies mid-call
+the unit stays charged and the row stays `in_flight`; the meal's next attempt marks it `died`. A crash costs a
+charged attempt, never an uncounted one. The only give-back is a later attempt that finished and made no counted
+send (a 429, or no `GEMINI_RPM` slot). HTTP retries
 inside one attempt are not counted again. **`AI_USER_DAILY_CAP` counts once per meal (job)**: its retries
 never charge the user again, so 3 timeouts of one meal use 1 of the user's 3 and two more meals are still
-allowed. Each **later** attempt (a busy requeue) that fires and reaches Gemini is charged one more unit
-against **`AI_DAILY_CAP` only** (the shared budget counts every attempt): any HTTP response except 429, or no response (timeout),
-counts as reaching Gemini. A 429 means Google rejected the request before running it, so that send is not
-charged. An attempt that never sends (no `GEMINI_RPM` slot before the deadline, etc.) is not charged. When
+allowed. Each **later** attempt (a busy requeue) is charged one more unit against **`AI_DAILY_CAP` only** (the
+shared budget counts every attempt) before it sends: any HTTP response except 429, or no response (timeout),
+keeps it. A 429 means Google rejected the request before running it, so that unit is given back after the
+attempt, as for an attempt that never sent (no `GEMINI_RPM` slot before the deadline, etc.). When
 `AI_DAILY_CAP` is already used up, a later attempt is not made and the meal ends as `daily_limit` (also before its last attempt). A meal
 gets at most **`AI_MAX_ATTEMPTS`** (default 3) attempts: 3 timeouts use 3 of `AI_DAILY_CAP`, 1 of the user's cap, log 3 `ai_calls`
 rows and end as `gave_up`. An attempt that restarts after its process died mid-call (lease recovery) is a new attempt and is charged. A meal that

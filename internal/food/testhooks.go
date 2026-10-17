@@ -1,6 +1,7 @@
 package food
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
@@ -43,7 +44,7 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 		stub.SetNext(items)
 		httpx.JSON(w, 200, map[string]any{"ok": true})
 	})
-	// POST /test/ai/fail {"mode":"error"|"timeout"|"busy"|"unavailable"|"daily_limit"|""}: every AI call fails
+	// POST /test/ai/fail {"mode":"error"|"timeout"|"busy"|"unavailable"|"daily_limit"|"hang"|""}: every AI call fails
 	// that way until mode "" (or /test/ai/calls/reset)
 	mux.HandleFunc("POST /test/ai/fail", func(w http.ResponseWriter, r *http.Request) {
 		var in struct {
@@ -53,8 +54,8 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 		if !httpx.Decode(w, r, &in) {
 			return
 		}
-		if in.Mode != "" && in.Mode != "error" && in.Mode != "timeout" && in.Mode != "busy" && in.Mode != "unavailable" && in.Mode != "daily_limit" {
-			httpx.Error(w, 400, "mode must be error, timeout, busy, unavailable, daily_limit or empty")
+		if in.Mode != "" && in.Mode != "error" && in.Mode != "timeout" && in.Mode != "busy" && in.Mode != "unavailable" && in.Mode != "daily_limit" && in.Mode != "hang" {
+			httpx.Error(w, 400, "mode must be error, timeout, busy, unavailable, daily_limit, hang or empty")
 			return
 		}
 		stub.SetFailTimes(in.Mode, in.Times)
@@ -73,4 +74,11 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 		s.GlobalCap.Store(in.Cap)
 		httpx.JSON(w, 200, map[string]any{"global_daily_cap": in.Cap})
 	})
+}
+
+// StartAttemptForTest runs the pre-send step of one AI attempt (the charge
+// and the "in_flight" ai_calls row, see startAICall) for a meal, so tests
+// can race attempts at the cap boundary. ok=false: refused by AI_DAILY_CAP.
+func (s *Service) StartAttemptForTest(ctx context.Context, userID int64, mealID string, later bool) (id int64, ok bool) {
+	return s.startAICall(ctx, &Job{ID: mealID, UserID: userID}, later)
 }

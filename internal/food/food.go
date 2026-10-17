@@ -492,29 +492,32 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 // the job stays pending (estimating) and goes back into the queue. The queue
 // ends it as gave_up when its window runs out.
 //
-// Cap counting: the meal reserved one unit of AI_USER_DAILY_CAP /
-// AI_DAILY_CAP when it was queued (that covers the first attempt, even if
-// Gemini answered 429). AI_USER_DAILY_CAP counts once per meal (job): later
-// attempts never charge it. Each later attempt that fires and reaches Gemini
-// (any HTTP response but 429, or no response / timeout) is charged one more
-// unit of AI_DAILY_CAP only. A 429 means Google rejected the request before running it, so it is
-// not charged. An attempt that never sends (no limiter slot, deadline)
-// charges nothing. A later attempt is not made when AI_DAILY_CAP is already
-// used up (the meal ends as daily_limit).
+// Cap counting (charged BEFORE the send, F2): the meal reserved one unit of
+// AI_USER_DAILY_CAP and AI_DAILY_CAP when it was queued (reserveAI, one
+// transaction); that covers the first attempt, even if Gemini answered 429.
+// AI_USER_DAILY_CAP counts once per meal (job): later attempts never charge
+// it. Each later attempt is charged one unit of AI_DAILY_CAP before it is
+// sent, in the same transaction that writes its ai_calls row (outcome
+// "in_flight"), with an atomic check-and-increment (no two attempts can both
+// pass at cap-1); when the cap is used up nothing is sent and the meal ends as
+// daily_limit. After the call the row gets its outcome. If the process dies
+// mid-call the charge and the "in_flight" row stay (the next attempt of that
+// meal marks it "died"): a crash costs a charged attempt, never an uncounted
+// one. The only give-back: a later attempt that finished and is known to have
+// made no counted send (a 429, which Google rejects before running it, or no
+// limiter slot).
 func (s *Service) runJob(ctx context.Context, j *Job) (ParseResponse, bool) {
 	fc, fs := j.failSplit()
 	later := j.Attempts > 1 || j.Requeues > 0 // not the attempt the meal's reservation covers
-	if later && s.globalCapFull(ctx) {
+	callID, ok := s.startAICall(ctx, j, later)
+	if !ok {
 		log.Printf("ai failed daily_limit: job=%s detail=%q", j.ID, "AI_DAILY_CAP used up before a requeued attempt")
 		return s.failedResponse(fc, fs, j.Slot, "global_cap_reached", "daily_limit"), false
 	}
 	sc := &sendCount{}
 	items, err := s.Fallback.EstimateMeal(withSendCount(ctx, sc), j.Text, j.Spans, j.Hint)
-	if later && sc.n.Load() > 0 {
-		s.chargeAI(ctx, j.UserID) // one more unit for this later attempt
-	}
 	outcome := "used"
-	defer func() { s.logAICall(ctx, j, int(sc.n.Load()), outcome) }()
+	defer func() { s.finishAICall(ctx, j, callID, later, int(sc.n.Load()), outcome) }()
 	for i := range items {
 		if items[i].AIName == "" {
 			items[i].AIName = items[i].Name
@@ -630,8 +633,15 @@ func (s *Service) userCap() int64 {
 // caps; it returns a fallback status when either is reached.
 func (s *Service) reserveAI(ctx context.Context, userID int64) string {
 	today := s.Quota.Day(httpx.Now())
+	// one transaction: both counters or neither (a meal refused by the
+	// project cap never uses one of the user's own estimates)
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		return "error"
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
 	var calls int
-	err := s.DB.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
+	err = tx.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
 		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
 		RETURNING calls`, userID, today, s.userCap()).Scan(&calls)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -641,13 +651,13 @@ func (s *Service) reserveAI(ctx context.Context, userID int64) string {
 		return "error"
 	}
 	gc := s.GlobalCap.Load() // 0 = unlimited, but always counted
-	err = s.DB.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
+	err = tx.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
 		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
 		RETURNING calls`, today, gc).Scan(&calls)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "global_cap_reached"
 	}
-	if err != nil {
+	if err != nil || tx.Commit(ctx) != nil {
 		return "error"
 	}
 	return ""
@@ -1702,48 +1712,74 @@ func appendFlag(fs []string, f string) []string {
 	return append(fs, f)
 }
 
-// chargeAI counts one more Gemini send of an already-queued meal against
-// the project-wide counter (AI_DAILY_CAP counts every attempt). The send
-// already happened, so it is counted even past the cap (the counter must not
-// think there are calls left after Google's real limit has run out).
-// AI_USER_DAILY_CAP is NOT charged again: a user's meal (job) uses one unit
-// of it however many attempts it takes (reserved once when it was queued).
-func (s *Service) chargeAI(ctx context.Context, userID int64) {
+// startAICall runs before an attempt's send, in ONE transaction: a later
+// attempt takes one unit of AI_DAILY_CAP (atomic check-and-increment on the
+// day's row: INSERT .. ON CONFLICT DO UPDATE .. WHERE calls < cap locks the row
+// and re-checks the latest value, so of two concurrent attempts at cap-1 only
+// one gets it); an earlier "in_flight" row of this meal (its process died
+// mid-call) is marked "died"; the attempt's ai_calls row is written as
+// "in_flight". ok=false: the cap is used up, nothing written, no send.
+// Without a DB (unit tests) every attempt may go ahead.
+func (s *Service) startAICall(ctx context.Context, j *Job, later bool) (id int64, ok bool) {
 	if s.DB == nil {
-		return
-	}
-	_ = userID
-	today := s.Quota.Day(httpx.Now())
-	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
-		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1`, today)
-}
-
-// logAICall stores one row per AI attempt in ai_calls (user id, meal id = job id, timestamp,
-// model, outcome, HTTP sends that reached Gemini). Best effort: a failed
-// insert never changes the meal's answer.
-func (s *Service) logAICall(ctx context.Context, j *Job, sends int, outcome string) {
-	if s.DB == nil {
-		return
+		return 0, true
 	}
 	model := ""
 	if m, ok := s.Fallback.(interface{ ModelName() string }); ok {
 		model = m.ModelName()
 	}
-	if _, err := s.DB.Exec(ctx, `INSERT INTO ai_calls(user_id,meal_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-		j.UserID, j.ID, httpx.Now(), model, outcome, sends, j.Requeues); err != nil {
-		log.Printf("ai_calls insert failed: job=%s err=%v", j.ID, err)
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		log.Printf("ai_calls start failed: job=%s err=%v", j.ID, err)
+		return 0, !later // can't charge: a later attempt is not sent uncounted
 	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if later {
+		var calls int64
+		err = tx.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
+			ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
+			RETURNING calls`, s.Quota.Day(httpx.Now()), s.GlobalCap.Load()).Scan(&calls)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, false
+		}
+		if err != nil {
+			log.Printf("ai charge failed: job=%s err=%v", j.ID, err)
+			return 0, false
+		}
+	}
+	if _, err = tx.Exec(ctx, `UPDATE ai_calls SET outcome='died' WHERE meal_id=$1 AND outcome='in_flight'`, j.ID); err == nil {
+		err = tx.QueryRow(ctx, `INSERT INTO ai_calls(user_id,meal_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,'in_flight',0,$5) RETURNING id`,
+			j.UserID, j.ID, httpx.Now(), model, j.Requeues).Scan(&id)
+	}
+	if err == nil {
+		err = tx.Commit(ctx)
+	}
+	if err != nil {
+		log.Printf("ai_calls start failed: job=%s err=%v", j.ID, err)
+		return 0, !later
+	}
+	return id, true
 }
 
-// globalCapFull: AI_DAILY_CAP is set and already used up today.
-func (s *Service) globalCapFull(ctx context.Context) bool {
-	gc := s.GlobalCap.Load()
-	if gc <= 0 || s.DB == nil {
-		return false
+// finishAICall writes the attempt's outcome and HTTP sends that reached
+// Gemini on its ai_calls row, and gives back a later attempt's unit when it
+// is known to have made no counted send. Skipped when the process is shutting
+// down mid-call (the queue context was cancelled): like a kill, the row stays
+// "in_flight" and the unit stays charged.
+func (s *Service) finishAICall(ctx context.Context, j *Job, id int64, later bool, sends int, outcome string) {
+	if s.DB == nil || errors.Is(ctx.Err(), context.Canceled) {
+		return
 	}
-	var used int64
-	_ = s.DB.QueryRow(ctx, `SELECT COALESCE((SELECT calls FROM ai_global_usage WHERE local_date=$1),0)`, s.Quota.Day(httpx.Now())).Scan(&used)
-	return used >= gc
+	wctx := context.WithoutCancel(ctx) // a timed-out attempt still records its outcome
+	if later && sends == 0 {
+		_, _ = s.DB.Exec(wctx, `UPDATE ai_global_usage SET calls=calls-1 WHERE local_date=$1 AND calls>0`, s.Quota.Day(httpx.Now()))
+	}
+	if id == 0 {
+		return
+	}
+	if _, err := s.DB.Exec(wctx, `UPDATE ai_calls SET outcome=$2, sends=$3 WHERE id=$1`, id, outcome, sends); err != nil {
+		log.Printf("ai_calls update failed: job=%s err=%v", j.ID, err)
+	}
 }
 
 // releaseAI gives back a call reserved by reserveAI that was never made.

@@ -376,6 +376,20 @@ func (s *Stub) ModelName() string { return "stub" }
 
 func (s *Stub) EstimateMeal(ctx context.Context, text string, spans []Span, _ []parser.Item) ([]parser.Item, error) {
 	s.mu.Lock()
+	if s.fail == "hang" {
+		// the request is out and no answer comes until the attempt's context ends: a test kills the
+		// process (cancels the queue) mid-call to check that the attempt stays charged and logged
+		s.calls++
+		if s.left > 0 {
+			if s.left--; s.left == 0 {
+				s.fail = ""
+			}
+		}
+		s.mu.Unlock()
+		countSend(ctx, 0)
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
 	defer s.mu.Unlock()
 	s.calls++
 	if s.fail != "" && s.left > 0 {
