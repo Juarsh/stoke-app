@@ -87,6 +87,10 @@ export function seedServerCounts(e: FoodEntry): FoodEntry {
   if (e.server_counts || e.server_failed || typeof e.server_version !== 'number' || e.deleted_at) return e;
   return { ...e, server_counts: e.needs_review ? { kcal: 0, protein: 0 } : { kcal: e.kcal.best, protein: e.protein_g.best } };
 }
+/** edge (a): a flagged row (5xx save or delete) the server has stored (it gave a version) but whose numbers the phone doesn't
+ * know: an older build's queued edit means the phone's copy isn't the server's, so nothing could be seeded (rg8 F-1). Its
+ * server copy is fetched (GET /v1/entries/{id}) so it counts what the server counts instead of 0. */
+export const needsServerCopy = (e: FoodEntry) => (!!e.server_failed || !!e.delete_failed) && !e.server_counts && typeof e.server_version === 'number';
 /** Only a confident table match may be saved without the user seeing it. */
 export const autoSavable = (it: Item) => it.source === 'table' && !it.needs_confirmation && !it.ai_estimate;
 /** Entry awaiting review: placeholder numbers are zero and never shown as a number. */

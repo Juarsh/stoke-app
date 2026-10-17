@@ -5,8 +5,8 @@ import { abandonedEntry, dropLate, dropLateOps, expirePending, stampPending } fr
 import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
-import { createApi, type DishUnits } from './api';
-import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, seedServerCounts, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
+import { createApi, type DishUnits, type ServerRow } from './api';
+import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, needsServerCopy, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, seedServerCounts, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { kv } from './kv';
@@ -122,6 +122,30 @@ export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[nu
   return { ...n, server_note: keptNote(k.reason) };
 }
 
+/** edge (a): the server's current copy of flagged rows whose server numbers the phone didn't know (needsServerCopy), fetched
+ * after a flush. A copy: the row counts exactly that (server_counts; needs_review = 0) and stays flagged, so the difference
+ * from the phone's own value is shown, never counted silently. null (404) on a flagged delete: the server no longer has the
+ * row, so the delete won (flag cleared, its queued delete dropped). Anything else, or a row no longer in that state: unchanged.
+ * Pure (testable). */
+export function applyServerCopies<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, got: Record<string, ServerRow | null>): P {
+  let changed = false; const won = new Set<string>();
+  const entries = p.entries.map((e) => {
+    if (!(e.id in got) || !needsServerCopy(e)) return e;
+    const row = got[e.id];
+    if (row === null) {
+      if (!e.deleted_at || !e.delete_failed) return e;
+      changed = true; won.add(e.id);
+      return { ...e, delete_failed: undefined, server_failed: undefined, server_counts: undefined, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined };
+    }
+    if (!row || typeof row !== 'object') return e;
+    changed = true;
+    const rev = row.state === 'needs_review';
+    return { ...e, server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: row.kcal_best ?? 0, protein: row.protein_best ?? 0 } };
+  });
+  if (!changed) return p;
+  return { ...p, entries, queue: won.size ? p.queue.filter((o) => !(o.kind === 'delete' && won.has(o.id))) : p.queue };
+}
+
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
   const r = expirePending(p.entries, p.queue, now);
   return r.converted.length ? { ...p, entries: r.entries, queue: r.queue } : p;
@@ -179,6 +203,19 @@ function useStoreValue() {
   const syncing = useRef(false);
   const entriesRef = useRef(s.entries);
   useEffect(() => { entriesRef.current = s.entries; }, [s.entries]);
+  /** edge (a): fetch the server's copy of these rows (GET /v1/entries/{id}) and count them as it has them (applyServerCopies).
+   * A failed GET (offline, 5xx) leaves the row as it was ("not counted") until the next sync or a retry. */
+  const fillServerCopies = useCallback(async (ids: string[]) => {
+    const got: Record<string, ServerRow | null> = {};
+    for (const id of [...new Set(ids)]) { try { got[id] = await api.getEntry(id); } catch { /* unknown: unchanged */ } }
+    if (Object.keys(got).length) setS((p) => applyServerCopies(p, got));
+  }, [api]);
+  // app start: flagged rows saved by an older build whose server numbers were never known (their ops are off the queue)
+  useEffect(() => {
+    if (!ready || !s.user || api.mock) return;
+    const ids = entriesRef.current.filter(needsServerCopy).map((e) => e.id);
+    if (ids.length) void fillServerCopies(ids);
+  }, [ready, s.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const sync = useCallback(async () => {
     if (api.mock || syncing.current) return; // mock mode: nothing leaves the device; queue is kept for later
     // job poll: anything past the 35-minute cutoff is converted first (the queue change re-runs sync without its poll)
@@ -192,6 +229,10 @@ function useStoreValue() {
       const r = await flush(sent, sender);
       const { rest, profileRejected } = r;
       setS((p) => applyFlush({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}) }, sent, r));
+      // edge (a): a row flagged now (or before) that the server has but whose numbers the phone doesn't know: ask the server
+      const flagged = new Set(r.failed.filter((f) => f.code === SERVER_ERROR).map((f) => f.id));
+      await fillServerCopies(entriesRef.current.filter((e) => (flagged.has(e.id) || e.server_failed || e.delete_failed) && !e.server_counts && !r.rows?.[e.id]
+        && typeof (r.versions[e.id] ?? e.server_version) === 'number').map((e) => e.id));
       // shown once (not persisted): the row is already gone from the phone
       if (r.gone?.length) setNotice(DELETED_ELSEWHERE);
       // a row held for its dish's units ('Check amount'): pull them again with the dish table
@@ -201,7 +242,7 @@ function useStoreValue() {
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
       }
     } finally { syncing.current = false; }
-  }, [api, sender, s.queue, expireAi, pullUnits]);
+  }, [api, sender, s.queue, expireAi, pullUnits, fillServerCopies]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
   // retry with backoff: wake up when the head op's wait is over
   const headAt = nextDueAt(s.queue);

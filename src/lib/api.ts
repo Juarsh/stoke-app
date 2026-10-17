@@ -238,6 +238,12 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       try { await req('POST', `/v1/parse/jobs/${encodeURIComponent(jobId)}/abandon`); } catch (e) { if (!(e instanceof ApiError && (e.status === 404 || e.status === 410))) throw e; }
     },
     /** 404 (never reached the server / already gone) counts as done. */
+    /** edge (a): GET /v1/entries/{id} (server id or the app's client_id): the server's current copy of a row; null when it
+     * has none (404: deleted, or never stored). Read-only: used to count a flagged row exactly as the server has it. */
+    async getEntry(id: string): Promise<ServerRow | null> {
+      if (config.mock) return null;
+      try { return await req<ServerRow>('GET', `/v1/entries/${encodeURIComponent(id)}`); } catch (e) { if (e instanceof ApiError && e.status === 404) return null; throw e; }
+    },
     async deleteEntry(id: string): Promise<void> {
       if (config.mock) return;
       try { await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }

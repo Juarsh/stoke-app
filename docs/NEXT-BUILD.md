@@ -4,7 +4,8 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 `next-build` in calorie-tracker. Order is CEO's (Oct 17, 2026).
 
 ## Top
-1. Edge (a): phone counts 0 and server 220, but the row only says "not counted". Make the phone count and show the server's numbers.
+1. [x] Edge (a): phone counts 0 and server 220, but the row only says "not counted". Make the phone count and show the server's numbers.
+   Done: a flagged row (5xx save or delete) the server has stored but whose numbers the phone never knew is fetched with GET /v1/entries/{id} and counted at the server's copy, still flagged. A failed GET leaves it "not counted" and it is asked again at the next sync / app start.
 2. Edit dropped when a delete is refused: an edit still queued at that point is lost with no message, and the row shows the phone's qty while counting the server's 220. Restore qty and unit from the server row, or re-queue the edit.
 
 ## rg10 notes (Tester)

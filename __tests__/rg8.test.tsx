@@ -103,9 +103,9 @@ describe('B2: an unmatched span keeps its amount words', () => {
 });
 
 // ---------- Log: what goes to /v1/parse, and what the row shows ----------
-const server = { log: [] as { method: string; path: string; body: Record<string, any> }[], answerUnit: 'plate' as string | null, del5xx: new Set<string>(), rows: new Map<string, { kcal: number }>(),
-  down: false, patch5xx: false, delAnswer: new Map<string, { status: number; body: unknown }[]>(),
-  reset() { this.log = []; this.answerUnit = 'plate'; this.del5xx.clear(); this.rows.clear(); this.down = false; this.patch5xx = false; this.delAnswer.clear(); } };
+const server = { log: [] as { method: string; path: string; body: Record<string, any> }[], answerUnit: 'plate' as string | null, del5xx: new Set<string>(), rows: new Map<string, { kcal: number; protein?: number; qty?: number; unit?: string; version?: number; state?: string }>(),
+  down: false, patch5xx: false, getDown: false, delAnswer: new Map<string, { status: number; body: unknown }[]>(),
+  reset() { this.log = []; this.answerUnit = 'plate'; this.del5xx.clear(); this.rows.clear(); this.down = false; this.patch5xx = false; this.getDown = false; this.delAnswer.clear(); } };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, headers: { get: () => null }, json: async () => body, text: async () => JSON.stringify(body) });
 const PULLED = [{ id: 'zarda_pulao', name: 'zarda pulao', version: DISH_TABLE_VERSION, supported_units: ['katori', 'plate', 'gram'] }];
 async function fakeFetch(url: string, init: { method: string; body?: string }) {
@@ -128,9 +128,17 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
     return reply(201, { entries: [{ version: 1, state: 'confirmed', qty: it.qty, unit: it.unit, kcal_best: it.kcal ?? 0, protein_best: 0 }] });
   }
   const m = /^\/v1\/entries\/(.+)$/.exec(path); const id = m ? decodeURIComponent(m[1]) : '';
+  // next-build edge (a): GET one row = the server's copy (404 when it has none)
+  if (init.method === 'GET' && m) {
+    if (server.getDown) return reply(503, { error: 'unavailable' });
+    const row = server.rows.get(id);
+    return row ? reply(200, { version: row.version ?? 1, state: row.state ?? 'confirmed', qty: row.qty, unit: row.unit, kcal_best: row.kcal, protein_best: row.protein ?? 0 }) : reply(404, { error: 'entry not found' });
+  }
   if (init.method === 'DELETE' && server.delAnswer.get(id)?.length) { const a = server.delAnswer.get(id)!.shift()!; if (a.status < 300) server.rows.delete(id); return reply(a.status, a.body); }
   if (init.method === 'DELETE') { if (server.del5xx.has(id)) return reply(503, { error: 'unavailable' }); server.rows.delete(id); return reply(204); }
   if (server.patch5xx) return reply(500, { error: 'save failed' });
+  const prev = server.rows.get(id);
+  if (prev && init.method === 'PATCH') server.rows.set(id, { ...prev, kcal: Number(b.kcal ?? prev.kcal), qty: b.qty ?? prev.qty, unit: b.unit ?? prev.unit, version: (prev.version ?? 1) + 1 });
   return reply(200, { version: 2, state: 'confirmed', kcal_best: b.kcal ?? 0, protein_best: 0 });
 }
 let st!: Store;
@@ -348,13 +356,15 @@ describe('rg9 B3: a delete flagged after 3x 5xx is counted at the server’s num
   });
   test('an older-build row (no server_counts) deleted then flagged counts the row the server recorded, not 0', async () => {
     const old = { ...tableEntry('O', 'roti', 2, 'count'), server_version: 3 } as FoodEntry; delete (old as Partial<FoodEntry>).server_counts;
-    server.del5xx.add('O');
+    server.del5xx.add('O'); server.rows.set('O', { kcal: old.kcal.best, protein: old.protein_g.best, version: 3 });
     await boot(<Today />, [old], [{ kind: 'upsert', entry: { ...old, server_version: 3 }, tries: 0, nextAt: Date.now() + 3_600_000 } as Op]);
     expect(st.entries.find((x) => x.id === 'O')!.server_counts).toBeUndefined(); // queued edit at load: not guessed
     await act(async () => { st.deleteEntry('O'); }); await tick(); await flagIt('O');
-    // a queued upsert was not seeded: no guess -> the flagged row says it isn't counted rather than inventing numbers
-    expect(st.entries.find((x) => x.id === 'O')!.delete_failed).toBe(true);
-    expect(textOf(r)).toContain('(deleted)'); expect(textOf(r)).toContain(NOT_DELETED_REASON);
+    // a queued upsert was not seeded: no guess. Next build edge (a): once flagged, the server's copy is fetched and counted
+    const o = st.entries.find((x) => x.id === 'O')!;
+    expect(o.delete_failed).toBe(true); expect(o.server_counts).toEqual({ kcal: old.kcal.best, protein: old.protein_g.best });
+    expect(dayTotals(st.entries).kcal).toBe(Math.round(old.kcal.best));
+    expect(textOf(r)).toContain('(deleted)'); expect(textOf(r)).toContain(NOT_DELETED_REASON); expect(textOf(r)).not.toContain('not counted');
   });
   test('an older-build row with nothing queued: deleting it records what the server has first', async () => {
     const old = { ...tableEntry('P', 'roti', 2, 'count'), server_version: 3 } as FoodEntry; delete (old as Partial<FoodEntry>).server_counts;
@@ -498,5 +508,96 @@ describe('rg10: a delete refused with a 4xx (not 404) restores the row at the se
     const rv = restoreKept(del({ ...tableEntry('C', 'dal', 1, 'katori'), needs_review: true, server_version: 1 }), { id: 'C', code: 'forbidden' });
     expect(rv.deleted_at).toBeNull(); expect(counted(rv)).toBe(false);
     expect(keptNote('')).toBe(KEPT_COPY);
+  });
+});
+
+// ---------- next-build edge (a) (rg10): a flagged row the server has, whose numbers the phone didn't know, counts the server's ----------
+import { applyServerCopies } from '../src/lib/store';
+import { needsServerCopy } from '../src/lib/domain';
+describe('edge (a): an older-build row with a queued edit, flagged, counts the server’s numbers (fetched), not 0', () => {
+  const older = (id: string) => { const o = { ...tableEntry(id, 'roti', 2, 'count', { slot: 'breakfast' }), server_version: 3 } as FoodEntry; delete (o as Partial<FoodEntry>).server_counts; return o; };
+  const flagIt = async (id: string) => {
+    for (let i = 0; i < 6 && !st.entries.find((x) => x.id === id)?.sync_error; i++) {
+      const spy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + (i + 1) * 3_600_000);
+      await act(async () => { await st.sync(); }); await tick(); spy.mockRestore();
+    }
+  };
+  const serverTotal = () => Math.round([...server.rows.values()].reduce((a, x) => a + x.kcal, 0));
+  test('queued edit (4 roti) then delete, 3x 5xx: phone == server (220) with the row flagged “(deleted)” and showing 220 kcal; retry deletes', async () => {
+    const O = older('O'), k = Math.round(O.kcal.best);
+    server.rows.set('O', { kcal: O.kcal.best, protein: O.protein_g.best, qty: 2, unit: 'count', version: 3 });
+    server.patch5xx = true; server.del5xx.add('O');
+    // the older build's queue still holds the 4-roti edit: nothing could be seeded (the phone's copy isn't the server's)
+    await boot(<Today />, [{ ...O, ...tableEntry('O', 'roti', 4, 'count', { slot: 'breakfast' }), server_version: 3 }], [{ kind: 'upsert', entry: { ...O, ...tableEntry('O', 'roti', 4, 'count', { slot: 'breakfast' }), server_version: 3 }, tries: 0 }]);
+    expect(st.entries.find((x) => x.id === 'O')!.server_counts).toBeUndefined();
+    await act(async () => { st.deleteEntry('O'); }); await tick();
+    await flagIt('O');
+    const o = st.entries.find((x) => x.id === 'O')!;
+    expect(o).toMatchObject({ delete_failed: true, sync_error: SERVER_ERROR, server_counts: { kcal: O.kcal.best, protein: O.protein_g.best } });
+    expect(server.log.some((l) => l.method === 'GET' && l.path === '/v1/entries/O')).toBe(true);
+    expect(counted(o)).toBe(true);
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(k); // 220, not 0 and not the 4-roti 440
+    const txt = textOf(r);
+    expect(txt).toContain(`${k} kcal`); expect(txt).not.toContain('not counted'); expect(txt).toContain('(deleted)'); expect(txt).toContain(NOT_DELETED_REASON);
+    // the server comes back: tap-retry deletes it everywhere
+    server.del5xx.clear();
+    await act(async () => { st.retrySync('O'); }); await tick();
+    expect(counted(st.entries.find((x) => x.id === 'O')!)).toBe(false); expect(server.rows.has('O')).toBe(false);
+    expect(dayTotals(st.entries).kcal).toBe(0); expect(serverTotal()).toBe(0);
+  });
+  test('queued edit flagged by 3x 5xx on its PATCH: counts the server’s 220 (flagged), not 0 and not the unsaved 440', async () => {
+    const O = older('P'), k = Math.round(O.kcal.best);
+    server.rows.set('P', { kcal: O.kcal.best, qty: 2, unit: 'count', version: 3 });
+    server.patch5xx = true;
+    const ed = { ...O, ...tableEntry('P', 'roti', 4, 'count', { slot: 'breakfast' }), server_version: 3 };
+    await boot(<Today />, [ed], [{ kind: 'upsert', entry: ed, tries: 0 }]);
+    await flagIt('P');
+    const p = st.entries.find((x) => x.id === 'P')!;
+    expect(p).toMatchObject({ server_failed: true, sync_error: SERVER_ERROR, server_counts: { kcal: O.kcal.best } });
+    expect(dayTotals(st.entries).kcal).toBe(k); expect(serverTotal()).toBe(k);
+    expect(textOf(r)).toContain(`${k} kcal`); expect(textOf(r)).not.toContain('not counted'); expect(textOf(r)).toContain('Couldn’t sync this');
+  });
+  test('the GET fails too: still “not counted” (never a guess); the next app start asks again and counts the server’s copy', async () => {
+    const O = older('Q'), k = Math.round(O.kcal.best);
+    server.rows.set('Q', { kcal: O.kcal.best, qty: 2, unit: 'count', version: 3 });
+    server.patch5xx = true; server.getDown = true;
+    const ed = { ...O, ...tableEntry('Q', 'roti', 4, 'count', { slot: 'breakfast' }), server_version: 3 };
+    await boot(<Today />, [ed], [{ kind: 'upsert', entry: ed, tries: 0 }]);
+    await flagIt('Q');
+    const q = st.entries.find((x) => x.id === 'Q')!;
+    expect(q.server_failed).toBe(true); expect(q.server_counts).toBeUndefined(); expect(dayTotals(st.entries).kcal).toBe(0);
+    expect(textOf(r)).toContain('not counted');
+    // restart with the flagged row persisted: the GET goes through now
+    const saved = JSON.parse(mockSaved!) as { entries: FoodEntry[]; queue: Op[] };
+    await act(async () => { r.unmount(); });
+    server.getDown = false;
+    await boot(<Today />, saved.entries, saved.queue);
+    expect(st.entries.find((x) => x.id === 'Q')!.server_counts).toEqual({ kcal: O.kcal.best, protein: 0 });
+    expect(dayTotals(st.entries).kcal).toBe(k); expect(textOf(r)).toContain(`${k} kcal`); expect(textOf(r)).not.toContain('not counted');
+  });
+  test('a row the server never stored (no version) is not fetched and stays “not counted” (rg7 H1 unchanged)', async () => {
+    server.patch5xx = true;
+    const n = tableEntry('N', 'roti', 2, 'count');
+    await boot(<Today />, [n], [{ kind: 'upsert', entry: n, tries: 0 }]);
+    await flagIt('N');
+    expect(st.entries.find((x) => x.id === 'N')!.server_failed).toBe(true);
+    expect(server.log.some((l) => l.method === 'GET' && l.path.startsWith('/v1/entries/'))).toBe(false);
+    expect(dayTotals(st.entries).kcal).toBe(0); expect(textOf(r)).toContain('not counted');
+  });
+  test('applyServerCopies (pure): copy -> server_counts (review = 0), flag kept; 404 on a flagged delete -> the delete won; others unchanged', () => {
+    const flaggedDel = { ...older('A'), deleted_at: '2026-10-17T05:00:00Z', delete_failed: true, server_failed: true, sync_error: SERVER_ERROR } as FoodEntry;
+    const flaggedSave = { ...older('B'), server_failed: true, sync_error: SERVER_ERROR } as FoodEntry;
+    const fine = { ...older('C') } as FoodEntry;
+    expect([flaggedDel, flaggedSave, fine].map(needsServerCopy)).toEqual([true, true, false]);
+    const p = { entries: [flaggedDel, flaggedSave, fine], queue: [] as Op[] };
+    const a = applyServerCopies(p, { A: { state: 'confirmed', kcal_best: 220, protein_best: 7 }, B: { state: 'needs_review', kcal_best: 0 }, C: { state: 'confirmed', kcal_best: 999 } });
+    expect(a.entries[0]).toMatchObject({ delete_failed: true, server_counts: { kcal: 220, protein: 7 } }); expect(dayTotals(a.entries).kcal).toBe(220 + Math.round(fine.kcal.best));
+    expect(a.entries[1]).toMatchObject({ server_failed: true, server_counts: { kcal: 0, protein: 0 } });
+    expect(a.entries[2]).toBe(fine);
+    const g = applyServerCopies({ entries: [flaggedDel], queue: [{ kind: 'delete', id: 'A', tries: 0 }] as Op[] }, { A: null });
+    expect(g.entries[0].delete_failed).toBeUndefined(); expect(g.entries[0].sync_error).toBeUndefined(); expect(counted(g.entries[0])).toBe(false); expect(g.queue).toHaveLength(0);
+    // 404 on a flagged SAVE: left for the retry's own 404 (deleted elsewhere) flow
+    expect(applyServerCopies({ entries: [flaggedSave], queue: [] as Op[] }, { B: null }).entries[0]).toBe(flaggedSave);
+    expect(applyServerCopies(p, {})).toBe(p);
   });
 });
