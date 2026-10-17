@@ -14,7 +14,7 @@ Branched from `closed-test-2` (app 72b6eb4, backend e461c87). Backend work goes 
 
 ## rg10 notes (Tester)
 - [x] "Saved as 2 count" reads badly. Needs pieces wording.
-  Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces" (now one shared "piece" chip, see below), "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel).
+  Done: 'count' is never a word in user copy: "Saved as 2 pieces · 220 kcal.", "dal isn’t measured in pieces" (was "by count"), the edit sheet's count chip reads "pieces" (now one shared "piece" chip, see below), "Did you mean … or pieces?", "kcal a piece" (unitWord / portionLabel); Designer later replaced the piece line with "That’s {n} kcal for one piece. Change the amount if yours is bigger or smaller." ({n} = kcal for one piece, shared kcal format; onePieceNote in labels.ts, __tests__/onePieceNote.test.tsx). Other units keep "Published recipes give … kcal a {unit}. Check it matches your {unit}.".
 - [x] The note row uses Indian-style digit grouping, so 1,00,000 shows above 99,999.
   Done: checked first: every kcal in the app is en-IN grouped (ring, plate rows, Progress, Log, Add buttons, format.ts kc), so 1,00,000 is the app's format and the note rows already matched it. They (and the flagged rows, "Saved as", the plate rows and Progress) now all go through the one formatter kc, and "Saved as" kcal is rounded like every other kcal (it could print raw decimals). Switching the whole app to 100,000-style grouping would be a separate, app-wide CEO call.
 - 5xx path: no automatic retry once the server is back.

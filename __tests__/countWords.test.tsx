@@ -1,5 +1,5 @@
 // Rg10 note (CEO, next build): 'count' is the server's unit name, never a word in user copy. It reads "piece" / "pieces"
-// ("Saved as 2 pieces", "dal isn’t measured in pieces", unit chips, "Did you mean … or pieces?", "kcal a piece").
+// ("Saved as 2 pieces", "dal isn’t measured in pieces", unit chips, "Did you mean … or pieces?"; the piece "sources vary" line: onePieceNote.test.tsx).
 import { adoptServer, reviewNote } from '../src/lib/serverRow';
 import { entryFromItem, FoodEntry, notMeasured, unitPlural, unitReason, localDate } from '../src/lib/domain';
 import { portionLabel, unitWord } from '../src/lib/labels';

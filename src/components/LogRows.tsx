@@ -4,7 +4,7 @@
 import { memo, ReactNode, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { reasonWord } from '../lib/learned';
-import { portionLabel, unitWord } from '../lib/labels';
+import { isPieceUnit, onePieceNote, portionLabel, unitWord } from '../lib/labels';
 import { Item, parser } from '../parser';
 import { makeStyles, useTheme } from '../theme';
 import { FoodTile } from './FoodTile';
@@ -152,7 +152,7 @@ export function OpenRow({ it, kind, onConfirm, onEdit, onRemove, onAdd, text = '
       </View>
       <View style={s.openBody}>
         {kind === 'unverified' ? (
-          <View style={s.warnNote}><T v="bodyStrong" tone="warn">Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {unitWord(it.unit)}. Check it matches your {unitWord(it.unit)}.</T></View>
+          <View style={s.warnNote}><T v="bodyStrong" tone="warn" testID="sources-vary">{isPieceUnit(it.unit) ? onePieceNote(it.kcal.best, it.quantity) : <>Published recipes give {n(it.kcal.low)}–{n(it.kcal.high)} kcal a {unitWord(it.unit)}. Check it matches your {unitWord(it.unit)}.</>}</T></View>
         ) : null}
         {isVar ? (
           <>
