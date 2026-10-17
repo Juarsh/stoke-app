@@ -208,6 +208,27 @@ export function anyOk(sent: Op[], r: Pick<FlushResult, 'rest' | 'failed' | 'reje
   return sent.some((o) => !left.has(opKey(o)) && !((o.kind === 'upsert' || o.kind === 'delete') && bad.has(opId(o))));
 }
 
+/** An explicit user edit (updateEntry). Pure (testable).
+ * - before the edit: what the server has for a synced row nothing is queued for (rg8 F-1);
+ * - next build (rg10 T3b): the row's sync state is the store's CURRENT one, never the copy the edit sheet opened with (an
+ *   automatic retry, a flagged delete or a fetched server copy may have landed since): its server version, server_counts and
+ *   server_failed (a row the server hasn't confirmed keeps counting what the server has until this edit syncs);
+ * - the edit replaces a delete that is still queued or flagged (its op is replaced by the upsert): the row is live again and
+ *   delete_failed / unsynced_edit go, so what it shows, what it counts, what is queued and what the server gets agree;
+ * - a row whose delete already went through (deleted, nothing queued, not flagged) stays deleted: nothing is queued. */
+export function editedState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, e: FoodEntry): P {
+  const old = p.entries.find((x) => x.id === e.id);
+  if (!old) return p;
+  const queued = p.queue.some((o) => (o.kind === 'upsert' || o.kind === 'delete') && opId(o) === e.id);
+  if (old.deleted_at && !old.delete_failed && !queued) return p;
+  const was = queued ? old : seedServerCounts(old);
+  const sc = was.server_counts ?? e.server_counts;
+  const n: FoodEntry = { ...e, server_version: old.server_version, server_counts: sc, server_failed: old.server_failed,
+    deleted_at: null, delete_failed: undefined, unsynced_edit: undefined,
+    sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, kept_on_server: undefined, amount_unknown: undefined, updated_at: new Date().toISOString() };
+  return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
+}
+
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
   const r = expirePending(p.entries, p.queue, now);
   return r.converted.length ? { ...p, entries: r.entries, queue: r.queue } : p;
@@ -366,13 +387,7 @@ function useStoreValue() {
   useEffect(() => { if (ready && s.user && !api.mock) api.getRemembered().then((rows) => setS((p) => ({ ...p, learned: fromRows(rows) }))).catch(() => {}); }, [ready, s.user, api]);
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
-  const updateEntry = (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => {
-      // before the edit: what the server has for a synced row nothing is queued for (rg8 F-1)
-      const old = p.entries.find((x) => x.id === e.id);
-      const was = old && !p.queue.some((o) => opId(o) === e.id) ? seedServerCounts(old) : old;
-      const n = { ...e, ...(was?.server_counts && !e.server_counts ? { server_counts: was.server_counts } : {}), sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined, kept_on_server: undefined, amount_unknown: undefined, updated_at: new Date().toISOString() };
-      return { ...p, entries: p.entries.map((x) => (x.id === e.id ? n : x)), queue: enqueue(p.queue, { kind: 'upsert', entry: n, tries: 0 }) };
-    }); return null; };
+  const updateEntry = (e: FoodEntry): string | null => { const reason = entryRefusal(e); if (reason) return reason; upd((p) => editedState(p, e)); return null; };
   return {
     notice, dismissNotice,
     ready, ...s, api, sync, expireAi,

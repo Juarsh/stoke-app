@@ -54,7 +54,7 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       {open ? items.map((e) => (
         <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${entryLabel(e)}`} style={s.entry}>
           <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
-          <T v="number">{fmt(e.delete_failed || e.kept_on_server ? countedNums(e).kcal : e.kcal.best)}</T>
+          <T v="number">{fmt(countedNums(e).kcal)}</T>
         </Pressable>
       )) : null}
     </View></View>
