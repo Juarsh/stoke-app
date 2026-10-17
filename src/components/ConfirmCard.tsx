@@ -30,7 +30,7 @@ export function ConfirmCard({ it, onResolve, onRemove }: { it: Item; onResolve: 
         <T tone="text2">Read as: </T><T v="bodyStrong">{displayName(it.name, it.dish_id)} · {portionLabel(it.quantity, it.unit)}</T>
         <T tone="text2"> · </T><T v="bodyStrong" tone="em" onPress={() => setOpen((v) => !v)} accessibilityRole="button">Change</T>
       </T>
-      {it.matched_text && it.matched_text !== it.name ? <T v="caption" tone="muted">You typed “{it.matched_text}”</T> : null}
+      {it.matched_text && it.matched_text !== it.name && it.matched_text !== displayName(it.name, it.dish_id) ? <T v="caption" tone="muted">You typed “{it.matched_text}”</T> : null}
       {open ? (
         <View style={{ gap: 6 }}>
           <Row style={{ flexWrap: 'wrap', gap: 6 }}>

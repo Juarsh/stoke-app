@@ -200,6 +200,8 @@ describe('Designer copy (rg8 F-4 items in scope)', () => {
     const txt = textOf(t);
     expect(txt).toContain('Read as: kodo khichdi · 1 katori');
     expect(txt).not.toContain('1 katori kodo khichdi ·');
+    const it2 = { ...it, matched_text: 'kodo khichdi' } as Item; await act(async () => { t.update(<ConfirmCard it={it2} onResolve={() => {}} onRemove={() => {}} />); });
+    expect(textOf(t)).not.toContain('You typed “kodo khichdi”'); // it reads as what was typed: not repeated
     expect(texts(t).filter((x) => x.trim().toLowerCase() === 'check')).toHaveLength(1); // the badge only
     await act(async () => { t.unmount(); });
   });
