@@ -110,9 +110,12 @@ for (const theme of ['light', 'dark']) {
   // a table row over 10,000 kcal ("That’s too much for one entry. Try a smaller amount.")
   const h = await page(theme, 'rg7');
   await h.goto(BASE + '/'); await wait(h, 3000);
+  // rg8: plus a delete flagged after 3x 5xx ("(deleted)", "Not deleted on the server yet.") and a custom name as typed
   const fail = h.getByRole('button', { name: /couldn’t sync this/i });
-  if ((await fail.count()) !== 1) throw new Error(`expected 1 sync-failed row, got ${await fail.count()}`);
-  await fail.scrollIntoViewIfNeeded(); await wait(h, 500);
+  if ((await fail.count()) !== 2) throw new Error(`expected 2 sync-failed rows (save + delete), got ${await fail.count()}`);
+  if ((await h.getByText('Not deleted on the server yet.', { exact: false }).count()) < 1) throw new Error('no flagged delete on Today');
+  if ((await h.getByText('akarsh_special_shake', { exact: false }).count()) < 1) throw new Error('custom name not shown as typed');
+  await fail.first().scrollIntoViewIfNeeded(); await wait(h, 500);
   await shot(h, `today-5xx-flag-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);
   for (const t of ['Pick a type to save this.', 'Not counted yet: dal isn’t measured in plates.', 'Not counted yet: Check the amount and add it again.'])
