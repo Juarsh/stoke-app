@@ -157,7 +157,17 @@ export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[nu
 export function applyServerCopies<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, got: Record<string, ServerRow | null>): P {
   let changed = false; const won = new Set<string>();
   const entries = p.entries.map((e) => {
-    if (!(e.id in got) || !needsServerCopy(e)) return e;
+    if (!(e.id in got)) return e;
+    // N4: a flagged row the phone already counts at server_counts: the server's copy NOW (another device may have edited it)
+    // replaces them, so it counts what the server has, not what it had when flagged. Still flagged; 404s are left to the retry.
+    if (!needsServerCopy(e)) {
+      const row = got[e.id];
+      if (!(e.server_failed || e.delete_failed) || !e.server_counts || e.amount_unknown || !row || typeof row !== 'object' || !row.state) return e;
+      const sc = row.state === 'needs_review' ? { kcal: 0, protein: 0 } : { kcal: row.kcal_best ?? e.server_counts.kcal, protein: row.protein_best ?? e.server_counts.protein };
+      if (sc.kcal === e.server_counts.kcal && sc.protein === e.server_counts.protein) return e;
+      changed = true;
+      return { ...e, server_counts: sc };
+    }
     const row = got[e.id];
     // next build: a restored row whose amount was unknown: now the server's row (qty, unit, numbers; shown == counted), note kept.
     // 404: the server no longer has it (deleted elsewhere): gone here too
@@ -319,7 +329,9 @@ function useStoreValue() {
       if (anyOk(sent, r)) setS((p) => queueAutoRetry(p));
       // edge (a): a row flagged now (or before) that the server has but whose numbers the phone doesn't know: ask the server
       const flagged = new Set(r.failed.filter((f) => f.code === SERVER_ERROR).map((f) => f.id));
-      await fillServerCopies(entriesRef.current.filter((e) => (flagged.has(e.id) || e.server_failed || e.delete_failed) && !e.server_counts && !r.rows?.[e.id]
+      // N4: and every row still flagged after this flush (its server_counts known or not): the server's copy now, so an edit
+      // made on another device is counted as the server has it without waiting for the retry to get through
+      await fillServerCopies(entriesRef.current.filter((e) => (flagged.has(e.id) || e.server_failed || e.delete_failed) && !r.rows?.[e.id]
         && typeof (r.versions[e.id] ?? e.server_version) === 'number').map((e) => e.id));
       // shown once (not persisted): the row is already gone from the phone
       if (r.gone?.length) setNotice(DELETED_ELSEWHERE);

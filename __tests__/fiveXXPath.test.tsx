@@ -20,8 +20,8 @@ const tableEntry = (id: string, dish: string, qty: number, unit: string, extra: 
   const it = { ...parser.recompute(dish, qty, unit, ''), needs_confirmation: false } as Item;
   return { ...entryFromItem(it, { id, slot: 'lunch', raw_text: `${qty} ${unit} ${dish}`, local_date: DAY, tableVersion: DISH_TABLE_VERSION }), qty, unit, ...extra };
 };
-const server = { rows: new Map<string, { kcal: number; protein: number; qty: number; unit: string; version: number }>(), fail: false, log: [] as string[],
-  reset() { this.rows.clear(); this.fail = false; this.log = []; } };
+const server = { rows: new Map<string, { kcal: number; protein: number; qty: number; unit: string; version: number }>(), fail: false, writeFail: false, log: [] as string[],
+  reset() { this.rows.clear(); this.fail = false; this.writeFail = false; this.log = []; } };
 const reply = (status: number, body: unknown = {}) => ({ ok: status < 300, status, headers: { get: () => null }, json: async () => body, text: async () => JSON.stringify(body) });
 const out = (r: { kcal: number; protein: number; qty: number; unit: string; version: number }) => ({ version: r.version, state: 'confirmed', qty: r.qty, unit: r.unit, kcal_best: r.kcal, protein_best: r.protein });
 async function fakeFetch(url: string, init: { method: string; body?: string }) {
@@ -29,7 +29,7 @@ async function fakeFetch(url: string, init: { method: string; body?: string }) {
   if (path === '/v1/remembered') return reply(200, { remembered: [] });
   if (path === '/v1/dishes') return reply(200, []);
   server.log.push(`${init.method} ${path}${init.method === 'POST' && b.items?.[0] ? ` ${b.items[0].client_id}` : ''}`);
-  if (server.fail && path.startsWith('/v1/entries')) return reply(503, { error: 'unavailable' });
+  if ((server.fail || (server.writeFail && init.method !== 'GET')) && path.startsWith('/v1/entries')) return reply(503, { error: 'unavailable' });
   if (init.method === 'POST' && path === '/v1/entries') {
     const it = b.items[0]; const had = server.rows.get(it.client_id);
     if (had) return reply(200, { duplicates: [it.client_id], entries: [out(had)] });
@@ -225,5 +225,51 @@ describe('streak: a day is logged exactly when the totals count a row on it (or 
     await act(async () => { st.deleteEntry('F'); }); await flushP(40);
     expect(server.rows.has('F')).toBe(false);
     expect(same('deleted')).toEqual({ logged: false, kcal: 0 });
+  });
+});
+
+import { applyServerCopies } from '../src/lib/store';
+describe('N4: an edit from another device is counted as the server has it while the row is flagged (refreshed on every sync)', () => {
+  const device2 = (qty: number) => { const r0 = server.rows.get('F')!; server.rows.set('F', { ...r0, qty, kcal: k(qty), protein: parser.recompute('roti', qty, 'count', '').protein_g.best, version: r0.version + 1 }); };
+  const flaggedEdit = () => ({ ...edit(roti2(), 3), server_failed: true, sync_error: SERVER_ERROR });
+  test('pure: a flagged row takes the server’s numbers now (review = 0); unflagged rows and "—" rows are left alone; same numbers = same state', () => {
+    const e = flaggedEdit();
+    const row = { version: 2, state: 'confirmed', qty: 4, unit: 'count', kcal_best: 440, protein_best: 14 };
+    const p = applyServerCopies({ entries: [e], queue: [] as Op[] }, { F: row });
+    expect(p.entries[0]).toMatchObject({ server_counts: { kcal: 440, protein: 14 }, server_failed: true, sync_error: SERVER_ERROR, qty: 3 });
+    expect(dayTotals(p.entries).kcal).toBe(440);
+    expect(applyServerCopies({ entries: [e], queue: [] as Op[] }, { F: { ...row, state: 'needs_review' } }).entries[0].server_counts).toEqual({ kcal: 0, protein: 0 });
+    const same = { entries: [e], queue: [] as Op[] };
+    expect(applyServerCopies(same, { F: { ...row, kcal_best: 220, protein_best: 7 } })).toBe(same);
+    const plain = { entries: [roti2()], queue: [] as Op[] };
+    expect(applyServerCopies(plain, { F: row })).toBe(plain);
+    const fd = { entries: [flaggedDelete()], queue: [] as Op[] };
+    expect(applyServerCopies(fd, { F: row }).entries[0]).toMatchObject({ delete_failed: true, server_counts: { kcal: 440, protein: 14 } });
+    const flagged404 = { entries: [e], queue: [] as Op[] };
+    expect(applyServerCopies(flagged404, { F: null })).toBe(flagged404); // left to the retry (404 there = deleted elsewhere)
+  });
+  test('store: flagged edit (phone 3, server 2 = 220); device 2 saves 4 roti; the next sync counts 440 == server; when saves work again the phone’s edit lands and phone == server', async () => {
+    seed220(); server.writeFail = true;
+    await boot([flaggedEdit()]);
+    expect(dayTotals(st.entries).kcal).toBe(220);
+    device2(4);
+    await advance(62_000); // the automatic retry (a sync): the save 503s, the server's copy is read
+    expect(F()).toMatchObject({ sync_error: SERVER_ERROR, server_failed: true, server_counts: { kcal: k(4) } });
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(Math.round(k(4)));
+    server.writeFail = false;
+    await advance(125_000);
+    expect(F().sync_error).toBeUndefined(); expect(F().server_failed).toBeUndefined();
+    expect(server.rows.get('F')).toMatchObject({ qty: 3 }); // the phone's edit is the latest one the user made here
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(Math.round(k(3)));
+  });
+  test('store: a flagged delete counts device 2’s edit too, until the delete gets through', async () => {
+    seed220(); server.writeFail = true;
+    await boot([flaggedDelete()]);
+    device2(4);
+    await advance(62_000);
+    expect(F()).toMatchObject({ delete_failed: true, server_counts: { kcal: k(4) } });
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal());
+    server.writeFail = false; await advance(125_000);
+    expect(server.rows.has('F')).toBe(false); expect(counted(F())).toBe(false); expect(dayTotals(st.entries).kcal).toBe(0);
   });
 });
