@@ -87,7 +87,7 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 | `GET /v1/dishes` | Full dish table (public; same file the app ships offline) |
 | `POST /v1/entries` | Save chips: `{local_date?, slot?, text?, items:[{dish_id, qty, unit, oil_level, source, confirmed}] or [{custom_name, kcal, protein_g, source, confirmed}]}` (see Saving rules). Dish rows are recomputed server-side from the table. Slot defaults by time: <11 breakfast, 11-16 lunch, 16-19 snacks, else dinner. With only `text`, saves what the table recognised and returns `unmatched`. 201 → `{entries, unmatched, summary}` |
 | `GET /v1/entries?date=` | Day's entries + `total` |
-| `GET/PATCH/DELETE /v1/entries/{id}` | Edit a chip (`qty, unit, oil_level, dish_id, slot, local_date, custom_name, kcal, protein_g, if_unmodified_since`); stale `if_unmodified_since` → 409 with the server copy. Delete is soft (204) |
+| `GET/PATCH/DELETE /v1/entries/{id}` | Edit a chip (`qty, unit, oil_level, dish_id, slot, local_date, custom_name, kcal, protein_g, version`); a stale `version` → 409 `version_conflict` with the server copy (see "Entry versions"). `if_unmodified_since` is accepted and ignored. Delete is soft (204) |
 | `GET /v1/sync/entries?since=RFC3339` | Changed entries incl. soft-deleted, for the app's SQLite copy (last-write-wins by `updated_at`) |
 | `GET/PATCH/DELETE /v1/me` | Profile basics, `diet` (veg/egg/nonveg), `steps_in_budget`; DELETE erases account and all data |
 | `PUT /v1/profile` | Onboarding `{sex, birth_year, height_cm, weight_kg, activity_level, goal: fat_loss\|maintain\|muscle_gain}` → computes target (Mifflin-St Jeor ±goal, protein 1.6/1.2 g/kg, fat 25%, carbs rest) |
@@ -298,9 +298,9 @@ parse is included in the prompt only as a hint. Every AI item comes back with
   The server never writes entries from a job result: only the app saves
   entries. A save tied to an abandoned job (`parse_job_id`) that carries an
   AI reading is refused with **409** `{"error": {"code": "job_abandoned", "item", "job_id", "message"}}`:
-  `POST /v1/entries` with `source: "ai_estimate"`, or `PATCH /v1/entries/{id}`
-  with `source: "ai_estimate"` (job from the body or the stored entry). Typed
-  saves (`source: "custom"`) tied to the job are accepted, so the user's kcal
+  `POST /v1/entries` with `source: "ai_estimate"`, or an AI-source `PATCH /v1/entries/{id}`
+  (`source: "ai_estimate"`, or keeping the stored AI reading; job from the body or the stored
+  entry). Typed saves (`source: "custom"`, a typed `kcal`) tied to the job are always accepted, so the user's kcal
   stands and is what totals and `/v1/summary` count (`needs_review` entries
   never count).
 - **`next_reset_at`** (RFC 3339) is on every `POST /v1/parse` response, every
@@ -438,10 +438,23 @@ their spans; these are the claimed spans.
 meal. A remembered whole-meal text, or a remembered unclaimed span, is
 applied before any AI call.
 
+**Entry versions (migration 016).** Every entry carries `version` (integer): 1 on insert, +1 on every
+write (PATCH, delete, link updates; a DB trigger, so no write path skips it). It is in every entry the
+server returns (POST `entries`, PATCH, GET, list, sync). `PATCH` takes an optional `version`: the version
+the client last saw for that row. If the row has moved on, the PATCH changes nothing and returns **409**
+`{"error": {"code": "version_conflict", "version": <current>, "message"}, "entry": <current row>}` (also when
+another write lands between the read and the update, so two writes on one version: exactly one wins).
+The client then re-applies its own edit on top of `entry` and retries once with `entry.version`; the
+user's edit wins. A PATCH without `version` is unconditional. `if_unmodified_since` (older apps) is
+accepted and **ignored**: a phone clock is never a precondition (a slow or fast clock used to make
+every edit 409 forever).
+
 **Linking entries to AI jobs.** `POST /v1/entries` items and `PATCH` accept
 optional `parse_job_id` (alias `job_id`) and `client_item_id`; `PATCH` also
-accepts an optional `source` (only `"ai_estimate"` is acted on: refused with
-409 `job_abandoned` when the entry's job was abandoned).
+accepts an optional `source`. `job_abandoned` applies to **AI-source writes only**: a PATCH with
+`source: "ai_estimate"`, or one that keeps the row's stored AI reading (e.g. `{"state":"confirmed"}` on an
+`ai_estimate` row, no `kcal`), on an entry whose job was abandoned gets 409 `job_abandoned`. A typed kcal
+(`source: "custom"`, or any `kcal` on a custom-name row) is always accepted, with or without the job id.
 `GET /v1/parse/jobs/{id}` lists the entries saved with that job id.
 
 **Overconfidence rules.** These flags always need a decision:
@@ -576,7 +589,7 @@ Settings (all env vars):
 | Setting | Default | Meaning |
 |---|---|---|
 | `AI_DAILY_CAP` | 20 | Project-wide AI meals per quota day (Gemini free tier: 20 requests/day/model, quotaId `GenerateRequestsPerDayPerProjectPerModel-FreeTier`). 0 = unlimited. `AI_GLOBAL_DAILY_CAP` is still read as the old name. |
-| `AI_USER_DAILY_CAP` | 3 | AI meals per user per quota day, so one user can't use up the day. Below 0 = no per-user limit. |
+| `AI_USER_DAILY_CAP` | 3 | AI meals per user per quota day (a meal's retries count once), so one user can't use up the day. Below 0 = no per-user limit. |
 | `AI_REQUEUE_MAX_MINUTES` | 30 | How long a busy Gemini job (`rate_limited` / `unavailable` / `timeout`) keeps being requeued, from its first try, before it ends as `gave_up`. |
 | `AI_QUOTA_RESET_TZ` | `America/Los_Angeles` | The caps reset at midnight in this zone, when Google resets its daily quota (12:30 PM IST in PDT, 1:30 PM IST in PST). The `ai_usage` / `ai_global_usage` `local_date` is the date in this zone. |
 | `GEMINI_RPM` | 10 | Global limiter: Gemini HTTP attempts (retries included) are spaced to at most this many a minute across the process; queued jobs wait for a slot instead of bursting. A slot that can't come before the job's deadline is not taken (`rate_limited`). |
@@ -602,8 +615,10 @@ quota day rolls (or when `exhausted_until` is past).
 
 **How attempts are counted.** One meal reserves ONE unit of the per-user and project caps (`AI_USER_DAILY_CAP`,
 `AI_DAILY_CAP`) before it is queued: that covers the first attempt, even if Gemini answers 429. HTTP retries
-inside one attempt are not counted again. Each **later** attempt (a busy requeue) that fires and reaches
-Gemini is charged one more unit against both caps: any HTTP response except 429, or no response (timeout),
+inside one attempt are not counted again. **`AI_USER_DAILY_CAP` counts once per meal (job)**: its retries
+never charge the user again, so 3 timeouts of one meal use 1 of the user's 3 and two more meals are still
+allowed. Each **later** attempt (a busy requeue) that fires and reaches Gemini is charged one more unit
+against **`AI_DAILY_CAP` only** (the shared budget counts every attempt): any HTTP response except 429, or no response (timeout),
 counts as reaching Gemini. A 429 means Google rejected the request before running it, so that send is not
 charged. An attempt that never sends (no `GEMINI_RPM` slot before the deadline, etc.) is not charged. When
 `AI_DAILY_CAP` is already used up, a later attempt is not made and the meal ends as `daily_limit`. A meal that
@@ -618,7 +633,7 @@ time, or the call timing out), the job is NOT answered with generic kcal. It sta
 The delays are 30 s, 1 min, 2 min, 3 min, 4 min, then 5 min (the last repeats every 5 min). A job is
 requeued until **`AI_REQUEUE_MAX_MINUTES`** (default **30**) after its first try; the last try is scheduled
 so that it finishes inside that window. A requeued job still respects `GEMINI_RPM` and `AI_PER_MINUTE`.
-A later attempt that reaches Gemini is charged against the caps (see above); a 429 or a send that never
+A later attempt that reaches Gemini is charged against `AI_DAILY_CAP` (not the per-user cap; see above); a 429 or a send that never
 leaves is not. While it waits, the job poll adds `requeues`, `busy_reason` (the last busy
 reason) and `next_attempt_at` (RFC 3339). When the window runs out the job ends as failed with
 `fallback: "gave_up"`, `fallback_reason: "gave_up"`. A finished job stays pollable for an hour after it

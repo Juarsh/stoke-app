@@ -382,8 +382,9 @@ func TestEntriesSummaryStreakCoach(t *testing.T) {
 	if c := call(t, srv, "PATCH", fmt.Sprintf("/v1/entries/%d", dal.ID), u, M{"oil_level": "loads"}, nil); c != 400 {
 		t.Errorf("bad oil: %d", c)
 	}
-	// stale client edit -> 409
-	if c := call(t, srv, "PATCH", fmt.Sprintf("/v1/entries/%d", dal.ID), u, M{"qty": 2, "if_unmodified_since": dal.UpdatedAt.Add(-time.Hour)}, nil); c != 409 {
+	// stale client edit (a row version the server has moved past) -> 409; the phone clock
+	// (if_unmodified_since) is never a precondition (see TestEntryVersionConflict)
+	if c := call(t, srv, "PATCH", fmt.Sprintf("/v1/entries/%d", dal.ID), u, M{"qty": 2, "version": 0, "if_unmodified_since": dal.UpdatedAt.Add(-time.Hour)}, nil); c != 409 {
 		t.Errorf("stale edit: %d", c)
 	}
 	// other users can't see or edit

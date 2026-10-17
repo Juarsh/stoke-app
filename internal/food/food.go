@@ -493,9 +493,10 @@ func (s *Service) aiResponse(claimed, ai, hint []parser.Item, fb, slot string) P
 //
 // Cap counting: the meal reserved one unit of AI_USER_DAILY_CAP /
 // AI_DAILY_CAP when it was queued (that covers the first attempt, even if
-// Gemini answered 429). Each later attempt that fires and reaches Gemini
+// Gemini answered 429). AI_USER_DAILY_CAP counts once per meal (job): later
+// attempts never charge it. Each later attempt that fires and reaches Gemini
 // (any HTTP response but 429, or no response / timeout) is charged one more
-// unit. A 429 means Google rejected the request before running it, so it is
+// unit of AI_DAILY_CAP only. A 429 means Google rejected the request before running it, so it is
 // not charged. An attempt that never sends (no limiter slot, deadline)
 // charges nothing. A later attempt is not made when AI_DAILY_CAP is already
 // used up (the meal ends as daily_limit).
@@ -754,6 +755,9 @@ type Entry struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	DeletedAt    *string   `json:"deleted_at"`
+	// Version: the server's row version (1 on insert, +1 on every write). PATCH
+	// sends back the version the client last saw (409 version_conflict if stale).
+	Version int `json:"version"`
 }
 
 // ItemIn is one chip the client confirms. Either dish_id (values recomputed
@@ -1028,14 +1032,14 @@ func (s *Service) draft(in ItemIn, cid *string) (Entry, int, error) {
 	return e, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id`
+const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id,version`
 
 func (s *Service) scan(row pgx.Row) (Entry, error) {
 	var e Entry
 	var d time.Time
 	var del *time.Time
 	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State, &e.SpanPart, &e.ParseJobID, &e.ClientItemID)
+		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State, &e.SpanPart, &e.ParseJobID, &e.ClientItemID, &e.Version)
 	e.LocalDate = d.Format("2006-01-02")
 	e.Name = e.CustomName
 	if e.DishID != nil {
@@ -1301,21 +1305,27 @@ func (s *Service) handleGetOne(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePatch edits a chip. Dish rows are recomputed from the table; custom
-// rows take the given numbers. If the client sends its updated_at and the
-// server row is newer, it's a 409 (last write wins on the client after sync).
+// rows take the given numbers. If the client sends the row version it last saw
+// and the row has moved on, it's a 409 version_conflict carrying the current
+// row; the client reapplies its own edit on top and retries with that version.
 func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Slot         *string    `json:"slot"`
-		LocalDate    *string    `json:"local_date"`
-		DishID       *string    `json:"dish_id"`
-		Qty          *float64   `json:"qty"`
-		Unit         *string    `json:"unit"`
-		OilLevel     *string    `json:"oil_level"`
-		CustomName   *string    `json:"custom_name"`
-		Kcal         *float64   `json:"kcal"`
-		ProteinG     *float64   `json:"protein_g"`
-		ProteinAlt   *float64   `json:"protein"` // alias
+		Slot       *string  `json:"slot"`
+		LocalDate  *string  `json:"local_date"`
+		DishID     *string  `json:"dish_id"`
+		Qty        *float64 `json:"qty"`
+		Unit       *string  `json:"unit"`
+		OilLevel   *string  `json:"oil_level"`
+		CustomName *string  `json:"custom_name"`
+		Kcal       *float64 `json:"kcal"`
+		ProteinG   *float64 `json:"protein_g"`
+		ProteinAlt *float64 `json:"protein"` // alias
+		// IfUnmodSince is accepted from older apps and IGNORED: a phone clock is
+		// never a precondition (it jammed queues with permanent 409s).
 		IfUnmodSince *time.Time `json:"if_unmodified_since"`
+		// Version: the row version the client last saw (from any entry response).
+		// Stale -> 409 {"error":{"code":"version_conflict"},"entry": current row}.
+		Version *int `json:"version"`
 		// Span overrides the stored parsed span; the corrected reading is
 		// remembered for it (set "remember": false to skip).
 		Span     *string `json:"span"`
@@ -1346,21 +1356,8 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, code, err.Error())
 		return
 	}
-	if in.Source != nil && *in.Source == "ai_estimate" {
-		job := deref(in.ParseJobID)
-		if job == "" {
-			job = deref(in.JobID)
-		}
-		if job == "" {
-			job = deref(e.ParseJobID)
-		}
-		if s.jobAbandoned(r.Context(), uid, job) {
-			httpx.JSON(w, 409, abandonedBody(0, job))
-			return
-		}
-	}
-	if in.IfUnmodSince != nil && e.UpdatedAt.After(*in.IfUnmodSince) {
-		httpx.JSON(w, 409, map[string]any{"error": "entry changed on the server", "entry": e})
+	if in.Version != nil && *in.Version != e.Version {
+		httpx.JSON(w, 409, versionConflict(e))
 		return
 	}
 	oldDay, _ := time.Parse("2006-01-02", e.LocalDate)
@@ -1433,6 +1430,21 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if it.DishID != "" && it.Source != "custom" {
 		it.Kcal, it.ProteinG = nil, nil // edited dish chips are recomputed from the current table
 	}
+	// job_abandoned applies to AI-source writes only: the client says the numbers are an AI
+	// reading, or the row keeps its stored AI numbers. A typed kcal (source custom) always goes through.
+	if (in.Source != nil && *in.Source == "ai_estimate") || (it.Source == "ai_estimate" && in.Kcal == nil) {
+		job := deref(in.ParseJobID)
+		if job == "" {
+			job = deref(in.JobID)
+		}
+		if job == "" {
+			job = deref(e.ParseJobID)
+		}
+		if s.jobAbandoned(r.Context(), uid, job) {
+			httpx.JSON(w, 409, abandonedBody(0, job))
+			return
+		}
+	}
 	chk := it
 	chk.Confirmed = in.Confirmed != nil && *in.Confirmed
 	if in.VariantDishID != nil {
@@ -1457,8 +1469,15 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 	saved, err := s.scan(s.DB.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
 		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
 		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
-		WHERE id=$1 AND user_id=$2 RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
-		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State))
+		WHERE id=$1 AND user_id=$2 AND ($21::int IS NULL OR version=$21) RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
+		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State, in.Version))
+	if errors.Is(err, pgx.ErrNoRows) && in.Version != nil {
+		// another write landed between the load and this update
+		if cur, _, lerr := s.load(r.Context(), uid, r); lerr == nil {
+			httpx.JSON(w, 409, versionConflict(cur))
+			return
+		}
+	}
 	if err != nil {
 		httpx.Error(w, 500, "save failed")
 		return
@@ -1467,8 +1486,8 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		in.ParseJobID = in.JobID
 	}
 	if in.ParseJobID != nil || in.ClientItemID != nil {
-		_, _ = s.DB.Exec(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
-			WHERE id=$1 AND user_id=$2`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID))
+		_ = s.DB.QueryRow(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
+			WHERE id=$1 AND user_id=$2 RETURNING version`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID)).Scan(&saved.Version)
 		saved.ParseJobID, saved.ClientItemID = orPtr(in.ParseJobID, saved.ParseJobID), orPtr(in.ClientItemID, saved.ClientItemID)
 	}
 	span := e.Span
@@ -1493,6 +1512,12 @@ func (s *Service) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, 200, saved)
+}
+
+// versionConflict: 409 body for a stale PATCH version, with the server's current row.
+func versionConflict(e Entry) map[string]any {
+	return map[string]any{"error": map[string]any{"code": "version_conflict", "version": e.Version,
+		"message": "entry changed on the server; reapply your edit on this version"}, "entry": e}
 }
 
 func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
@@ -1629,16 +1654,17 @@ func appendFlag(fs []string, f string) []string {
 }
 
 // chargeAI counts one more Gemini send of an already-queued meal against
-// the per-user and project-wide counters. The send already happened, so it
-// is counted even past the cap (the counter must not think there are calls
-// left after Google's real limit has run out).
+// the project-wide counter (AI_DAILY_CAP counts every attempt). The send
+// already happened, so it is counted even past the cap (the counter must not
+// think there are calls left after Google's real limit has run out).
+// AI_USER_DAILY_CAP is NOT charged again: a user's meal (job) uses one unit
+// of it however many attempts it takes (reserved once when it was queued).
 func (s *Service) chargeAI(ctx context.Context, userID int64) {
 	if s.DB == nil {
 		return
 	}
+	_ = userID
 	today := s.Quota.Day(httpx.Now())
-	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
-		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1`, userID, today)
 	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
 		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1`, today)
 }
