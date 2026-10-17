@@ -40,6 +40,10 @@ export interface FoodEntry {
   variant_dish_id?: string;
   /** local only: the variant choices the user picked from, so a variant_required rejection can reopen the chips */
   variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[];
+  /** local only: the 35-minute backstop turned this pending AI row into a failed row (typed kcal only; late answers ignored) */
+  ai_expired?: boolean;
+  /** local only: why the AI row failed (FailedRow.reason, e.g. 'backstop'); Review shows failedCopy for it */
+  ai_fail_reason?: string;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;

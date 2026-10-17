@@ -4,7 +4,8 @@ import { Pressable, TextInput, View } from 'react-native';
 import { Button, Row, T } from '@/components/ui';
 import { useTheme } from '@/theme';
 
-export function KcalRow({ name, onAdd, onRemove }: { name: string; onAdd: (kcal: number) => void; onRemove: () => void }) {
+/** note: the failed-AI copy (failedCopy) shown above the kcal field, e.g. the 35-minute backstop's. */
+export function KcalRow({ name, note, onAdd, onRemove }: { name: string; note?: string; onAdd: (kcal: number) => void; onRemove: () => void }) {
   const t = useTheme(); const [v, setV] = useState('');
   const k = Number(v);
   const ok = Number.isFinite(k) && k > 0 && k <= 5000;
@@ -14,6 +15,7 @@ export function KcalRow({ name, onAdd, onRemove }: { name: string; onAdd: (kcal:
         <T v="bodyStrong" style={{ flex: 1 }}>{name}</T>
         <T tone="muted">— kcal · needs review</T>
       </Row>
+      {note ? <T tone="text2">{note}</T> : null}
       <T tone="text2">Enter kcal</T>
       <Row style={{ gap: 8 }}>
         <TextInput value={v} onChangeText={(x) => setV(x.replace(/[^0-9]/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="kcal" placeholderTextColor={t.c.muted}

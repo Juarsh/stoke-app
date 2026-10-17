@@ -13,6 +13,8 @@ import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
 import { entryFromItem, FoodEntry, localDate, Slot, slotFor } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
+import { backstopDue, BACKSTOP_REASON, isExpiredId } from '@/lib/aiBackstop';
+import { useBackstopTick } from '@/lib/useBackstop';
 import { draftTotals, logSummary } from '@/lib/logSummary';
 import { splitBySpan } from '@/lib/pending';
 import { applyLearned, learnKey, LoggedItem, readingOf } from '@/lib/learned';
@@ -61,6 +63,11 @@ export default function Log() {
   const [offline, setOffline] = useState<string[]>([]);
   const spanIds = useRef(new Map<string, string>());
   const handedOff = useRef(new Set<string>()); // span ids already queued by Add
+  // 35-minute backstop (aiBackstop): when each span's AI job started, and the span ids it already turned into failed rows
+  const estStart = useRef(new Map<string, number>());
+  const expired = useRef(new Set<string>());
+  const entriesRef = useRef(st.entries); entriesRef.current = st.entries;
+  const gone = (id: string) => expired.current.has(id) || isExpiredId(entriesRef.current, id);
   const idFor = (u: string) => { let id = spanIds.current.get(u); if (!id) { id = st.newId(); spanIds.current.set(u, id); } return id; };
   const unk = pendingUnmatched.filter((u) => !estimating.includes(u) && !offline.includes(u));
   const unkKey = unk.join('|');
@@ -81,21 +88,24 @@ export default function Log() {
     if (aiUsedToday >= AI_CAP && !config.mockAi) return toCustom(spans, '', { reason: 'user_limit', userDailyLimit: AI_CAP });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
+    for (const id of ids) { estStart.current.set(id, Date.now()); expired.current.delete(id); } // a new job: its own 35-minute clock
     setEstimating((e) => [...e, ...spans]); setBusy(true);
     const done = () => setEstimating((e) => e.filter((x) => !spans.includes(x)));
     // one handler for the first answer and for a late one (polled job): fills the SAME row by stable id
     const land = (r: Awaited<ReturnType<typeof st.api.parse>>) => {
+      if (ids.every((id) => expired.current.has(id))) return; // converted by the backstop: a late result never overwrites the row
       const status = aiStatus(r);
       if (status === 'estimating') return; // no job to poll on an inline answer: stays Estimating; Add / leaving hands it to review
       if (status === 'failed') {
         const why = { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at };
         // every asked span gets a failed row (no AI kcal came for any of them), plus any extra open span the server listed
-        const rows = failedRows(r, spans).filter((u) => !(spanIds.current.has(u) && handedOff.current.has(idFor(u)))); // handed-off spans stay needs_review
+        const rows = failedRows(r, spans).filter((u) => !(spanIds.current.has(u) && (handedOff.current.has(idFor(u)) || expired.current.has(idFor(u))))); // handed-off spans stay needs_review
         toCustom(rows, '', why);
         done(); return;
       }
       const got = r.items.filter((x) => x.ai_estimate);
       spans.forEach((u, k) => {
+        if (expired.current.has(ids[k])) return; // backstop already made this a failed row: ignore the late answer
         const its = splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
         if (!its.length) { toCustom([u], '', { reason: r.fallback_reason ?? 'error', userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
@@ -113,6 +123,7 @@ export default function Log() {
       for (;;) {
         await new Promise((res) => setTimeout(res, pollDelay(cur.nextAttemptAt)));
         if (gen.current !== myGen) return; // the text changed; handed-off spans are resolved by the sync queue
+        if (ids.every(gone)) return; // every span was converted by the 35-minute backstop: stop polling this job
         try { land(await st.api.parseJob(cur.jobId)); return; }
         catch (e2) {
           if (e2 instanceof ParsePending) { cur = e2; continue; }
@@ -168,7 +179,8 @@ export default function Log() {
     // offline ones wait as Pending; estimating ones go straight to items to review (at: 0), keyed by their stable id
     if (pendingUnmatched.length) st.addPending(pendingUnmatched.map((span) => {
       const id = idFor(span); handedOff.current.add(id);
-      return { id, span, slot, local_date: date, raw_text: text, ...(offline.includes(span) ? {} : { at: 0 }) };
+      const t0 = estStart.current.get(id);
+      return { id, span, slot, local_date: date, raw_text: text, ...(offline.includes(span) ? {} : { at: 0 }), ...(t0 ? { queued_at: t0 } : {}) };
     }));
     for (const c of addedCustoms) {
       const k = Number(c.kcal) || 0, p = Number(c.protein) || 0, now = new Date().toISOString();
@@ -200,10 +212,20 @@ export default function Log() {
     for (const f of failed) handedOff.current.add(f.id);
     for (const p of pending) handedOff.current.add(p.id);
     if (reviews.length) st.addEntries(reviews);
-    if (pending.length) st.addPending(pending);
+    if (pending.length) st.addPending(pending.map((f) => { const t0 = estStart.current.get(f.id); return t0 ? { ...f, queued_at: t0 } : f; }));
     return true;
   }
   const leaveRef = useRef(saveOpen); leaveRef.current = saveOpen;
+  /** Backstop on this screen: spans still Estimating / Pending whose job started > 35 min ago become failed rows. */
+  function checkBackstop(now = Date.now()) {
+    const due = pendingUnmatched.filter((u) => { const id = spanIds.current.get(u); return !!id && !handedOff.current.has(id) && !expired.current.has(id) && backstopDue(estStart.current.get(id), now); });
+    if (!due.length) return;
+    for (const u of due) expired.current.add(idFor(u));
+    setEstimating((e) => e.filter((x) => !due.includes(x))); setOffline((o) => o.filter((x) => !due.includes(x)));
+    setCustoms((c) => [...c, ...due.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, reason: BACKSTOP_REASON }))]);
+  }
+  const backstopRef = useRef(checkBackstop); backstopRef.current = checkBackstop;
+  useBackstopTick(() => { st.expireAi(); backstopRef.current(); });
   useFocusEffect(useCallback(() => () => { if (leaveRef.current()) setText(''); }, []));
   const setItem = (d: Draft, n: Item) => d.key.startsWith('ai:') ? setAi((a) => a.map((x) => (x.key === d.key ? { ...x, it: n } : x))) : setEdits((e) => ({ ...e, [d.key]: n }));
   const remove = (d: Draft) => d.key.startsWith('ai:') ? setAi((a) => a.filter((x) => x.key !== d.key)) : setEdits((e) => ({ ...e, [d.key]: null }));

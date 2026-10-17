@@ -34,7 +34,7 @@ export async function resolvePending(api: { parse(t: string, ai?: boolean): Prom
  * never touches an entry that is already resolved/saved, never duplicates. Pure. */
 export function fillPending(entries: FoodEntry[], queue: Op[], id: string, items: Item[]): { entries: FoodEntry[]; queue: Op[]; changed: boolean } {
   const ph = entries.find((e) => e.id === id);
-  if (!ph || !ph.pending || ph.deleted_at) return { entries, queue, changed: false };
+  if (!ph || !ph.pending || ph.deleted_at || ph.ai_expired) return { entries, queue, changed: false };
   const got = items.filter((it) => !isPlaceholder(it) && it.kcal.best > 0);
   if (!got.length) return { entries, queue, changed: false };
   const o = (i: number) => ({ id: i === 0 ? id : `${id}-${i}`, slot: ph.slot, raw_text: ph.raw_text, local_date: ph.local_date, tableVersion: DISH_TABLE_VERSION });

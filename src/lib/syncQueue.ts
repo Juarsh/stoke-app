@@ -5,7 +5,8 @@
 import type { FoodEntry, Slot } from './domain';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
-export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued */ at?: number }
+export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued (0 = straight to items to review) */ at?: number;
+  /** ms when its AI job started (Log estimate start, else when queued): the 35-minute backstop (aiBackstop) runs from here */ queued_at?: number }
 type Retry = { tries: number; nextAt?: number };
 export type Op =
   | ({ kind: 'upsert'; entry: FoodEntry } & Retry)

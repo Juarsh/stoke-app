@@ -1,5 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
+import { dropLate, dropLateOps, expirePending, stampPending } from './aiBackstop';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
@@ -20,6 +22,11 @@ interface Persisted {
 }
 const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {}, learned: {} };
 const KEY = 'app-state-v1';
+/** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
+export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
+  const r = expirePending(p.entries, p.queue, now);
+  return r.converted.length ? { ...p, entries: r.entries, queue: r.queue } : p;
+}
 
 function useStoreValue() {
   const [s, setS] = useState<Persisted>(EMPTY);
@@ -29,8 +36,18 @@ function useStoreValue() {
   const api = useMemo(() => createApi(() => tokenRef.current), []);
 
   useEffect(() => {
-    kv.get(KEY).then((raw) => { if (raw) setS({ ...EMPTY, ...JSON.parse(raw) }); }).finally(() => setReady(true));
+    kv.get(KEY).then((raw) => {
+      if (!raw) return;
+      const p: Persisted = { ...EMPTY, ...JSON.parse(raw) };
+      setS(expireState({ ...p, queue: stampPending(p.queue, p.entries) })); // older queues get a start time; app start runs the backstop
+    }).finally(() => setReady(true));
   }, []);
+  /** Backstop: app start, foreground, before each sync (the job poll) and on the Log / Review timer. */
+  const expireAi = useCallback(() => setS((p) => expireState(p)), []);
+  useEffect(() => {
+    const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') expireAi(); });
+    return () => sub?.remove?.();
+  }, [expireAi]);
   useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
   const sender = useMemo(() => ({
@@ -38,22 +55,28 @@ function useStoreValue() {
     resolvePending: (f: PendingFood) => resolvePending(api, f),
   }), [api]);
   const syncing = useRef(false);
+  const entriesRef = useRef(s.entries);
+  useEffect(() => { entriesRef.current = s.entries; }, [s.entries]);
   const sync = useCallback(async () => {
     if (api.mock || syncing.current) return; // mock mode: nothing leaves the device; queue is kept for later
+    // job poll: anything past the 35-minute cutoff is converted first (the queue change re-runs sync without its poll)
+    if (expirePending(entriesRef.current, s.queue).converted.length) { expireAi(); return; }
     syncing.current = true;
     try {
       const sent = s.queue;
       const { rest, resolved, rejected, profileRejected } = await flush(sent, sender);
       const reopened = rejected.map((r) => reopenRejected(r.entry, r.code, new Date(), r.variant_options));
-      // ops added while we were sending stay queued after the remaining ones
-      setS((p) => ({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}), queue: reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), [...rest, ...p.queue.slice(sent.length)]),
-        entries: mergeEntries(p.entries, resolved).map((x) => reopened.find((r) => r.id === x.id) ?? x) }));
+      // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
+      // remaining ones and replace their same-id op
+      // a late result for a job the backstop converted while we were sending is ignored (dropLate / dropLateOps)
+      setS((p) => ({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}), queue: dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), rest)), p.entries),
+        entries: mergeEntries(p.entries, dropLate(p.entries, resolved)).map((x) => reopened.find((r) => r.id === x.id) ?? x) }));
       if (!rest.some((o) => o.kind === 'forget' || o.kind === 'forgetAll')) {
         const rows = await api.getRemembered().catch(() => null);
         if (rows) setS((p) => ({ ...p, learned: fromRows(rows) }));
       }
     } finally { syncing.current = false; }
-  }, [api, sender, s.queue]);
+  }, [api, sender, s.queue, expireAi]);
   useEffect(() => { if (ready && s.queue.length && s.user) sync(); }, [ready, s.queue.length, s.user, sync]);
   // retry with backoff: wake up when the head op's wait is over
   const headAt = s.queue[0]?.nextAt;
@@ -67,7 +90,7 @@ function useStoreValue() {
 
   const upd = (f: (p: Persisted) => Persisted) => setS(f);
   return {
-    ready, ...s, api, sync,
+    ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),
     signOut: () => upd((p) => ({ ...p, user: null })),
@@ -120,7 +143,7 @@ function useStoreValue() {
     fillPending: (id: string, items: Item[]) => upd((p) => { const r = fillPending(p.entries, p.queue, id, items); return r.changed ? { ...p, entries: r.entries, queue: r.queue } : p; }),
     /** Queue foods with no number yet. `at` defaults to now; pass 0 to send them straight to items to review. */
     addPending: (fs: PendingFood[]) => upd((p) => {
-      fs = fs.map((f) => ({ at: Date.now(), ...f }));
+      fs = fs.map((f) => ({ at: Date.now(), queued_at: Date.now(), ...f }));
       const ph = fs.map((f) => pendingEntry(f));
       let q = p.queue;
       for (let i = 0; i < fs.length; i++) { q = enqueue(q, { kind: 'upsert', entry: ph[i], tries: 0 }); q = enqueue(q, { kind: 'pending', food: fs[i], tries: 0 }); }

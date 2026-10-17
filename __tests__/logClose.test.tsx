@@ -7,7 +7,7 @@ const mockStore = {
   learned: {}, aiUsed: {}, entries: [], queue: [],
   api: { mock: true, parse: jest.fn(), parseJob: jest.fn() },
   newId: (() => { let n = 0; return () => `id${n++}`; })(),
-  useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(),
+  useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(), expireAi: jest.fn(),
 };
 jest.mock('@/lib/store', () => ({ useStore: () => mockStore }));
 jest.mock('@/lib/config', () => ({ config: { mock: true, mockAi: true, mockAiDelay: 0 }, flags: {} }));

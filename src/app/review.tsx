@@ -12,12 +12,15 @@ import { itemKind } from '@/lib/itemKind';
 import { reviewHeader } from '@/lib/reviewMode';
 import { useStore } from '@/lib/store';
 import { isStale, pendingFor } from '@/lib/syncQueue';
+import { failedCopy } from '@/lib/aiRows';
+import { useBackstopTick } from '@/lib/useBackstop';
 
 /** Items to review: uncertain resolutions (same confirm UI as Log) + foods still waiting on an estimate after ~10 s.
  * Nothing here is counted until confirmed. */
 export default function Review() {
   const st = useStore(); const router = useRouter();
   const { date } = useLocalSearchParams<{ date?: string }>();
+  useBackstopTick(st.expireAi); // 35-minute AI backstop while this screen is open
   const rows = st.entries.filter((e) => toReview(e) && (!date || e.local_date === date));
   const waiting = pendingFor(st.queue, date).filter((f) => isStale(f));
   // rows the server refused never join the bulk confirm: each needs its own fix
@@ -31,7 +34,7 @@ export default function Review() {
         const it = e.review_item!;
         const kind = reviewRowKind(it);
         const body = kind === 'kcal'
-          ? <KcalRow name={e.raw_text || it.name} onAdd={(k) => st.confirmReviewKcal(e.id, k)} onRemove={() => st.dropReview(e.id)} />
+          ? <KcalRow name={e.raw_text || it.name} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason }) : undefined} onAdd={(k) => st.confirmReviewKcal(e.id, k)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'estimate'
             ? <OpenRow it={it} kind="estimate" text={e.raw_text} onAdd={(n) => st.confirmReview(e.id, n)} onConfirm={(n) => st.confirmReview(e.id, n)} onEdit={(n) => st.confirmReview(e.id, n)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'chips'
