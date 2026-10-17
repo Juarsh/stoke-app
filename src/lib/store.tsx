@@ -69,12 +69,10 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   const failed = new Map(r.failed.filter((f) => { const cur = p.entries.find((x) => x.id === f.id); return !f.sent || unchangedSince(cur, f.sent); }).map((f) => [f.id, f]));
   // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
   // remaining ones and replace their same-id op; a late result for a job the backstop converted is ignored (dropLate / dropLateOps)
-  let queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
+  const queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
   const kept = new Map((r.kept ?? []).map((k) => [k.id, k]));
   const failedIds = new Set([...r.failed.map((f) => f.id), ...kept.keys()]);
   const deletedOk = new Set(sent.filter((o) => o.kind === 'delete' && !r.rest.includes(o) && !r.rest.some((x) => x.kind === 'delete' && x.id === (o as { id: string }).id) && !failedIds.has((o as { id: string }).id)).map((o) => (o as { id: string }).id));
-  /** next build: edits a refused delete had replaced, re-sent (restoreKept decides) */
-  const resend: FoodEntry[] = [];
   const entries = mergeEntries(p.entries, dropLate(p.entries, r.resolved)).map((x) => {
     let n = reopened.find((e) => e.id === x.id) ?? x;
     const v = r.versions[x.id];
@@ -96,12 +94,11 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
     if (sv && !f && !reopened.some((e) => e.id === x.id) && unchangedSince(x, sv.sent)) n = adoptServer(n, sv.row);
     // rg10: the server refused the delete (4xx other than 404): it still has the row, so the phone has it too
     const k = kept.get(x.id);
-    if (k && n.deleted_at) { const out: { requeue?: boolean } = {}; n = restoreKept(n, k, out); if (out.requeue) resend.push(n); }
+    if (k && n.deleted_at) n = restoreKept(n, k);
     // retry spinner: done once that row's op has come back (failed again -> sync_error above, else synced)
     if (n.sync_retrying && (failed.has(x.id) || !queue.some((o) => opId(o) === x.id))) n = { ...n, sync_retrying: undefined };
     return n;
   });
-  queue = resend.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), queue);
   return { ...p, queue, entries };
 }
 
@@ -112,9 +109,8 @@ export const keptNote = (reason?: string) => (reason && sentence(reason) ? `${KE
 /** rg10: a delete the server refused: the row is live again (no deleted_at, no delete op), counted at the server's numbers
  * (its copy when the refusal carried one, else server_counts, else the row as the server last confirmed it) and it says why.
  * Edit / delete work on it as on any row. Pure. */
-/** next build: on a refused delete, the edit the delete had replaced (the server never got it). Re-sent: */
-export const editKept = (what: string) => `Your change to ${what} is kept.`;
-/** ... or, when the server's copy changed since (another device) or the edit can't be saved, not re-sent: */
+/** next build (CEO, Oct 17): on a refused delete, the edit the delete had replaced (the server never got it) is never re-sent;
+ * the row goes back to the server's copy and this note follows the server's reason. */
 export const editNotSaved = (what: string) => `Your change to ${what} wasn’t saved. Edit it again if you still want it.`;
 const editWhat = (e: FoodEntry) => (e.dish_id ? portionLabel(e.qty, e.unit) : `${Math.round(e.kcal.best).toLocaleString('en-IN')} kcal`);
 /** the row as the server's copy has it: its amount and numbers (what it counts), its version */
@@ -127,25 +123,18 @@ function serverCopy(n: FoodEntry, row: ServerRow): FoodEntry {
   return { ...(rev ? adoptServer(n, row) : shown), ...(typeof row.version === 'number' ? { server_version: row.version } : {}), server_failed: undefined,
     server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: k, protein: p } };
 }
-export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[number], out?: { requeue?: boolean }): FoodEntry {
+export function restoreKept(e: FoodEntry, k: NonNullable<FlushResult['kept']>[number]): FoodEntry {
   let n: FoodEntry = { ...e, deleted_at: null, delete_failed: undefined, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, kept_on_server: true, unsynced_edit: undefined };
-  // next build (rg10 note 1): the delete had replaced an edit the server never got (queued, or flagged 5xx). Never dropped
-  // silently: re-sent when it still applies (the server's copy is the one the edit was made on, and it can be saved), so the
-  // row shows the edit and syncs it; otherwise the row takes the server's copy (amount and numbers: shown == counted) and
-  // the note names the change that wasn't saved.
+  // next build (rg10 note 1, CEO Oct 17): the delete had replaced an edit the server never got (queued, or flagged 5xx). It is
+  // never re-sent and never dropped silently: the row ALWAYS goes back to the server's copy (qty, unit and numbers: shown ==
+  // counted) and the note names the change that wasn't saved.
   if (k.edited || e.unsynced_edit) {
     const copy = k.row && k.row.state ? k.row : undefined;
-    const what = editWhat(e);
-    const movedOn = !!copy && typeof copy.version === 'number' && typeof e.server_version === 'number' && copy.version !== e.server_version;
-    if (!movedOn && !n.needs_review && !n.pending && entryRefusal(n) === null) {
-      const sc = copy ? (copy.state === 'needs_review' ? { kcal: 0, protein: 0 } : { kcal: copy.kcal_best ?? n.kcal.best, protein: copy.protein_best ?? n.protein_g.best }) : n.server_counts;
-      if (out) out.requeue = true;
-      return { ...n, server_counts: sc, server_failed: undefined, server_note: `${keptNote(k.reason)} ${editKept(what)}`, updated_at: new Date().toISOString() };
-    }
-    if (copy) return { ...serverCopy(n, copy), server_note: `${keptNote(k.reason)} ${editNotSaved(what)}` };
-    // no copy and the edit can't be re-sent: counted as the server last had it (below), flagged, and the note says so
+    const note = `${keptNote(k.reason)} ${editNotSaved(editWhat(e))}`;
+    if (copy) return { ...serverCopy(n, copy), server_note: note };
+    // the server's copy couldn't be read (GET failed): counted as the server last had it (server_counts), flagged
     const sc = n.server_counts;
-    return { ...n, server_counts: sc, server_failed: sc ? true : n.server_failed, server_note: `${keptNote(k.reason)} ${editNotSaved(what)}` };
+    return { ...n, server_counts: sc, server_failed: sc ? true : n.server_failed, server_note: note };
   }
   if (k.row && k.row.state) {
     const rev = k.row.state === 'needs_review';
@@ -346,7 +335,7 @@ function useStoreValue() {
     clearServerNote: (id: string) => upd((p) => ({ ...p, entries: p.entries.map((x) => (x.id === id && x.server_note && !x.needs_review ? { ...x, server_note: undefined } : x)) })),
     deleteEntry: (id: string) => upd((p) => {
       // next build: an edit the server never got (queued, or flagged 5xx) is replaced by this delete: marked, so a refused
-      // delete re-sends it or names it (restoreKept), never drops it silently
+      // delete restores the server's copy and names the edit (restoreKept), never drops it silently
       const x0 = p.entries.find((x) => x.id === id);
       const edited = !!x0 && typeof x0.server_version === 'number' && !x0.deleted_at
         && (!!x0.unsynced_edit || !!x0.server_failed || p.queue.some((o) => o.kind === 'upsert' && o.entry.id === id));

@@ -603,50 +603,40 @@ describe('edge (a): an older-build row with a queued edit, flagged, counts the s
 });
 
 // ---------- next-build (rg10 note 1): an edit still unsynced when a delete is refused is never dropped silently ----------
-import { editKept, editNotSaved } from '../src/lib/store';
-describe('dropped edit: a refused delete re-sends the edit it had replaced (or shows the server’s copy and says the edit wasn’t saved)', () => {
+import { editNotSaved } from '../src/lib/store';
+describe('dropped edit (CEO: always restore, never re-send): a refused delete brings back the server’s row and says the edit wasn’t saved', () => {
   const F = () => ({ ...tableEntry('F', 'roti', 2, 'count', { slot: 'breakfast' }), server_version: 1, server_counts: { kcal: 220, protein: 7 } });
   const LOCKED = { error: { code: 'forbidden', message: 'This entry is locked.' } };
+  const NOT_SAVED = 'Your change to 3 pieces wasn’t saved. Edit it again if you still want it.';
   const serverTotal = () => Math.round([...server.rows.values()].reduce((a, x) => a + x.kcal, 0));
   const later = async (h = 1) => { const spy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + h * 3_600_000); await act(async () => { await st.sync(); }); await tick(); spy.mockRestore(); };
   const edit3 = async () => { await act(async () => { st.updateEntry({ ...st.entries.find((x) => x.id === 'F')!, ...tableEntry('F', 'roti', 3, 'count', { slot: 'breakfast' }), server_version: 1 }); }); await tick(); };
-  test('queued edit (PATCH 5xx) then delete refused 403: the edit is re-sent; the row shows 3 pieces and says so; once the PATCH lands phone == server (330)', async () => {
+  const writesAfter = (n0: number) => server.log.slice(n0).filter((l) => l.path.startsWith('/v1/entries') && (l.method === 'PATCH' || l.method === 'POST'));
+  test('queued edit (PATCH 5xx) then delete refused 403, same server copy: the server’s 2 pieces come back (shown == counted 220), the note says the 3-piece edit wasn’t saved, and no edit op is sent', async () => {
     const f = F(); server.rows.set('F', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 });
     server.patch5xx = true;
     await boot(<Today />, [f]);
     await edit3();
     expect(st.queue.some((o) => o.kind === 'upsert')).toBe(true); // the edit is waiting (5xx backoff)
+    server.patch5xx = false; // the server would take an edit now: it still must not be sent
     server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
+    const n0 = server.log.length;
     await act(async () => { st.deleteEntry('F'); }); await tick();
     expect(server.log.some((l) => l.method === 'GET' && l.path === '/v1/entries/F')).toBe(true); // the server's copy was read
     const row = st.entries.find((x) => x.id === 'F')!;
-    expect(row).toMatchObject({ deleted_at: null, qty: 3, unit: 'count', kept_on_server: true, server_counts: { kcal: 220, protein: 7 } });
-    expect(row.unsynced_edit).toBeUndefined(); expect(row.server_failed).toBeUndefined();
-    expect(row.server_note).toBe(`${KEPT_COPY} This entry is locked. ${editKept('3 pieces')}`);
-    expect(st.queue.filter((o) => o.kind === 'upsert' && o.entry.id === 'F')).toHaveLength(1); // re-queued, not dropped
-    expect(st.queue.some((o) => o.kind === 'delete')).toBe(false);
-    expect(textOf(r)).toContain(editKept('3 pieces'));
-    // the server is back: the edit lands and everything agrees
-    server.patch5xx = false; await later();
-    expect(st.queue).toHaveLength(0);
-    const k3 = Math.round(tableEntry('F', 'roti', 3, 'count').kcal.best);
-    expect(server.rows.get('F')!.kcal).toBe(k3); // the 3-piece edit reached the server
-    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(k3);
-    expect(r.root.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string').props.children).toBe(`${k3} kcal`);
+    expect(row).toMatchObject({ deleted_at: null, qty: 2, unit: 'count', server_version: 1, kept_on_server: true, server_counts: { kcal: 220, protein: 7 } });
+    expect(row.kcal.best).toBe(220); expect(row.unsynced_edit).toBeUndefined(); expect(row.server_failed).toBeUndefined();
+    expect(row.server_note).toBe(`Not deleted: the server kept this entry. This entry is locked. ${NOT_SAVED}`);
+    expect(st.queue).toHaveLength(0); // nothing re-queued
+    // later syncs send no edit either
+    await later(); await later(2);
+    expect(writesAfter(n0)).toHaveLength(0);
+    expect(server.rows.get('F')).toMatchObject({ kcal: 220, qty: 2 });
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(220); // phone == server (== summary: the mock's day)
+    expect(textOf(r)).toContain(`This entry is locked. ${NOT_SAVED}`); expect(textOf(r)).not.toContain('is kept.');
+    expect(r.root.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string').props.children).toBe('220 kcal');
   });
-  test('the re-sent edit still 5xx-es 3 times: flagged and counted at the server’s 220 (shown 220), never the unsaved 330', async () => {
-    const f = F(); server.rows.set('F', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 });
-    server.patch5xx = true;
-    await boot(<Today />, [f]);
-    await edit3();
-    server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
-    await act(async () => { st.deleteEntry('F'); }); await tick();
-    for (let i = 0; i < 6 && !st.entries.find((x) => x.id === 'F')!.server_failed; i++) await later(i + 1);
-    const row = st.entries.find((x) => x.id === 'F')!;
-    expect(row).toMatchObject({ server_failed: true, sync_error: SERVER_ERROR });
-    expect(dayTotals(st.entries).kcal).toBe(220); expect(serverTotal()).toBe(220);
-  });
-  test('409 with a newer server copy (another device: 4 pieces): the server’s copy wins (shown == counted 440) and the note says the 3-piece edit wasn’t saved', async () => {
+  test('409 with a newer server copy (another device: 4 pieces): the server’s copy (shown == counted 440) and the same note', async () => {
     const copy = { version: 5, state: 'confirmed', dish_id: 'roti', qty: 4, unit: 'count', kcal_best: 440, protein_best: 14 };
     server.rows.set('F', { kcal: 440, qty: 4, unit: 'count', version: 5 });
     server.patch5xx = true;
@@ -657,7 +647,6 @@ describe('dropped edit: a refused delete re-sends the edit it had replaced (or s
     const row = st.entries.find((x) => x.id === 'F')!;
     expect(row).toMatchObject({ deleted_at: null, qty: 4, unit: 'count', server_version: 5, server_counts: { kcal: 440, protein: 14 } });
     expect(row.kcal.best).toBe(440); expect(row.server_failed).toBeUndefined();
-    expect(row.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
     expect(st.queue).toHaveLength(0);
     expect(dayTotals(st.entries).kcal).toBe(440); expect(serverTotal()).toBe(440);
     // Designer copy (exact, curly apostrophe), on the same warn note line after the reason; the app's unit words, never "3 count"
@@ -674,35 +663,46 @@ describe('dropped edit: a refused delete re-sends the edit it had replaced (or s
     const row = st.entries.find((x) => x.id === 'F')!;
     expect(row.server_note).toBe(`${KEPT_COPY} This entry is locked.`); expect(row.qty).toBe(2); expect(st.queue).toHaveLength(0);
   });
-  test('a 5xx-flagged edit, then a delete refused on its retry: the edit is re-sent (the flag set unsynced_edit)', async () => {
+  test('a 5xx-flagged edit, then a delete refused 422: the server’s row comes back (2 pieces, 220, not flagged), the note, no edit sent', async () => {
     server.rows.set('F', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 });
     server.patch5xx = true;
     await boot(<Today />, [F()]);
     await edit3();
     for (let i = 0; i < 6 && !st.entries.find((x) => x.id === 'F')!.server_failed; i++) await later(i + 1);
     expect(st.entries.find((x) => x.id === 'F')!.server_failed).toBe(true); expect(st.queue).toHaveLength(0);
-    server.delAnswer.set('F', [{ status: 422, body: LOCKED }]);
-    await act(async () => { st.deleteEntry('F'); }); await tick();
+    server.patch5xx = false; server.delAnswer.set('F', [{ status: 422, body: LOCKED }]);
+    const n0 = server.log.length;
+    await act(async () => { st.deleteEntry('F'); }); await tick(); await later(10);
     const row = st.entries.find((x) => x.id === 'F')!;
-    expect(row).toMatchObject({ deleted_at: null, qty: 3 }); expect(row.server_note).toContain(editKept('3 pieces'));
-    server.patch5xx = false; await later(10);
-    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(Math.round(tableEntry('F', 'roti', 3, 'count').kcal.best));
+    expect(row).toMatchObject({ deleted_at: null, qty: 2 }); expect(row.kcal.best).toBe(220); expect(row.server_failed).toBeUndefined(); expect(row.sync_error).toBeUndefined();
+    expect(row.server_note).toContain(NOT_SAVED);
+    expect(writesAfter(n0)).toHaveLength(0);
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(220);
   });
-  test('restoreKept (pure): edited + same-version copy -> re-send; newer copy -> server’s copy + note; no copy and unsavable -> flagged at server_counts + note', () => {
+  test('the server’s copy can’t be read (GET 503): counted at the server’s last numbers (220), flagged, the note; no edit sent', async () => {
+    server.rows.set('F', { kcal: 220, protein: 7, qty: 2, unit: 'count', version: 1 });
+    server.patch5xx = true;
+    await boot(<Today />, [F()]);
+    await edit3();
+    server.patch5xx = false; server.getDown = true; server.delAnswer.set('F', [{ status: 403, body: LOCKED }]);
+    const n0 = server.log.length;
+    await act(async () => { st.deleteEntry('F'); }); await tick(); await later();
+    const row = st.entries.find((x) => x.id === 'F')!;
+    expect(row).toMatchObject({ deleted_at: null, server_failed: true, server_counts: { kcal: 220, protein: 7 } }); expect(row.server_note).toContain(NOT_SAVED);
+    expect(writesAfter(n0)).toHaveLength(0); expect(st.queue).toHaveLength(0);
+    expect(dayTotals(st.entries).kcal).toBe(220); expect(serverTotal()).toBe(220);
+  });
+  test('restoreKept (pure): edited + same-version copy -> the server’s copy + note (never the edit); newer copy -> same; no copy -> flagged at server_counts + note', () => {
     const del = (e: FoodEntry) => ({ ...e, deleted_at: '2026-10-17T05:00:00Z', unsynced_edit: true });
     const e3 = { ...tableEntry('A', 'roti', 3, 'count'), server_version: 2, server_counts: { kcal: 220, protein: 7 } } as FoodEntry;
-    const out: { requeue?: boolean } = {};
-    const a = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true, row: { version: 2, state: 'confirmed', qty: 2, unit: 'count', kcal_best: 220, protein_best: 7 } }, out);
-    expect(out.requeue).toBe(true); expect(a).toMatchObject({ qty: 3, deleted_at: null, server_counts: { kcal: 220, protein: 7 } }); expect(a.unsynced_edit).toBeUndefined();
-    const out2: { requeue?: boolean } = {};
-    const b = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true, row: { version: 3, state: 'confirmed', qty: 1, unit: 'count', kcal_best: 110, protein_best: 3 } }, out2);
-    expect(out2.requeue).toBeUndefined(); expect(b).toMatchObject({ qty: 1, server_version: 3, server_counts: { kcal: 110, protein: 3 } }); expect(b.kcal.best).toBe(110);
+    const a = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true, row: { version: 2, state: 'confirmed', qty: 2, unit: 'count', kcal_best: 220, protein_best: 7 } });
+    expect(a).toMatchObject({ qty: 2, deleted_at: null, server_counts: { kcal: 220, protein: 7 } }); expect(a.kcal.best).toBe(220); expect(a.unsynced_edit).toBeUndefined();
+    expect(a.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`); expect(dayTotals([a]).kcal).toBe(220);
+    const b = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true, row: { version: 3, state: 'confirmed', qty: 1, unit: 'count', kcal_best: 110, protein_best: 3 } });
+    expect(b).toMatchObject({ qty: 1, server_version: 3, server_counts: { kcal: 110, protein: 3 } }); expect(b.kcal.best).toBe(110);
     expect(dayTotals([b]).kcal).toBe(110); expect(b.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
-    // a custom row whose edit can't be saved (0 kcal) and no copy: counted as the server last had it, flagged, named in the note
-    const c0 = { ...e3, id: 'C', dish_id: null, custom_name: 'thali', source: 'custom', kcal: { low: 0, best: 0, high: 0 } } as FoodEntry;
-    const out3: { requeue?: boolean } = {};
-    const c = restoreKept(del(c0), { id: 'C', code: 'forbidden', edited: true }, out3);
-    expect(out3.requeue).toBeUndefined(); expect(c.server_failed).toBe(true); expect(dayTotals([c]).kcal).toBe(220); expect(c.server_note).toBe(`${KEPT_COPY} ${editNotSaved('0 kcal')}`);
+    const c = restoreKept(del(e3), { id: 'A', code: 'forbidden', edited: true });
+    expect(c.server_failed).toBe(true); expect(dayTotals([c]).kcal).toBe(220); expect(c.server_note).toBe(`${KEPT_COPY} ${editNotSaved('3 pieces')}`);
   });
 });
 

@@ -70,11 +70,11 @@ if (process.argv[3] === 'rg7') {
   const h7 = t('h7', 'idli', 2, 'count', 'lunch');
   entries.push({ ...h7, server_version: 1, server_counts: { kcal: h7.kcal.best, protein: h7.protein_g.best }, kept_on_server: true,
     server_note: 'Not deleted: the server kept this entry. This entry is locked.' });
-  // next build: refused deletes that had replaced an unsynced edit. Re-sent (shows the 3-piece edit), and one whose server
-  // copy moved on (another device: 4 pieces): shows the server's copy and says the edit wasn't saved
-  const h8 = t('h8', 'roti', 3, 'count', 'dinner');
-  entries.push({ ...h8, server_version: 1, server_counts: { kcal: Math.round(h8.kcal.best * 2 / 3), protein: 0 }, kept_on_server: true,
-    server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces is kept.' });
+  // next build (CEO: always restore, never re-send): a refused delete that had replaced an unsynced 3-piece edit shows the
+  // server's copy (2 pieces) and says the edit wasn't saved; one whose server copy moved on (another device: 4 pieces) too
+  const h8 = t('h8', 'roti', 2, 'count', 'dinner');
+  entries.push({ ...h8, server_version: 1, server_counts: { kcal: h8.kcal.best, protein: h8.protein_g.best }, kept_on_server: true,
+    server_note: 'Not deleted: the server kept this entry. This entry is locked for now. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' });
   const h9 = t('h9', 'roti', 4, 'count', 'dinner');
   entries.push({ ...h9, server_version: 5, server_counts: { kcal: h9.kcal.best, protein: h9.protein_g.best }, kept_on_server: true,
     server_note: 'Not deleted: the server kept this entry. Your change to 3 pieces wasn’t saved. Edit it again if you still want it.' });

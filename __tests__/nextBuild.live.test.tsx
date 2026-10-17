@@ -2,8 +2,8 @@
 // the real StoreProvider and Today. Faults are forced in front of the server (e461c87 only answers 204 / 404 / 5xx itself).
 // - edge (a): an older build's row with a queued edit (no server_counts), deleted, the DELETE 5xx x3: flagged, and counted at
 //   the server's copy read with GET /v1/entries/{client_id}: phone == GET /v1/entries total == /v1/summary (not 0).
-// - dropped edit: an edit still queued when the DELETE is refused (403): the edit is re-sent, the row says so, and once it
-//   lands phone == server == summary at the edited amount.
+// - dropped edit (CEO: always restore, never re-send): an edit still queued when the DELETE is refused (403): the row takes
+//   the server's copy (qty, unit, numbers), the note says the edit wasn't saved, no edit is sent, phone == server == summary.
 // Run: NEXTB_URL=http://localhost:8811 npx jest __tests__/nextBuild.live.test.tsx
 import React from 'react';
 import * as http from 'http';
@@ -37,7 +37,7 @@ const log: string[] = [];
   return { ok: r.status >= 200 && r.status < 300, status: r.status, headers: { get: () => null }, text: async () => r.text, json: async () => JSON.parse(r.text) };
 };
 
-import { StoreProvider, useStore, Store, KEPT_COPY, editKept } from '../src/lib/store';
+import { StoreProvider, useStore, Store, KEPT_COPY, editNotSaved } from '../src/lib/store';
 import { counted, dayTotals, entryFromItem, localDate, FoodEntry } from '../src/lib/domain';
 import { parseLocal } from '../src/lib/parseLocal';
 import { DISH_TABLE_VERSION } from '../src/parser';
@@ -92,23 +92,25 @@ run('edge (a): older-build row with a queued edit, DELETE 5xx x3: counted at the
   await act(async () => { r.unmount(); });
 });
 
-run('dropped edit: an edit queued (PATCH 503) when the DELETE is refused 403 is re-sent; phone == server == summary at the edit', async () => {
+run('dropped edit: an edit queued (PATCH 503) when the DELETE is refused 403: the server’s row comes back, no edit sent, phone == server == summary', async () => {
   const user = `nb-d-${Date.now() % 1e6}`;
   const r = await boot(user, [tab('nF', '2 roti'), tab('nG', '1 katori dal')], [tab('nF', '2 roti'), tab('nG', '1 katori dal')].map((e) => ({ kind: 'upsert', entry: e, tries: 0 })));
-  const t0 = await totals(user); expect(t0.phone).toBe(t0.server);
+  const t0 = await totals(user); expect(t0.phone).toBe(t0.server); expect(t0.server).toBe(t0.summary);
   forced.push({ id: 'nF', method: 'PATCH', status: 503, body: { error: 'unavailable' }, n: 1 });
   const three = tab('nF', '3 roti'); const cur = st.entries.find((x) => x.id === 'nF')!;
   await act(async () => { st.updateEntry({ ...cur, qty: three.qty, kcal: three.kcal, protein_g: three.protein_g, carbs_g: three.carbs_g, fat_g: three.fat_g, raw_text: '3 roti' }); });
   await settle(2000, () => forced[0].n === 0);
-  expect(st.queue.some((x) => x.kind === 'upsert')).toBe(true); // the edit is waiting (5xx backoff)
+  expect(st.queue.some((x) => x.kind === 'upsert')).toBe(true); // the edit is waiting (5xx backoff); the server would take it now
   forced.push({ id: 'nF', method: 'DELETE', status: 403, body: { error: { code: 'forbidden', message: 'This entry is locked.' } }, n: 1 });
-  await act(async () => { st.deleteEntry('nF'); }); await settle(20_000);
+  const n0 = log.length;
+  await act(async () => { st.deleteEntry('nF'); }); await settle(8000, () => false);
   const f = st.entries.find((x) => x.id === 'nF')!;
-  expect(f.deleted_at).toBeNull(); expect(counted(f)).toBe(true); expect(f.qty).toBe(three.qty);
-  expect(f.server_note).toBe(`${KEPT_COPY} This entry is locked. ${editKept('3 pieces')}`);
+  expect(f.deleted_at).toBeNull(); expect(counted(f)).toBe(true); expect(f.qty).toBe(cur.qty); expect(f.unit).toBe(cur.unit); expect(f.kcal.best).toBe(cur.kcal.best);
+  expect(f.server_note).toBe(`${KEPT_COPY} This entry is locked. ${editNotSaved('3 pieces')}`);
   expect(log).toContain('GET /v1/entries/nF');
-  const t1 = await totals(user); expect(t1.phone).toBe(t1.server); expect(t1.server).toBe(t1.summary); expect(t1.ids).toEqual(['nF', 'nG']);
-  expect(t1.server).toBe(t0.server - Math.round(cur.kcal.best) + Math.round(three.kcal.best)); // the 3-roti edit is on the server
-  expect(texts(r)).toContain(editKept('3 pieces'));
+  expect(log.slice(n0).filter((l) => /^(PATCH|POST) \/v1\/entries/.test(l))).toEqual([]); // no edit op sent after the refusal
+  expect(st.queue).toHaveLength(0);
+  const t1 = await totals(user); expect(t1).toEqual(t0); // phone == server == summary, at the server's 2 roti
+  expect(texts(r)).toContain(editNotSaved('3 pieces'));
   await act(async () => { r.unmount(); });
 });
