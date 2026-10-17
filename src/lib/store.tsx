@@ -69,6 +69,8 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
   // ops added (or coalesced, e.g. the backstop's row or the user's typed kcal) while we were sending stay queued after the
   // remaining ones and replace their same-id op; a late result for a job the backstop converted is ignored (dropLate / dropLateOps)
   const queue = dropLateOps(reopened.reduce((q, e) => enqueue(q, { kind: 'upsert', entry: e, tries: 0 }), p.queue.filter((o) => !sent.includes(o)).reduce((q, o) => enqueue(q, o), r.rest)), p.entries);
+  const failedIds = new Set(r.failed.map((f) => f.id));
+  const deletedOk = new Set(sent.filter((o) => o.kind === 'delete' && !r.rest.includes(o) && !r.rest.some((x) => x.kind === 'delete' && x.id === (o as { id: string }).id) && !failedIds.has((o as { id: string }).id)).map((o) => (o as { id: string }).id));
   const entries = mergeEntries(p.entries, dropLate(p.entries, r.resolved)).map((x) => {
     let n = reopened.find((e) => e.id === x.id) ?? x;
     const v = r.versions[x.id];
@@ -80,7 +82,10 @@ export function applyFlush<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P
       n = { ...n, server_failed: undefined, server_counts: rev ? { kcal: 0, protein: 0 } : { kcal: sr.kcal_best ?? ok.sent.kcal.best, protein: sr.protein_best ?? ok.sent.protein_g.best } };
     } else if (typeof v === 'number' && !failed.has(x.id) && n.server_failed) n = { ...n, server_failed: undefined };
     const f = failed.get(x.id);
-    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason, ...(f.options?.length ? { variant_options: f.options } : {}), ...(f.code === SERVER_ERROR ? { server_failed: true } : {}) };
+    if (f) n = { ...n, sync_error: f.code, sync_reason: f.reason, ...(f.options?.length ? { variant_options: f.options } : {}), ...(f.code === SERVER_ERROR ? { server_failed: true } : {}),
+      ...(f.code === SERVER_ERROR && n.deleted_at && !f.sent ? { delete_failed: true } : {}) };
+    // rg9 B3: the delete got through (sent, not failed, not still queued): the row is gone on the server too
+    if (!f && n.deleted_at && deletedOk.has(x.id)) n = { ...n, delete_failed: undefined, server_failed: undefined, server_counts: undefined, sync_error: undefined, sync_reason: undefined };
     // rg6 F1: the server stored this save differently (needs_review, or other numbers / amount): the row shows the server's
     // version, so the phone counts exactly what the server counts. Only when the user hasn't changed it since it was sent.
     const sv = r.rows?.[x.id];
@@ -237,7 +242,8 @@ function useStoreValue() {
     /** dismiss the "Saved as …" note on a row the server stored with other numbers */
     clearServerNote: (id: string) => upd((p) => ({ ...p, entries: p.entries.map((x) => (x.id === id && x.server_note && !x.needs_review ? { ...x, server_note: undefined } : x)) })),
     deleteEntry: (id: string) => upd((p) => ({
-      ...p, entries: p.entries.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),
+      // what the server has for it is recorded first (rg8 F-1): if the delete is flagged, the row counts exactly that (rg9 B3)
+      ...p, entries: p.entries.map((x) => (x.id === id ? { ...(p.queue.some((o) => opId(o) === id) ? x : seedServerCounts(x)), deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } : x)),
       queue: enqueue(p.queue, { kind: 'delete', id, tries: 0 }),
     })),
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),

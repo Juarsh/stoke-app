@@ -115,6 +115,11 @@ for (const theme of ['light', 'dark']) {
   if ((await fail.count()) !== 2) throw new Error(`expected 2 sync-failed rows (save + delete), got ${await fail.count()}`);
   if ((await h.getByText('Not deleted on the server yet.', { exact: false }).count()) < 1) throw new Error('no flagged delete on Today');
   if ((await h.getByText('akarsh_special_shake', { exact: false }).count()) < 1) throw new Error('custom name not shown as typed');
+  // rg9 B3: the flagged delete shows the server's kcal (2 roti, 220) and Breakfast counts it
+  const delRow = h.getByRole('button', { name: /\(deleted\): couldn’t sync this/i });
+  if (!/220 kcal/.test(await delRow.innerText())) throw new Error(`flagged delete shows no kcal: ${await delRow.innerText()}`);
+  const bf = await h.getByRole('button', { name: /^Breakfast: / }).first().getAttribute('aria-label');
+  if (!/roti/i.test(bf ?? '') || Number((/([\d,]+) calories/.exec(bf ?? '')?.[1] ?? '0').replace(/,/g, '')) < 220) throw new Error(`Breakfast doesn't count the flagged delete: ${bf}`);
   await fail.first().scrollIntoViewIfNeeded(); await wait(h, 500);
   await shot(h, `today-5xx-flag-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);

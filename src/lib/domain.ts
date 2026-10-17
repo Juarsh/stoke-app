@@ -64,13 +64,19 @@ export interface FoodEntry {
   /** rg7 H1: the server answered this row's save 5xx three times in a row: flagged ("Couldn’t sync this. Tap to retry") and
    * counted only as the server has it (server_counts, else not at all) until a save goes through */
   server_failed?: boolean;
+  /** rg9 B3: the user deleted this row but the server answered 5xx three times: the server still has it, so it stays counted
+   * at the server's numbers (server_counts) and flagged ("Not deleted on the server yet.") until a delete gets through */
+  delete_failed?: boolean;
 }
 /** Counted in totals/streak: live and not awaiting review. */
-export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;
+/** live on the server: not deleted, or deleted on the phone but the delete was flagged (rg9 B3: the server still counts it) */
+export const onServer = (e: FoodEntry) => !e.deleted_at || !!e.delete_failed;
+/** A not-yet-flagged delete is hidden at once (optimistic); a flagged one counts as the server has it. */
+export const counted = (e: FoodEntry) => onServer(e) && !e.needs_review;
 /** The numbers a counted row adds to the day: the phone's, except a row the server couldn't save (5xx, rg7 H1), which adds
  * what the server has (server-row-is-truth): its last stored numbers, or nothing for a row it never stored. */
 export function countedNums(e: FoodEntry): { kcal: number; protein: number } {
-  if (e.server_failed) return e.server_counts ?? { kcal: 0, protein: 0 };
+  if (e.server_failed || e.delete_failed) return e.server_counts ?? { kcal: 0, protein: 0 };
   return { kcal: e.kcal.best, protein: e.protein_g.best };
 }
 /** rg8 F-1: a row an older build synced (server_version, no server_counts) and not changed since: what the server has is
@@ -226,7 +232,7 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
 
 /** Streak days: anything logged that day counts, even if every item is pending or awaiting review (calories don't). */
 export function loggedDays(entries: FoodEntry[], pendingDates: string[] = []): Set<string> {
-  return new Set([...entries.filter((e) => !e.deleted_at).map((e) => e.local_date), ...pendingDates]);
+  return new Set([...entries.filter(onServer).map((e) => e.local_date), ...pendingDates]);
 }
 
 /** Placeholder entry for a pending food, synced as needs_review so the server streak matches. */

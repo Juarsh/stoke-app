@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
-import { addDays, counted, displayName, entryLabel, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
+import { addDays, counted, countedNums, displayName, onServer, entryLabel, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
 import { isStale, pendingFor, PendingFood } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
@@ -52,8 +52,8 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
       {day.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state="offline" />)}
       {open ? items.map((e) => (
         <Pressable key={e.id} onPress={() => onPick(e)} accessibilityRole="button" accessibilityLabel={`Edit ${entryLabel(e)}`} style={s.entry}>
-          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)} · {portionLabel(e.qty, e.unit)}</T>
-          <T v="number">{fmt(e.kcal.best)}</T>
+          <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{SLOT_LABEL[e.slot]} · {displayName(e.custom_name || '', e.dish_id)}{e.delete_failed ? ' (deleted)' : ''} · {portionLabel(e.qty, e.unit)}</T>
+          <T v="number">{fmt(e.delete_failed ? countedNums(e).kcal : e.kcal.best)}</T>
         </Pressable>
       )) : null}
     </View></View>
@@ -68,7 +68,7 @@ export default function Progress() {
   const today = localDate();
   const days = useMemo<Day[]>(() => {
     const by = new Map<string, FoodEntry[]>();
-    for (const e of st.entries) if (!e.deleted_at) by.set(e.local_date, [...(by.get(e.local_date) ?? []), e]);
+    for (const e of st.entries) if (onServer(e)) by.set(e.local_date, [...(by.get(e.local_date) ?? []), e]);
     const pend = pendingFor(st.queue);
     for (const f of pend) if (!by.has(f.local_date)) by.set(f.local_date, []);
     by.delete(today); // today lives on the Today tab (frame 6 lists past days only)
@@ -84,7 +84,8 @@ export default function Progress() {
     return out;
   }, [today]);
   const month = asDate(today).toLocaleDateString('en-GB', { month: 'long' });
-  const onPick = useCallback((e: FoodEntry) => { setSlot(e.slot); setEditing(e); }, []);
+  // a flagged delete (rg9 B3) is not edited: tapping it retries the delete
+  const onPick = useCallback((e: FoodEntry) => { if (e.delete_failed) { st.retrySync(e.id); return; } setSlot(e.slot); setEditing(e); }, [st]);
   const weekAgo = addDays(today, -6);
   const lastFreeze = [...d.streak.frozenDays].sort().reverse().find((x) => x >= weekAgo);
   const header = (

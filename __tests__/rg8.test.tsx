@@ -292,3 +292,96 @@ describe('F-1: a row an older build synced counts exactly what the server has wh
     expect(st.entries.find((x) => x.id === 'Q')!.server_counts).toBeUndefined();
   });
 });
+
+// ---------- rg9 B3: a flagged failed delete counts what the server still has ----------
+import Progress from '../src/app/(tabs)/progress';
+import { addDays, loggedDays, plateRows } from '../src/lib/domain';
+import { applyFlush } from '../src/lib/store';
+describe('rg9 B3: a delete flagged after 3x 5xx is counted at the server’s numbers until it gets through', () => {
+  const plateLabel = (slot: string) => r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && new RegExp(`^${slot}: `).test(n.props.accessibilityLabel)).map((n) => n.props.accessibilityLabel as string)[0] ?? '';
+  const flagIt = async (id: string) => {
+    for (let i = 0; i < 6 && !st.entries.find((x) => x.id === id)?.sync_error; i++) {
+      const spy = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + (i + 1) * 3_600_000);
+      await act(async () => { await st.sync(); }); await tick(); spy.mockRestore();
+    }
+  };
+  const roti = () => ({ ...tableEntry('F', 'roti', 2, 'count', { slot: 'breakfast' }), server_version: 1, server_counts: { kcal: 220, protein: 7 } });
+  const dal = () => ({ ...tableEntry('G', 'dal', 1, 'katori', { slot: 'breakfast' }), server_version: 1 });
+  test('pending: hidden (optimistic); flagged: phone total, Breakfast sum and the flagged row all show the server’s 220; retry success removes it', async () => {
+    const F = roti(), G = dal(), g = Math.round(G.kcal.best);
+    server.del5xx.add('F');
+    await boot(<Today />, [F, G]);
+    expect(dayTotals(st.entries).kcal).toBe(220 + g);
+    await act(async () => { st.deleteEntry('F'); }); await tick();
+    // the first 5xx: not flagged yet -> hidden at once (the phone may be ahead of the server only while it is still trying)
+    const f1 = st.entries.find((x) => x.id === 'F')!;
+    expect(f1.sync_error).toBeUndefined(); expect(counted(f1)).toBe(false);
+    expect(dayTotals(st.entries).kcal).toBe(g);
+    await flagIt('F');
+    const f = st.entries.find((x) => x.id === 'F')!;
+    expect(f).toMatchObject({ sync_error: SERVER_ERROR, sync_reason: NOT_DELETED_REASON, delete_failed: true, server_counts: { kcal: 220, protein: 7 } });
+    expect(counted(f)).toBe(true);
+    expect(dayTotals(st.entries).kcal).toBe(220 + g); // = the server's day
+    expect(plateRows(st.entries.filter(counted), (e) => e.dish_id ?? '').find((x) => x.slot === 'breakfast')?.kcal).toBe(220 + g);
+    expect(loggedDays(st.entries).has(DAY)).toBe(true);
+    const txt = textOf(r);
+    expect(txt).toContain('(deleted)'); expect(txt).toContain('220 kcal'); expect(txt).toContain(NOT_DELETED_REASON); expect(txt).not.toContain('not counted');
+    expect(plateLabel('Breakfast')).toMatch(new RegExp(`${220 + g} calories$`));
+    // tap retry -> the delete gets through -> gone from the counts (and the flag)
+    server.del5xx.clear();
+    const tap = r.root.findAll((n) => typeof n.props.onPress === 'function' && /\(deleted\): couldn’t sync this/i.test(String(n.props.accessibilityLabel ?? '')));
+    await act(async () => { tap[0].props.onPress(); });
+    await act(async () => { await st.sync(); }); await tick();
+    const done = st.entries.find((x) => x.id === 'F')!;
+    expect(done.delete_failed).toBeUndefined(); expect(done.sync_error).toBeUndefined(); expect(counted(done)).toBe(false);
+    expect(dayTotals(st.entries).kcal).toBe(g);
+    expect(textOf(r)).not.toContain('(deleted)'); expect(plateLabel('Breakfast')).toMatch(new RegExp(`${g} calories$`));
+  });
+  test('a retry that 5xx-es again stays counted and flagged (never silently dropped)', async () => {
+    server.del5xx.add('F');
+    await boot(<Today />, [roti()]);
+    await act(async () => { st.deleteEntry('F'); }); await tick(); await flagIt('F');
+    await act(async () => { st.retrySync('F'); }); await tick(); await flagIt('F');
+    expect(st.entries.find((x) => x.id === 'F')).toMatchObject({ delete_failed: true, sync_error: SERVER_ERROR });
+    expect(dayTotals(st.entries).kcal).toBe(220);
+  });
+  test('an older-build row (no server_counts) deleted then flagged counts the row the server recorded, not 0', async () => {
+    const old = { ...tableEntry('O', 'roti', 2, 'count'), server_version: 3 } as FoodEntry; delete (old as Partial<FoodEntry>).server_counts;
+    server.del5xx.add('O');
+    await boot(<Today />, [old], [{ kind: 'upsert', entry: { ...old, server_version: 3 }, tries: 0, nextAt: Date.now() + 3_600_000 } as Op]);
+    expect(st.entries.find((x) => x.id === 'O')!.server_counts).toBeUndefined(); // queued edit at load: not guessed
+    await act(async () => { st.deleteEntry('O'); }); await tick(); await flagIt('O');
+    // a queued upsert was not seeded: no guess -> the flagged row says it isn't counted rather than inventing numbers
+    expect(st.entries.find((x) => x.id === 'O')!.delete_failed).toBe(true);
+    expect(textOf(r)).toContain('(deleted)'); expect(textOf(r)).toContain(NOT_DELETED_REASON);
+  });
+  test('an older-build row with nothing queued: deleting it records what the server has first', async () => {
+    const old = { ...tableEntry('P', 'roti', 2, 'count'), server_version: 3 } as FoodEntry; delete (old as Partial<FoodEntry>).server_counts;
+    server.del5xx.add('P');
+    await boot(<Today />, [old]);
+    await act(async () => { st.deleteEntry('P'); }); await tick(); await flagIt('P');
+    expect(dayTotals(st.entries).kcal).toBe(Math.round(old.kcal.best));
+  });
+  test('a delete refused for another reason (not 5xx) is not counted (the old rule); a pure applyFlush success clears the flag', () => {
+    const F = { ...roti(), deleted_at: '2026-10-17T05:00:00Z' };
+    const refused = applyFlush({ entries: [F], queue: [] }, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [], resolved: [], rejected: [], versions: {}, gone: [], failed: [{ id: 'F', code: 'http_403' }] } as never);
+    expect(refused.entries[0].delete_failed).toBeUndefined(); expect(counted(refused.entries[0])).toBe(false);
+    const flagged = applyFlush({ entries: [F], queue: [] }, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [], resolved: [], rejected: [], versions: {}, gone: [], failed: [{ id: 'F', code: SERVER_ERROR, reason: NOT_DELETED_REASON }] } as never);
+    expect(flagged.entries[0]).toMatchObject({ delete_failed: true, server_failed: true }); expect(dayTotals(flagged.entries).kcal).toBe(220);
+    const parked = applyFlush(flagged, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [{ kind: 'delete', id: 'F', tries: 1, fives: 1 }], resolved: [], rejected: [], versions: {}, gone: [], failed: [] } as never);
+    expect(parked.entries[0].delete_failed).toBe(true); // still backing off: still on the server
+    const ok = applyFlush(flagged, [{ kind: 'delete', id: 'F', tries: 0 }], { rest: [], resolved: [], rejected: [], versions: {}, gone: [], failed: [] } as never);
+    expect(ok.entries[0].delete_failed).toBeUndefined(); expect(dayTotals(ok.entries).kcal).toBe(0);
+  });
+  test('Progress: a past day with a flagged delete shows the server’s total, and its row says (deleted)', async () => {
+    const y = addDays(DAY, -1);
+    const F = { ...roti(), local_date: y, deleted_at: `${y}T05:00:00Z`, server_failed: true, delete_failed: true, sync_error: SERVER_ERROR, sync_reason: NOT_DELETED_REASON };
+    const G = { ...dal(), local_date: y };
+    await boot(<Progress />, [F, G]);
+    const day = r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /, 2 items, /.test(n.props.accessibilityLabel));
+    expect(day.length).toBeGreaterThan(0);
+    expect(day[0].props.accessibilityLabel).toContain(`${220 + Math.round(G.kcal.best)} calories`);
+    await act(async () => { day[0].props.onPress(); });
+    expect(textOf(r)).toContain('(deleted)');
+  });
+});

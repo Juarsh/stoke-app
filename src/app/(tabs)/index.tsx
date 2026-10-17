@@ -114,7 +114,7 @@ export default function Today() {
           ))}
           {d.syncFailed.map((e) => (
             <SyncFailedRow key={`sync-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}${e.deleted_at ? ' (deleted)' : ''}`}
-              kcal={e.deleted_at ? undefined : countedNums(e).kcal} notCounted={!e.deleted_at && !!e.server_failed && !e.server_counts} retrying={!!e.sync_retrying} reason={e.sync_reason}
+              kcal={e.deleted_at && !e.delete_failed ? undefined : countedNums(e).kcal} notCounted={(!e.deleted_at || !!e.delete_failed) && !!e.server_failed && !e.server_counts} retrying={!!e.sync_retrying} reason={e.sync_reason}
               line={e.sync_error === 'variant_required' && !e.deleted_at ? PICK_TYPE_COPY : undefined}
               onRetry={() => (e.sync_error === 'variant_required' && !e.deleted_at ? setPicking(e.id) : st.retrySync(e.id))} />
           ))}

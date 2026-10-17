@@ -47,7 +47,7 @@ test('Today: while retrying the row shows a spinner, is busy and not tappable; i
   expect(ringEaten(r)).toBe(500); // poha (retrying) + dal
   await act(async () => { r.unmount(); });
 });
-test('Today: a failed row still counts in the totals (ring + plate), a failed delete does not', async () => {
+test('Today: a failed row still counts in the totals (ring + plate), a delete the server refused (not 5xx) does not', async () => {
   mockStore.entries = [e('a', 'poha', 300, 'sync_conflict'), e('b', 'dal', 200)];
   let r!: ReactTestRenderer;
   await act(async () => { r = create(<Today />); });
