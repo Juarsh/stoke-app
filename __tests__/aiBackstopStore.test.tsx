@@ -28,7 +28,7 @@ const food = (startedMinAgo: number): PendingFood => ({ id: 'p1', span: 'dum alo
 function seed(f: PendingFood, user = true) {
   const ph = pendingEntry(f, new Date(f.queued_at!));
   mockSaved = JSON.stringify({ user: user ? { id: 'u', name: 'A', email: 'a@x', idToken: 't', mock: false } : null, profile: null, entries: [ph], steps: {},
-    queue: [{ kind: 'upsert', entry: ph, tries: 0 }, { kind: 'pending', food: f, tries: 0 }], themePref: 'system', challenge: null, aiUsed: {}, learned: {} });
+    queue: [{ kind: 'upsert', entry: ph, tries: 0 }, { kind: 'pending', food: f, tries: 0 }], themePref: 'system', challenge: null, aiQuota: { used: 0 }, learned: {} });
 }
 const flushAll = async () => { for (let i = 0; i < 5; i++) await act(async () => { await Promise.resolve(); }); };
 const ai = { ...parser.unknown('dum aloo lakhnavi'), name: 'dum aloo lakhnavi', matched_text: 'dum aloo lakhnavi', ai_estimate: true, source: 'ai_estimate', needs_confirmation: true,

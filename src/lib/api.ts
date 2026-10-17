@@ -56,7 +56,8 @@ export function parseJobBody(b: JobBody, jobId?: string): ParseResponse {
   return (b.result ?? b) as ParseResponse;
 }
 
-export function createApi(getToken: () => string | null) {
+/** onReset: called with next_reset_at whenever a server response carries it. */
+export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void) {
   async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
     const tok = getToken();
     const res = await fetch(config.apiUrl + path, {
@@ -66,6 +67,7 @@ export function createApi(getToken: () => string | null) {
     if (!res.ok) throw new ApiError(res.status, await res.text());
     if (res.status === 204) return undefined as T;
     const json = await res.json();
+    if (onReset && json && typeof json.next_reset_at === 'string') onReset(json.next_reset_at);
     return (res.status === 202 ? { status: 'pending', ...json } : json) as T;
   }
   return {
@@ -82,7 +84,7 @@ export function createApi(getToken: () => string | null) {
           const qa = /qauserlimit(nt)?|qadaily(nt)?/i.exec(text)?.[0].toLowerCase();
           if (qa) {
             const base = { ...r, items: r.items.filter((i) => i.dish_id !== ''), used_ai: false, ai_state: 'failed' as const, custom_items: r.unmatched.map((u) => ({ custom_name: u, needs_input: true })) };
-            const at = qa.endsWith('nt') ? {} : { ai_resets_at: '2026-10-16T00:00:00-07:00' };
+            const at = qa.endsWith('nt') ? {} : { ai_resets_at: '2026-10-16T00:00:00-07:00', next_reset_at: '2026-10-16T00:00:00-07:00' };
             return qa.startsWith('qauser') ? { ...base, fallback: 'cap_reached', fallback_reason: 'user_limit', user_daily_limit: 3, ...at }
               : { ...base, fallback: 'daily_limit', fallback_reason: 'daily_limit', ...at };
           }

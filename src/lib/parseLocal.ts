@@ -12,6 +12,8 @@ export interface ParseResponse {
   custom_items: { custom_name: string; needs_input: boolean }[]; message?: string; slot: Slot;
   /** why there is no AI answer: user_limit, daily_limit, rate_limited, unavailable, timeout, error */
   fallback_reason?: string; user_daily_limit?: number; ai_resets_at?: string;
+  /** when the daily AI caps next reset (RFC 3339; every parse response / job poll) */
+  next_reset_at?: string;
   /** server's row state (a72964e): estimating (job still pending / requeued), answered, failed */
   ai_state?: 'estimating' | 'answered' | 'failed';
   /** open spans of a failed meal: the user types the calories (no kcal comes with them) */

@@ -44,6 +44,8 @@ export interface FoodEntry {
   ai_expired?: boolean;
   /** local only: why the AI row failed (FailedRow.reason, e.g. 'backstop'); Review shows failedCopy for it */
   ai_fail_reason?: string;
+  /** local only: the server's next_reset_at for a cap failure (the cap copy shows it) */
+  ai_resets_at?: string;
 }
 /** Counted in totals/streak: live and not awaiting review. */
 export const counted = (e: FoodEntry) => !e.deleted_at && !e.needs_review;

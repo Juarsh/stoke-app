@@ -34,7 +34,7 @@ export default function Review() {
         const it = e.review_item!;
         const kind = reviewRowKind(it);
         const body = kind === 'kcal'
-          ? <KcalRow name={e.raw_text || it.name} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason }) : undefined} onAdd={(k) => st.confirmReviewKcal(e.id, k)} onRemove={() => st.dropReview(e.id)} />
+          ? <KcalRow name={e.raw_text || it.name} note={e.ai_fail_reason ? failedCopy({ reason: e.ai_fail_reason, resetsAt: e.ai_resets_at }) : undefined} onAdd={(k) => st.confirmReviewKcal(e.id, k)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'estimate'
             ? <OpenRow it={it} kind="estimate" text={e.raw_text} onAdd={(n) => st.confirmReview(e.id, n)} onConfirm={(n) => st.confirmReview(e.id, n)} onEdit={(n) => st.confirmReview(e.id, n)} onRemove={() => st.dropReview(e.id)} />
           : kind === 'chips'

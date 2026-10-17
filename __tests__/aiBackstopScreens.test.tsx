@@ -7,7 +7,7 @@ import { ParsePending } from '../src/lib/api';
 type Deferred = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 const jobs: Deferred[] = [];
 const mockStore = {
-  learned: {}, aiUsed: {}, entries: [], queue: [],
+  learned: {}, aiQuota: { used: 0 }, entries: [], queue: [],
   api: { mock: true, parse: jest.fn(), parseJob: jest.fn() },
   newId: (() => { let n = 0; return () => `id${n++}`; })(),
   useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(), expireAi: jest.fn(),

@@ -6,7 +6,8 @@ import { ConfirmCard } from '@/components/ConfirmCard';
 import { Glows } from '@/components/Gradient';
 import { SlotCycle } from '@/components/ItemEditor';
 import { DecisionCard, FailedAiRow, Group, ItemRow, OpenRow } from '@/components/LogRows';
-import { aiStatus, failedCounts, failReason, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay } from '@/lib/aiRows';
+import { aiStatus, failedCounts, failReason, FailedRow, failedRows, failedWaiting, lateAnswer, leaveLog, pollDelay, resetOf } from '@/lib/aiRows';
+import { localCapHit } from '@/lib/aiQuota';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
@@ -55,7 +56,6 @@ export default function Log() {
     .filter((d) => edits[d.key] !== null);
   const drafts = [...table, ...ai];
   const pendingUnmatched = parsed.unmatched.filter((u) => !customs.some((c) => c.key === u) && !ai.some((a) => a.key.startsWith(`ai:${u}:`)));
-  const aiUsedToday = st.aiUsed[localDate()] ?? 0;
 
   // AI-first: unknown spans go to the AI automatically (debounced, one batched call). Each span gets a STABLE id up front,
   // so a late answer (after Add / the 10 s timeout) fills the same review item instead of creating a new one.
@@ -85,7 +85,8 @@ export default function Log() {
   async function estimateUnknown(spans: string[]) {
     const myGen = gen.current;
     const toCustom = (us: string[], m: string, why: { reason?: string; userDailyLimit?: number; resetsAt?: string } = {}) => { setCustoms((c) => [...c, ...us.filter((u) => !c.some((x) => x.key === u)).map((u) => ({ key: u, id: idFor(u), name: u, kcal: '', protein: '', added: false, ...why }))]); setMsg(m); };
-    if (aiUsedToday >= AI_CAP && !config.mockAi) return toCustom(spans, '', { reason: 'user_limit', userDailyLimit: AI_CAP });
+    // the app's own per-user cap resets at the server's next_reset_at (never a local midnight)
+    if (localCapHit(st.aiQuota, AI_CAP) && !config.mockAi) return toCustom(spans, '', { reason: 'user_limit', userDailyLimit: AI_CAP, resetsAt: st.aiQuota.resetAt });
     if (st.api.mock && !config.mockAi) return toCustom(spans, 'AI estimates need the server (this build is offline/mock). Add it yourself for now.');
     const ids = spans.map(idFor);
     for (const id of ids) { estStart.current.set(id, Date.now()); expired.current.delete(id); } // a new job: its own 35-minute clock
@@ -97,7 +98,7 @@ export default function Log() {
       const status = aiStatus(r);
       if (status === 'estimating') return; // no job to poll on an inline answer: stays Estimating; Add / leaving hands it to review
       if (status === 'failed') {
-        const why = { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at };
+        const why = { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: resetOf(r) };
         // every asked span gets a failed row (no AI kcal came for any of them), plus any extra open span the server listed
         const rows = failedRows(r, spans).filter((u) => !(spanIds.current.has(u) && (handedOff.current.has(idFor(u)) || expired.current.has(idFor(u))))); // handed-off spans stay needs_review
         toCustom(rows, '', why);
@@ -108,7 +109,7 @@ export default function Log() {
         if (expired.current.has(ids[k])) return; // backstop already made this a failed row: ignore the late answer
         const its = splitBySpan(got, spans)[k];
         if (handedOff.current.has(ids[k])) { if (its.length) st.fillPending(ids[k], its); return; } // after Add / leaving: fills the review item, unconfirmed
-        if (!its.length) { toCustom([u], '', { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: r.ai_resets_at }); return; }
+        if (!its.length) { toCustom([u], '', { reason: failReason(r), userDailyLimit: r.user_daily_limit, resetsAt: resetOf(r) }); return; }
         setCustoms((cs) => {
           const l = lateAnswer(cs.find((c) => c.key === u), its);
           if (l.drop) return cs; // the user's own kcal wins

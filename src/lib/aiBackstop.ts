@@ -47,9 +47,10 @@ export function failedAiItem(span: string): Item {
 
 /** A queued food that ended without a number (same stable id as the pending placeholder): needs_review, typed kcal only;
  * Review shows failedCopy(reason). */
-export function failedAiEntry(f: PendingFood, reason: string, ph?: FoodEntry, now = new Date()): FoodEntry {
+export function failedAiEntry(f: PendingFood, reason: string, ph?: FoodEntry, now = new Date(), resetsAt?: string): FoodEntry {
   const e = reviewEntry(failedAiItem(f.span), { id: f.id, slot: f.slot, raw_text: f.raw_text, local_date: f.local_date, tableVersion: DISH_TABLE_VERSION, now });
-  return { ...e, custom_name: f.span, span: f.span, pending: false, ai_fail_reason: reason, created_at: ph?.created_at ?? e.created_at, updated_at: now.toISOString() };
+  return { ...e, custom_name: f.span, span: f.span, pending: false, ai_fail_reason: reason, ...(resetsAt ? { ai_resets_at: resetsAt } : {}),
+    created_at: ph?.created_at ?? e.created_at, updated_at: now.toISOString() };
 }
 /** The backstop's converted row: a failed AI row whose late server answer is ignored (ai_expired). */
 export function backstopEntry(f: PendingFood, ph?: FoodEntry, now = new Date()): FoodEntry {

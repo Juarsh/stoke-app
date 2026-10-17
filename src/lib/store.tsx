@@ -2,10 +2,11 @@ import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { dropLate, dropLateOps, expirePending, stampPending } from './aiBackstop';
+import { AiQuota, countAi, EMPTY_QUOTA, noteReset } from './aiQuota';
 import type { ThemePref } from '../theme';
 import { fromRows, Learned, Reading } from './learned';
 import { createApi } from './api';
-import { entryFromItem, hasKcal, FoodEntry, localDate, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected } from './domain';
+import { entryFromItem, hasKcal, FoodEntry, mergeEntries, pendingEntry, Profile, profilePayload, reopenRejected } from './domain';
 import { DISH_TABLE_VERSION, Item } from '../parser';
 import { kv } from './kv';
 import { fillPending, resolvePending } from './pending';
@@ -18,9 +19,11 @@ interface Persisted {
   /** server refused the profile (error.code): onboarding reopens with the values kept */
   profileError?: string | null;
   user: User | null; profile: Profile | null; entries: FoodEntry[]; steps: Record<string, number>;
-  queue: Op[]; themePref: ThemePref; challenge: Challenge | null; aiUsed: Record<string, number>; learned: Learned;
+  queue: Op[]; themePref: ThemePref; challenge: Challenge | null;
+  /** the app's own per-user AI count; resets at the server's next_reset_at */
+  aiQuota: AiQuota; learned: Learned;
 }
-const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiUsed: {}, learned: {} };
+const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {} };
 const KEY = 'app-state-v1';
 /** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
 export function expireState<P extends { entries: FoodEntry[]; queue: Op[] }>(p: P, now = Date.now()): P {
@@ -33,7 +36,8 @@ function useStoreValue() {
   const [ready, setReady] = useState(false);
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = s.user?.idToken ?? null;
-  const api = useMemo(() => createApi(() => tokenRef.current), []);
+  // every server response with next_reset_at keeps the app's own AI count on the server's reset instant
+  const api = useMemo(() => createApi(() => tokenRef.current, (iso) => setS((p) => { const q = noteReset(p.aiQuota, iso); return q === p.aiQuota ? p : { ...p, aiQuota: q }; })), []);
 
   useEffect(() => {
     kv.get(KEY).then((raw) => {
@@ -109,7 +113,7 @@ function useStoreValue() {
     })),
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),
     setChallenge: (challenge: Challenge | null) => upd((p) => ({ ...p, challenge })),
-    useAi: () => upd((p) => ({ ...p, aiUsed: { [localDate()]: (p.aiUsed[localDate()] ?? 0) + 1 } })),
+    useAi: () => upd((p) => ({ ...p, aiQuota: countAi(p.aiQuota) })),
     /** Offline cache only; the server learns from the entry's span when it syncs. */
     remember: (pairs: [string, Reading][]) => upd((p) => ({ ...p, learned: { ...p.learned, ...Object.fromEntries(pairs) } })),
     /** Reset one (by key) or all. Server deletes go through the queue so they survive being offline. */

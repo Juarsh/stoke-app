@@ -4,7 +4,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { TextInput } from 'react-native';
 
 const mockStore = {
-  learned: {}, aiUsed: {}, entries: [], queue: [],
+  learned: {}, aiQuota: { used: 0 }, entries: [], queue: [],
   api: { mock: true, parse: jest.fn(), parseJob: jest.fn() },
   newId: (() => { let n = 0; return () => `id${n++}`; })(),
   useAi: jest.fn(), fillPending: jest.fn(), addPending: jest.fn(), addEntries: jest.fn(), remember: jest.fn(), expireAi: jest.fn(),

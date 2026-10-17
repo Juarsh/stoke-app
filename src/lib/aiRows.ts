@@ -48,29 +48,49 @@ export function failedRows(r: ParseResponse, asked: string[]): string[] {
   const extra = failedSpans(r, asked).filter((t) => !asked.some((a) => a === t || a.includes(t) || t.includes(a)));
   return [...asked, ...extra];
 }
-/** Failed-row copy by the server's fallback_reason (user_daily_limit from the server; left out when missing). */
-/** ai_resets_at (RFC 3339) in the user's local time, e.g. "12:30 PM"; '' when missing or unreadable. */
-export function resetTime(iso?: string): string {
-  const d = iso ? new Date(iso) : null;
-  if (!d || isNaN(d.getTime())) return '';
-  const h = d.getHours(), m = d.getMinutes();
-  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+/** Wall-clock parts of an instant in a time zone (the device's when omitted). */
+function wall(d: Date, timeZone?: string): { date: string; h: number; m: number } {
+  try {
+    const ps = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+    const g = (k: string) => ps.find((p) => p.type === k)?.value ?? '';
+    const h = Number(g('hour')) % 24, m = Number(g('minute'));
+    if (Number.isFinite(h) && Number.isFinite(m) && g('year')) return { date: `${g('year')}-${g('month')}-${g('day')}`, h, m };
+  } catch { /* no Intl time zones: device local time below */ }
+  return { date: `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`, h: d.getHours(), m: d.getMinutes() };
 }
+const hmm = (h: number, m: number) => `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+/** The reset instant (next_reset_at, RFC 3339) in local time as h:mm AM/PM, and whether it falls on a later local date
+ * than now. null when missing or unreadable. */
+export function resetWhen(iso?: string, now = new Date(), timeZone?: string): { time: string; laterDay: boolean } | null {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d.getTime())) return null;
+  const r = wall(d, timeZone), n = wall(now, timeZone);
+  return { time: hmm(r.h, r.m), laterDay: r.date > n.date };
+}
+/** next_reset_at in local time, e.g. "12:30 PM"; '' when missing or unreadable. */
+export const resetTime = (iso?: string, timeZone?: string): string => resetWhen(iso, new Date(), timeZone)?.time ?? '';
+/** The reset instant a response carries: next_reset_at, else (older servers) ai_resets_at. */
+export const resetOf = (r: { next_reset_at?: string; ai_resets_at?: string }) => r.next_reset_at ?? r.ai_resets_at;
 /** The daily AI cap ran out (per user or for everyone): fallback_reason daily_limit / user_limit, or fallback cap_reached /
  * global_cap_reached / daily_limit when the server sent no reason; also the app's own per-user cap and queued foods. */
 export const CAP_REASONS = ['daily_limit', 'user_limit', 'cap_reached', 'global_cap_reached'];
 export const isCapReason = (reason?: string) => CAP_REASONS.includes(reason ?? '');
-export const CAP_COPY = 'Today’s free estimates are used up. Add the calories yourself, or try again tomorrow.';
+const CAP_HEAD = 'Today’s free estimates are used up. Add the calories yourself, or try again';
+/** Cap copy (team, Oct 17): always the reset time in local h:mm AM/PM; "tomorrow after" when it falls on a later local
+ * date; "later" only when the reset is unknown (offline / no field). */
+export function capCopy(resetsAt?: string, now = new Date(), timeZone?: string): string {
+  const r = resetWhen(resetsAt, now, timeZone);
+  return r ? `${CAP_HEAD} ${r.laterDay ? 'tomorrow ' : ''}after ${r.time}.` : `${CAP_HEAD} later.`;
+}
 export const FAILED_COPY = 'Couldn’t estimate this. Add the calories yourself.';
 /** FailedRow.reason for a failed answer: fallback_reason, else a cap-type fallback, else 'error' (generic copy). */
 export function failReason(r: { fallback_reason?: string; fallback?: string }): string {
   if (r.fallback_reason) return r.fallback_reason;
   return isCapReason(r.fallback) ? r.fallback! : 'error';
 }
-/** Failed-row copy: the cap one for any cap reason (never a bare 'failed'), else the generic one.
- * userDailyLimit / resetsAt are kept on the row but no longer shown (Product, Oct 17: "try again tomorrow"). */
-export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit' | 'resetsAt'>): string {
-  return isCapReason(f.reason) ? CAP_COPY : FAILED_COPY;
+/** Failed-row copy: the cap one (with the reset time) for any cap reason, never a bare 'failed'; else the generic one. */
+export function failedCopy(f: Pick<FailedRow, 'reason' | 'userDailyLimit' | 'resetsAt'>, now = new Date(), timeZone?: string): string {
+  return isCapReason(f.reason) ? capCopy(f.resetsAt, now, timeZone) : FAILED_COPY;
 }
 /** failed rows still waiting for the user's kcal (they count as "still needs a choice") */
 export const failedWaiting = (fs: FailedRow[]) => fs.filter((f) => !failedCounts(f)).length;
@@ -90,7 +110,8 @@ export function leaveLog(o: { open: Item[]; failed: FailedRow[]; estimating: { i
   const base = { slot: o.slot, raw_text: o.text, local_date: o.date, tableVersion: DISH_TABLE_VERSION, now: o.now };
   const reviews: FoodEntry[] = [
     ...o.open.map((it) => reviewEntry({ ...it, needs_confirmation: true }, { ...base, id: o.newId() })),
-    ...o.failed.filter((f) => !failedCounts(f)).map((f) => ({ ...reviewEntry(parser.unknown(f.name), { ...base, id: f.id }), ...(f.reason ? { ai_fail_reason: f.reason } : {}) })),
+    ...o.failed.filter((f) => !failedCounts(f)).map((f) => ({ ...reviewEntry(parser.unknown(f.name), { ...base, id: f.id }), ...(f.reason ? { ai_fail_reason: f.reason } : {}),
+      ...(f.resetsAt ? { ai_resets_at: f.resetsAt } : {}) })),
   ];
   const pending: PendingFood[] = o.estimating.map((e) => ({ id: e.id, span: e.span, slot: o.slot, local_date: o.date, raw_text: o.text, at: 0 }));
   return { reviews, pending };
