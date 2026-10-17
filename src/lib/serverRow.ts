@@ -4,13 +4,13 @@
 // so. Phone == server == /v1/summary after every sync. Pure (testable).
 import { parser, type Item } from '../parser';
 import type { ServerRow } from './api';
-import { serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
+import { notMeasured, serverSource, unitSupportedFor, UNITS_UNKNOWN, unitsKnown, type FoodEntry } from './domain';
 
 const near = (a: number | undefined, b: number) => typeof a !== 'number' || Math.abs(a - b) <= 0.5;
 const fmt = (n: number) => n.toLocaleString('en-IN');
 export const SERVER_REVIEW = 'server_review';
 export function reviewNote(e: FoodEntry): string {
-  if (e.dish_id && e.unit && !unitSupportedFor(e.dish_id, e.unit)) return `Not counted yet: this dish doesn’t come in ${e.unit}. Check the amount and add it again.`;
+  if (e.dish_id && e.unit && !unitSupportedFor(e.dish_id, e.unit)) return `Not counted yet: ${notMeasured(e.dish_id, e.unit)}. Check the amount and add it again.`;
   return 'Not counted yet: this needs a check. Look at it and add it again.';
 }
 function itemOf(e: FoodEntry, row: ServerRow): Item {

@@ -128,23 +128,23 @@ describe('F1 (a): only the units the dish comes in', () => {
     expect(parser.supportedUnits('dal')).toEqual(['katori', 'spoon', 'plate', 'gram']);
     expect(parser.supportedUnits('roti')).not.toContain('katori');
   });
-  test('a reading in a unit the dish doesn’t come in (1 piece dal): the sheet says so and Save is off until a unit is picked', async () => {
+  test('a reading in a unit the dish isn’t measured in (1 piece dal): the sheet says so and Save is off until a unit is picked', async () => {
     const onSave = jest.fn(); let t!: ReactTestRenderer;
     const it = { ...parser.recompute('dal', 1, 'piece', ''), unit: 'piece', needs_confirmation: false } as Item;
     await act(async () => { t = create(<EditSheet visible it={it} onClose={() => {}} onSave={onSave} onDelete={() => {}} />); });
-    expect(textOf(t)).toContain('This dish doesn’t come in piece. Pick another unit.');
+    expect(textOf(t)).toContain('Dal isn’t measured in pieces. Pick another unit.');
     const save = t.root.findAll((n) => n.props.title === 'Save changes')[0];
     await act(async () => { save.props.onPress(); }); expect(onSave).not.toHaveBeenCalled();
     const katori = t.root.findAll((n) => n.props.label === 'katori' && typeof n.props.onPress === 'function')[0];
     await act(async () => { katori.props.onPress(); });
-    expect(textOf(t)).not.toContain('doesn’t come in');
+    expect(textOf(t)).not.toContain('isn’t measured');
     await act(async () => { t.root.findAll((n) => n.props.title === 'Save changes')[0].props.onPress(); });
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ unit: 'katori', dish_id: 'dal' }));
     await act(async () => { t.unmount(); });
   });
   test('store guard: a table row in an unsupported unit (or litre) is refused with the reason, nothing sent', async () => {
-    expect(entryRefusal(tableEntry('x', 'dal', 1, 'piece'))).toBe('This dish doesn’t come in piece. Pick another unit.');
-    expect(entryRefusal({ ...tableEntry('x', 'dal', 1, 'katori'), unit: 'litre' })).toBe('This dish doesn’t come in litre. Pick another unit.');
+    expect(entryRefusal(tableEntry('x', 'dal', 1, 'piece'))).toBe('Dal isn’t measured in pieces. Pick another unit.');
+    expect(entryRefusal({ ...tableEntry('x', 'dal', 1, 'katori'), unit: 'litre' })).toBe('Dal isn’t measured in litres. Pick another unit.');
     expect(entryRefusal(tableEntry('x', 'dal', 2, 'katori'))).toBeNull();
     await boot();
     let refused: unknown;
@@ -154,7 +154,7 @@ describe('F1 (a): only the units the dish comes in', () => {
     await act(async () => { st.addEntries([tableEntry('K', 'dal', 2, 'katori')]); }); await settle();
     let why: string | null = null;
     await act(async () => { why = st.updateEntry({ ...ent('K'), unit: 'glass' }); });
-    expect(why).toBe('This dish doesn’t come in glass. Pick another unit.'); await settle();
+    expect(why).toBe('Dal isn’t measured in glasses. Pick another unit.'); await settle();
     expect(ent('K')).toMatchObject({ unit: 'katori', qty: 2 }); expectInSync();
   });
 });
@@ -168,13 +168,13 @@ describe('F1 (b): the phone shows (and counts) what the server saved', () => {
     await settle();
     expect(server.rows.get('OLD')).toMatchObject({ state: 'needs_review' });
     const x = ent('OLD');
-    expect(x).toMatchObject({ needs_review: true, confirmed: false, reject_code: 'server_review', server_note: 'Not counted yet: this dish doesn’t come in piece. Check the amount and add it again.' });
+    expect(x).toMatchObject({ needs_review: true, confirmed: false, reject_code: 'server_review', server_note: 'Not counted yet: dal isn’t measured in pieces. Check the amount and add it again.' });
     expect(counted(x)).toBe(false); expect(x.review_item).toMatchObject({ dish_id: 'dal', unit: 'katori' });
     expectInSync();
     expect(dayTotals(live().filter(counted)).kcal).toBe(300); // only the 2 katori dal
     const ring = r.root.findAll((n) => typeof n.props.eaten === 'number' && 'kcalLeft' in n.props)[0];
     expect(ring.props.eaten).toBe(300);
-    expect(textOf(r)).toContain('Not counted yet: this dish doesn’t come in piece.');
+    expect(textOf(r)).toContain('Not counted yet: dal isn’t measured in pieces.');
     expect(r.root.findAll((n) => n.props.testID === 'server-note').length).toBeGreaterThanOrEqual(2); // Today + Review
     // checking it in Review (the server's unit) counts it, in sync
     let why: string | null = null;
@@ -287,5 +287,17 @@ describe('PE: units come down with the dish table; a dish with none on the phone
     expect(why).toBeNull(); await settle();
     expect(counted(ent('H'))).toBe(true); expect(ent('H').kcal.best).toBe(parser.recompute('dal', 2, 'katori', '').kcal.best);
     expect(server.rows.get('H')).toMatchObject({ state: 'confirmed', unit: 'katori', qty: 2 }); expectInSync();
+  });
+});
+
+describe('Designer copy: "isn’t measured in {unit plural}"', () => {
+  test('plurals and both lines', () => {
+    const { unitPlural, notMeasured } = require('../src/lib/domain');
+    expect(['katori', 'spoon', 'plate', 'gram', 'piece', 'glass', 'litre'].map(unitPlural)).toEqual(['katoris', 'spoons', 'plates', 'grams', 'pieces', 'glasses', 'litres']);
+    expect(notMeasured('dal', 'piece')).toBe('dal isn’t measured in pieces');
+    expect(unitReason('glass', 'roti')).toBe('Roti isn’t measured in glasses. Pick another unit.');
+    expect(unitReason('piece', 'kodo_khichdi')).toBe('This dish isn’t measured in pieces. Pick another unit.'); // a dish the phone doesn't have
+    const { reviewNote } = require('../src/lib/serverRow');
+    expect(reviewNote(tableEntry('x', 'dal', 1, 'piece'))).toBe('Not counted yet: dal isn’t measured in pieces. Check the amount and add it again.');
   });
 });

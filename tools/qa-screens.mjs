@@ -91,7 +91,7 @@ for (const theme of ['light', 'dark']) {
   await g.goto(BASE + '/'); await wait(g, 3000);
   const pick = g.getByRole('button', { name: /: Pick a type to save this\.$/ });
   if ((await pick.count()) !== 1) throw new Error(`expected 1 pick-a-type row, got ${await pick.count()}`);
-  if ((await g.getByText('Not counted yet: this dish doesn’t come in piece.', { exact: false }).count()) < 1) throw new Error('no server review note on Today');
+  if ((await g.getByText('Not counted yet: dal isn’t measured in pieces.', { exact: false }).count()) < 1) throw new Error('no server review note on Today');
   await pick.scrollIntoViewIfNeeded(); await wait(g, 500);
   await shot(g, `today-server-version-${theme}`, { fullPage: true });
   await pick.click(); await wait(g, 1200);
