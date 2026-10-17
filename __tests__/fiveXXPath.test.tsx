@@ -184,3 +184,46 @@ describe('Progress: a flagged row whose tap retries says "Tap to retry", never "
     expect(row.length).toBeGreaterThan(0); expect(row[0].props.accessibilityState).toEqual({ busy: true });
   });
 });
+
+import { computeStreak, loggedDays, onServer } from '../src/lib/domain';
+describe('streak: a day is logged exactly when the totals count a row on it (or it has a review row), in every delete state', () => {
+  // checked at 273aeb7: loggedDays and the totals both go by onServer, so the streak never dips without the total dipping
+  // too. A not-yet-flagged delete is hidden from both at once (rg9 B3: optimistic); flagged, retrying, auto-retrying or
+  // replaced by an edit, the row is back in both; once the delete gets through it is gone from both (as on the server).
+  const y = () => new Date(now - 86_400_000).toISOString().slice(0, 10);
+  const same = (tag: string) => {
+    const days = new Set(st.entries.filter((e) => onServer(e) && (counted(e) || !!e.needs_review)).map((e) => e.local_date));
+    expect([tag, [...loggedDays(st.entries)].sort()]).toEqual([tag, [...days].sort()]);
+    const onY = st.entries.filter((e) => e.local_date === y());
+    expect([tag, loggedDays(st.entries).has(y())]).toEqual([tag, onY.some(counted)]);
+    expect([tag, computeStreak(loggedDays(st.entries), DAY).current]).toEqual([tag, computeStreak(days, DAY).current]);
+    return { logged: loggedDays(st.entries).has(y()), kcal: Math.round(dayTotals(onY).kcal) };
+  };
+  test('pending -> flagged -> tap-retrying -> auto retry -> gone; and an edit replacing a flagged delete', async () => {
+    seed220(); server.rows.set('G', { kcal: 100, protein: 1, qty: 1, unit: 'count', version: 1 });
+    const G = { ...tableEntry('G', 'roti', 1, 'count'), server_version: 1 };
+    await boot([{ ...roti2(), local_date: y() }, G]);
+    expect(same('start')).toEqual({ logged: true, kcal: 220 });
+    server.fail = true;
+    await act(async () => { st.deleteEntry('F'); }); await flushP(20);
+    expect(F().delete_failed).toBeUndefined();
+    expect(same('pending')).toEqual({ logged: false, kcal: 0 });
+    for (let i = 0; i < 40 && !F().delete_failed; i++) await advance(1000);
+    expect(same('flagged')).toEqual({ logged: true, kcal: 220 });
+    await act(async () => { st.retrySync('F'); }); await flushP(20);
+    expect(same('tap-retrying')).toEqual({ logged: true, kcal: 220 });
+    for (let i = 0; i < 40 && F().sync_retrying; i++) await advance(1000);
+    await advance(60_000); // an automatic retry, failing again
+    expect(same('auto-retried')).toEqual({ logged: true, kcal: 220 });
+    // the user edits it instead (replaces the flagged delete): still on the day, counted as the server has it
+    await act(async () => { st.updateEntry(edit({ ...F(), local_date: y() }, 3)); }); await flushP(20);
+    expect(same('edited')).toEqual({ logged: true, kcal: 220 });
+    server.fail = false; await advance(70_000);
+    expect(same('edit synced')).toEqual({ logged: true, kcal: Math.round(k(3)) });
+    expect(serverTotal() - 100).toBe(Math.round(k(3)));
+    // and a delete that gets through: gone from both, as on the server
+    await act(async () => { st.deleteEntry('F'); }); await flushP(40);
+    expect(server.rows.has('F')).toBe(false);
+    expect(same('deleted')).toEqual({ logged: false, kcal: 0 });
+  });
+});

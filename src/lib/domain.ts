@@ -243,7 +243,10 @@ export function entryFromItem(it: Item, o: { slot: Slot; raw_text: string; local
   };
 }
 
-/** Streak days: anything logged that day counts, even if every item is pending or awaiting review (calories don't). */
+/** Streak days: anything logged that day counts, even if every item is pending or awaiting review (calories don't).
+ * Same rule as the totals (onServer; counted = onServer minus review): a row the totals count always makes its day logged,
+ * and a row they drop (a not-yet-flagged delete, a delete that went through) never does, so the streak can't dip on its
+ * own (rg10; pinned in __tests__/fiveXXPath.test.tsx). */
 export function loggedDays(entries: FoodEntry[], pendingDates: string[] = []): Set<string> {
   return new Set([...entries.filter(onServer).map((e) => e.local_date), ...pendingDates]);
 }
