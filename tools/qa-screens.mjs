@@ -127,6 +127,13 @@ for (const theme of ['light', 'dark']) {
   if ((await kept.count()) < 1) throw new Error('no restored-with-reason row on Today');
   const lunch = await h.getByRole('button', { name: /^Lunch: / }).first().getAttribute('aria-label');
   if (!/idli/i.test(lunch ?? '')) throw new Error(`Lunch doesn't count the restored row: ${lunch}`);
+  // Designer Oct 17: the row shows its counted kcal (2 idli = 120); OK is a labelled >= 44 px button
+  const keptOk = h.getByRole('button', { name: /^Dismiss note on Lunch · Idli: Not deleted/i });
+  if ((await keptOk.count()) !== 1) throw new Error('restored row has no labelled OK button');
+  const okBox = await keptOk.boundingBox();
+  if (!okBox || okBox.width < 44 || okBox.height < 44) throw new Error(`OK tap target too small: ${JSON.stringify(okBox)}`);
+  const keptRow = h.getByTestId('server-note-row').filter({ hasText: 'This entry is locked.' });
+  if (!/Lunch · Idli\s*120 kcal/.test(await keptRow.innerText())) throw new Error(`restored row lacks its kcal: ${await keptRow.innerText()}`);
   await kept.first().scrollIntoViewIfNeeded(); await wait(h, 400);
   await shot(h, `today-delete-kept-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);

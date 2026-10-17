@@ -407,6 +407,11 @@ describe('rg10: a delete refused with a 4xx (not 404) restores the row at the se
     expect(dayTotals(st.entries).kcal).toBe(serverTotal()); expect(serverTotal()).toBe(220 + Math.round(g.kcal.best));
     expect(textOf(r)).toContain('Not deleted: the server kept this entry. This entry is locked.');
     expect(textOf(r)).not.toContain('(deleted)'); expect(textOf(r)).not.toContain('Couldn’t sync this');
+    // the row shows what it counts; OK dismisses the note (the row stays, still counted)
+    expect(r.root.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string').props.children).toBe('220 kcal');
+    await act(async () => { r.root.find((n) => n.props.testID === 'server-note-ok' && typeof n.props.onPress === 'function').props.onPress(); }); await tick();
+    expect(st.entries.find((x) => x.id === 'F')!.server_note).toBeUndefined(); expect(textOf(r)).not.toContain(KEPT_COPY);
+    expect(dayTotals(st.entries).kcal).toBe(serverTotal());
     // edit works as on any row (PATCH, note cleared, counted at what the server saved)
     const n0 = server.log.length;
     let why: string | null = 'x';

@@ -8,7 +8,7 @@ const day = localDate();
 const e = (id: string, name: string, kcal: number, sync_error?: string, sync_retrying?: boolean) => ({ id, local_date: day, slot: 'lunch', raw_text: name, dish_id: null, custom_name: name, qty: 1, unit: 'count', oil_level: '',
   kcal: { low: kcal, best: kcal, high: kcal }, protein_g: { low: 0, best: 0, high: 0 }, source: 'custom', source_note: '', confirmed: true, dish_table_version: DISH_TABLE_VERSION,
   created_at: '', updated_at: '', deleted_at: null, ...(sync_error ? { sync_error } : {}), ...(sync_retrying ? { sync_retrying } : {}) });
-const mockStore: { entries: ReturnType<typeof e>[]; [k: string]: unknown } = { entries: [e('a', 'poha', 300, 'sync_conflict'), e('b', 'dal', 200)], queue: [], steps: {}, profile: null, user: null, retrySync: jest.fn() };
+const mockStore: { entries: ReturnType<typeof e>[]; [k: string]: unknown } = { entries: [e('a', 'poha', 300, 'sync_conflict'), e('b', 'dal', 200)], queue: [], steps: {}, profile: null, user: null, retrySync: jest.fn(), clearServerNote: jest.fn() };
 jest.mock('@/lib/store', () => ({ useStore: () => mockStore }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push: jest.fn(), back: jest.fn() }), useFocusEffect: () => {}, useLocalSearchParams: () => ({}) }));
 jest.mock('react-native-safe-area-context', () => {
@@ -58,7 +58,7 @@ test('Today: a failed row still counts in the totals (ring + plate); a delete th
   mockStore.entries = [{ ...e('a', 'poha', 300), kept_on_server: true, server_version: 1, server_counts: { kcal: 300, protein: 0 }, server_note: note } as never, e('b', 'dal', 200)];
   await act(async () => { r = create(<Today />); });
   expect(ringEaten(r)).toBe(500);
-  expect(r.root.findAll((n) => n.props.accessibilityLabel === `poha: ${note} Tap to dismiss`).length).toBeGreaterThan(0);
+  expect(r.root.findAll((n) => n.props.accessibilityLabel === `Dismiss note on Lunch · poha: ${note}` && typeof n.props.onPress === 'function').length).toBeGreaterThan(0);
   expect(r.root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /\(deleted\)|couldn’t sync/i.test(n.props.accessibilityLabel))).toHaveLength(0);
   await act(async () => { r.unmount(); });
 });
@@ -84,4 +84,46 @@ test('rg4 (a): a refused PATCH shows the server\'s reason under the retry line, 
   act(() => { r.update(<SyncFailedRow title="Lunch · wedding plate" kcal={6000} retrying onRetry={() => {}} reason="this item needs kcal (0-5000)" />); });
   expect(r.root.findAll((n) => n.props.testID === 'sync-reason')).toHaveLength(0);
   act(() => { r.unmount(); });
+});
+
+// Designer Oct 17: a row with a server note (rg10 restored delete, rg6 F1 "Saved as …") is laid out like the other rows
+describe('server-note row layout', () => {
+  const { StyleSheet } = jest.requireActual('react-native');
+  const { palette } = jest.requireActual('../src/theme/tokens');
+  const KEPT = 'Not deleted: the server kept this entry. This entry is locked.';
+  const rowParts = (r: ReactTestRenderer) => {
+    const row = r.root.find((n) => n.props.testID === 'server-note-row' && typeof n.type !== 'string');
+    const strings = (n: typeof row) => n.findAll((x) => typeof x.type === 'string').flatMap((x) => [x.props.children].flat()).filter((c) => typeof c === 'string') as string[];
+    return { row, strings: strings(row),
+      kcal: row.find((n) => n.props.testID === 'server-note-kcal' && typeof n.type !== 'string'), note: row.find((n) => n.props.testID === 'server-note' && typeof n.type !== 'string'),
+      ok: row.find((n) => n.props.testID === 'server-note-ok' && typeof n.props.onPress === 'function') };
+  };
+  test('restored delete: title left, the COUNTED kcal right (= what the ring adds), the note on its own warn line, OK is a ≥ 44 px button that dismisses', async () => {
+    // the phone's own numbers (300) differ from what the server counts (280): the row shows 280, the ring adds 280
+    mockStore.entries = [{ ...e('a', 'idli', 300), slot: 'lunch', kept_on_server: true, server_version: 1, server_failed: true, server_counts: { kcal: 280, protein: 0 }, server_note: KEPT } as never, e('b', 'dal', 200)];
+    (mockStore.clearServerNote as jest.Mock).mockClear();
+    let r!: ReactTestRenderer;
+    await act(async () => { r = create(<Today />); });
+    const p = rowParts(r);
+    expect(p.strings[0]).toBe('Lunch · idli');
+    expect(p.kcal.props.children).toBe('280 kcal'); expect(ringEaten(r)).toBe(480);
+    expect(p.strings).toEqual(['Lunch · idli', '280 kcal', KEPT, 'OK']); // the note is its own element, after the title line, copy unchanged
+    const noteStyle = StyleSheet.flatten(r.root.findAll((n) => n.props.children === KEPT && typeof n.type === 'string')[0].props.style);
+    expect([palette.light.warn, palette.dark.warn]).toContain(noteStyle.color); expect(noteStyle.fontSize).toBe(13);
+    const ok = StyleSheet.flatten(p.ok.props.style);
+    expect(ok.minHeight).toBeGreaterThanOrEqual(44); expect(ok.minWidth).toBeGreaterThanOrEqual(44);
+    expect(p.ok.props.accessibilityRole).toBe('button');
+    expect(p.ok.props.accessibilityLabel).toBe(`Dismiss note on Lunch · idli: ${KEPT}`);
+    await act(async () => { p.ok.props.onPress(); });
+    expect(mockStore.clearServerNote).toHaveBeenCalledWith('a');
+    await act(async () => { r.unmount(); });
+  });
+  test('the rg6 F1 "Saved as …" note uses the same row (copy unchanged), kcal = counted', async () => {
+    mockStore.entries = [{ ...e('a', 'poha', 250), server_version: 2, server_counts: { kcal: 250, protein: 0 }, server_note: 'Saved as 250 kcal.' } as never];
+    let r!: ReactTestRenderer;
+    await act(async () => { r = create(<Today />); });
+    const p = rowParts(r);
+    expect(p.strings).toEqual(['Lunch · poha', '250 kcal', 'Saved as 250 kcal.', 'OK']); expect(ringEaten(r)).toBe(250);
+    await act(async () => { r.unmount(); });
+  });
 });

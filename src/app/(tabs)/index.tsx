@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { PendingRow } from '@/components/PendingRow';
 import { ReviewLink } from '@/components/ReviewLink';
 import { RingHero } from '@/components/RingHero';
+import { ServerNoteRow } from '@/components/ServerNoteRow';
 import { SyncFailedRow } from '@/components/SyncFailedRow';
 import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet';
 import { Card, Row, T } from '@/components/ui';
@@ -119,11 +120,7 @@ export default function Today() {
               onRetry={() => (e.sync_error === 'variant_required' && !e.deleted_at ? setPicking(e.id) : st.retrySync(e.id))} />
           ))}
           {notes.map((e) => (
-            <Pressable key={`note-${e.id}`} onPress={() => st.clearServerNote(e.id)} style={s.reviewRow} accessibilityRole="button"
-              accessibilityLabel={`${nameOf(e)}: ${e.server_note} Tap to dismiss`}>
-              <T style={{ flex: 1 }} numberOfLines={2}>{SLOT_LABEL[e.slot]} · {nameOf(e)} <T v="caption" tone="warn" testID="server-note">{e.server_note}</T></T>
-              <T v="caption" tone="muted">OK</T>
-            </Pressable>
+            <ServerNoteRow key={`note-${e.id}`} title={`${SLOT_LABEL[e.slot]} · ${nameOf(e)}`} kcal={countedNums(e).kcal} note={e.server_note!} onDismiss={() => st.clearServerNote(e.id)} />
           ))}
           {d.pending.map((f) => <PendingRow key={f.id} label={`${SLOT_LABEL[f.slot]} · ${f.span}`} state={d.offline ? 'offline' : 'estimating'} />)}
           <View>
