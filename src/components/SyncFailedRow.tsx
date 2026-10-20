@@ -27,13 +27,21 @@ export function SyncFailedRow({ title, kcal, retrying, onRetry, reason, line, no
           <T style={{ flex: 1 }} numberOfLines={1}>{title}</T>
           {notCounted ? <T v="caption" tone="muted">— kcal · not counted</T> : kcal !== undefined ? <T v="caption" tone="muted">{kc(kcal)} kcal</T> : null}
         </Row>
-        <Row style={{ gap: 6 }}>
-          {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} /> : <Icon name="sync" color={t.c.warn} size={14} />}
-          <T v="caption" tone="warn" style={s.line}>{retrying ? SYNC_RETRYING_COPY : main}</T>
-        </Row>
+        <SyncLine retrying={retrying} text={main} />
         {reason && !retrying && !line ? <T v="caption" tone="muted" testID="sync-reason">{reason}</T> : null}
       </View>
     </Pressable>
+  );
+}
+/** the warn line with the retry icon (a spinner and "Retrying…" while the retry runs): Today's rows and Progress's rows */
+export function SyncLine({ retrying, text, testID }: { retrying: boolean; text?: string; testID?: string }) {
+  const t = useTheme(); const s = useStyles();
+  return (
+    <Row style={{ gap: 6 }}>
+      {retrying ? <ActivityIndicator testID="sync-retry-spinner" size={14} color={t.c.warn} />
+        : <View testID="sync-retry-icon"><Icon name="sync" color={t.c.warn} size={14} /></View>}
+      <T v="caption" tone="warn" style={s.line} testID={testID}>{retrying ? SYNC_RETRYING_COPY : text ?? SYNC_FAILED_COPY}</T>
+    </Row>
   );
 }
 const useStyles = makeStyles(() => ({

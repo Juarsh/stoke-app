@@ -11,7 +11,7 @@ import { PendingRow } from '@/components/PendingRow';
 import { AMOUNT_CHECK_COPY, AMOUNT_CHECK_LABEL, AMOUNT_UNKNOWN, portionLabel, SLOT_LABEL } from '@/lib/labels';
 import { kc } from '@/lib/format';
 import { Icon } from '@/components/Icon';
-import { SyncFailedRow, SYNC_FAILED_COPY, SYNC_RETRYING_COPY, syncFailedLabel } from '@/components/SyncFailedRow';
+import { SyncLine, syncFailedLabel } from '@/components/SyncFailedRow';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { DISH_TABLE_VERSION, Item, parser } from '@/parser';
@@ -56,15 +56,24 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
         const name = `${SLOT_LABEL[e.slot]} · ${displayName(e.custom_name || '', e.dish_id)}`;
         // rg10 + Designer: a row whose tap retries (a flagged delete; a 5xx-flagged edit, which also shows Today's warn line)
         // says so, and so does a "—" row (its tap reads the server's copy again); every other row opens the editor
-        // CEO + Designer (next build): a flagged delete looks as it does on Today: Today's row component and copy (name
-        // "(deleted)", "Couldn’t sync this. Tap to retry" in warn, the reason "Not deleted on the server yet." muted), the kcal
-        // it counts (the server's), a tap retries; label (ee954dd) and "Retrying…" (fb92c66) are the component's own
-        if (e.delete_failed) return (
-          <View key={e.id} style={s.entryBox} testID="progress-deleted-row">
-            <SyncFailedRow title={`${name} (deleted)`} kcal={countedNums(e).kcal} notCounted={!!e.server_failed && !e.server_counts}
-              retrying={!!e.sync_retrying} reason={e.sync_reason} onRetry={() => onPick(e)} />
-          </View>
-        );
+        // CEO + Designer (next build): a flagged delete says what Today says, laid out like its neighbours (Designer, review of
+        // 395b405): same indent, name size and bold kcal (the counted one, the server's), "(deleted)" after the name, then Today's
+        // warn line with the retry icon and the muted reason. A tap retries; label (ee954dd) and "Retrying…" (fb92c66) as on Today
+        if (e.delete_failed) {
+          const retrying = !!e.sync_retrying;
+          return (
+            <Pressable key={e.id} onPress={retrying ? undefined : () => onPick(e)} disabled={retrying} accessibilityRole="button" style={s.entryBox}
+              testID="progress-deleted-row" accessibilityLabel={syncFailedLabel(`${name} (deleted)`, { retrying, reason: e.sync_reason })}
+              accessibilityState={{ busy: retrying, disabled: retrying }}>
+              <View style={s.entry}>
+                <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{`${name} (deleted)`}</T>
+                {e.server_failed && !e.server_counts ? <T v="caption" tone="muted">— kcal · not counted</T> : <T v="number">{fmt(countedNums(e).kcal)}</T>}
+              </View>
+              <SyncLine retrying={retrying} testID="progress-sync-line" />
+              {e.sync_reason && !retrying ? <T v="caption" tone="muted" testID="sync-reason">{e.sync_reason}</T> : null}
+            </Pressable>
+          );
+        }
         const failedEdit = !e.deleted_at && (e.sync_error === SERVER_ERROR || (!!e.sync_retrying && !!e.server_failed));
         const retryRow = failedEdit;
         const label = retryRow ? syncFailedLabel(name, { retrying: !!e.sync_retrying, reason: e.sync_reason })
@@ -76,7 +85,7 @@ const DayRow = memo(function DayRow({ day, today, target, first, last, onPick }:
               <T tone="text2" style={{ flex: 1 }} numberOfLines={1}>{name} · {e.amount_unknown ? AMOUNT_UNKNOWN : portionLabel(e.qty, e.unit)}</T>
               <T v="number">{fmt(countedNums(e).kcal)}</T>
             </View>
-            {failedEdit ? <T v="caption" tone="warn" testID="progress-sync-line">{e.sync_retrying ? SYNC_RETRYING_COPY : SYNC_FAILED_COPY}</T>
+            {failedEdit ? <SyncLine retrying={!!e.sync_retrying} testID="progress-sync-line" />
               : e.amount_unknown ? <T v="caption" tone="muted" testID="progress-check-line">{AMOUNT_CHECK_COPY}</T> : null}
           </Pressable>
         );

@@ -170,21 +170,35 @@ for (const theme of ['light', 'dark']) {
   if ((await h.getByText('Couldn’t sync this. Tap to retry', { exact: true }).count()) < 1) throw new Error('no retry line in Progress');
   if ((await h.getByRole('button', { name: 'Amount not known yet. Tap to check again.', exact: true }).count()) !== 1) throw new Error('no check-again label on the "—" row');
   if ((await h.getByText('Tap to check again', { exact: true }).count()) !== 1) throw new Error('no "Tap to check again" line');
-  await h.getByText('Tap to check again', { exact: true }).scrollIntoViewIfNeeded(); await wait(h, 400);
+  await h.getByText('Tap to check again', { exact: true }).evaluate((n) => n.scrollIntoView({ block: 'center' })); await wait(h, 600); // clear of the tab bar
   await shot(h, `progress-retry-check-${theme}`);
-  // CEO + Designer: the flagged delete (yesterday) looks as on Today: name "(deleted)", the counted kcal (the server's 220),
-  // "Couldn’t sync this. Tap to retry" in warn, then "Not deleted on the server yet." muted; label as on Today (ee954dd)
+  // CEO + Designer: the flagged delete (yesterday) says what Today says, laid out like its Progress neighbours (Designer review
+  // of 395b405): name "(deleted)" + the bold counted kcal (the server's 220), "Couldn’t sync this. Tap to retry" in warn with the
+  // retry icon, then "Not deleted on the server yet." muted; label as on Today (ee954dd)
   const del = h.getByTestId('progress-deleted-row');
   if ((await del.count()) !== 1) throw new Error(`flagged-delete rows in Progress: ${await del.count()}`);
   const delTxt = await del.innerText();
-  if (!/^Breakfast · roti \(deleted\)\s*220 kcal\s*Couldn’t sync this\. Tap to retry\s*Not deleted on the server yet\.\s*$/.test(delTxt)) throw new Error(`flagged-delete row text/order: ${JSON.stringify(delTxt)}`);
+  if (!/^Breakfast · roti \(deleted\)\s*220\s*Couldn’t sync this\. Tap to retry\s*Not deleted on the server yet\.\s*$/.test(delTxt)) throw new Error(`flagged-delete row text/order: ${JSON.stringify(delTxt)}`);
   if ((await h.getByRole('button', { name: 'Breakfast · roti (deleted): couldn’t sync this. Tap to retry. Not deleted on the server yet.', exact: true }).count()) !== 1) throw new Error('flagged-delete label in Progress');
-  const col = async (txt) => del.getByText(txt, { exact: true }).evaluate((n) => getComputedStyle(n).color);
-  const todayWarn = await col('Couldn’t sync this. Tap to retry');
-  const muted = await col('Not deleted on the server yet.'), kcalCol = await col('220 kcal');
-  if (todayWarn === muted) throw new Error(`warn line not in warn: ${todayWarn}`);
-  if (muted !== kcalCol) throw new Error(`reason not muted: ${muted} vs ${kcalCol}`);
-  if ((await h.getByText('(deleted)', { exact: false }).count()) < 1) throw new Error('no (deleted)');
+  const css = (loc, ...k) => loc.evaluate((n, k) => { const c = getComputedStyle(n), b = n.getBoundingClientRect(); return Object.fromEntries(k.map((x) => [x, x === 'left' ? Math.round(b.left) : x === 'right' ? Math.round(b.right) : c[x]])); }, k);
+  const warnC = await css(del.getByText('Couldn’t sync this. Tap to retry', { exact: true }), 'color');
+  const reasonC = await css(del.getByText('Not deleted on the server yet.', { exact: true }), 'color');
+  const mutedC = await css(h.getByTestId('progress-check-line').last(), 'color'); // "Tap to check again" (muted)
+  const editWarnC = await css(h.getByTestId('progress-sync-line').first(), 'color');
+  if (warnC.color === reasonC.color || warnC.color !== editWarnC.color) throw new Error(`warn line colour: ${warnC.color} (edit row ${editWarnC.color}, reason ${reasonC.color})`);
+  if (reasonC.color !== mutedC.color) throw new Error(`reason not muted: ${reasonC.color} vs ${mutedC.color}`);
+  // layout parity with the neighbour rows of the same day: name indent/size/weight, bold kcal size/weight/right edge
+  const nName = await css(h.getByText('Lunch · dal · 1 katori', { exact: true }).first(), 'left', 'fontSize', 'fontWeight', 'color');
+  const dName = await css(del.getByText('Breakfast · roti (deleted)', { exact: true }), 'left', 'fontSize', 'fontWeight', 'color');
+  if (JSON.stringify(nName) !== JSON.stringify(dName)) throw new Error(`name differs from its neighbour: ${JSON.stringify(dName)} vs ${JSON.stringify(nName)}`);
+  const nK = await css(h.getByText('150', { exact: true }).first(), 'right', 'fontSize', 'fontWeight', 'fontFamily');
+  const dK = await css(del.getByText('220', { exact: true }), 'right', 'fontSize', 'fontWeight', 'fontFamily');
+  if (JSON.stringify(nK) !== JSON.stringify(dK)) throw new Error(`kcal differs from its neighbour: ${JSON.stringify(dK)} vs ${JSON.stringify(nK)}`);
+  // the retry icon on BOTH "Couldn’t sync this" lines in Progress (the flagged delete and the 5xx-flagged edit), nowhere else
+  if ((await del.getByTestId('sync-retry-icon').count()) !== 1) throw new Error('no retry icon on the flagged-delete row');
+  if ((await h.getByRole('button', { name: 'Lunch · roti: couldn’t sync this. Tap to retry', exact: true }).getByTestId('sync-retry-icon').count()) !== 1) throw new Error('no retry icon on the flagged-edit row');
+  if ((await h.getByTestId('sync-retry-icon').count()) !== 2) throw new Error(`retry icons in Progress: ${await h.getByTestId('sync-retry-icon').count()}`);
+  if ((await h.getByTestId('progress-sync-line').count()) !== 2) throw new Error('expected 2 "Couldn’t sync this" lines in Progress');
   await del.evaluate((n) => n.scrollIntoView({ block: 'center' })); await wait(h, 600); // clear of the floating tab bar
   await shot(h, `progress-deleted-${theme}`);
   await h.goto(BASE + '/review'); await wait(h, 2000);

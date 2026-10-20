@@ -185,35 +185,38 @@ describe('Progress: a flagged row whose tap retries says "Tap to retry", never "
   });
 });
 
-import { SyncFailedRow, SYNC_RETRYING_COPY } from '../src/components/SyncFailedRow';
-describe('CEO + Designer (next build): a flagged delete in Progress looks as it does on Today', () => {
+import { SYNC_RETRYING_COPY } from '../src/components/SyncFailedRow';
+import { T } from '../src/components/ui';
+describe('CEO + Designer (next build): a flagged delete in Progress says what Today says, laid out like its Progress neighbours', () => {
   const y = () => new Date(now - 86_400_000).toISOString().slice(0, 10);
   const open = async () => {
     const day = r.root.findAll((x) => typeof x.props.accessibilityLabel === 'string' && /, \d+ items?, /.test(x.props.accessibilityLabel) && typeof x.props.onPress === 'function');
     await act(async () => { day[0].props.onPress(); });
   };
-  const rowOf = () => { const b = r.root.findAll((x) => x.props.testID === 'progress-deleted-row' && typeof x.type === 'string'); expect(b).toHaveLength(1); return b[0]; };
-  /** the row's visible lines, top to bottom, with their tone */
-  const lines = () => rowOf().findAll((x) => x.props.tone !== undefined || (typeof x.type !== 'string' && typeof x.props.children === 'string' && x.props.v === undefined && x.props.style?.flex === 1))
-    .filter((x) => typeof x.type !== 'string').map((x) => ({ text: [x.props.children].flat().join(''), tone: x.props.tone ?? 'text' }));
+  const hostRows = (pred: (x: any) => boolean) => r.root.findAll((x) => typeof x.type === 'string' && pred(x));
+  const rowOf = () => { const b = hostRows((x) => x.props.testID === 'progress-deleted-row'); expect(b).toHaveLength(1); return b[0]; };
+  /** the row's visible lines (T), top to bottom: text + tone (or 'number' for the bold kcal) */
+  const linesIn = (row: any) => row.findAll((x: any) => x.type === T).map((x: any) => ({ text: [x.props.children].flat().join(''), tone: x.props.v === 'number' ? 'number' : x.props.tone ?? 'text' }));
+  const lines = () => linesIn(rowOf());
   const flagged = () => ({ ...flaggedDelete(), local_date: y(), slot: 'breakfast' as const });
-  test('exact strings and order: "Breakfast · roti (deleted)" · the counted kcal, then the warn line, then the muted reason; Today’s component', async () => {
+  const withNeighbour = async (extra: FoodEntry[] = []) => {
     seed220(); server.fail = true;
     const g = { ...tableEntry('G', 'dal', 1, 'katori'), local_date: y(), server_version: 1 };
     server.rows.set('G', { kcal: g.kcal.best, protein: g.protein_g.best, qty: 1, unit: 'katori', version: 1 });
-    await boot([flagged(), g], [], <Progress />);
+    await boot([flagged(), g, ...extra], [], <Progress />);
     await open();
-    expect(rowOf().findAll((x) => x.type === SyncFailedRow)).toHaveLength(1); // Today's component
-    expect(r.root.findAll((x) => x.type === SyncFailedRow)).toHaveLength(1);
+  };
+  test('exact strings and order: "Breakfast · roti (deleted)" · bold 220, then the warn line (retry icon), then the muted reason; a tap retries', async () => {
+    await withNeighbour();
     expect(F().server_counts?.kcal).toBe(220);
     expect(lines()).toEqual([
-      { text: 'Breakfast · roti (deleted)', tone: 'text' },
-      { text: '220 kcal', tone: 'muted' },
+      { text: 'Breakfast · roti (deleted)', tone: 'text2' },
+      { text: '220', tone: 'number' },
       { text: 'Couldn’t sync this. Tap to retry', tone: 'warn' },
       { text: 'Not deleted on the server yet.', tone: 'muted' },
     ]);
+    expect(rowOf().findAll((x) => x.props.testID === 'sync-retry-icon' && typeof x.type === 'string')).toHaveLength(1);
     expect(SYNC_FAILED_COPY).toBe('Couldn’t sync this. Tap to retry'); expect(NOT_DELETED_REASON).toBe('Not deleted on the server yet.');
-    // label (ee954dd), tap retries (never the editor)
     const want = 'Breakfast · roti (deleted): couldn’t sync this. Tap to retry. Not deleted on the server yet.';
     const press = r.root.findAll((x) => x.props.accessibilityLabel === want && typeof x.props.onPress === 'function');
     expect(press.length).toBeGreaterThan(0);
@@ -224,27 +227,52 @@ describe('CEO + Designer (next build): a flagged delete in Progress looks as it 
     expect(r.root.findAll((x) => x.props.testID === 'progress-deleted-row')).toHaveLength(0);
     expect(Math.round(dayTotals(st.entries.filter((e) => e.local_date === y())).kcal)).toBe(serverTotal());
   });
-  test('kcal shown is the counted one (the server’s numbers, not the phone’s edit); no server numbers -> Today’s "— kcal · not counted"', async () => {
+  test('layout parity with the neighbour row: same box (indent), same first line, same name style, same bold kcal style', async () => {
+    await withNeighbour();
+    const del = rowOf();
+    const nb = hostRows((x) => x.props.accessibilityLabel === 'Edit Dal' && x.props.testID !== 'progress-deleted-row')[0];
+    expect(nb).toBeDefined();
+    expect(del.props.style).toEqual(nb.props.style); // entryBox: paddingLeft 8, minHeight 40
+    const firstLine = (row: any) => row.findAll((x: any) => typeof x.type === 'string' && x.props.style?.flexDirection === 'row')[0];
+    expect(firstLine(del).props.style).toEqual(firstLine(nb).props.style);
+    const ts = (row: any) => row.findAll((x: any) => x.type === T).slice(0, 2).map((x: any) => ({ v: x.props.v, tone: x.props.tone, style: x.props.style, lines: x.props.numberOfLines }));
+    expect(ts(del)).toEqual(ts(nb));
+    expect(linesIn(nb)[1].tone).toBe('number');
+  });
+  test('the retry icon is on both "Couldn’t sync this" lines in Progress: the flagged delete and the 5xx-flagged edit', async () => {
+    const ed = { ...edit({ ...roti2(), id: 'E', client_id: 'E' } as FoodEntry, 3), id: 'E', local_date: y(), slot: 'lunch' as const, server_failed: true, sync_error: SERVER_ERROR, server_counts: { kcal: 220, protein: 7 } };
+    await withNeighbour([ed]);
+    const lineRows = r.root.findAll((x) => x.props.testID === 'progress-sync-line' && x.type === T);
+    expect(lineRows).toHaveLength(2);
+    expect(lineRows.map((x) => x.props.children)).toEqual(['Couldn’t sync this. Tap to retry', 'Couldn’t sync this. Tap to retry']);
+    const editRow = hostRows((x) => x.props.accessibilityLabel === 'Lunch · roti: couldn’t sync this. Tap to retry')[0];
+    expect(editRow.findAll((x) => x.props.testID === 'sync-retry-icon' && typeof x.type === 'string')).toHaveLength(1);
+    expect(rowOf().findAll((x) => x.props.testID === 'sync-retry-icon' && typeof x.type === 'string')).toHaveLength(1);
+    expect(hostRows((x) => x.props.testID === 'sync-retry-icon')).toHaveLength(2); // nowhere else
+  });
+  test('kcal shown is the counted one (the server’s numbers, not the phone’s edit); no server numbers -> "— kcal · not counted"', async () => {
     seed220(); server.fail = true;
     await boot([{ ...flagged(), server_counts: { kcal: 440, protein: 14 } }], [], <Progress />);
     await open();
-    expect(lines()[1]).toEqual({ text: '440 kcal', tone: 'muted' });
+    expect(lines()[1]).toEqual({ text: '440', tone: 'number' });
     await act(async () => { r.unmount(); });
     await boot([{ ...flagged(), server_counts: undefined }], [], <Progress />);
     await open();
     expect(lines()[1]).toEqual({ text: '— kcal · not counted', tone: 'muted' });
   });
-  test('while the retry runs: "Retrying…" in warn (spinner), no reason line, busy, label "… (deleted): retrying sync", a tap does nothing', async () => {
+  test('while the retry runs: "Retrying…" in warn (spinner, no icon), no reason line, busy, label "… (deleted): retrying sync", a tap does nothing', async () => {
     seed220(); server.fail = true;
     const d = { ...flagged(), sync_error: undefined, sync_retrying: true };
     await boot([d], [{ kind: 'delete', id: 'F', tries: 1, fives: 1, nextAt: now + 3_600_000 } as Op], <Progress />);
     await open();
-    expect(lines()).toEqual([{ text: 'Breakfast · roti (deleted)', tone: 'text' }, { text: '220 kcal', tone: 'muted' }, { text: SYNC_RETRYING_COPY, tone: 'warn' }]);
+    expect(lines()).toEqual([{ text: 'Breakfast · roti (deleted)', tone: 'text2' }, { text: '220', tone: 'number' }, { text: SYNC_RETRYING_COPY, tone: 'warn' }]);
     expect(SYNC_RETRYING_COPY).toBe('Retrying…');
     expect(rowOf().findAll((x) => x.props.testID === 'sync-retry-spinner').length).toBeGreaterThan(0);
+    expect(rowOf().findAll((x) => x.props.testID === 'sync-retry-icon')).toHaveLength(0);
     const row = r.root.findAll((x) => x.props.accessibilityLabel === 'Breakfast · roti (deleted): retrying sync' && x.props.accessibilityState !== undefined);
     expect(row.length).toBeGreaterThan(0); expect(row[0].props.accessibilityState).toMatchObject({ busy: true });
-    expect(row[0].props.onPress).toBeUndefined();
+    for (const x of row) if (typeof x.props.onPress === 'function') { await act(async () => { x.props.onPress(); }); }
+    expect(r.root.findAll((x) => x.props.title === 'Save changes')).toHaveLength(0);
   });
 });
 
