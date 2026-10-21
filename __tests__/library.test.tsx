@@ -39,6 +39,21 @@ describe('the curated wger export', () => {
     const keys = ALL.flatMap((e) => [e.name, ...e.aliases]).map((s) => words(s).join(' '));
     expect(keys.length - new Set(keys).size).toBe(0);
   });
+  test('names are English and not numbered variants (no "mit", no "Bear Walk 2")', () => {
+    for (const e of ALL) {
+      expect(e.name).not.toMatch(/\b(mit|und|auf|zum|zur|der|das|ohne|bizeps|trizeps|con|avec|sur|para)\b|[À-ÿ]/i);
+      expect(e.name.trim()).not.toMatch(/\s(\d+|\(\d+\)|v\d+)$/i);
+    }
+  });
+  test('steps are instructions: intro sentences ("This exercise …", "X is a … exercise", "… targets …") are dropped, ≥ 2 left', () => {
+    for (const e of ALL) {
+      expect(e.steps.length).toBeGreaterThanOrEqual(2);
+      for (const s of e.steps) {
+        expect(s).not.toMatch(/^(this|these)( \w+)? (exercise|movement|is)\b|^[^.:]{0,80}?\b(is|are) (a|an|another) [^.]*\b(exercise|variation|movement)\b/i);
+        if (!/^(lean|stand|sit|lie|lay|hold|grab|grip|place|put|take|start|begin|bend|step)\b/i.test(s)) expect(s).not.toMatch(/\btargets?\b/i);
+      }
+    }
+  });
   test('every row records its source and licence (§9.7): wger id, page, licence + URL, authors for BY-SA, data licence', () => {
     for (const e of ALL) {
       expect(e.source).toBe('wger');

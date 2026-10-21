@@ -139,6 +139,69 @@
    "video_channel": null
   },
   {
+   "id": "wger-1486",
+   "name": "Alternating High Cable Row",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Cable",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Start by putting the attachment in a high position on the cable station and step back about 1m from the attachment. Grab the cable pulley handle in your left hand at about head height with your elbow slightly bent. Step back with your left foot.",
+    "Pull your elbow joint in toward the torso twisting slightly and perform a single-arm row. Engage the lats as you twist.",
+    "Return to the starting position with cable pulley and left foot and grab the cable pulley handle in the right hand. Repeat this motion on the opposite side with your right foot stepped back."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1486/view-base",
+   "wger_id": 1486,
+   "wger_translation_id": 2449,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Moffi"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Moffi",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1501",
+   "name": "Alternative DB Gorilla rows",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Slightly bent down and knees to mimic a gorilla position and pull/row up the DBs to the chest.",
+    "DB stay straight (thumbs pointing up)"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1501/view-base",
+   "wger_id": 1501,
+   "wger_translation_id": 2463,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "JohnPreston"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "JohnPreston",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-1804",
    "name": "Ankle dorsiflexion rocks",
    "aliases": [],
@@ -242,39 +305,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1638",
-   "name": "Barbell Clean and press",
-   "aliases": [],
-   "group": "Shoulders",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Shoulders",
-    "Chest"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves lifting a barbell from the ground to the shoulders, then pressing it overhead.",
-    "It is a compound movement that targets multiple muscle groups, including the legs, back, shoulders, and arms.",
-    "It is often used in strength and conditioning programs to improve overall power and athleticism."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1638/view-base",
-   "wger_id": 1638,
-   "wger_translation_id": 2744,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "Rottekongen"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "Rottekongen",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1801",
    "name": "Barbell Full Squat",
    "aliases": [],
@@ -291,10 +321,8 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "The barbell full squat is a compound exercise that targets multiple muscle groups in the lower body, including the quadriceps, hamstrings, and glutes.",
     "Proper form is crucial for maximizing results and preventing injuries during the barbell full squat.",
     "This includes maintaining a shoulder-width stance, creating whole body tension, controlling your descent, and maintaining proper depth and knee positioning.",
-    "Assistance moves such as the front squat, goblet squat, split squat, and Bulgarian split squat can help improve your performance in the barbell full squat by targeting specific muscle groups and improving overall technique.",
     "To achieve new personal records in your back squat, gradually increase weight over time, vary rep ranges and sets to stimulate muscle growth, and prioritize rest and recovery between training sessions."
    ],
    "source": "wger",
@@ -349,41 +377,133 @@
    "video_channel": null
   },
   {
-   "id": "wger-1320",
-   "name": "Bench Dips On Floor HD",
+   "id": "wger-1700",
+   "name": "Barbell Romanian Deadlift (RDL)",
    "aliases": [],
-   "group": "Arms",
-   "equipment": "Bodyweight",
+   "group": "Back",
+   "equipment": "Barbell",
    "primary_muscles": [
-    "Biceps",
-    "Brachialis",
-    "Triceps"
+    "Hamstrings",
+    "Glutes"
    ],
-   "secondary_muscles": [
-    "Shoulders",
-    "Chest",
-    "Soleus",
-    "Trapezius"
-   ],
-   "type": "bodyweight",
+   "secondary_muscles": [],
+   "type": "weight_reps",
    "steps": [
-    "Triceps dips on floor are a compound exercise as they worked multiple muscle groups simultaneously.",
-    "Although this bodyweight exercise mainly targets the triceps, it also hits your chest and front of your shoulder.",
-    "Triceps dips on floor are one of the most effective exercises to increase arm strength and also build lean muscle in your upper arms.",
-    "Triceps dips on floor are a closed kinetic chain exercise and express that you do the movements around a fixed point.",
-    "It increases compression force on your joints thereby improving stability."
+    "Hinge at the hips: Push your hips backward , keeping a slight bend in the knees (soft knees).",
+    "Lower the barbell along the front of your thighs/shins while maintaining a neutral spine .",
+    "Keep the bar close to your body ."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1320/view-base",
-   "wger_id": 1320,
-   "wger_translation_id": 2292,
+   "source_ref": "https://wger.de/exercise/1700/view-base",
+   "wger_id": 1700,
+   "wger_translation_id": 2819,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "hektkaso"
+    "daiben"
    ],
    "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "hektkaso",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1698",
+   "name": "Barbell Row (Overhand)",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Barbell",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Starting position: Hold the barbell with arms fully extended toward the floor.",
+    "Maintain tension in your lats and back muscles."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1698/view-base",
+   "wger_id": 1698,
+   "wger_translation_id": 2817,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1699",
+   "name": "Barbell Row (Underhand)",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Barbell",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Starting position: Hold the barbell with arms fully extended toward the floor.",
+    "Maintain tension in your lats and back muscles."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1699/view-base",
+   "wger_id": 1699,
+   "wger_translation_id": 2818,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1687",
+   "name": "Bear crawl pull through",
+   "aliases": [],
+   "group": "Core",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Shoulders",
+    "Glutes",
+    "Quads",
+    "Abs"
+   ],
+   "secondary_muscles": [
+    "Hamstrings",
+    "Calves",
+    "Trapezius"
+   ],
+   "type": "weight_reps",
+   "steps": [
+    "Place a dumbbell at around hip level and assume a bear crawl position.",
+    "Push the knees off the floor and hold."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1687/view-base",
+   "wger_id": 1687,
+   "wger_translation_id": 2806,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "meldun"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "meldun",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -653,7 +773,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "The biceps curl machine is designed to isolate the biceps muscles and provide a controlled range of motion.",
     "Sit on the machine with your back against the pad and adjust the seat so your arms are aligned with the machine's handles or pads.",
     "Grip the handles firmly, keeping your elbows fixed in place, and curl the handles upward by contracting your biceps.",
     "Slowly lower the handles to the starting position, maintaining control throughout the movement."
@@ -824,7 +943,6 @@
    ],
    "type": "bodyweight",
    "steps": [
-    "Bicycle crunches are a core exercise performed on the floor.",
     "Lie on your back with your hands behind your head and legs extended.",
     "Lift your shoulders off the ground, bring one knee toward your chest, and twist your torso so your opposite elbow meets the knee.",
     "Alternate sides in a pedaling motion, ensuring controlled movements and engaging your core throughout the exercise."
@@ -882,38 +1000,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1483",
-   "name": "Bizeps Curls Trifecta",
-   "aliases": [],
-   "group": "Arms",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Biceps"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "For the Supinated Cross Body Curl, supinate the forearm with palms facing toward the ceiling and forearms coming across the body. Lift the inner-facing weight of the dumbbell towards your shoulder.",
-    "For the Pronated Cross Body Curl, pronate the forearm with palms facing toward the floor (pronated grip or overhand grip) and forearms coming across the body. Lift the inner-facing weight of the dumbbell towards your shoulder.",
-    "For the No Money Curl, you’ll curl the dumbbell as you outwardly rotate the shoulder. Lift the inner-facing weight of the dumbbell towards your outer side of the shoulder."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1483/view-base",
-   "wger_id": 1483,
-   "wger_translation_id": 2446,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "Moffi"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "Moffi",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-112",
    "name": "Body-Ups",
    "aliases": [],
@@ -950,34 +1036,35 @@
    "video_channel": null
   },
   {
-   "id": "wger-1324",
-   "name": "Bodyweight lunge HD",
+   "id": "wger-1608",
+   "name": "Bodyweight Biceps Curl",
    "aliases": [],
-   "group": "Legs",
+   "group": "Arms",
    "equipment": "Bodyweight",
    "primary_muscles": [
-    "Quads"
+    "Biceps"
    ],
-   "secondary_muscles": [
-    "Glutes",
-    "Soleus"
-   ],
+   "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "Bodyweight lunges are an effective calisthenic exercise for strengthening the lower body, improving balance and stability, and developing functional strength.",
-    "They are a popular choice for bodyweight workouts, home workouts, and can also be included as part of a larger strength training routine."
+    "Set up under a straight bar (around waist or chest height).",
+    "Grip the bar with your palms facing you (supinated grip), hands about shoulder-width apart.",
+    "Lean back with straight arms so that your body is at an angle to the ground.",
+    "Keeping your elbows high and close to the bar, pull your upper body toward the bar by flexing your elbows, similar to a biceps curl.",
+    "Lower yourself back down in a controlled manner.",
+    "Keep your core tight and movement slow to maximize tension on the biceps."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1324/view-base",
-   "wger_id": 1324,
-   "wger_translation_id": 2297,
+   "source_ref": "https://wger.de/exercise/1608/view-base",
+   "wger_id": 1608,
+   "wger_translation_id": 2583,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "hektkaso"
+    "tenebrizz"
    ],
    "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "hektkaso",
+   "data_licence_author": "tenebrizz",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -1001,13 +1088,7 @@
    ],
    "type": "bodyweight",
    "steps": [
-    "Squat is a type of bodyweight exercise.",
-    "It is one of the most popular exercises for strength and muscle growth.",
     "Squat is particularly effective for focusing on the muscles of the leg and hips.",
-    "Squat are an easy exercise for beginners to do.",
-    "It can help strengthen leg muscles, tighten hip muscles and burn calories to lose weight.",
-    "It tightens the butt and legs.",
-    "Squats are very effective for firming and strengthening your legs by acting on the gluteus,hip flexors, quadriceps, hamstrings and inner thigh muscles.",
     "Also, bodyweight squats can help shape your glutes and butt."
    ],
    "source": "wger",
@@ -1109,7 +1190,6 @@
    "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "In this midrange exercise your arm muscles provide you with a little bit of momentum to help to get you off the ground.",
     "You also open them up in overhead position which engages the upper back.",
     "Start lying with feet flat on the ground, knees at an angle, arms crossed in towards your chest.",
     "Using your ab muscles, bring your upper body off the ground as you open your arms into goal post position, then slowly lower yourself back down to return to starting position."
@@ -1193,39 +1273,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "Shiladree",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1109",
-   "name": "Cable Concentration Curl",
-   "aliases": [],
-   "group": "Arms",
-   "equipment": "Cable",
-   "primary_muscles": [
-    "Biceps",
-    "Brachialis"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "The concentration curl is a classic exercise for building the biceps one arm at a time.",
-    "It can be performed bent over or kneeling, but is more often performed seated on a bench.",
-    "It's great for emphasizing the biceps peak and is often used to finish a biceps workout"
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1109/view-base",
-   "wger_id": 1109,
-   "wger_translation_id": 2072,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "cshep442"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "cshep442",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -1447,7 +1494,6 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "This exercise lets you work the upper, or larger, part of the glutes.",
     "For that reason, it should never be missing from your routine of isolated exercises for training the glutes.",
     "Stand in front of a cable machine and locate the low pulley.",
     "Then attach the ankle strap to work on the low pulley.",
@@ -1559,7 +1605,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "The Cable Pull Through is a lower-body exercise that targets the glutes and hamstrings using a \"hip hinge\" motion.",
     "To perform it, attach a rope to the lowest pulley setting, face away from the machine with the rope between your legs, and step forward to create tension.",
     "Keeping your back flat and knees slightly soft, push your hips backward as if trying to close a door behind you until you feel a deep stretch in your hamstrings."
    ],
@@ -1616,8 +1661,8 @@
    "video_channel": null
   },
   {
-   "id": "wger-1661",
-   "name": "Cable Triceps Press",
+   "id": "wger-1662",
+   "name": "Cable Tri Extension - Internal Rotation",
    "aliases": [],
    "group": "Arms",
    "equipment": "Cable",
@@ -1627,13 +1672,13 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "A single arm exercise that starts with the hand close to the chest with with the elbows bent, and the elbow flared out.",
-    "Press forward and down against the cable straightening the elbow."
+    "single arm exercise with cable held at opposite shoulder with elbow bent.",
+    "Turn towards the cable, and the straighten the elbow across the body."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1661/view-base",
-   "wger_id": 1661,
-   "wger_translation_id": 2782,
+   "source_ref": "https://wger.de/exercise/1662/view-base",
+   "wger_id": 1662,
+   "wger_translation_id": 2783,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
@@ -1641,6 +1686,37 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "Shiladree",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1509",
+   "name": "Cable Tricep Kickback",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Cable",
+   "primary_muscles": [
+    "Triceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Grab onto the handle, and pull your elbow up and back slightly above your torso.",
+    "Keep your upper arm to be parallel to the ground for the duration of the set"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1509/view-base",
+   "wger_id": 1509,
+   "wger_translation_id": 2468,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Expenses7000"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Expenses7000",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -1745,43 +1821,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-152",
-   "name": "Chin Up",
-   "aliases": [],
-   "group": "Back",
-   "equipment": "Pull-up bar",
-   "primary_muscles": [
-    "Biceps",
-    "Lats"
-   ],
-   "secondary_muscles": [
-    "Brachialis",
-    "Trapezius"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "The chin-up (also known as a chin or chinup) is a strength training exercise.",
-    "People frequently do this exercise with the intention of strengthening muscles such as the latissimus dorsi and biceps, which extend the shoulder and flex the elbow, respectively.",
-    "In this maneuver, the palms are faced towards the body.",
-    "It is a form of pull-up in which the range of motion is established in relation to a person's chin."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/152/view-base",
-   "wger_id": 152,
-   "wger_translation_id": 803,
-   "licence": "CC0-1.0",
-   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-   "licence_authors": [
-    "BFad07"
-   ],
-   "data_licence": "CC0-1.0",
-   "data_licence_author": "",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1554",
    "name": "Clap Push-UP",
    "aliases": [],
@@ -1823,6 +1862,7 @@
    "name": "Clean and Press",
    "aliases": [
     "Clean & Press",
+    "Barbell Clean and Press",
     "Olympic Clean and Press"
    ],
    "group": "Shoulders",
@@ -2087,7 +2127,6 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The procedure is very similar as for regular crunches, only with the additional weight of the machine.",
     "Sit on the machine, put both feet firmly on the ground.",
     "Grab the to the weights, cables, etc. and do a rolling motion forwards (the spine should ideally lose touch vertebra by vertebra).",
     "Slowly return to the starting position."
@@ -2142,6 +2181,38 @@
    "video_channel": null
   },
   {
+   "id": "wger-1666",
+   "name": "Curl  - With Shoulder Elevated",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Place elbow so that it is about level with the shoulder.",
+    "Curl the wieght to your shoulder.",
+    "Focus on the stretch in the eccentric part of the curl"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1666/view-base",
+   "wger_id": 1666,
+   "wger_translation_id": 2785,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Shiladree"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Shiladree",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-177",
    "name": "Cycling",
    "aliases": [],
@@ -2160,7 +2231,6 @@
    ],
    "type": "time",
    "steps": [
-    "Cycling, also called bicycling or biking, is the use of bicycles for transport, recreation, exercise or sport.",
     "People engaged in cycling are referred to as cyclists, bicyclists, or bikers.",
     "Apart from two-wheeled bicycles, cycling also includes the riding of unicycles, tricycles, quadracycles, recumbent and similar human-powered vehicles."
    ],
@@ -2388,40 +2458,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-194",
-   "name": "Dips",
-   "aliases": [
-    "Weighted Dips"
-   ],
-   "group": "Chest",
-   "equipment": "Bodyweight",
-   "primary_muscles": [
-    "Chest",
-    "Triceps"
-   ],
-   "secondary_muscles": [],
-   "type": "bodyweight",
-   "steps": [
-    "A dip is an upper-body strength exercise.",
-    "Narrow, shoulder-width dips primarily train the triceps, with major synergists being the anterior deltoid, the pectoralis muscles (sternal, clavicular, and minor), and the rhomboid muscles of the back (in that order).[1] Wide arm training places additional emphasis on the pectoral muscles, similar in respect to the way a wide grip bench press would focus more on the pectorals and less on the triceps."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/194/view-base",
-   "wger_id": 194,
-   "wger_translation_id": 781,
-   "licence": "CC0-1.0",
-   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-   "licence_authors": [
-    "BFad07"
-   ],
-   "data_licence": "CC0-1.0",
-   "data_licence_author": "",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-197",
    "name": "Dips Between Two Benches",
    "aliases": [],
@@ -2449,47 +2485,6 @@
    ],
    "data_licence": "CC-BY-SA-3.0",
    "data_licence_author": "wger.de",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1360",
-   "name": "Double Kettlebell Clean and Press",
-   "aliases": [],
-   "group": "Arms",
-   "equipment": "Kettlebell",
-   "primary_muscles": [
-    "Shoulders",
-    "Biceps",
-    "Brachialis",
-    "Quads",
-    "Trapezius",
-    "Triceps"
-   ],
-   "secondary_muscles": [
-    "Hamstrings",
-    "Glutes",
-    "Lats",
-    "Abs"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "Full-body muscles building exercise.",
-    "This exercise provides a huge range of benefits in terms of strength & size and is extremely functional."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1360/view-base",
-   "wger_id": 1360,
-   "wger_translation_id": 2327,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "m4k3r"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "m4k3r",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -2565,34 +2560,35 @@
    "video_channel": null
   },
   {
-   "id": "wger-1639",
-   "name": "Dumbbell Bent Over Face Pull",
+   "id": "wger-1512",
+   "name": "Drop Curl",
    "aliases": [],
-   "group": "Back",
+   "group": "Arms",
    "equipment": "Dumbbell",
    "primary_muscles": [
-    "Shoulders",
-    "Lats"
+    "Biceps"
    ],
-   "secondary_muscles": [
-    "Trapezius"
-   ],
+   "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "This exercise involves using dumbbells to perform a bent over face pull, which targets the upper back and shoulders.",
-    "The movement involves pulling the weights towards the face while keeping the elbows high and squeezing the shoulder blades together."
+    "Drop curls in a modified position at a slow pace effectively engage the brachialis for arm width.",
+    "Starting position is with both arms in a slight angle towards each other at chest height with a dumbbell in each hand.",
+    "Lower one dumbbell close to full extended arm position slowly and in a controlled manner during the first half of the curl, then curl it back up to starting position, while the other dumbbell stays at its starting position.",
+    "Now lower the other dumbbell down.",
+    "This keeps tension on the brachialis.",
+    "As we pass the 90deg mark on our way down, the biceps will take over the work."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1639/view-base",
-   "wger_id": 1639,
-   "wger_translation_id": 2745,
+   "source_ref": "https://wger.de/exercise/1512/view-base",
+   "wger_id": 1512,
+   "wger_translation_id": 2471,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "AlucardEvil40"
+    "Moffi"
    ],
    "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
+   "data_licence_author": "Moffi",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -2748,7 +2744,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "Dumbbell crunches are a weighted variation of traditional crunches designed to target the abdominal muscles more intensely.",
     "Lie flat on your back with your knees bent and feet flat on the floor.",
     "Hold a dumbbell with both hands close to your chest or above your head.",
     "Lift your shoulders and upper back off the ground in a crunching motion, engaging your core.",
@@ -2784,14 +2779,14 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The dumbbell donkey kick is an effective exercise for working the glute and hamstring muscles.",
-    "This exercise is usually performed on all fours, using a dumbbell to add resistance.",
     "The steps for performing it correctly are described below.",
     "Starting position: Get on all fours on a mat, with your hands aligned under your shoulders and your knees aligned under your hips.",
     "Placing the dumbbell: Take a dumbbell and place it behind the knee of the leg you are going to lift.",
     "Make sure it is held securely to prevent it from falling during the exercise.",
     "Exercise: Inhale and, as you exhale, lift the leg with the dumbbell upward, keeping the knee bent at a 90-degree angle.",
-    "Raise the leg until it is parallel to the floor, feeling the contraction in the glutes."
+    "Raise the leg until it is parallel to the floor, feeling the contraction in the glutes.",
+    "Hold the position for one second at the top and then slowly lower the leg back to the starting position.",
+    "Repetitions: Perform 10 to 15 repetitions per leg, making sure to maintain good form throughout the exercise."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1616/view-base",
@@ -2836,41 +2831,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "Lynn_McIntyre",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1640",
-   "name": "Dumbbell Front Squat",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes",
-    "Quads"
-   ],
-   "secondary_muscles": [
-    "Shoulders",
-    "Abs"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a dumbbell in each hand at shoulder height and performing a squat.",
-    "It targets the lower body muscles, including the quads, hamstrings, and glutes, while also engaging the core and upper body."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1640/view-base",
-   "wger_id": 1640,
-   "wger_translation_id": 2747,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -2942,38 +2902,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "philip",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1642",
-   "name": "Dumbbell Hip Thrust",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes",
-    "Quads"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves sitting on the ground with a dumbbell resting on the hips, then thrusting the hips upward while squeezing the glutes.",
-    "It is a great exercise for strengthening the glutes and improving hip mobility."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1642/view-base",
-   "wger_id": 1642,
-   "wger_translation_id": 2751,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -3090,72 +3018,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1651",
-   "name": "Dumbbell Rear Lunge",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes",
-    "Quads"
-   ],
-   "secondary_muscles": [
-    "Soleus"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a dumbbell in each hand and stepping back into a lunge position, then returning to standing.",
-    "It primarily targets the glutes, hamstrings, and quadriceps."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1651/view-base",
-   "wger_id": 1651,
-   "wger_translation_id": 2768,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1652",
-   "name": "Dumbbell Romanian Deadlift",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Hamstrings",
-    "Glutes"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a dumbbell in each hand and bending forward at the hips while keeping the back straight, then returning to a standing position.",
-    "It primarily targets the hamstrings and glutes."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1652/view-base",
-   "wger_id": 1652,
-   "wger_translation_id": 2770,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1429",
    "name": "Dumbbell Shoulder Rotations",
    "aliases": [],
@@ -3181,105 +3043,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "hpmbala@gmail.com",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1650",
-   "name": "Dumbbell Side Bend",
-   "aliases": [],
-   "group": "Core",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Obliques"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a dumbbell in one hand and bending sideways to work the oblique muscles on the side of the body.",
-    "It can be done standing or seated and is often used as a core strengthening exercise."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1650/view-base",
-   "wger_id": 1650,
-   "wger_translation_id": 2766,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1653",
-   "name": "Dumbbell Side Squat",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes",
-    "Quads"
-   ],
-   "secondary_muscles": [
-    "Hamstrings"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a dumbbell in one hand and performing a squat while stepping to the side.",
-    "It targets the legs, glutes, and core muscles."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1653/view-base",
-   "wger_id": 1653,
-   "wger_translation_id": 2772,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1234",
-   "name": "Dumbbell Single-leg Hip Thrust",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes"
-   ],
-   "secondary_muscles": [
-    "Hamstrings",
-    "Quads"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "The single-leg hip thrust is performed by placing your upper back on a weight bench, raising one leg, and extending the hip of the other leg to achieve an isolated contraction of the glute.",
-    "By working each side separately, you can fully isolate your glutes unilaterally, providing maximal training stimulus."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1234/view-base",
-   "wger_id": 1234,
-   "wger_translation_id": 2199,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "carlos3c"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "carlos3c",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -3317,6 +3080,42 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "philip",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1684",
+   "name": "Dumbbell Thruster",
+   "aliases": [],
+   "group": "Legs",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Hamstrings",
+    "Glutes",
+    "Quads"
+   ],
+   "secondary_muscles": [
+    "Shoulders"
+   ],
+   "type": "weight_reps",
+   "steps": [
+    "Start with the dumbbells resting on your shoulders and squat down.",
+    "Push into standing and raise the dumbbells into an overhead position.",
+    "Bring the dumbbells back to your shoulders and repeat."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1684/view-base",
+   "wger_id": 1684,
+   "wger_translation_id": 2804,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "meldun"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "meldun",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -3535,39 +3334,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1242",
-   "name": "Exercise Band Plantarflexion",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Band",
-   "primary_muscles": [
-    "Calves"
-   ],
-   "secondary_muscles": [
-    "Soleus"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "Banded plantarflexion is a great way to bridge the gap between plantarflexion range of motion and the more strenuous calf raises in weight bearing.",
-    "This can help strengthen the calf muscles, load the Achilles tendon, and improve plantarflexion range of motion."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1242/view-base",
-   "wger_id": 1242,
-   "wger_translation_id": 2204,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "erikocobra"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "erikocobra",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1732",
    "name": "Face pulls with yellow/green band",
    "aliases": [],
@@ -3596,6 +3362,41 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "54str",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1694",
+   "name": "Flat Machine Press",
+   "aliases": [],
+   "group": "Chest",
+   "equipment": "Machine",
+   "primary_muscles": [
+    "Chest"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Start position: Elbows bent at roughly 90°, hands just outside your chest.",
+    "Keep wrists straight and aligned with your forearms.",
+    "Pressing phase (concentric): Push the handles forward until your arms are almost fully extended — don’t lock out.",
+    "Focus on squeezing your chest at the end of the movement.",
+    "Returning phase (eccentric): Slowly bring the handles back toward your chest, feeling the stretch in your pecs .",
+    "Maintain tension — don’t let the weight stack touch down between reps."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1694/view-base",
+   "wger_id": 1694,
+   "wger_translation_id": 2813,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -3727,12 +3528,8 @@
    ],
    "type": "time",
    "steps": [
-    "The plank is a bodyweight exercise.",
-    "As a multi-functional movement, the plank not only targets your abdominal muscles but also the spine and hip.",
     "Plank strengthens and tightens your entire body, improves your posture and balance, reduces body fat, and can help boost your metabolism.",
-    "Exercises such as the “plank pose” help strengthen the stamina of stabilizing abdominal muscles.",
-    "It can also help relieve back pain associated with a weakening of the function of the stabilizing muscles of the body.",
-    "Planks are a versatile exercise that targets many of the most important muscle groups in the body, so they can be applied by anyone to improve endurance and overall body strength."
+    "Exercises such as the “plank pose” help strengthen the stamina of stabilizing abdominal muscles."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1307/view-base",
@@ -3781,6 +3578,44 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "http://www.realsimple.com/health/fitness-exercise/",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1686",
+   "name": "Glute Bridge Single-Arm Press",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Chest"
+   ],
+   "secondary_muscles": [
+    "Shoulders",
+    "Biceps",
+    "Hamstrings",
+    "Glutes",
+    "Triceps"
+   ],
+   "type": "weight_reps",
+   "steps": [
+    "With one dumbbell in hand, perform a glute bridge.",
+    "Lower the dumbbell so that your elbow touches the floor or is roughly 45 degrees below your shoulder if using a bench.",
+    "Push the dumbbell back into the starting position."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1686/view-base",
+   "wger_id": 1686,
+   "wger_translation_id": 2805,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "meldun"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "meldun",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -3837,7 +3672,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "Hack squats target the lower body and are performed on a hack squat machine or with a barbell.",
     "For the machine variation, position yourself on the platform with your shoulders under the pads and feet slightly forward.",
     "Push through your heels to lift the weight, then bend your knees to lower the platform in a controlled motion until your thighs are parallel to the ground.",
     "Push back up to the starting position.",
@@ -4009,7 +3843,6 @@
    "type": "bodyweight",
    "steps": [
     "The handstand push-up (press-up) - also called the vertical push-up (press-up) or the inverted push-up (press-up) also called commandos- is a type of push-up exercise where the body is positioned in a handstand.",
-    "For a true handstand, the exercise is performed free-standing, held in the air.",
     "To prepare the strength until one has built adequate balance, the feet are often placed against a wall, held by a partner, or secured in some other way from falling.",
     "Handstand pushups require significant strength, as well as balance and control if performed free-standing."
    ],
@@ -4083,9 +3916,7 @@
    "type": "time",
    "steps": [
     "You can use this exercise both as a dynamic warm-up before training and add it to your cardio training routine to burn fat.",
-    "High knee skips are a plyometric exercise.",
     "Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.",
-    "High knee skips target the oblique, leg muscles, hip muscles and hip flexors and also work on the thighs, knee tendons, quadriceps and shoulders.",
     "Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work.",
     "Since jumps elevate your heart rate, they can also improve your cardiovascular fitness."
    ],
@@ -4117,7 +3948,6 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The high-cable cross tricep extension is an isolation exercise for targeting the triceps, particularly the long head.",
     "It utilizes cables and handles grasped with opposite hands, allowing for a unique pressing motion that can be effective for building tricep strength.",
     "Unlike exercises that use a straight bar or rope, this variation can be more comfortable on your wrists and elbows"
    ],
@@ -4310,38 +4140,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-828",
-   "name": "Incline Bench Reverse Fly",
-   "aliases": [],
-   "group": "Back",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Shoulders",
-    "Trapezius"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "The incline dumbbell reverse fly is an upper-body exercise targeting the posterior or rear deltoids, as well as the postural muscles of the upper back.",
-    "Because it targets such small muscles, this exercise is usually performed with light weight for high reps, such as 10-15 reps per set or more."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/828/view-base",
-   "wger_id": 828,
-   "wger_translation_id": 1080,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "cshep442"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "cshep442",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1283",
    "name": "Incline Chest-Supported Dumbbell Row",
    "aliases": [],
@@ -4477,6 +4275,39 @@
    "video_channel": null
   },
   {
+   "id": "wger-1693",
+   "name": "Incline Static Hold",
+   "aliases": [],
+   "group": "Chest",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Chest"
+   ],
+   "secondary_muscles": [],
+   "type": "time",
+   "steps": [
+    "Hold Position: Lower the dumbbells a few inches above your chest — about the midpoint of a normal incline press.",
+    "Static Hold: Hold the position for 20–45 seconds while keeping the chest tight.",
+    "Breathe slowly but stay tense — do not relax your chest or shoulders .",
+    "End the set: After the hold, carefully bring the dumbbells down and rest."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1693/view-base",
+   "wger_id": 1693,
+   "wger_translation_id": 2812,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-1302",
    "name": "JM Press",
    "aliases": [],
@@ -4527,9 +4358,7 @@
    ],
    "type": "time",
    "steps": [
-    "Jumping jack are a plyometric exercise.",
     "Plyometrics are explosive aerobic moves that increase speed, quickness, and power and they work your whole body.",
-    "Jumping jack target the arm, shoulder, abdominal muscles, hip muscles and hip flexors and also work on the thighs, knee tendons and quadriceps.",
     "Jumps are beneficial to your health because they combine cardiovascular conditioning with strength work.",
     "Since jumps elevate your heart rate, they can also improve your cardiovascular fitness."
    ],
@@ -4588,37 +4417,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1641",
-   "name": "Kettlebell One Legged Deadlift",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Glutes"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "This exercise involves holding a kettlebell in one hand and standing on one leg while bending forward to touch the kettlebell to the ground.",
-    "It targets the hamstrings, glutes, and lower back while also improving balance and stability."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1641/view-base",
-   "wger_id": 1641,
-   "wger_translation_id": 2749,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "AlucardEvil40"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-1612",
    "name": "Kettlebell sumo deadlift",
    "aliases": [],
@@ -4654,36 +4452,33 @@
    "video_channel": null
   },
   {
-   "id": "wger-960",
-   "name": "Kettlebell Swing",
+   "id": "wger-331",
+   "name": "Kettlebell Swings",
    "aliases": [],
    "group": "Legs",
    "equipment": "Kettlebell",
    "primary_muscles": [
-    "Shoulders",
     "Glutes"
    ],
    "secondary_muscles": [
-    "Quads",
-    "Abs",
-    "Trapezius"
+    "Hamstrings"
    ],
    "type": "weight_reps",
    "steps": [
-    "While kettlebell swings are a full-body workout, they mostly target the muscles along the posterior chain (back of the body).",
-    "The main muscles used are the glutes, hamstrings, spinal erectors, and muscles of the upper back."
+    "Hold the kettlebell securely in both hands.",
+    "Keep your back flat throughout the move, avoiding any rounding of the spine.Keeping your knees \"soft\", hinge your hips backwards, letting the kettlebell swing between your knees."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/960/view-base",
-   "wger_id": 960,
-   "wger_translation_id": 1252,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "source_ref": "https://wger.de/exercise/331/view-base",
+   "wger_id": 331,
+   "wger_translation_id": 249,
+   "licence": "CC-BY-SA-3.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
    "licence_authors": [
-    "clafal"
+    "J120290,cerin"
    ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "clafal",
+   "data_licence": "CC-BY-SA-3.0",
+   "data_licence_author": "J120290,cerin",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -4763,8 +4558,40 @@
    "video_channel": null
   },
   {
-   "id": "wger-355",
-   "name": "Lat Pull Down (Straight Back)",
+   "id": "wger-1511",
+   "name": "Kong Curl",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "During the exercise, maintain a pronated forearm position with starting position of approx.",
+    "45 degree pronated.",
+    "Start with slightly bend elbows and alternately curl until your hands (your thumb first) meet your upper middle chest (similar to how Kong hits his chest, thus the name of this exercise)."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1511/view-base",
+   "wger_id": 1511,
+   "wger_translation_id": 2470,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Moffi"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Moffi",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1659",
+   "name": "Lat Pulldown - Cross Body Single Arm",
    "aliases": [],
    "group": "Back",
    "equipment": "Cable",
@@ -4774,20 +4601,21 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The lat pull down is an exercise used to build the muscles of the back.",
-    "While the exercise will primarily target the lats, you will also notice a fair amount of bicep and middle back activation."
+    "Sit at lat pulldown machine with body at a diagonal angle so that only one leg is under the pad.",
+    "Pull the cable down with the opposite arm. this will force the cable to across your body while pulling down.",
+    "Emphasises the stretch of the lat."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/355/view-base",
-   "wger_id": 355,
-   "wger_translation_id": 187,
-   "licence": "CC-BY-SA-3.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+   "source_ref": "https://wger.de/exercise/1659/view-base",
+   "wger_id": 1659,
+   "wger_translation_id": 2780,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "drthurlow"
+    "Shiladree"
    ],
-   "data_licence": "CC-BY-SA-3.0",
-   "data_licence_author": "drthurlow",
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Shiladree",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -4808,7 +4636,6 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "This exercise works the deltoid muscle of the shoulder.",
     "The movement starts with the arms straight, and the hands holding weights at the sides or in front of the body.",
     "Body is in a slight forward-leaning position with hips and knees bent a little.",
     "Arms are kept straight or slightly bent, and raised through an arc of movement in the coronal plane that terminates when the hands are at approximately shoulder height.",
@@ -4833,33 +4660,31 @@
    "video_channel": null
   },
   {
-   "id": "wger-364",
-   "name": "Leg Curl",
+   "id": "wger-1514",
+   "name": "Lateral Walk",
    "aliases": [],
-   "group": "Legs",
-   "equipment": "Machine",
+   "group": "Back",
+   "equipment": "Bodyweight",
    "primary_muscles": [
-    "Hamstrings",
     "Glutes"
    ],
    "secondary_muscles": [],
-   "type": "weight_reps",
+   "type": "bodyweight",
    "steps": [
-    "The leg curl, also known as the hamstring curl, is an isolation exercise that targets the hamstring muscles.",
-    "The exercise involves flexing the lower leg against resistance towards the buttocks.",
-    "Other exercises that can be used to strengthen the hamstrings are the glute-ham raise and the deadlift."
+    "They can be performed with or without resistance bands.",
+    "These exercises strengthen the hip abductors, glutes, and other stabilizing muscles."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/364/view-base",
-   "wger_id": 364,
-   "wger_translation_id": 792,
-   "licence": "CC0-1.0",
-   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_ref": "https://wger.de/exercise/1514/view-base",
+   "wger_id": 1514,
+   "wger_translation_id": 2473,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "BFad07"
+    "cozyGalvinism"
    ],
-   "data_licence": "CC0-1.0",
-   "data_licence_author": "",
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "cozyGalvinism",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -4879,8 +4704,7 @@
    "steps": [
     "Lay on a bench and put your calves behind the leg holder (better if they are hold on around the lower calves).",
     "Hold a grip on the bars to make sure the body is firmly in place.",
-    "Bend your legs bringing the weight up, go slowly back.",
-    "During the exercise the body should not move, all work is done by the legs."
+    "Bend your legs bringing the weight up, go slowly back."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/365/view-base",
@@ -4910,12 +4734,8 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The leg extension is a resistance weight training exercise that targets the quadriceps muscle in the legs.",
-    "The exercise is done using a machine called the Leg Extension Machine.",
     "There are various manufacturers of these machines and each one is slightly different.",
     "Most gym and weight rooms will have the machine in their facility.",
-    "The leg extension is an isolated exercise targeting one specific muscle group, the quadriceps.",
-    "It should not be considered as a total leg workout, such as the squat or deadlift.",
     "The exercise consists of bending the leg at the knee and extending the legs, then lowering them back to the original position."
    ],
    "source": "wger",
@@ -5182,39 +5002,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1296",
-   "name": "Low-Cable Cross-Over - NB",
-   "aliases": [],
-   "group": "Chest",
-   "equipment": "Cable",
-   "primary_muscles": [
-    "Chest"
-   ],
-   "secondary_muscles": [
-    "Shoulders"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "The low-cable cross-over is an isolation movement that uses a cable stack to target the upper portion of the pectoral muscles.",
-    "It is common in upper-body and chest-focused muscle-building workouts, often in combination with presses or flyes from other angles to target all portions of the chest."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1296/view-base",
-   "wger_id": 1296,
-   "wger_translation_id": 2262,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "JackSparrow"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "JackSparrow",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-984",
    "name": "Lunges",
    "aliases": [],
@@ -5246,6 +5033,40 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1530",
+   "name": "Lying Dumbbell Curls",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Take a dumbbell in each hand and lie backwards on a bench, similar to a classic chest press.",
+    "Let your arms hang down at your sides, with the dumbbells possibly touching the floor.",
+    "Now start to lift the dumbbells upwards until your forearms are perpendicular to the ceiling.",
+    "Slowly lower the dumbbells until they almost touch the floor again.",
+    "Keep your ellbows in place to minimize cheating."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1530/view-base",
+   "wger_id": 1530,
+   "wger_translation_id": 2488,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Moffi"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Moffi",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -5285,93 +5106,35 @@
    "video_channel": null
   },
   {
-   "id": "wger-1132",
-   "name": "Machine glute extension",
+   "id": "wger-1490",
+   "name": "Lying Triceps Kickback",
    "aliases": [],
-   "group": "Legs",
-   "equipment": "Machine",
+   "group": "Arms",
+   "equipment": "Dumbbell",
    "primary_muscles": [
-    "Glutes"
+    "Triceps"
    ],
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "A GHD hip extension is one of the best exercises for the glutes.",
-    "While the exercise mainly targets the glutes, it is also excellent for the lower back, the calves and the hamstrings."
+    "Set the bench to an 60deg angle.",
+    "Stand still and rest your upper body on the inclined bench, ensuring a nearly straight line of your entire body.",
+    "Squeeze your shoulder blades together, so that your elbows are located behind your torso with your upper arms nearly parallel to the floor.",
+    "Lift the dumbbells until your arms form a straight line.",
+    "Slowly lower the dumbbells back to the initial position.",
+    "Initial position corresponds to an rectangular position of upper and lower arms."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1132/view-base",
-   "wger_id": 1132,
-   "wger_translation_id": 2109,
+   "source_ref": "https://wger.de/exercise/1490/view-base",
+   "wger_id": 1490,
+   "wger_translation_id": 2453,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "Franpol"
+    "Moffi"
    ],
    "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "Franpol",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1654",
-   "name": "Machine Lateral Raise",
-   "aliases": [],
-   "group": "Shoulders",
-   "equipment": "Machine",
-   "primary_muscles": [
-    "Shoulders"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "The machine lateral raise is an isolation exercise that targets the medial (side) deltoid muscle to build wider, more defined shoulders.",
-    "The machine's fixed path of motion provides greater stability than dumbbells, making it ideal for beginners or those who want to focus solely on muscle activation."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1654/view-base",
-   "wger_id": 1654,
-   "wger_translation_id": 2774,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "roneydya"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "roneydya",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1744",
-   "name": "Machine Side Lateral Raises",
-   "aliases": [],
-   "group": "Shoulders",
-   "equipment": "Machine",
-   "primary_muscles": [
-    "Shoulders"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "Machine side lateral raises are an isolation exercise for the side (lateral) deltoids, performed on a machine for stability, targeting the outer shoulder by lifting pads or handles out to the sides to shoulder height, then lowering slowly, keeping elbows slightly bent and traps down to focus on the delts.",
-    "This exercise helps build shoulder width by preventing swinging and providing constant tension, making it great for beginners or as a finisher."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1744/view-base",
-   "wger_id": 1744,
-   "wger_translation_id": 2874,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "Tierrasverdes"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "Tierrasverdes",
+   "data_licence_author": "Moffi",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -5433,7 +5196,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "The Meadows row is a unilateral row performed with a landmine setup, overhand grip, and staggered stance.",
     "Lean your torso forward and grip the barbell.",
     "Rest the other forearm on the forward leg.",
     "Start this movement by driving the elbow behind you while retracting the shoulder-blade.",
@@ -5451,42 +5213,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "carlos3c",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-418",
-   "name": "Military Press mit SZ-Bar",
-   "aliases": [],
-   "group": "Shoulders",
-   "equipment": "EZ bar",
-   "primary_muscles": [
-    "Shoulders"
-   ],
-   "secondary_muscles": [
-    "Trapezius",
-    "Triceps"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "On an SZ-bar grip your hands on the outside of each bend and stand with your arms straight down, palms facing your legs.",
-    "Pull the bar (bending your arms at the elbow) to your chest, and the push the bar above your head (arms as straight as possible).",
-    "Return the bar to your chest by dropping your arms at the elbows.",
-    "Return the bar to it's origional position (stand with your arms straight down, palms facing your legs.)"
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/418/view-base",
-   "wger_id": 418,
-   "wger_translation_id": 256,
-   "licence": "CC-BY-SA-3.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
-   "licence_authors": [
-    "mbozi1"
-   ],
-   "data_licence": "CC-BY-SA-3.0",
-   "data_licence_author": "mbozi1",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -5565,6 +5291,100 @@
    "video_channel": null
   },
   {
+   "id": "wger-1484",
+   "name": "Omni Cable Cross-over",
+   "aliases": [],
+   "group": "Chest",
+   "equipment": "EZ bar",
+   "primary_muscles": [
+    "Chest"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Position one cable at a high setting and the other at the lowest level setting. Get into a staggered stance in between the cable towers.",
+    "For the cable set high, draw it downward and across your body. This will primarily engage the lower chest."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1484/view-base",
+   "wger_id": 1484,
+   "wger_translation_id": 2447,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Moffi"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Moffi",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1668",
+   "name": "One Arm Overhead Cable Tricep Extension",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Cable",
+   "primary_muscles": [
+    "Triceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Set the pulley at the bottom of the cable machine and grab onto it without using any attachments.",
+    "Extend the cable directly overhead."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1668/view-base",
+   "wger_id": 1668,
+   "wger_translation_id": 2787,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "AlucardEvil40"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "AlucardEvil40",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1701",
+   "name": "One-Arm Heavy Row",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Rowing phase (concentric): Pull the dumbbell toward your lower chest or waist , leading with your elbow .",
+    "Keep your torso stable — avoid twisting or rotating your shoulders.",
+    "Pause at the top and squeeze your lats ."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1701/view-base",
+   "wger_id": 1701,
+   "wger_translation_id": 2820,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-975",
    "name": "One-handed kettlebell curls",
    "aliases": [],
@@ -5625,6 +5445,37 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "nishant0712",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1513",
+   "name": "Overhead Cable Tricep Extension",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Cable",
+   "primary_muscles": [
+    "Triceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Use rope handle with your back against the cable machine.",
+    "Straighten your arms until they are filly extended and reverse the motion resisting on the negative."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1513/view-base",
+   "wger_id": 1513,
+   "wger_translation_id": 2472,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Expenses7000"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Expenses7000",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -5767,6 +5618,38 @@
    "video_channel": null
   },
   {
+   "id": "wger-1580",
+   "name": "Perpendicular Unilateral Landmine Row",
+   "aliases": [],
+   "group": "Shoulders",
+   "equipment": "Barbell",
+   "primary_muscles": [
+    "Shoulders",
+    "Trapezius"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Using a landmine attachment with the barbell running at 90 degrees to either side, hinge slightly at the hips and grip the barbell by the plate sleeve.",
+    "Raise the barbell to chest height, with your upper arm parallel to the floor at the top of the movement."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1580/view-base",
+   "wger_id": 1580,
+   "wger_translation_id": 2528,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "CptnFatbeard"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "CptnFatbeard",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-458",
    "name": "Plank",
    "aliases": [],
@@ -5797,6 +5680,68 @@
    ],
    "data_licence": "CC-BY-SA-3.0",
    "data_licence_author": "YYCfit / BFad07",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1658",
+   "name": "Preacher Curl - Externally Rotated",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Single arm curl that can be done using a dumbbell and a preacher bench, or a preacher curl machine.",
+    "Turn body away from the weight"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1658/view-base",
+   "wger_id": 1658,
+   "wger_translation_id": 2779,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Shiladree"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Shiladree",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1657",
+   "name": "Preacher Curl - Internally Rotated",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Single arm curl that can be done using a dumbbell and a preacher bench, or a preacher curl machine.",
+    "Turn body towards the weight"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1657/view-base",
+   "wger_id": 1657,
+   "wger_translation_id": 2778,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Shiladree"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Shiladree",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -5913,6 +5858,40 @@
    "video_channel": null
   },
   {
+   "id": "wger-1695",
+   "name": "Pull-Ups (Wide Grip)",
+   "aliases": [],
+   "group": "Back",
+   "equipment": "Bodyweight",
+   "primary_muscles": [
+    "Lats"
+   ],
+   "secondary_muscles": [],
+   "type": "bodyweight",
+   "steps": [
+    "Pulling phase (concentric): Drive your elbows down and slightly back , pulling your chest toward the bar .",
+    "Focus on leading with your chest , not your chin.",
+    "Keep your shoulders depressed (avoid shrugging).",
+    "Top position: Chin should clear the bar (or at least reach bar level).",
+    "Pause for a brief squeeze in your lats ."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1695/view-base",
+   "wger_id": 1695,
+   "wger_translation_id": 2814,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "daiben"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "daiben",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-1551",
    "name": "Push-Up",
    "aliases": [],
@@ -5964,7 +5943,6 @@
    ],
    "type": "bodyweight",
    "steps": [
-    "Decline push-ups are another modified version of the traditional push-up that target the upper body muscles in a different way.",
     "To perform a decline push-up, elevate your feet on an elevated surface, such as a bench, chair, or step, while placing your hands on the ground in a push-up position.",
     "Lower your body towards the ground while maintaining a straight line from your shoulders to your ankles, and then push back up to the starting position.",
     "Unlike the inclined push-up, the decline push-up places more emphasis on the shoulders and triceps, while still engaging the chest muscles to a lesser extent.",
@@ -5983,76 +5961,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "anon1337",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1111",
-   "name": "Push-Ups | Incline",
-   "aliases": [],
-   "group": "Chest",
-   "equipment": "Bodyweight",
-   "primary_muscles": [
-    "Chest"
-   ],
-   "secondary_muscles": [
-    "Triceps"
-   ],
-   "type": "bodyweight",
-   "steps": [
-    "Inclined push-ups primarily target the chest muscles (pectoralis major and minor), but also work the triceps, shoulders, and core to a lesser extent.",
-    "Because the upper body is elevated, the incline push-up places less emphasis on the triceps compared to regular push-ups, which may be beneficial for individuals looking to specifically target their chest muscles."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1111/view-base",
-   "wger_id": 1111,
-   "wger_translation_id": 2074,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "anon1337"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "anon1337",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-957",
-   "name": "Quadriped Arm and Leg Raise",
-   "aliases": [],
-   "group": "Back",
-   "equipment": "Bodyweight",
-   "primary_muscles": [
-    "Shoulders",
-    "Glutes",
-    "Serratus",
-    "Trapezius"
-   ],
-   "secondary_muscles": [
-    "Lats"
-   ],
-   "type": "bodyweight",
-   "steps": [
-    "In this exercise, the back muscles and the muscles of the back of the leg and back of the arm are activated by lifting the crossed arm and leg at the same time in the crawling position.",
-    "It also improves balance and proprioception.",
-    "The movement is done symmetrically."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/957/view-base",
-   "wger_id": 957,
-   "wger_translation_id": 1236,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "utkb"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "utkb",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -6128,32 +6036,36 @@
    "video_channel": null
   },
   {
-   "id": "wger-495",
-   "name": "Reverse Curl",
+   "id": "wger-1709",
+   "name": "Reverse Fly Standing",
    "aliases": [],
-   "group": "Arms",
-   "equipment": "Barbell",
+   "group": "Shoulders",
+   "equipment": "Cable",
    "primary_muscles": [
-    "Biceps",
-    "Brachialis"
+    "Shoulders",
+    "Trapezius"
    ],
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "The reverse-grip barbell curl is a variation on the biceps curl where the palms face downward.",
-    "The switch from an underhand to an overhand grip brings the forearm and brachialis muscles more into the exercise."
+    "Stand with a good posture holding a cable in each hand opposite the machine",
+    "Starting with the hands in front of your chest pull the arms out to your side into the shape of a T with the elbows nearly straight",
+    "Slowly release the arms forward to the start",
+    "Repeat with the arms moving into the shape of a Y",
+    "Repeat with the arms in the shape of a W",
+    "Repeat with the arms in the shape of an L by your side"
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/495/view-base",
-   "wger_id": 495,
-   "wger_translation_id": 771,
-   "licence": "CC0-1.0",
-   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source_ref": "https://wger.de/exercise/1709/view-base",
+   "wger_id": 1709,
+   "wger_translation_id": 2832,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "BFad07"
+    "Croak6728"
    ],
-   "data_licence": "CC0-1.0",
-   "data_licence_author": "",
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Croak6728",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -6265,6 +6177,40 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "mike6426",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1485",
+   "name": "Rocking Triceps Pushdown",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "EZ bar",
+   "primary_muscles": [
+    "Triceps"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Set your feet below the rope and lean your upper body towards the rope.",
+    "Set one foot back.",
+    "Push down the rope and lean your entire body back onto the rear foot as you push down to get your hands behind your body.",
+    "Don't forget to bring your chest to the front during the pushdown.",
+    "As you release the rope slowly, lean your body back onto the front foot."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1485/view-base",
+   "wger_id": 1485,
+   "wger_translation_id": 2448,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Moffi"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Moffi",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -6513,64 +6459,35 @@
    "video_channel": null
   },
   {
-   "id": "wger-1620",
-   "name": "Seated Dumbbell Calf Raise",
+   "id": "wger-1680",
+   "name": "Seated figure four",
    "aliases": [],
    "group": "Legs",
-   "equipment": "Dumbbell",
+   "equipment": "Bodyweight",
    "primary_muscles": [
-    "Calves"
+    "Glutes"
    ],
    "secondary_muscles": [],
-   "type": "weight_reps",
+   "type": "bodyweight",
    "steps": [
-    "The seated dumbbell calf raise is a targeted exercise for strengthening the lower leg muscles.",
-    "It follows the same movement pattern as the machine version: you place the weight on your knees, and by extending and flexing your ankles, you move the weight."
+    "Seat on a bench.",
+    "Feet flat on the ground.",
+    "Place your left ankle over your right knee.",
+    "Your right knee stays flat.",
+    "Keep your back straight.",
+    "Gently push your left knee down."
    ],
    "source": "wger",
-   "source_ref": "https://wger.de/exercise/1620/view-base",
-   "wger_id": 1620,
-   "wger_translation_id": 2602,
+   "source_ref": "https://wger.de/exercise/1680/view-base",
+   "wger_id": 1680,
+   "wger_translation_id": 2802,
    "licence": "CC-BY-SA-4.0",
    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
    "licence_authors": [
-    "AlucardEvil40"
+    "ricardodavidrd"
    ],
    "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "AlucardEvil40",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-1289",
-   "name": "Seated Dumbbell Curls",
-   "aliases": [],
-   "group": "Arms",
-   "equipment": "Dumbbell",
-   "primary_muscles": [
-    "Biceps"
-   ],
-   "secondary_muscles": [
-    "Brachialis"
-   ],
-   "type": "weight_reps",
-   "steps": [
-    "Seated Dumbbell Curls are an effective bicep workout that isolates the muscles by stabilizing the upper body, reducing momentum that can detract from the exercise’s effectiveness.",
-    "This exercise is performed sitting down with a dumbbell in each hand, focusing on controlled movement to maximize engagement of the bicep muscles."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1289/view-base",
-   "wger_id": 1289,
-   "wger_translation_id": 2256,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "sTiKyt"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "sTiKyt",
+   "data_licence_author": "ricardodavidrd",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -6636,6 +6553,40 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "cal.zabel",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1714",
+   "name": "Shoulder Dumbbell Pendular Exercise",
+   "aliases": [],
+   "group": "Shoulders",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Shoulders",
+    "Lats",
+    "Chest",
+    "Trapezius"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "Lean forward to rest your hand on a chair or other object, holding a dumbbell in the other hand",
+    "Gently swing the dumbbell in a circular motion"
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1714/view-base",
+   "wger_id": 1714,
+   "wger_translation_id": 2837,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "Croak6728"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "Croak6728",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -6727,10 +6678,8 @@
    "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "The shoulder shrug (usually called simply the shrug) is an exercise in weight training used to develop the upper trapezius muscle.",
     "The lifter stands erect, hands about shoulder width apart, and raises the shoulders as high as possible, and then lowers them, while not bending the elbows, or moving the body at all.",
-    "The lifter may not have as large a range of motion as in a normal shrug done for active flexibility.",
-    "It is usually considered good form if the slope of the shoulders is horizontal in the elevated position."
+    "The lifter may not have as large a range of motion as in a normal shrug done for active flexibility."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/570/view-base",
@@ -6869,7 +6818,6 @@
    ],
    "type": "weight_reps",
    "steps": [
-    "AKA dumbbell side bends.",
     "Stand in line with the hips with slightly bent knees, maintain the natural curvature of the spine, hand stretched by the body, grip the barbell with one hand.",
     "Make slow and controlled torso side flexions till you reach the angle of approximately 45°."
    ],
@@ -6884,39 +6832,6 @@
    ],
    "data_licence": "CC-BY-SA-3.0",
    "data_licence_author": "GiglioRosso",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-580",
-   "name": "Side Plank",
-   "aliases": [],
-   "group": "Core",
-   "equipment": "Bodyweight",
-   "primary_muscles": [
-    "Abs"
-   ],
-   "secondary_muscles": [
-    "Obliques"
-   ],
-   "type": "time",
-   "steps": [
-    "Works your obliques and helps stabilize your spine.",
-    "Lie on your side and support your body between your forearm and knee to your feet."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/580/view-base",
-   "wger_id": 580,
-   "wger_translation_id": 325,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "http://www.bodybuilding.com/"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "http://www.bodybuilding.com/",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -7210,7 +7125,6 @@
    "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "This is a top down rotation movement, and it’s a bit more explosive, too.",
     "Lying with knees bent and feet on the floor, sit up and then drive your left elbow across your entire body toward the right, then come back to center and then finally lower yourself down.",
     "Then hit the other side."
    ],
@@ -7225,6 +7139,48 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "Moffi",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1526",
+   "name": "Ski Machine",
+   "aliases": [],
+   "group": "Full body",
+   "equipment": "Machine",
+   "primary_muscles": [
+    "Calves",
+    "Lats",
+    "Trapezius",
+    "Triceps"
+   ],
+   "secondary_muscles": [
+    "Hamstrings",
+    "Glutes",
+    "Quads",
+    "Abs"
+   ],
+   "type": "time",
+   "steps": [
+    "Start standing on the platform with your feet hip-width apart.",
+    "Reach overhead to grip the handles with your palms facing in.",
+    "Soften your knees, then simultaneously drive your butt back as if you're closing a door behind you while pulling your arms straight down past your hips until your hands pass by the side of your knees.",
+    "Next, bring your arms back overhead while thrusting your hips forward until you're standing with your arms fully extended.",
+    "Repeat for reps, time or distance."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1526/view-base",
+   "wger_id": 1526,
+   "wger_translation_id": 2482,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "flanny"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "flanny",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -7418,39 +7374,6 @@
    "video_channel": null
   },
   {
-   "id": "wger-1593",
-   "name": "Smith Machine Split Squat",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Barbell",
-   "primary_muscles": [
-    "Hamstrings",
-    "Quads"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "The \"Smith Machine Split Squat\" is a strength exercise performed on the Smith machine, ideal for targeting the legs and glutes.",
-    "It involves placing one foot forward and the other back, lowering the body until the front thigh is parallel to the ground while the bar slides vertically along the machine.",
-    "This exercise helps improve stability, correct muscle imbalances, and reduces stress on the back, providing a safe environment for strength training."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/1593/view-base",
-   "wger_id": 1593,
-   "wger_translation_id": 2542,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "workout@rooven.anonaddy.me"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "workout@rooven.anonaddy.me",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
    "id": "wger-599",
    "name": "Snatch",
    "aliases": [],
@@ -7515,41 +7438,6 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "Moffi",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-616",
-   "name": "Squat Thrust",
-   "aliases": [],
-   "group": "Legs",
-   "equipment": "Bodyweight",
-   "primary_muscles": [
-    "Glutes",
-    "Quads",
-    "Abs",
-    "Soleus"
-   ],
-   "secondary_muscles": [],
-   "type": "bodyweight",
-   "steps": [
-    "The burpee, or squat thrust, is a full body exercise used in strength training and as an aerobic exercise.",
-    "The basic movement is performed in four steps and known as a four-count burpee: Begin in a standing position.",
-    "Move into a squat position with your hands on the ground. (count 1) Kick your feet back into a plank position, while keeping your arms extended. (count 2) Immediately return your feet into squat position. (count 3) Stand up from the squat position (count 4)"
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/616/view-base",
-   "wger_id": 616,
-   "wger_translation_id": 795,
-   "licence": "CC0-1.0",
-   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-   "licence_authors": [
-    "BFad07"
-   ],
-   "data_licence": "CC0-1.0",
-   "data_licence_author": "",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -7704,7 +7592,6 @@
    ],
    "type": "bodyweight",
    "steps": [
-    "Standing side crunches are a dynamic exercise that targets the obliques while improving balance and stability.",
     "Stand upright with your feet shoulder-width apart and hands behind your head or holding a dumbbell in one hand.",
     "Lean your torso to one side, contracting your obliques, while bringing your elbow toward your hip (or crunching toward the weight if using a dumbbell).",
     "Return to the starting position and alternate sides or perform all repetitions on one side before switching."
@@ -7951,11 +7838,9 @@
    "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "Toe taps are a core-focused exercise performed lying on your back.",
     "Lie flat with your arms by your sides and your legs raised to a tabletop position (knees bent at 90 degrees).",
     "Slowly lower one foot to gently tap the floor, keeping your core engaged and your lower back pressed into the ground.",
-    "Return to the starting position and alternate legs.",
-    "This exercise strengthens the core while minimizing strain on the lower back."
+    "Return to the starting position and alternate legs."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1425/view-base",
@@ -8011,6 +7896,40 @@
    "video_channel": null
   },
   {
+   "id": "wger-1529",
+   "name": "Toes to bar",
+   "aliases": [],
+   "group": "Core",
+   "equipment": "Pull-up bar",
+   "primary_muscles": [
+    "Abs"
+   ],
+   "secondary_muscles": [
+    "Lats",
+    "Obliques"
+   ],
+   "type": "weight_reps",
+   "steps": [
+    "The name \"Toes to Bar\" says it all: This exercise, in which you hang from a pull-up bar, involves bringing your toes toward the bar, pointing toward your face.",
+    "This really works your abdominal muscles."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1529/view-base",
+   "wger_id": 1529,
+   "wger_translation_id": 2487,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "florian.bussmann"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "florian.bussmann",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-1377",
    "name": "Torso Twist",
    "aliases": [],
@@ -8023,8 +7942,7 @@
    "type": "bodyweight",
    "steps": [
     "Standing Torso Twist WorkoutTarget your core and improve flexibility with this dynamic standing exercise!",
-    "The Standing Torso Twist Workout involves twisting your torso while keeping your feet and hips stable, engaging your obliques, and stretching your entire upper body.",
-    "This movement helps to:Strengthen core musclesIncrease flexibility in the spine and torsoImprove posture and balanceEnhance overall athletic performancePerform 3 sets of 10-15 reps, twisting to each side, to feel the benefits of this effective and efficient workout!"
+    "The Standing Torso Twist Workout involves twisting your torso while keeping your feet and hips stable, engaging your obliques, and stretching your entire upper body."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1377/view-base",
@@ -8070,38 +7988,6 @@
    ],
    "data_licence": "CC-BY-SA-3.0",
    "data_licence_author": "http://www.bodybuilding.com/",
-   "adapted": true,
-   "art_origin": null,
-   "video_url": null,
-   "video_channel": null
-  },
-  {
-   "id": "wger-805",
-   "name": "Tricep Pushdown on Cable",
-   "aliases": [],
-   "group": "Arms",
-   "equipment": "Cable",
-   "primary_muscles": [
-    "Triceps"
-   ],
-   "secondary_muscles": [],
-   "type": "weight_reps",
-   "steps": [
-    "The cable rope push-down is a popular exercise targeting the triceps muscles.",
-    "It's easy to learn and perform, making it a favorite for everyone from beginners to advanced lifters.",
-    "It is usually performed for moderate to high reps, such as 8-12 reps or more per set, as part of an upper-body or arm-focused workout."
-   ],
-   "source": "wger",
-   "source_ref": "https://wger.de/exercise/805/view-base",
-   "wger_id": 805,
-   "wger_translation_id": 1073,
-   "licence": "CC-BY-SA-4.0",
-   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-   "licence_authors": [
-    "cshep442"
-   ],
-   "data_licence": "CC-BY-SA-4.0",
-   "data_licence_author": "cshep442",
    "adapted": true,
    "art_origin": null,
    "video_url": null,
@@ -8275,6 +8161,44 @@
    "video_channel": null
   },
   {
+   "id": "wger-1704",
+   "name": "Tuck L-sit",
+   "aliases": [],
+   "group": "Core",
+   "equipment": "Bodyweight",
+   "primary_muscles": [
+    "Abs"
+   ],
+   "secondary_muscles": [
+    "Brachialis",
+    "Chest",
+    "Quads",
+    "Trapezius",
+    "Triceps"
+   ],
+   "type": "bodyweight",
+   "steps": [
+    "Your hips stay lifted, your spine stays tall, and your feet hover off the ground.",
+    "The goal is to keep your core tight, shoulders depressed, and arms locked out while maintaining the tucked position.",
+    "It’s a core-intensive, shoulder-stabilizing static hold often used as a progression toward the full L-sit."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1704/view-base",
+   "wger_id": 1704,
+   "wger_translation_id": 2825,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "clafal"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "clafal",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
    "id": "wger-1607",
    "name": "Typewriter Pull-ups",
    "aliases": [],
@@ -8292,8 +8216,7 @@
     "Hang from a pull-up bar with an overhand grip, slightly wider than shoulder-width.",
     "Pull yourself up until your chin is above the bar.",
     "At the top position, instead of going straight down, shift your body to one side by extending one arm while keeping the other arm bent.",
-    "Move smoothly from one side to the other, like a typewriter motion, before lowering yourself back down.",
-    "This exercise increases time under tension and strengthens the lats, biceps, and shoulders while building unilateral pulling strength."
+    "Move smoothly from one side to the other, like a typewriter motion, before lowering yourself back down."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1607/view-base",
@@ -8431,7 +8354,6 @@
    "secondary_muscles": [],
    "type": "bodyweight",
    "steps": [
-    "This challenging exercise is a variation of reverse crunches that is made up of three parts in which we’re basically drawing an upside down ‘W’ with our legs.",
     "Start position is lying face up flat on the floor with legs extended at the low point of the outer leg of the ‘W’.",
     "Keeping a strong core and legs straight, go up, rise your hips and then slowly lower your legs down halfway.",
     "Then, lifting your legs back up to the top, rise your hips again, maintaining that straight line, use your core strength to finally come back all the way down to the other outer leg of the W.",
@@ -8722,14 +8644,14 @@
    "secondary_muscles": [],
    "type": "weight_reps",
    "steps": [
-    "Purpose: Improves shoulder stability, posture, and scapular (shoulder blade) control.",
     "Often used in physical therapy and warm-ups.",
     "Starting Position: Stand with feet shoulder-width apart.",
     "Hinge forward at the hips (like a deadlift) keeping your back flat, or lie face down on an incline bench.",
     "Keep your thumbs pointing up throughout.",
     "Y (Arms up): Extend both arms straight forward and upward at a 135-degree angle from your body, forming a \"Y\".",
     "Squeeze your shoulder blades together at the top.",
-    "T (Arms out): Open your arms straight out to the sides, perpendicular to your body, forming a \"T\"."
+    "T (Arms out): Open your arms straight out to the sides, perpendicular to your body, forming a \"T\".",
+    "Focus on pinching your shoulder blades."
    ],
    "source": "wger",
    "source_ref": "https://wger.de/exercise/1885/view-base",
@@ -8742,6 +8664,39 @@
    ],
    "data_licence": "CC-BY-SA-4.0",
    "data_licence_author": "teus_ergaster",
+   "adapted": true,
+   "art_origin": null,
+   "video_url": null,
+   "video_channel": null
+  },
+  {
+   "id": "wger-1683",
+   "name": "Zottman curl",
+   "aliases": [],
+   "group": "Arms",
+   "equipment": "Dumbbell",
+   "primary_muscles": [
+    "Biceps",
+    "Brachialis"
+   ],
+   "secondary_muscles": [],
+   "type": "weight_reps",
+   "steps": [
+    "With your palms facing forward, curl the weights up to your shoulders.",
+    "Turn your hands so that that your palms downwards and slowly return the weights back down.",
+    "Finally face your palms back forward."
+   ],
+   "source": "wger",
+   "source_ref": "https://wger.de/exercise/1683/view-base",
+   "wger_id": 1683,
+   "wger_translation_id": 2803,
+   "licence": "CC-BY-SA-4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "licence_authors": [
+    "meldun"
+   ],
+   "data_licence": "CC-BY-SA-4.0",
+   "data_licence_author": "meldun",
    "adapted": true,
    "art_origin": null,
    "video_url": null,

@@ -6,11 +6,15 @@
 //    line must name one).
 // 3. Equipment: wger's list (main item first by MAIN_EQUIPMENT), or, when wger lists none, a word in the name
 //    (machine, smith, leg press, pulldown, ...). A row whose equipment can't be told is left out.
-// 4. Not a one-sided copy ("… left" / "… right", the other side is the same exercise) and not a stretch (the library is
+// 4. The name is English and not a numbered variant: no word from NON_ENGLISH ("mit", "und", ...), no accented letters,
+//    no trailing variant number ("Bear Walk 2"). The next ranked row takes its place.
+// 4b. Not a one-sided copy ("… left" / "… right", the other side is the same exercise) and not a stretch (the library is
 //    for logged sets).
 // 5. One row per normalised name (case, punctuation and a plural s ignored), across names and aliases. Ranked by how many languages wger has it in (a proxy for how common it is), then by
 //    image count, then id; the top 250 are kept.
-// Steps: the description's numbered list, else the sentences of its first paragraph (max 8), HTML removed. That split is the adaptation
+// Steps: the description's numbered list, else the sentences of its first paragraph (max 8), HTML removed; a sentence that
+// only introduces the exercise (INTRO: "This exercise …", "X is a …", "… targets …") is dropped, and a row left with fewer
+// than 2 steps is skipped. That split is the adaptation
 // ("Steps adapted from wger.de"). Names: first letter upper-cased, otherwise as in wger.
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -34,9 +38,9 @@ function steps(html) {
   // lists are notes and variations)
   const ol = /<ol[^>]*>([\s\S]*?)<\/ol>/i.exec(html);
   const li = ol ? [...ol[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => text(m[1])).filter((s) => s.length >= 8) : [];
-  if (li.length >= 2) return li.slice(0, 8);
+  if (li.length >= 2) return li.filter((x) => !INTRO.test(x)).slice(0, 8);
   const p = /<p[^>]*>([\s\S]*?)<\/p>/i.exec(html);
-  return text(p ? p[1] : html).split(/(?<=[.!?])\s+(?=[A-Z0-9“"])/).map((x) => x.trim()).filter((x) => x.length >= 8).slice(0, 8);
+  return text(p ? p[1] : html).split(/(?<=[.!?])\s+(?=[A-Z0-9“"])/).map((x) => x.trim()).filter((x) => x.length >= 8 && !INTRO.test(x)).slice(0, 8);
 }
 function equipment(r) {
   for (const [w, label] of MAIN_EQUIPMENT) if (r.equipment.includes(w)) {
@@ -50,6 +54,9 @@ function equipment(r) {
 const norm = (s) => s.toLowerCase().replace(/[-_]+/g, ' ').replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
 const key = (s) => norm(s).split(' ').map((w) => w.replace(/(?<=\w\w)s$/, '')).join(' ');
 const authorsOf = (r) => [...new Set([...(r.t.author_history ?? []), r.t.license_author].map((a) => (a ?? '').trim()).filter(Boolean))];
+const NON_ENGLISH = /\b(mit|und|auf|zum|zur|der|das|ohne|bizeps|trizeps|kurzhantel|langhantel|seitheben|liegend|stehend|sitzend|con|avec|sur|para|sentado)\b|[À-ÿ]/i;
+const VARIANT_NO = /\s(\d+|\(\d+\)|v\d+)$/i;
+const INTRO = /^(?!(your|make|first|keep|be|ensure|lean|stand|sit|lie|lay|hold|grab|grip|place|put|take|start|begin|bend|step)\b)(?:(this|these)( \w+)? (exercise|movement|is)\b|in this\b|it (can|helps|works|tightens|should not be considered|is (one|a|an|usually))\b|aka\b|purpose\b|works your\b|full-body\b|the procedure\b|[^.:]{0,80}?\b(is|are) (a|an|one|another|the|designed|ideal|great|very|similar|done|performed|known|used)\b|.*\b(targets?|targeting)\b|.*\bexercise (that|which|for|used|in|performed)\b)/i;
 const SKIP = /\b(left|right)\b|stretch/i;
 const TIME = /\bplank\b|\bhold\b|wall sit|isometric/i;
 
@@ -57,7 +64,7 @@ const seen = new Set();
 const cand = snap.rows
   .filter((r) => text(r.t.description).length >= 120 && r.muscles.length && LICENCE[r.t.license] && DATA_LICENCE[r.license.short_name])
   .filter((r) => r.t.license === 3 || authorsOf(r).length > 0)
-  .filter((r) => !SKIP.test(r.t.name))
+  .filter((r) => !SKIP.test(r.t.name) && !NON_ENGLISH.test(r.t.name) && !VARIANT_NO.test(r.t.name.trim()))
   .map((r) => ({ r, eq: equipment(r) })).filter((x) => x.eq)
   .sort((a, b) => b.r.n_translations - a.r.n_translations || b.r.n_images - a.r.n_images || a.r.id - b.r.id)
   .filter(({ r }) => steps(r.t.description).length >= 2)
