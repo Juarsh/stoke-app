@@ -19,5 +19,6 @@ test('Stoke ids; the Expo slug stays placeholder-fit (EAS project of the signed 
   if (process.env.APP_SLUG || process.env.APP_ANDROID_PACKAGE || process.env.APP_IOS_BUNDLE_ID) return;
   const brand = require('../brand.config.js');
   expect([brand.slug, brand.androidPackage, brand.iosBundleId]).toEqual(['placeholder-fit', 'app.stokefit', 'app.stokefit']);
+  if (!process.env.APP_SCHEME) expect(brand.scheme).toBe('stoke');
   expect(readFileSync(join(__dirname, '../app.config.ts'), 'utf8')).toMatch(/slug: brand\.slug/);
 });

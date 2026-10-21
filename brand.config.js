@@ -5,7 +5,7 @@
 module.exports = {
   name: process.env.APP_NAME || 'Stoke',
   slug: process.env.APP_SLUG || 'placeholder-fit',
-  scheme: process.env.APP_SCHEME || 'placeholderfit',
+  scheme: process.env.APP_SCHEME || 'stoke',
   androidPackage: process.env.APP_ANDROID_PACKAGE || 'app.stokefit',
   iosBundleId: process.env.APP_IOS_BUNDLE_ID || 'app.stokefit',
   inviteBaseUrl: process.env.APP_INVITE_BASE_URL || 'https://example.github.io/kc/j',
