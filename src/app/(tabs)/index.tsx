@@ -113,11 +113,11 @@ export default function Home() {
               {/* "kcal left" drops under the number when it doesn't fit (full-b2 notes, 1.3x) */}
               <Row style={{ alignItems: 'baseline', columnGap: 8, flexWrap: 'wrap', flex: 1, minWidth: 0 }} accessible
                 accessibilityLabel={food.isOver ? `${n(food.over)} calories over` : `${n(food.left)} calories left`}>
-                <T v="display" style={{ fontSize: 48, lineHeight: 54, color: food.isOver ? t.c.over : t.c.text }}>{n(food.isOver ? food.over : food.left)}</T>
+                <T v="display" style={{ fontSize: 44, lineHeight: 50, letterSpacing: -1.2, color: food.isOver ? t.c.over : t.c.text }}>{n(food.isOver ? food.over : food.left)}</T>
                 <T v="bodyStrong" tone={food.isOver ? 'over' : 'text'} style={{ fontSize: 16 }}>{food.isOver ? 'kcal over' : 'kcal left'}</T>
               </Row>
               <Pressable onPress={() => log()} accessibilityRole="button" accessibilityLabel="Log food" style={s.logBtn}>
-                <Icon name="plus" color={t.c.text} size={18} strokeWidth={2.4} /><T v="bodyStrong" style={{ fontSize: 16 }}>Log food</T>
+                <Icon name="plus" color={t.c.text} size={16} strokeWidth={2.4} /><T v="bodyStrong" style={{ fontSize: 15 }}>Log food</T>
               </Pressable>
             </Row>
             <Bar pct={food.kcalPct} color={food.isOver ? t.c.over : t.c.food} />
@@ -203,7 +203,7 @@ const useStyles = makeStyles((t) => ({
   list: { padding: t.space.screen, paddingBottom: t.sizes.nav + t.space.xxl * 2, gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: t.c.card2, alignItems: 'center', justifyContent: 'center' },
   streak: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, minHeight: 34, borderRadius: t.radius.full, backgroundColor: t.c.tintGold },
-  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 48, paddingHorizontal: 16, borderRadius: t.radius.tile, borderWidth: 1.5, borderColor: t.c.cardLine, backgroundColor: t.c.card2 },
+  logBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 48, paddingHorizontal: 12, borderRadius: t.radius.tile, borderWidth: 1.5, borderColor: t.c.cardLine, backgroundColor: t.c.card2 },
   example: { minHeight: 40, paddingHorizontal: 14, justifyContent: 'center', borderRadius: t.radius.full, borderWidth: 1.5, borderColor: t.c.cardLine },
   coach: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 12, paddingLeft: 14, paddingRight: 8, borderRadius: t.radius.card, backgroundColor: t.c.accentTint },
   sheet: { backgroundColor: t.c.sheet, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: 20, paddingBottom: 32, gap: 10,
