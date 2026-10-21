@@ -19,7 +19,11 @@ const P: Record<string, string> = {
   minus: 'M5 12h14', down: 'M7 10l5 5 5-5', chev: 'M9 6l6 6-6 6', x: 'M6 6l12 12M18 6L6 18',
   habit: 'M12 3a9 9 0 100 18 9 9 0 000-18zM8 12.5l2.7 2.7L16 9.8',
   moon: 'M19 14.5A7.5 7.5 0 019.5 5a7.5 7.5 0 109.5 9.5z', play: 'M8 5.5l10 6.5-10 6.5z', up: 'M7 14l5-5 5 5',
-  drop: 'M12 4c3 4 6 7 6 10a6 6 0 01-12 0c0-3 3-6 6-10z', circle: 'M12 5a7 7 0 100 14 7 7 0 000-14z', back: 'M15 5l-7 7 7 7',
+  drop: 'M12 4c3 4 6 7 6 10a6 6 0 01-12 0c0-3 3-6 6-10z',
+  book: 'M4 5h6a2 2 0 012 2v12a2 2 0 00-2-2H4zM20 5h-6a2 2 0 00-2 2v12a2 2 0 012-2h6z',
+  walk: 'M13 3.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM10 21l2-6 3 3v3M8 12l3-3 3 1 2 3M12 9l-1.5 6',
+  pill: 'M10 20.5a4.5 4.5 0 01-6.4-6.4l7-7a4.5 4.5 0 016.4 6.4zM7.5 10.5l6 6',
+  phone: 'M6 3h3l2 5-2.5 1.5a11 11 0 005.5 5.5L15.5 13l5 2v3a2 2 0 01-2 2A16 16 0 014 5a2 2 0 012-2z', circle: 'M12 5a7 7 0 100 14 7 7 0 000-14z', back: 'M15 5l-7 7 7 7',
 };
 const FILLED = new Set(['spark', 'play']);
 export function Icon({ name, color, size = 22, strokeWidth = 1.8 }: { name: string; color: string; size?: number; strokeWidth?: number }) {

@@ -12,6 +12,7 @@ import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { localStore } from './data';
 import { PLANS_KEY, PlansProvider } from './plans';
 import { WORKOUTS_KEY, WorkoutsProvider } from './workouts';
+import { HABITS_KEY, HabitsProvider } from './habits';
 import type { MyFood } from '@/features/myfoods/model';
 import { portionLabel } from './labels';
 import { kc } from './format';
@@ -569,14 +570,14 @@ function useStoreValue() {
     }),
     /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
     deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {});
-      await localStore.save(PLANS_KEY, '').catch(() => {}); await localStore.save(WORKOUTS_KEY, '').catch(() => {}); setS(EMPTY); setWipeGen((g) => g + 1); },
+      await localStore.save(PLANS_KEY, '').catch(() => {}); await localStore.save(WORKOUTS_KEY, '').catch(() => {}); await localStore.save(HABITS_KEY, '').catch(() => {}); setS(EMPTY); setWipeGen((g) => g + 1); },
   };
 }
 export type Store = ReturnType<typeof useStoreValue>;
 const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const v = useStoreValue();
-  return <Ctx.Provider value={v}><PlansProvider wipeGen={v.wipeGen}><WorkoutsProvider wipeGen={v.wipeGen}>{children}</WorkoutsProvider></PlansProvider></Ctx.Provider>;
+  return <Ctx.Provider value={v}><PlansProvider wipeGen={v.wipeGen}><WorkoutsProvider wipeGen={v.wipeGen}><HabitsProvider wipeGen={v.wipeGen}>{children}</HabitsProvider></WorkoutsProvider></PlansProvider></Ctx.Provider>;
 }
 export function useStore(): Store {
   const v = useContext(Ctx);

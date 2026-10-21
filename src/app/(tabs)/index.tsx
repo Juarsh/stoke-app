@@ -1,6 +1,6 @@
 // Home (build-plan item 3, spec §3, full-b2 home / home-empty / home-steps-off): greeting + streak chip, Food card
-// (kcal eaten and left, protein bar, steps bar), Today's workout ink card (item 9), Last 7 days, Coach tip. Habits B2 comes
-// with item 13; nothing stands in for it here. Everything is read from the phone's store (offline).
+// (kcal eaten and left, protein bar, steps bar), Today's workout ink card (item 9), Habits B2 (item 13), Last 7 days, Coach tip.
+// Everything is read from the phone's store (offline).
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
@@ -19,6 +19,7 @@ import { DISHES } from '@/parser';
 import { coachTip, foodCard, homeDate, lastLine, weekStrip } from '@/features/home/model';
 import { weekCount } from '@/features/workout/history';
 import { useWorkouts } from '@/lib/workouts';
+import { HabitsCard } from '@/features/habits/HabitsCard';
 import { TodayCard } from '@/features/plans/TodayCard';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -177,6 +178,8 @@ export default function Home() {
           </Card>
 
           <TodayCard date={d.date} />
+
+          <HabitsCard date={d.date} />
 
           <Card style={{ gap: 10 }}>
             <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
