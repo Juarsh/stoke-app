@@ -10,6 +10,7 @@ import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, needsSer
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { localStore } from './data';
+import type { MyFood } from '@/features/myfoods/model';
 import { portionLabel } from './labels';
 import { kc } from './format';
 import { fillPending, resolvePending } from './pending';
@@ -27,8 +28,10 @@ interface Persisted {
   aiQuota: AiQuota; learned: Learned;
   /** PE: supported units per dish pulled with the server's dish table (the bundled table's are only the start) */
   dishUnits?: DishUnits | null;
+  /** §6 My foods (soft-deleted ones kept with deleted_at, so Undo restores them); on the phone, offline */
+  myFoods: MyFood[];
 }
-const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {} };
+const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {}, myFoods: [] };
 const KEY = 'app-state-v1';
 /** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
 /** The phone's entry is still the one that op sent (the user has not changed it since). */
@@ -437,6 +440,12 @@ function useStoreValue() {
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
     /** Store guard (entryRefusal): typed kcal outside 1-5000, or a counted row with no real number, is refused. Returns the
      * refused ones with the reason; the caller keeps them open and shows it (never dropped silently). */
+    /** My foods: create or replace by id (the caller checked the name clash and limits: foodFromDraft). Never touches
+     * logged rows: they keep their own snapshot. */
+    saveMyFood: (f: MyFood) => upd((p) => ({ ...p, myFoods: p.myFoods.some((x) => x.id === f.id) ? p.myFoods.map((x) => (x.id === f.id ? f : x)) : [...p.myFoods, f] })),
+    /** Soft delete (no confirm): hidden from search, Recent and My foods; Undo restores it. */
+    deleteMyFood: (id: string) => upd((p) => ({ ...p, myFoods: p.myFoods.map((x) => (x.id === id ? { ...x, deleted_at: new Date().toISOString() } : x)) })),
+    restoreMyFood: (id: string) => upd((p) => ({ ...p, myFoods: p.myFoods.map((x) => (x.id === id ? { ...x, deleted_at: null } : x)) })),
     addEntries: (all0: FoodEntry[]): Refused[] => {
       // a dish the phone has no units for: held for review ('Check amount', not counted) until they come down
       const all = all0.map((e) => (needsUnits(e) ? holdForUnits(e) : e));

@@ -45,6 +45,8 @@ export interface FoodEntry {
   kcal_edited?: boolean; protein_edited?: boolean;
   /** S2.1 snapshot: the amount as the user picked it (piece / bowl / g / ml) and its grams; qty / unit stay the table's */
   display_amount?: number; display_unit?: string; grams?: number;
+  /** S2.1: the My food this row was logged from (the row keeps its own snapshot; editing / deleting the food never changes it) */
+  my_food_id?: string;
   /** local only: the variant choices the user picked from, so a variant_required rejection can reopen the chips */
   variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[];
   /** local only: the 35-minute backstop turned this pending AI row into a failed row (typed kcal only; late answers ignored) */

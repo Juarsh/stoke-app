@@ -2,6 +2,7 @@
 // Pure functions only: every number comes from the bundled dish table via parser.recompute (no new values), and the
 // entries go through the store's existing hard gate (entryRefusal) before anything is saved.
 import { DISH_TABLE_VERSION, Dish, DISHES, Item, parser } from '@/parser';
+import { activeFoods, isMine, MyFood } from '@/features/myfoods/model';
 import { dayOf, DAY_START_HOUR, entryFromItem, entryRefusal, FoodEntry, istParts, localDate, slotFor, addDays } from '@/lib/domain';
 
 export type UiUnit = 'piece' | 'bowl' | 'g' | 'ml';
@@ -11,6 +12,10 @@ export const STEP: Record<UiUnit, number> = { piece: 1, bowl: 0.5, g: 25, ml: 50
 export const isDrink = (d: Dish) => d.category === 'drink';
 /** "tandoori roti" -> "Tandoori roti" */
 export const displayName = (d: Pick<Dish, 'name'>) => (d.name ? d.name[0].toUpperCase() + d.name.slice(1) : d.name);
+/** A food in search, Recent, the sheet and the tray: a table dish or one of the user's My foods. */
+export type Food = Dish | MyFood;
+export const foodId = (f: Food) => (isMine(f) ? `mine:${f.id}` : f.id);
+export const foodName = (f: Food) => (isMine(f) ? f.name : displayName(f));
 
 /** Only foods the table can save exactly: no generic (needs_confirm) or unverified-estimate rows (Q3: no AI rows in
  * search). needs_verification rows (rice, egg, milk) stay: picking one by name here is the user's own pick. */
@@ -26,7 +31,9 @@ function serverUnit(d: Dish, u: UiUnit): string {
   return 'gram';
 }
 /** §5.3 / Q4: only piece, bowl, g and ml. The default comes first, g last; drinks also have ml. */
-export function uiUnits(d: Dish): UiUnit[] {
+export function uiUnits(d: Food): UiUnit[] {
+  // a My food: its own unit, plus g when the user gave the grams in one piece / bowl (§6.4)
+  if (isMine(d)) return d.unitGrams && (d.unit === 'piece' || d.unit === 'bowl') ? [d.unit, 'g'] : [d.unit];
   const su = parser.supportedUnits(d.id);
   // §5.3 example: Chai "ml · g". Drinks are ml and g only.
   if (isDrink(d)) return su.includes('gram') ? ['ml', 'g'] : [];
@@ -43,9 +50,10 @@ function preferredUnit(d: Dish): UiUnit {
   if (d.unit === 'katori') return 'bowl';
   return 'g';
 }
-export const defaultUnit = (d: Dish): UiUnit => uiUnits(d)[0];
+export const defaultUnit = (d: Food): UiUnit => uiUnits(d)[0];
 /** The food's default portion in a unit: 1 piece / 1 bowl, or the table's portion grams (ml for drinks). */
-export function defaultAmount(d: Dish, u: UiUnit): number {
+export function defaultAmount(d: Food, u: UiUnit): number {
+  if (isMine(d)) return u === d.unit ? d.amount : Math.max(1, Math.round(d.amount * (d.unitGrams ?? 1)));
   return u === 'piece' || u === 'bowl' ? 1 : Math.max(1, Math.round(d.portion_grams));
 }
 
@@ -72,39 +80,77 @@ export function searchFoods(query: string, table: Dish[] = DISHES, limit = 20): 
   hits.sort((a, b) => a.r - b.r || a.d.name.length - b.d.name.length || a.d.name.localeCompare(b.d.name));
   return hits.slice(0, limit).map((h) => h.d);
 }
-/** Recent: the last table foods logged (newest first, one row each), still in the table and searchable. */
-export function recentFoods(entries: FoodEntry[], limit = 4): Dish[] {
-  const seen = new Set<string>(); const out: Dish[] = [];
-  for (const e of [...entries].filter((x) => !x.deleted_at && x.dish_id).sort((a, b) => (b.eaten_at ?? b.created_at).localeCompare(a.eaten_at ?? a.created_at))) {
-    const d = parser.dishById(e.dish_id!);
-    if (!d || seen.has(d.id) || !searchable(d)) continue;
-    seen.add(d.id); out.push(d);
+/** §6.3: a Mine food's own match: 'strong' (exact or prefix), 'loose' (a word inside the name), or none. */
+function mineRank(f: MyFood, q: string): 'strong' | 'loose' | null {
+  const n = norm(f.name);
+  if (n === q || n.startsWith(q)) return 'strong';
+  if (n.split(' ').some((w) => w.startsWith(q)) || n.includes(q)) return 'loose';
+  const qt = q.split(' '), words = n.split(' ');
+  return qt.length > 1 && qt.every((t) => words.some((w) => w.startsWith(t))) ? 'loose' : null;
+}
+/** Search with My foods (§6.3): an exact / prefix Mine match first, then an exact table match, then a loose Mine match,
+ * then the other table results. A loose Mine match never beats an exact table match. Deleted foods are never found. */
+export function searchAll(query: string, mine: MyFood[], table: Dish[] = DISHES, limit = 20): Food[] {
+  const q = norm(query);
+  if (!q) return [];
+  const hits: { f: Food; tier: number; r: number; len: number }[] = [];
+  for (const f of activeFoods(mine)) { const m = mineRank(f, q); if (m) hits.push({ f, tier: m === 'strong' ? 0 : 2, r: 0, len: f.name.length }); }
+  for (const d of table) {
+    const r = rank(d, q);
+    if (r !== null && searchable(d)) hits.push({ f: d, tier: r === 0 || r === 2 ? 1 : 3, r, len: d.name.length });
+  }
+  hits.sort((a, b) => a.tier - b.tier || a.r - b.r || a.len - b.len || foodName(a.f).localeCompare(foodName(b.f)));
+  return hits.slice(0, limit).map((h) => h.f);
+}
+/** Recent: the last foods logged (newest first, one row each): table foods still searchable, My foods not deleted (shown
+ * as they are now; the logged rows keep their own snapshot). */
+export function recentFoods(entries: FoodEntry[], mine: MyFood[] = [], limit = 4): Food[] {
+  const seen = new Set<string>(); const out: Food[] = [];
+  for (const e of [...entries].filter((x) => !x.deleted_at && (x.dish_id || x.my_food_id)).sort((a, b) => (b.eaten_at ?? b.created_at).localeCompare(a.eaten_at ?? a.created_at))) {
+    const d: Food | undefined = e.my_food_id ? activeFoods(mine).find((f) => f.id === e.my_food_id) : parser.dishById(e.dish_id!);
+    if (!d || seen.has(foodId(d)) || (!isMine(d) && !searchable(d))) continue;
+    seen.add(foodId(d)); out.push(d);
     if (out.length >= limit) break;
   }
   return out;
 }
 
 // ---------- the item sheet / tray rows ----------
-/** A tray row. Edited values are kept per gram, so they scale with the amount and the unit and keep their mark. */
-export interface TrayItem { key: string; dishId: string; unit: UiUnit; amount: number; kcalPerG?: number; proteinPerG?: number }
-export interface Computed { name: string; kcal: number; protein: number; carbs: number; fat: number; grams: number; item: Item; kcalEdited: boolean; proteinEdited: boolean }
+/** A tray row: a table dish (dishId) or a My food (mine: the food as it was when added; dishId ''). Edited values are
+ * kept per gram (per unit of the food's own amount when it has no grams), so they scale with the amount and the unit and
+ * keep their mark. */
+export interface TrayItem { key: string; dishId: string; mine?: MyFood; unit: UiUnit; amount: number; kcalPerG?: number; proteinPerG?: number }
+export interface Computed { name: string; kcal: number; protein: number; carbs: number; fat: number; grams: number; item?: Item; kcalEdited: boolean; proteinEdited: boolean; mine: boolean }
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
-export function newTrayItem(d: Dish, key: string, unit: UiUnit = defaultUnit(d), amount = defaultAmount(d, unit)): TrayItem {
-  return { key, dishId: d.id, unit, amount };
+export function newTrayItem(d: Food, key: string, unit: UiUnit = defaultUnit(d), amount = defaultAmount(d, unit)): TrayItem {
+  return isMine(d) ? { key, dishId: '', mine: d, unit, amount } : { key, dishId: d.id, unit, amount };
+}
+export const trayFood = (t: TrayItem): Food => t.mine ?? parser.dishById(t.dishId)!;
+/** A My food at an amount: its own numbers x (amount / its amount); in g via the grams in one unit. */
+function mineNums(f: MyFood, t: TrayItem) {
+  const perBase = t.unit === f.unit ? t.amount / f.amount : t.amount / (f.amount * (f.unitGrams ?? 1));
+  const grams = t.unit === 'g' || t.unit === 'ml' ? t.amount : f.unitGrams ? t.amount * f.unitGrams : 0;
+  return { kcal: f.kcal * perBase, protein: f.protein * perBase, carbs: (f.carbs ?? 0) * perBase, fat: (f.fat ?? 0) * perBase, grams };
 }
 export function compute(t: TrayItem): Computed {
-  const d = parser.dishById(t.dishId)!;
-  const it = parser.recompute(d.id, t.amount, serverUnit(d, t.unit), d.oil_sensitive ? 'normal' : '');
-  const grams = it.grams;
   const kcalEdited = typeof t.kcalPerG === 'number', proteinEdited = typeof t.proteinPerG === 'number';
+  let base: { kcal: number; protein: number; carbs: number; fat: number; grams: number; item?: Item; name: string };
+  if (t.mine) base = { ...mineNums(t.mine, t), name: t.mine.name };
+  else {
+    const d = parser.dishById(t.dishId)!;
+    const it = parser.recompute(d.id, t.amount, serverUnit(d, t.unit), d.oil_sensitive ? 'normal' : '');
+    base = { kcal: it.kcal.best, protein: it.protein_g.best, carbs: it.carbs_g ?? 0, fat: it.fat_g ?? 0, grams: it.grams, item: it, name: displayName(d) };
+  }
+  const basis = basisOf(t, base.grams);
   return {
-    name: displayName(d), grams, item: it, kcalEdited, proteinEdited,
-    kcal: kcalEdited ? Math.round(t.kcalPerG! * grams) : it.kcal.best,
-    protein: proteinEdited ? r1(t.proteinPerG! * grams) : it.protein_g.best,
-    carbs: it.carbs_g ?? 0, fat: it.fat_g ?? 0,
+    name: base.name, grams: base.grams, item: base.item, kcalEdited, proteinEdited, mine: !!t.mine,
+    kcal: kcalEdited ? Math.round(t.kcalPerG! * basis) : base.kcal,
+    protein: proteinEdited ? r1(t.proteinPerG! * basis) : base.protein,
+    carbs: base.carbs, fat: base.fat,
   };
 }
+const basisOf = (t: TrayItem, grams: number) => (grams > 0 ? grams : t.amount);
 /** Typed amount / stepper value: > 0 and at most 5000 (the table's quantity range). */
 export const amountOk = (n: number) => Number.isFinite(n) && n > 0 && n <= 5000;
 export const canStepDown = (t: Pick<TrayItem, 'unit' | 'amount'>) => t.amount - STEP[t.unit] >= STEP[t.unit] - 1e-9;
@@ -116,32 +162,32 @@ export function stepAmount(t: TrayItem, dir: 1 | -1): TrayItem {
 }
 export function setUnit(t: TrayItem, u: UiUnit): TrayItem {
   if (u === t.unit) return t;
-  const d = parser.dishById(t.dishId)!;
-  return { ...t, unit: u, amount: defaultAmount(d, u) };
+  return { ...t, unit: u, amount: defaultAmount(trayFood(t), u) };
 }
 /** Typed kcal / protein: kept exactly at this amount (and scaled with it after). null clears (Reset). */
 export function editKcal(t: TrayItem, kcal: number | null): TrayItem {
   if (kcal === null) { const { kcalPerG: _k, ...rest } = t; return rest; }
-  return { ...t, kcalPerG: kcal / compute(t).grams };
+  return { ...t, kcalPerG: kcal / basisOf(t, compute(t).grams) };
 }
 export function editProtein(t: TrayItem, p: number | null): TrayItem {
   if (p === null) { const { proteinPerG: _p, ...rest } = t; return rest; }
-  return { ...t, proteinPerG: p / compute(t).grams };
+  return { ...t, proteinPerG: p / basisOf(t, compute(t).grams) };
 }
 export const resetEdits = (t: TrayItem): TrayItem => editProtein(editKcal(t, null), null);
 export const isEdited = (t: TrayItem) => typeof t.kcalPerG === 'number' || typeof t.proteinPerG === 'number';
 
 /** Quick + : the default amount; a food already in the tray (same unit) gets it added to its row. */
-export function quickAdd(tray: TrayItem[], d: Dish, key: string): TrayItem[] {
+const sameFood = (x: TrayItem, d: Food) => (isMine(d) ? x.mine?.id === d.id : !x.mine && x.dishId === d.id);
+export function quickAdd(tray: TrayItem[], d: Food, key: string): TrayItem[] {
   const u = defaultUnit(d), add = defaultAmount(d, u);
-  const i = tray.findIndex((x) => x.dishId === d.id && x.unit === u);
+  const i = tray.findIndex((x) => sameFood(x, d) && x.unit === u);
   if (i < 0) return [...tray, newTrayItem(d, key, u, add)];
   return tray.map((x, j) => (j === i ? { ...x, amount: Math.min(5000, x.amount + add) } : x));
 }
 /** "×N" for a food in the tray: its amount in default portions (at least 1). */
-export function trayCount(tray: TrayItem[], d: Dish): number {
+export function trayCount(tray: TrayItem[], d: Food): number {
   let n = 0;
-  for (const x of tray) if (x.dishId === d.id) n += Math.max(1, Math.round(x.amount / defaultAmount(d, x.unit)));
+  for (const x of tray) if (sameFood(x, d)) n += Math.max(1, Math.round(x.amount / defaultAmount(d, x.unit)));
   return n;
 }
 /** Tray total: the exact sum of the rows (rounded once, like the day totals). */
@@ -211,6 +257,7 @@ export const dayStartLine = (dayStartHour = DAY_START_HOUR) =>
   `The day starts at ${dayStartHour} AM, so ${dayStartHour > 1 ? 1 : 0} AM counts towards the day before.`;
 
 // ---------- Log ----------
+const LEGACY_UNIT: Record<UiUnit, string> = { piece: 'count', bowl: 'katori', g: 'gram', ml: 'gram' };
 /** "Log N items": N entries at the chosen time, or the reasons none can be saved (all-or-nothing, §5.2). */
 export function buildEntries(tray: TrayItem[], at: Date, o: { now?: Date; newId: () => string; dayStartHour?: number }):
   { entries: FoodEntry[]; refused: { key: string; reason: string }[] } {
@@ -218,9 +265,19 @@ export function buildEntries(tray: TrayItem[], at: Date, o: { now?: Date; newId:
   const local_date = dayOf(at, o.dayStartHour ?? DAY_START_HOUR), slot = slotFor(at);
   const entries: FoodEntry[] = [], refused: { key: string; reason: string }[] = [];
   for (const t of tray) {
-    const c = compute(t), d = parser.dishById(t.dishId)!;
-    const variant = parser.variantGroup(d.id) ? { variant_dish_id: d.id } : {}; // the user picked this exact food
-    const base = entryFromItem({ ...c.item, ...variant } as Item, { slot, raw_text: c.name, local_date, tableVersion: DISH_TABLE_VERSION, now, id: o.newId() });
+    const c = compute(t);
+    let base: FoodEntry;
+    if (t.mine) {
+      // a My food is the user's own numbers (custom on the server); the row is a snapshot of the food as logged
+      const r = (x: number) => ({ low: x, best: x, high: x }), ts = now.toISOString();
+      base = { id: o.newId(), local_date, slot, raw_text: c.name, dish_id: null, custom_name: c.name, qty: t.amount, unit: LEGACY_UNIT[t.unit], oil_level: '',
+        kcal: r(c.kcal), protein_g: r(c.protein), carbs_g: c.carbs, fat_g: c.fat, source: 'custom', source_note: 'My food', confirmed: true,
+        dish_table_version: DISH_TABLE_VERSION, created_at: ts, updated_at: ts, deleted_at: null, my_food_id: t.mine.id };
+    } else {
+      const d = parser.dishById(t.dishId)!;
+      const variant = parser.variantGroup(d.id) ? { variant_dish_id: d.id } : {}; // the user picked this exact food
+      base = entryFromItem({ ...c.item, ...variant } as Item, { slot, raw_text: c.name, local_date, tableVersion: DISH_TABLE_VERSION, now, id: o.newId() });
+    }
     const snap = { eaten_at: at.toISOString(), display_amount: t.amount, display_unit: t.unit, grams: c.grams };
     let e: FoodEntry = { ...base, ...snap };
     if (c.kcalEdited || c.proteinEdited) {
