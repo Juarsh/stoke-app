@@ -42,7 +42,14 @@ describe('B1: Health Connect in the release build', () => {
     expect(home).toMatch(/onPress=\{async \(\) => \{ if \(missing\)[^\n]*connectSteps\(\)/);
   });
   test('SYSTEM_ALERT_WINDOW is blocked in app.config (removed from the merged manifest)', () => {
-    expect(src('app.config.ts')).toMatch(/blockedPermissions: \['android\.permission\.SYSTEM_ALERT_WINDOW'\]/);
+    // the list grew for expo-notifications (5f3b993), so the evaluated config is checked instead of one literal line
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cfg = require('../app.config').default as { android: { blockedPermissions: string[]; permissions: string[] } };
+    expect(cfg.android.blockedPermissions).toContain('android.permission.SYSTEM_ALERT_WINDOW');
+    for (const p of ['com.google.android.c2dm.permission.RECEIVE', 'android.permission.WAKE_LOCK', 'me.everything.badger.permission.BADGE_COUNT_WRITE'])
+      expect(cfg.android.blockedPermissions).toContain(p);
+    expect(cfg.android.blockedPermissions).not.toContain('android.permission.POST_NOTIFICATIONS');
+    expect(cfg.android.blockedPermissions).not.toContain('android.permission.RECEIVE_BOOT_COMPLETED');
   });
 });
 
