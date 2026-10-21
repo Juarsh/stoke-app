@@ -21,7 +21,15 @@ var testDBURL string
 
 // TEST_PG_ADMIN_URL: a server connection whose role can CREATE DATABASE
 // (default postgres://calorie:calorie@localhost:5432/postgres).
+//
+// TEST_APP_DB_URL (optional): run against this existing test database
+// instead (its public schema is dropped and rebuilt by every test), with
+// no database created or dropped.
 func TestMain(m *testing.M) {
+	if u := os.Getenv("TEST_APP_DB_URL"); u != "" {
+		testDBURL = u
+		os.Exit(m.Run())
+	}
 	admin := os.Getenv("TEST_PG_ADMIN_URL")
 	if admin == "" {
 		admin = "postgres://calorie:calorie@localhost:5432/postgres"
