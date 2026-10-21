@@ -126,11 +126,11 @@ function ExerciseCard({ x, repo }: { x: SessionExercise; repo: ExerciseRepo }) {
   const g0 = firstOpen >= 0 ? ghost(prev, firstOpen, x.target) : null;
   const hint = g0 && g0.reps && !x.sets[firstOpen].kg_in && !x.sets[firstOpen].reps_in && prev.length
     ? `Grey is last time. Tap ✓ to log ${kind === 'weight' ? `${g0.kg} × ${g0.reps}` : prevLabel({ kg: g0.kg ? Number(g0.kg) : null, reps: Number(g0.reps) }, kind)}.` : null;
-  const col = { set: 34, done: 52 };
+  const col = { set: 28, done: 50 };
   const box = (val: string, ph: string, label: string, onChange: (v: string) => void, done: boolean) => done
-    ? <T v="bodyStrong" style={{ flex: 1, textAlign: 'center', fontSize: 17 }} accessibilityLabel={`${label} ${val || ph}`}>{val || ph}</T>
+    ? <T v="bodyStrong" style={{ flex: 1, flexBasis: 0, minWidth: 0, textAlign: 'center', fontSize: 17 }} accessibilityLabel={`${label} ${val || ph}`}>{val || ph}</T>
     : <TextInput value={val} onChangeText={onChange} placeholder={ph} placeholderTextColor={t.c.muted} keyboardType="decimal-pad" accessibilityLabel={label} selectionColor={t.c.em}
-      style={{ flex: 1, minHeight: 48, borderRadius: 12, backgroundColor: t.c.card2, textAlign: 'center', fontSize: 17, color: t.c.text, fontFamily: t.type.body.fontFamily }} />;
+      style={{ flex: 1, flexBasis: 0, minWidth: 0, width: 0, minHeight: 48, borderRadius: 12, backgroundColor: t.c.card2, textAlign: 'center', fontSize: 17, color: t.c.text, fontFamily: t.type.body.fontFamily }} />;
   return (
     <View style={card} testID={`ex-${x.exercise_id}`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingTop: 12 }}>
@@ -142,9 +142,9 @@ function ExerciseCard({ x, repo }: { x: SessionExercise; repo: ExerciseRepo }) {
           <T v="bodyStrong" style={{ fontSize: 20 }}>⋯</T>
         </Pressable>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 8 }} importantForAccessibility="no-hide-descendants">
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, gap: 6 }} importantForAccessibility="no-hide-descendants">
         {[['SET', col.set], ['PREVIOUS', 0], [kgHead, 0], [repsHead, 0], ['DONE', col.done]].map(([h, wd]) => (
-          <T key={String(h)} v="eyebrow" tone="text2" style={{ fontSize: 12, textAlign: h === 'PREVIOUS' ? 'left' : 'center', ...(wd ? { width: Number(wd) } : { flex: h === 'PREVIOUS' ? 1.3 : 1 }) }}>{String(h)}</T>
+          <T key={String(h)} v="eyebrow" tone="text2" style={{ fontSize: 12, textAlign: h === 'PREVIOUS' ? 'left' : 'center', ...(wd ? { width: Number(wd) } : { flex: h === 'PREVIOUS' ? 1.5 : 1, flexBasis: 0, minWidth: 0 }) }}>{String(h)}</T>
         ))}
       </View>
       {x.sets.map((y, i) => {
@@ -153,10 +153,10 @@ function ExerciseCard({ x, repo }: { x: SessionExercise; repo: ExerciseRepo }) {
         const ph = kind === 'weight' ? g.kg : g.kg ? `BW +${g.kg}` : 'BW';
         return (
           <View key={y.id} style={{ backgroundColor: y.done ? t.c.accentTint : 'transparent', borderTopWidth: 1, borderTopColor: t.c.lineSoft }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, gap: 8, minHeight: 60 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 6, minHeight: 60 }}>
               <T v="bodyStrong" style={{ width: col.set, textAlign: 'center', fontSize: 16 }}>{String(i + 1)}</T>
-              <T tone="text2" style={{ flex: 1.3, fontSize: 14 }}>{prevLabel(prev[i], kind)}</T>
-              {kind === 'time' ? <T tone="muted" style={{ flex: 1, textAlign: 'center' }}>—</T>
+              <T tone="text2" style={{ flex: 1.5, flexBasis: 0, minWidth: 0, fontSize: 14 }}>{prevLabel(prev[i], kind)}</T>
+              {kind === 'time' ? <T tone="muted" style={{ flex: 1, flexBasis: 0, textAlign: 'center' }}>—</T>
                 : box(y.done ? (kind === 'weight' ? y.kg_in : '') : y.kg_in, y.done ? (kind === 'weight' ? '' : y.kg ? `BW +${y.kg_in}` : 'BW') : ph, `Set ${i + 1} ${kind === 'weight' ? 'kg' : 'added kg'}`,
                   (v) => { setErrs((m) => ({ ...m, [y.id]: '' })); w.setInput(x.id, y.id, 'kg_in', v); }, y.done)}
               {box(y.reps_in, g.reps, `Set ${i + 1} ${kind === 'time' ? 'seconds' : 'reps'}`, (v) => { setErrs((m) => ({ ...m, [y.id]: '' })); w.setInput(x.id, y.id, 'reps_in', v); }, y.done)}
