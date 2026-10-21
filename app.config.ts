@@ -38,6 +38,8 @@ const config: ExpoConfig = {
   experiments: { typedRoutes: true },
   extra: {
     brand,
+    // Dev-only: lets a signed-in Expo Go open the dev server (signed manifest). Empty in release builds.
+    ...(env.EAS_PROJECT_ID ? { eas: { projectId: env.EAS_PROJECT_ID } } : {}),
     apiUrl: env.EXPO_PUBLIC_API_URL || '',
     googleAndroidClientId: env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '',
     googleWebClientId: env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
