@@ -21,7 +21,7 @@ import { Habits, HABITS_KEY, useHabits } from '../src/lib/habits';
 import { ALL_DAYS, Habit, HabitLog, snapOf } from '../src/features/habits/model';
 import { HabitForm } from '../src/features/habits/HabitForm';
 import { HabitsScreen } from '../src/features/habits/HabitsScreen';
-import { HabitDetail } from '../src/features/habits/HabitDetail';
+import { HabitDetail, MIN_TOUCH, PAGE_PAD, WEEK_BLEED, WEEK_INSET, weekCellDp } from '../src/features/habits/HabitDetail';
 import { HabitToastHost } from '../src/features/habits/HabitToastHost';
 
 const today = dayOf();
@@ -210,6 +210,21 @@ describe('Habit detail', () => {
     } else {
       expect(new Date(today + 'T00:00:00Z').getUTCDay()).toBe(1); // only Monday has no past day this week
     }
+    await act(async () => { r.unmount(); });
+  });
+  test('Tester O3: the This week days are 48dp touch targets on a 360dp phone, squares about the same size as before', async () => {
+    expect(weekCellDp(360)).toBeGreaterThanOrEqual(48);
+    expect(weekCellDp(360) - 2 * WEEK_INSET).toBeGreaterThan((360 - 2 * PAGE_PAD - 6 * 6) / 7); // was ≈ 40.6dp
+    const h = H({ short_name: 'Read', starts_on: addDays(today, -30) });
+    seed([h]);
+    const r = await mount(<HabitDetail id={h.id} />);
+    const flat = (st: unknown) => Object.assign({}, ...[st].flat(9).filter(Boolean));
+    const row = r.root.findAll((x) => typeof x.type === 'string' && x.props.testID === 'week-row')[0];
+    expect(flat(row.props.style)).toMatchObject({ flexDirection: 'row', marginHorizontal: -WEEK_BLEED });
+    expect(flat(row.props.style).gap).toBeUndefined(); // no dead gaps between targets
+    const days = r.root.findAll((x) => typeof x.type === 'string' && /^day-\d{4}-\d\d-\d\d$/.test(String(x.props.testID ?? '')));
+    expect(days).toHaveLength(7);
+    for (const d of days) expect(flat(d.props.style)).toMatchObject({ width: '100%', minHeight: MIN_TOUCH, padding: WEEK_INSET });
     await act(async () => { r.unmount(); });
   });
 });

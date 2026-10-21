@@ -19,6 +19,12 @@ import { Box, Confirm, Header } from '../plans/parts';
 import { AmountSheet } from './AmountSheet';
 import { DAY_NAMES, daysCount, isDue, logDateError, logOf, metaLine, partialText, snapOf, streak, targetText, weekCells } from './model';
 
+/** Tester O3: each "This week" day is a 48dp touch target on a 360dp phone. The row bleeds 8dp into the 20dp page padding
+ *  (7 × 48 = 336 = 360 − 2 × 12) and the old 6dp gaps became a 3dp inset around each square, so the squares look the same
+ *  (about 42dp at 360dp, was 41) while the whole cell is tappable. */
+export const PAGE_PAD = 20, WEEK_BLEED = 8, WEEK_INSET = 3, MIN_TOUCH = 48;
+export const weekCellDp = (screenDp: number) => (screenDp - 2 * (PAGE_PAD - WEEK_BLEED)) / 7;
+
 export function HabitDetail({ id }: { id: string }) {
   const t = useTheme(); const router = useRouter(); const hb = useHabits(); const st = useStore(); const today = useLogDay();
   const [amount, setAmount] = useState(false);
@@ -55,7 +61,7 @@ export function HabitDetail({ id }: { id: string }) {
           style={{ minHeight: 48, minWidth: 48, alignItems: 'flex-end', justifyContent: 'center' }}>
           <T v="bodyStrong" style={{ color: t.c.accentText, fontSize: 17 }}>Edit</T>
         </Pressable>} />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, gap: 14 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: PAGE_PAD, paddingBottom: 40, gap: 14 }}>
         <View style={{ gap: 4 }}>
           <T v="title" accessibilityRole="header" style={{ fontSize: 32, lineHeight: 38 }}>{h.name}</T>
           <T tone="text2" style={{ fontSize: 15 }}>{metaLine(h)}</T>
@@ -74,7 +80,7 @@ export function HabitDetail({ id }: { id: string }) {
           </View>
         </Pressable>
         <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 17, marginTop: 4 }}>This week</T>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
+        <View style={{ flexDirection: 'row', marginHorizontal: -WEEK_BLEED }} testID="week-row">
           {weekCells(s, h, today).map((c, i) => {
             const can = !c.isToday && (c.cell === 'missed' || c.cell === 'done' || c.cell === 'off') && !logDateError(c.date, today);
             const state = c.cell === 'done' ? 'done' : c.cell === 'missed' ? 'missed' : c.cell === 'future' ? 'not yet' : c.cell === 'before' ? 'before the start' : c.cell === 'off' ? 'not planned' : 'not done yet';
@@ -83,11 +89,13 @@ export function HabitDetail({ id }: { id: string }) {
                 <T v={c.isToday ? 'bodyStrong' : 'body'} tone={c.isToday ? 'text' : 'text2'} style={{ fontSize: 13 }}>{c.isToday ? 'Today' : DAY_NAMES[i]}</T>
                 <Pressable disabled={!can} onPress={() => toggle(c.date)} accessibilityRole={can ? 'button' : undefined} testID={`day-${c.date}`}
                   accessibilityLabel={`${dayLabel(c.date)}, ${state}${can ? (c.cell === 'done' ? '. Double-tap to undo' : '. Double-tap to log it') : ''}`}
-                  style={{ width: '100%', aspectRatio: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+                  style={{ width: '100%', minHeight: MIN_TOUCH, padding: WEEK_INSET, justifyContent: 'center' }}>
+                  <View style={{ width: '100%', aspectRatio: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
                     backgroundColor: c.cell === 'done' ? t.c.train : c.cell === 'missed' ? t.c.card2 : c.cell === 'future' || c.cell === 'before' || c.cell === 'off' ? 'transparent' : t.c.card,
                     borderWidth: c.isToday ? 2 : c.cell === 'future' ? 1.5 : 0, borderStyle: c.cell === 'future' ? 'dashed' : 'solid',
                     borderColor: c.isToday ? t.c.text : t.c.lineSoft, opacity: c.cell === 'future' ? 0.7 : 1 }}>
-                  {c.cell === 'done' ? <T style={{ color: fgDone, fontSize: 16 }}>✓</T> : c.cell === 'before' ? <T tone="muted" style={{ fontSize: 16 }}>–</T> : null}
+                    {c.cell === 'done' ? <T style={{ color: fgDone, fontSize: 16 }}>✓</T> : c.cell === 'before' ? <T tone="muted" style={{ fontSize: 16 }}>–</T> : null}
+                  </View>
                 </Pressable>
               </View>
             );
