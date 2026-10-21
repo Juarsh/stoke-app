@@ -100,7 +100,7 @@ export default function Onboarding() {
       <T v="bodyStrong">Sex</T>
       <Choice label="Sex" small value={sex} onChange={setSex} options={[{ value: 'm', label: 'Male' }, { value: 'f', label: 'Female' }, { value: 'x', label: 'Prefer not to say' }]} />
       <T v="caption" tone="muted">Only used to work out your target. Stays on this phone.</T>
-      <Row style={{ gap: 8 }}>
+      <Row style={{ gap: 8, alignItems: 'flex-start' }}>
         <View style={{ flex: 1 }}><NumField label="Height" unit="cm" value={h} onChange={setH} onBlur={leave('heightCm')} error={shown('heightCm')} /></View>
         <View style={{ flex: 1 }}><NumField label="Weight" unit="kg" value={w} onChange={setW} onBlur={leave('weightKg')} error={shown('weightKg')} /></View>
       </Row>
