@@ -178,6 +178,8 @@ export function localDate(d: Date = new Date()): string {
   return `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
 }
 /** Spec §4: the day starts at 4 AM (per-user setting, default 04:00): 00:00–03:59 counts towards the day before. */
+/** When a row was eaten (§4, §12.3): eaten_at, or created_at for rows from before eaten-at existed. */
+export const eatenAt = (e: { eaten_at?: string; created_at: string }) => e.eaten_at ?? e.created_at;
 export const DAY_START_HOUR = 4;
 /** THE day boundary on the phone: the log day (YYYY-MM-DD, IST) a moment belongs to, with the day start. Home, the 7-day
  * strip, Today, streak, steps, Progress, the coach and every saved local_date use it ("today" = dayOf()). localDate is

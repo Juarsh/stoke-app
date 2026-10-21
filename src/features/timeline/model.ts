@@ -1,12 +1,12 @@
 // Food timeline (spec §4, Q10, Q12): a day's counted entries by eaten-at time, in display-only blocks (entries within 45
 // minutes of each other), a logged row as a tray item for the v4 item sheet (Update), and the edited row it saves.
-import { countedNums, entryLabel, FoodEntry } from '@/lib/domain';
+import { countedNums, eatenAt, entryLabel, FoodEntry } from '@/lib/domain';
 import { parser } from '@/parser';
 import type { MyFood } from '@/features/myfoods/model';
-import { amountLabel, buildEntries, compute, TrayItem, uiUnits, UiUnit } from '@/features/logfood/model';
+import { amountLabel, buildEntries, compute, editKcal, editProtein, TrayItem, uiUnits, UiUnit } from '@/features/logfood/model';
 
 export const BLOCK_GAP_MIN = 45;
-export const timeOf = (e: FoodEntry) => e.eaten_at ?? e.created_at;
+export const timeOf = (e: FoodEntry) => eatenAt(e);
 export interface Block { key: string; start: string; entries: FoodEntry[]; kcal: number }
 /** Blocks: sorted by time; an entry within 45 minutes of the previous one joins its block (45:00 joins, 45:01 does not). */
 export function blocks(entries: FoodEntry[]): Block[] {
@@ -38,24 +38,30 @@ export function rowAmount(e: FoodEntry): { unit: UiUnit; amount: number } {
 export const amountText = (e: FoodEntry) => { const a = rowAmount(e); return amountLabel(a.unit, a.amount); };
 
 /** True when the row is a plain table row the sheet can recompute (a dish, not edited, not an AI reading). */
-const tableRow = (e: FoodEntry) => !!e.dish_id && e.source === 'table' && !e.kcal_edited && !e.protein_edited && !!parser.dishById(e.dish_id);
+const tableRow = (e: FoodEntry) => !!e.dish_id && e.source === 'table' && !!parser.dishById(e.dish_id);
 /** A logged row as a tray item for the item sheet (Update). A table row recomputes from the table; any other row (My food,
  * typed, edited, AI) scales from its own saved snapshot, so a past My food row never takes the food's later values. */
 export function trayFromEntry(e: FoodEntry): TrayItem {
   const a = rowAmount(e);
-  if (tableRow(e)) {
-    const d = parser.dishById(e.dish_id!)!;
-    return uiUnits(d).includes(a.unit) ? { key: e.id, dishId: d.id, unit: a.unit, amount: a.amount } : { key: e.id, dishId: d.id, unit: 'g', amount: Math.round(e.grams ?? 100) };
+  const d = e.dish_id && e.source === 'table' ? parser.dishById(e.dish_id) : undefined;
+  if (d) {
+    const base: TrayItem = uiUnits(d).includes(a.unit) ? { key: e.id, dishId: d.id, unit: a.unit, amount: a.amount } : { key: e.id, dishId: d.id, unit: 'g', amount: Math.round(e.grams ?? 100) };
+    // a typed kcal / protein comes back as typed (the "edited" pill), so Reset returns the table's own values (§5.2)
+    const k = e.kcal_edited ? editKcal(base, e.kcal.best) : base;
+    return e.protein_edited ? editProtein(k, e.protein_g.best) : k;
   }
   const snap: MyFood = { id: e.my_food_id ?? '', name: entryLabel(e), unit: a.unit, amount: a.amount, kcal: e.kcal.best, protein: e.protein_g.best,
     carbs: e.carbs_g, fat: e.fat_g, created_at: e.created_at, updated_at: e.updated_at, deleted_at: null };
-  return { key: e.id, dishId: '', mine: snap, unit: a.unit, amount: a.amount };
+  const t: TrayItem = { key: e.id, dishId: '', mine: snap, unit: a.unit, amount: a.amount };
+  // a snapshot row keeps its edited flags (its own values are the typed ones)
+  const k = e.kcal_edited ? editKcal(t, e.kcal.best) : t;
+  return e.protein_edited ? editProtein(k, e.protein_g.best) : k;
 }
 /** The edited row: the sheet's numbers and the chosen time on the old row's identity (id, server version, flags), for
  * store.updateEntry (the existing sync / version path). null when nothing changed. */
 export function entryFromEdit(old: FoodEntry, t: TrayItem, at: Date, now = new Date()): { entry: FoodEntry | null; reason?: string } {
   const before = trayFromEntry(old);
-  const same = before.unit === t.unit && before.amount === t.amount && t.kcalPerG === undefined && t.proteinPerG === undefined && Date.parse(timeOf(old)) === at.getTime();
+  const same = before.unit === t.unit && before.amount === t.amount && before.kcalPerG === t.kcalPerG && before.proteinPerG === t.proteinPerG && Date.parse(timeOf(old)) === at.getTime();
   if (same) return { entry: null };
   const { entries, refused } = buildEntries([t], at, { now, newId: () => old.id });
   if (refused.length) return { entry: null, reason: refused[0].reason };
@@ -71,6 +77,7 @@ export function entryFromEdit(old: FoodEntry, t: TrayItem, at: Date, now = new D
     source_note: snapshotRow ? old.source_note : n.source_note, dish_table_version: snapshotRow ? old.dish_table_version : n.dish_table_version,
     display_amount: t.amount, display_unit: t.unit, grams: c.grams || old.grams,
     variant_dish_id: snapshotRow ? old.variant_dish_id : n.variant_dish_id,
+    // typed numbers stay flagged (an edited row is a snapshot without its table dish, so its typed value is all it has)
     kcal_edited: old.kcal_edited || c.kcalEdited || undefined, protein_edited: old.protein_edited || c.proteinEdited || undefined,
     my_food_id: old.my_food_id,
   };

@@ -1,10 +1,13 @@
 // Home (build-plan item 3, spec §3): pure numbers for the Food card, the Last 7 days strip and the Coach tip.
 // Hard gate: every number is the sum of the counted rows (dayTotals / countedNums), the same rule as the rest of the app.
 import { coachPicks, Suggestion } from '@/lib/coach';
-import { addDays, counted, dayTotals, Diet, displayName, FoodEntry } from '@/lib/domain';
+import { addDays, counted, dayTotals, Diet, displayName, eatenAt, FoodEntry } from '@/lib/domain';
 import type { Dish } from '@/parser/parser';
 
 const IST = 'Asia/Kolkata';
+
+/** Home's date line for the log day ("Wednesday 21 Oct"): from 00:00 to 03:59 that is still the previous day (4 AM start). */
+export const homeDate = (date: string) => new Date(`${date}T12:00:00+05:30`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: IST }).replace(',', '');
 
 /** Food card: eaten, left (never negative) or over, protein against target, bar fractions clamped 0..1. */
 export function foodCard(dayEntries: FoodEntry[], kcalTarget: number, proteinTarget: number) {
@@ -18,12 +21,13 @@ export function foodCard(dayEntries: FoodEntry[], kcalTarget: number, proteinTar
   };
 }
 
-/** "Last: 1:15 PM · 3 roti, rajma, rice": the latest counted row and the rows logged within 45 min before it. */
+/** "Last: 1:15 PM · 3 roti, rajma, rice": the latest counted row by eaten-at time (§4, §12.3; not when it was logged) and the
+ * rows eaten within 45 min before it. */
 export function lastLine(dayEntries: FoodEntry[]): string | null {
-  const rows = dayEntries.filter(counted).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const rows = dayEntries.filter(counted).sort((a, b) => Date.parse(eatenAt(a)) - Date.parse(eatenAt(b)));
   if (!rows.length) return null;
-  const last = rows[rows.length - 1]; const end = Date.parse(last.created_at);
-  const block = rows.filter((e) => end - Date.parse(e.created_at) <= 45 * 60_000);
+  const last = rows[rows.length - 1]; const end = Date.parse(eatenAt(last));
+  const block = rows.filter((e) => end - Date.parse(eatenAt(e)) <= 45 * 60_000);
   const time = new Date(end).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: IST });
   const names = [...new Set(block.map((e) => displayName(e.custom_name || '', e.dish_id)))];
   return `Last: ${time} · ${names.join(', ')}`;
