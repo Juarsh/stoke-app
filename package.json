@@ -70,5 +70,12 @@
       "/node_modules/",
       "/dist/"
     ]
+  },
+  "expo": {
+    "autolinking": {
+      "exclude": [
+        "expo-health-connect"
+      ]
+    }
   }
 }
