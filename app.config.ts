@@ -30,7 +30,7 @@ const config: ExpoConfig = {
     'expo-sqlite',
     'expo-sharing',
     ['expo-splash-screen', { backgroundColor: '#FFFFFF', image: './assets/images/splash-icon.png', imageWidth: 76 }],
-    ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 35, targetSdkVersion: 35 } }],
+    ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 36, targetSdkVersion: 35 } }],
     'expo-health-connect',
   ],
   experiments: { typedRoutes: true },
