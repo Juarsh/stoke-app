@@ -89,6 +89,44 @@ describe('streak', () => {
     const s = S([wd], ['2026-10-16', '2026-10-19', '2026-10-20'].map((x) => L(wd, x)));
     expect(streak(s, wd, D)).toBe(3);
   });
+  // Tester O1 (444633c) + CEO rule: habits due N < 7 days a week need N completions in every completed Mon–Sun week
+  test('daily keeps the one-forgiven-miss rule: two misses in a row always break it', () => {
+    expect(streak(days('2026-10-15', '2026-10-16', '2026-10-17', '2026-10-20'), h, D)).toBe(4); // Sun 18 missed alone: forgiven
+    expect(streak(days('2026-10-15', '2026-10-16', '2026-10-17'), h, D)).toBe(0); // Sun 18 (last week) + Mon 19 + Tue 20
+    expect(streak(days('2026-10-12', '2026-10-13', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'), h, D)).toBe(5); // Wed 14 + Thu 15
+  });
+  const sun = H({ short_name: 'Long run', schedule: 'days', weekdays: 0b1000000, starts_on: '2026-06-01' });
+  const sundays = (...ds: string[]) => S([sun], ds.map((x) => L(sun, x)));
+  test('Sundays only: 4 Sundays ticked then 12 skipped → 0 (it used to stay 4 for ever)', () => {
+    expect(streak(sundays('2026-07-05', '2026-07-12', '2026-07-19', '2026-07-26'), sun, D)).toBe(0);
+    // ticked through last Sunday: 4, and this week (its Sunday still ahead) can't break it
+    expect(streak(sundays('2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18'), sun, D)).toBe(4);
+    expect(streak(sundays('2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25'), sun, '2026-10-25')).toBe(5);
+    // one skipped Sunday in the middle breaks it at that week
+    expect(streak(sundays('2026-09-27', '2026-10-11', '2026-10-18'), sun, D)).toBe(2);
+  });
+  test('the week ends at 4 AM on Monday (dayOf): Sunday not ticked still counts the past until then', () => {
+    const s = sundays('2026-10-04', '2026-10-11', '2026-10-18');
+    expect(streak(s, sun, dayOf(new Date('2026-10-25T23:30:00+05:30')))).toBe(3);
+    expect(streak(s, sun, dayOf(new Date('2026-10-26T03:59:00+05:30')))).toBe(3); // still Sunday's log day
+    expect(streak(s, sun, dayOf(new Date('2026-10-26T04:00:00+05:30')))).toBe(0); // the week ended without its Sunday
+  });
+  test('weekdays: every completed week needs all 5; the current week never breaks it; weekends don\'t count', () => {
+    const wd = H({ short_name: 'Gym', schedule: 'weekdays', weekdays: 31, starts_on: '2026-10-01' });
+    const on = (...ds: string[]) => S([wd], ds.map((x) => L(wd, x)));
+    const lastWeek = ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16'];
+    expect(streak(on(...lastWeek, '2026-10-20'), wd, D)).toBe(6); // Mon 19 missed this week: not over yet
+    expect(streak(on(...lastWeek, '2026-10-18', '2026-10-20'), wd, D)).toBe(6); // a Sunday tick isn't a due day
+    expect(streak(on('2026-10-12', '2026-10-13', '2026-10-15', '2026-10-16', '2026-10-19', '2026-10-20'), wd, D)).toBe(2); // Wed 14 missed
+    // start week: only the due days on or after starts_on (Thu 1, Fri 2) are needed
+    expect(streak(on('2026-10-01', '2026-10-02', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', ...lastWeek), wd, D)).toBe(12);
+  });
+  test('2 days a week (Mon, Thu): never doing Thursday breaks it', () => {
+    const mt = H({ short_name: 'Yoga', schedule: 'days', weekdays: 0b0001001, starts_on: '2026-09-01' });
+    const on = (...ds: string[]) => S([mt], ds.map((x) => L(mt, x)));
+    expect(streak(on('2026-09-28', '2026-10-05', '2026-10-12', '2026-10-19'), mt, D)).toBe(1);
+    expect(streak(on('2026-10-05', '2026-10-08', '2026-10-12', '2026-10-15', '2026-10-19'), mt, D)).toBe(5);
+  });
   test('week squares: done, today, future, missed (warm grey), before the start date', () => {
     const n = H({ short_name: 'New', starts_on: '2026-10-20' });
     const cells = weekCells(S([n], [L(n, '2026-10-20')]), n, D).map((c) => c.cell);

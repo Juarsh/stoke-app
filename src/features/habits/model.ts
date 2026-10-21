@@ -108,12 +108,31 @@ export function homeA11y(h: Habit, done: boolean): string {
 
 // ---- streak (§10.3) ---------------------------------------------------------------------------------------------
 /** Consecutive due days done, back from today (today counts once done; not done yet doesn't break it). Days not due are
- *  skipped. One miss per Mon–Sun week is forgiven silently; a second miss in the same week ends the streak. */
+ *  skipped. Daily habits: one miss per Mon–Sun week is forgiven silently; a second miss in the same week ends the streak.
+ *  Habits due N < 7 days a week (Tester O1, CEO rule 21 Oct): the forgiven miss let a once-a-week habit keep its streak
+ *  for ever, so instead every COMPLETED Mon–Sun week must reach its N due-day completions (fewer in the start week: only
+ *  its due days on or after starts_on count); the current week can't break it until it ends. `today` is the dayOf() log
+ *  day (4 AM start), so a week ends at 4 AM on Monday. Completions on days not due don't count. */
 export function streak(s: HabitsState, h: Habit, today: string): number {
   const done = new Set(s.logs.filter((l) => l.habit_id === h.id && l.done).map((l) => l.local_date));
+  const mask = maskOf(h);
+  const due = (d: string) => d >= h.starts_on && (mask & (1 << weekdayOf(d))) !== 0;
+  if (mask !== ALL_DAYS) {
+    let mon = addDays(today, -weekdayOf(today));
+    let n = 0;
+    for (let d = mon; d <= today; d = addDays(d, 1)) if (due(d) && done.has(d)) n++; // this week: counts, never breaks
+    for (let i = 0; i < 600; i++) {
+      mon = addDays(mon, -7);
+      if (addDays(mon, 6) < h.starts_on) break;
+      const days = Array.from({ length: 7 }, (_, j) => addDays(mon, j)).filter(due);
+      const got = days.filter((d) => done.has(d)).length;
+      if (got < days.length) break;
+      n += got;
+    }
+    return n;
+  }
   let n = 0; const missedWeek = new Set<string>();
   for (let d = today, i = 0; d >= h.starts_on && i < 3700; d = addDays(d, -1), i++) {
-    if (!(maskOf(h) & (1 << weekdayOf(d)))) continue;
     if (done.has(d)) { n++; continue; }
     if (d === today) continue;
     const wk = addDays(d, -weekdayOf(d));
