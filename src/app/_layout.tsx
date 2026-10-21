@@ -34,6 +34,7 @@ function Gate() {
         <Stack.Screen name="share" options={{ presentation: 'modal' }} />
         <Stack.Screen name="remembered" />
         <Stack.Screen name="review" />
+        <Stack.Screen name="credits" />
       </Stack>
       <NoticeToast />
     </>
