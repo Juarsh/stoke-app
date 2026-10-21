@@ -1,20 +1,24 @@
 // Log food S2.1 (spec §5, locked v4 frames rework/v4/logfood/frames/s2-*): search first, quick +, item sheet, tray rows,
 // "Log N items · X kcal" with the time chip (§4). Nothing saves until Log; Log is all-or-nothing through the store gate.
 import { useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/ui';
 import { useStore } from '@/lib/store';
-import { Dish } from '@/parser';
 import { useTheme } from '@/theme';
-import { buildEntries, chipLabel, compute, displayName, amountLabel, logLabel, newTrayItem, pickTime, quickAdd, recentFoods, searchFoods,
+import { buildEntries, chipLabel, compute, amountLabel, Food, foodId, foodName, logLabel, newTrayItem, pickTime, quickAdd, recentFoods, searchAll,
   TimePick, timeReason, TrayItem, trayCount, trayTotal, defaultUnit, defaultAmount } from './model';
+import { FoodForm } from '@/features/myfoods/FoodForm';
+import { isMine, newDraft } from '@/features/myfoods/model';
+import { SaveButton } from '@/features/myfoods/SaveButton';
+import { useFoodDraft } from '@/features/myfoods/useFoodDraft';
 import { ItemSheet } from './ItemSheet';
 import { TimeSheet } from './TimeSheet';
 
 const kc = (n: number) => Math.round(n).toLocaleString('en-IN');
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter(); const st = useStore();
@@ -31,18 +35,30 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
   const nextKey = () => `t${++keyN.current}`;
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const results = useMemo(() => searchFoods(query), [query]);
-  const recent = useMemo(() => recentFoods(st.entries), [st.entries]);
+  const results = useMemo(() => searchAll(query, st.myFoods), [query, st.myFoods]);
+  const recent = useMemo(() => recentFoods(st.entries, st.myFoods), [st.entries, st.myFoods]);
   const total = trayTotal(tray);
   const q = query.trim();
+  const noMatch = !!q && !results.length;
+  // §6.4 No match: "Add your own food" with the search text as the name; "Save and add" saves it and adds 1 unit
+  const own = useFoodDraft(newDraft(cap(q)), st.myFoods);
+  const ownReset = own.reset;
+  useEffect(() => { ownReset(newDraft(cap(q))); }, [q]); // eslint-disable-line react-hooks/exhaustive-deps
+  const saveAndAdd = () => {
+    const food = own.trySave(st.newId());
+    if (!food) return;
+    st.saveMyFood(food);
+    setTray((x) => quickAdd(x, food, nextKey()));
+    setQuery('');
+  };
 
   const showToast = (text: string, undo: () => void) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ text, undo });
     toastTimer.current = setTimeout(() => setToast(null), 4000);
   };
-  const add = (d: Dish) => { setTray((x) => quickAdd(x, d, nextKey())); setRefused({}); };
-  const open = (d: Dish) => setSheet({ item: newTrayItem(d, nextKey()), editing: false });
+  const add = (d: Food) => { setTray((x) => quickAdd(x, d, nextKey())); setRefused({}); };
+  const open = (d: Food) => setSheet({ item: newTrayItem(d, nextKey()), editing: false });
   const remove = (k: string) => {
     const prev = tray; const it = tray.find((x) => x.key === k); if (!it) return;
     setTray(tray.filter((x) => x.key !== k));
@@ -71,16 +87,34 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
   };
 
   const searchLine = focused ? t.c.honeyEdge : t.c.lineSoft;
-  const rowFor = (d: Dish) => {
+  const rowFor = (d: Food) => {
     const u = defaultUnit(d), a = defaultAmount(d, u);
     const k = compute(newTrayItem(d, 'x', u, a)).kcal;
-    const n = trayCount(tray, d), name = displayName(d);
+    const n = trayCount(tray, d), name = foodName(d), mine = isMine(d);
+    // §6.3: Mine rows and names over 13 characters use two lines (name + tag, then the amount)
+    const two = mine || name.length > 13;
+    const tag = mine ? (
+      <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ borderWidth: 1.5, borderColor: t.c.sageFill, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 0 }}>
+        <T v="bodyStrong" style={{ color: t.c.trainText, fontSize: 14, lineHeight: 20 }}>Mine</T>
+      </View>
+    ) : null;
     return (
-      <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 64, paddingLeft: 16, paddingRight: 8 }}>
-        <Pressable onPress={() => open(d)} accessibilityRole="button" accessibilityLabel={`${name}, ${amountLabel(u, a)}, ${kc(k)} kcal. Open details`}
+      <View key={foodId(d)} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 64, paddingLeft: 16, paddingRight: 8 }}>
+        <Pressable onPress={() => open(d)} accessibilityRole="button" accessibilityLabel={`${name}${mine ? ', my food' : ''}, ${amountLabel(u, a)}, ${kc(k)} kcal. Open details`}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 6 }}>
-          <T v="bodyStrong" style={{ fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{name}</T>
-          <T tone="muted" style={{ fontSize: 15, flexShrink: 0 }} numberOfLines={1}>· {amountLabel(u, a)}</T>
+          {two ? (
+            <View style={{ flexShrink: 1, paddingVertical: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <T v="bodyStrong" style={{ fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{name}</T>{tag}
+              </View>
+              <T tone="muted" style={{ fontSize: 15 }} numberOfLines={1}>{amountLabel(u, a)}</T>
+            </View>
+          ) : (
+            <>
+              <T v="bodyStrong" style={{ fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{name}</T>
+              <T tone="muted" style={{ fontSize: 15, flexShrink: 0 }} numberOfLines={1}>· {amountLabel(u, a)}</T>
+            </>
+          )}
           <View style={{ flex: 1 }} />
           <T v="number" style={{ fontSize: 18, marginRight: 8 }}>{kc(k)}</T>
         </Pressable>
@@ -90,7 +124,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
             <T v="bodyStrong" style={{ color: t.c.trainText }}>×{n}</T><Icon name="plus" color={t.c.trainText} size={16} strokeWidth={2.4} />
           </Pressable>
         ) : (
-          <Pressable onPress={() => add(d)} accessibilityRole="button" accessibilityLabel={`Add ${amountLabel(u, a)} ${d.name}`}
+          <Pressable onPress={() => add(d)} accessibilityRole="button" accessibilityLabel={`Add ${amountLabel(u, a)} ${name.toLowerCase()}`}
             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.c.sheetTile, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="plus" color={t.c.text} size={20} strokeWidth={2.2} />
           </Pressable>
@@ -188,7 +222,15 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
         {q ? (
           <>
             {results.length ? <View style={card}>{results.map(rowFor)}</View> : (
-              <T v="bodyStrong" style={{ fontSize: 16, paddingTop: 4 }} accessibilityLiveRegion="polite">No match for “{q}”</T>
+              <>
+                <T v="bodyStrong" style={{ fontSize: 17, paddingTop: 4 }} accessibilityLiveRegion="polite">No match for “{q}”</T>
+                <View style={{ backgroundColor: t.c.card, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.lineSoft, paddingTop: 18 }}>
+                  <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 17, paddingHorizontal: 20 }}>Add your own food</T>
+                  <View style={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>
+                    <FoodForm draft={own.draft} onChange={own.setDraft} errors={own.errors} clash={own.clash} focus={own.focus} onFocused={own.onFocused} card={false} />
+                  </View>
+                </View>
+              </>
             )}
             {tray.length ? chips : null}
           </>
@@ -197,12 +239,17 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
             <T v="caption" tone="text2" style={{ fontSize: 14, fontWeight: '600' }} accessibilityRole="header">Added</T>
             {trayRows}
           </>
-        ) : recent.length ? (
+        ) : (
           <>
-            <T v="caption" tone="text2" style={{ fontSize: 14, fontWeight: '600' }} accessibilityRole="header">Recent</T>
-            <View style={card}>{recent.map(rowFor)}</View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: -12 }}>
+              {recent.length ? <T v="caption" tone="text2" style={{ fontSize: 14, fontWeight: '600' }} accessibilityRole="header">Recent</T> : <View />}
+              <Pressable onPress={() => router.push('/my-foods')} accessibilityRole="button" accessibilityLabel="My foods" style={{ minHeight: 48, justifyContent: 'center', paddingLeft: 12 }}>
+                <T v="bodyStrong" tone="text2" style={{ fontSize: 14 }}>My foods ›</T>
+              </Pressable>
+            </View>
+            {recent.length ? <View style={card}>{recent.map(rowFor)}</View> : null}
           </>
-        ) : null}
+        )}
       </ScrollView>
       {toast ? (
         <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={{ marginHorizontal: 20, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: t.c.popBg, paddingLeft: 16 }}>
@@ -212,6 +259,14 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
           </Pressable>
         </View>
       ) : null}
+      {noMatch ? (
+        <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 10 + ins.bottom }}>
+          <SaveButton title="Save and add" disabled={own.clash} onPress={saveAndAdd}
+            a11y={own.clash ? 'Save and add. Unavailable: you already have this food'
+              : `Save and add. Saves ${own.draft.name.trim().toLowerCase() || 'this food'} to My foods and adds ${amountLabel(own.draft.unit, Number(own.draft.amount) || 1)} to the tray`} />
+          <T tone="muted" style={{ textAlign: 'center', fontSize: 13, marginTop: 6 }}>Saved to My foods</T>
+        </View>
+      ) : (
       <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 + ins.bottom }}>
         <Pressable onPress={log} disabled={!tray.length} accessibilityRole="button" accessibilityState={{ disabled: !tray.length }}
           accessibilityLabel={tray.length ? logLabel(tray.length, total.kcal) : 'Log food'}
@@ -222,6 +277,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
           ) : <T v="bodyStrong" tone="muted" style={{ fontSize: 17 }}>Log food</T>}
         </Pressable>
       </View>
+      )}
       {sheet ? <ItemSheet item={sheet.item} editing={sheet.editing} onClose={() => setSheet(null)} onDone={commitSheet} /> : null}
       <TimeSheet visible={timeOpen} value={time} now={now} onClose={() => setTimeOpen(false)} onPick={(p) => { setTime(p); setTimeOpen(false); }} />
     </KeyboardAvoidingView>

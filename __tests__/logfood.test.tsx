@@ -10,7 +10,7 @@ import {
   searchFoods, setUnit, stepAmount, TOO_OLD_REASON, trayCount, trayTotal, timeReason, uiUnits, wheelTime, TrayItem,
 } from '../src/features/logfood/model';
 
-const mockStore = { entries: [] as unknown[], newId: (() => { let n = 0; return () => `id${n++}`; })(), addEntries: jest.fn(() => []), showUndo: jest.fn(), deleteEntry: jest.fn() };
+const mockStore = { entries: [] as unknown[], myFoods: [], newId: (() => { let n = 0; return () => `id${n++}`; })(), addEntries: jest.fn(() => []), showUndo: jest.fn(), deleteEntry: jest.fn() };
 const mockBack = jest.fn(), mockPush = jest.fn();
 jest.mock('@/lib/store', () => ({ useStore: () => mockStore }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: mockPush }) }));

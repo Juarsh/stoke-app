@@ -6,9 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/ui';
 import { TYPED_KCAL_REASON, TYPED_PROTEIN_REASON, validTypedKcal } from '@/lib/domain';
-import { parser } from '@/parser';
 import { useTheme } from '@/theme';
-import { amountLabel, amountOk, canStepDown, compute, editKcal, editProtein, resetEdits, setUnit, stepAmount, TrayItem, uiUnits, UiUnit } from './model';
+import { amountLabel, amountOk, canStepDown, compute, editKcal, editProtein, resetEdits, setUnit, stepAmount, TrayItem, trayFood, uiUnits, UiUnit } from './model';
 
 const fmtAmt = (n: number) => String(Math.round(n * 100) / 100);
 const UNIT_A11Y: Record<UiUnit, string> = { piece: 'Piece', bowl: 'Bowl', g: 'Grams', ml: 'Millilitres' };
@@ -21,7 +20,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
   const [amtText, setAmtText] = useState<string | null>(null);
   const [field, setField] = useState<{ which: 'kcal' | 'protein'; text: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const d = parser.dishById(cur.dishId)!;
+  const d = trayFood(cur);
   const c = compute(cur);
   const units = uiUnits(d);
   const kcal = Math.round(c.kcal), protein = Math.round(c.protein * 10) / 10;
@@ -109,7 +108,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
     );
   };
   const name = c.name;
-  const doneLabel = editing ? `Update ${name}, ${amountLabel(cur.unit, cur.amount)}, ${kcal} kcal` : `Add ${amountLabel(cur.unit, cur.amount).replace(/ (pieces?|bowls?)$/, '')} ${d.name}, ${kcal} kcal`;
+  const doneLabel = editing ? `Update ${name}, ${amountLabel(cur.unit, cur.amount)}, ${kcal} kcal` : `Add ${amountLabel(cur.unit, cur.amount).replace(/ (pieces?|bowls?)$/, '')} ${c.name.toLowerCase()}, ${kcal} kcal`;
   const editedAny = c.kcalEdited || c.proteinEdited;
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
