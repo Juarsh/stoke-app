@@ -59,7 +59,7 @@ describe('privacy: backup, export, delete', () => {
   });
   test('delete account overwrites the whole on-device store (profile incl. sex) immediately', () => {
     const st = src('src/lib/store.tsx');
-    expect(st).toMatch(/deleteAll: async \(\) => \{ await api\.deleteMe\(\)\.catch\(\(\) => \{\}\); await kv\.set\(KEY, JSON\.stringify\(EMPTY\)\)/);
+    expect(st).toMatch(/deleteAll: async \(\) => \{ await api\.deleteMe\(\)\.catch\(\(\) => \{\}\); await localStore\.save\(KEY, JSON\.stringify\(EMPTY\)\)/);
     expect(st).toMatch(/const EMPTY: Persisted = \{[^}]*profile: null/);
   });
 });

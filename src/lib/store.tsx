@@ -9,7 +9,7 @@ import { createApi, type DishUnits, type ServerRow } from './api';
 import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, needsServerCopy, NO_KCAL_REASON, pendingEntry, Profile, profilePayload, reopenRejected, seedServerCounts, serverName, TYPED_KCAL_REASON, validTypedKcal } from './domain';
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
-import { kv } from './kv';
+import { localStore } from './data';
 import { portionLabel } from './labels';
 import { kc } from './format';
 import { fillPending, resolvePending } from './pending';
@@ -284,7 +284,7 @@ function useStoreValue() {
   onTableVersion.current = (v) => { if (v > Math.max(unitsVersion.current, DISH_TABLE_VERSION)) void pullUnits(); };
 
   useEffect(() => {
-    kv.get(KEY).then((raw) => {
+    localStore.load(KEY).then((raw) => {
       if (!raw) return;
       const p: Persisted = { ...EMPTY, ...JSON.parse(raw) };
       // rows an older build synced and nothing is queued for: the server has them as they are (rg8 F-1)
@@ -298,7 +298,7 @@ function useStoreValue() {
     const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') expireAi(); });
     return () => sub?.remove?.();
   }, [expireAi]);
-  useEffect(() => { if (ready) kv.set(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
+  useEffect(() => { if (ready) localStore.save(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
   const sender = useMemo(() => ({
     putProfile: api.putProfile, abandonJob: api.abandonJob,
@@ -535,7 +535,7 @@ function useStoreValue() {
       return { ...p, entries: [...p.entries, ...ph], queue: q };
     }),
     /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
-    deleteAll: async () => { await api.deleteMe().catch(() => {}); await kv.set(KEY, JSON.stringify(EMPTY)).catch(() => {}); setS(EMPTY); },
+    deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {}); setS(EMPTY); },
   };
 }
 export type Store = ReturnType<typeof useStoreValue>;
