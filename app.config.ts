@@ -27,7 +27,21 @@ const config: ExpoConfig = {
     },
     permissions: ['android.permission.health.READ_STEPS'],
     // RN's dev overlay permission must not ship (Tester P1 O4): removed from the merged release manifest
-    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
+    // expo-notifications also pulls in Firebase push (c2dm RECEIVE, WAKE_LOCK) and ShortcutBadger's launcher-badge
+    // permissions. The rest alert is a local notification with no badge, so none of them ship (tools/build-apk.sh
+    // allowlist); only POST_NOTIFICATIONS and RECEIVE_BOOT_COMPLETED are kept.
+    blockedPermissions: [
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'com.google.android.c2dm.permission.RECEIVE', 'android.permission.WAKE_LOCK', 'android.permission.READ_APP_BADGE',
+      'com.sec.android.provider.badge.permission.READ', 'com.sec.android.provider.badge.permission.WRITE',
+      'com.htc.launcher.permission.READ_SETTINGS', 'com.htc.launcher.permission.UPDATE_SHORTCUT',
+      'com.sonyericsson.home.permission.BROADCAST_BADGE', 'com.sonymobile.home.permission.PROVIDER_INSERT_BADGE',
+      'com.anddoes.launcher.permission.UPDATE_COUNT', 'com.majeur.launcher.permission.UPDATE_BADGE',
+      'com.huawei.android.launcher.permission.CHANGE_BADGE', 'com.huawei.android.launcher.permission.READ_SETTINGS',
+      'com.huawei.android.launcher.permission.WRITE_SETTINGS', 'com.oppo.launcher.permission.READ_SETTINGS',
+      'com.oppo.launcher.permission.WRITE_SETTINGS', 'me.everything.badger.permission.BADGE_COUNT_READ',
+      'me.everything.badger.permission.BADGE_COUNT_WRITE',
+    ],
   },
   web: { output: 'single', favicon: './assets/images/favicon.png' },
   plugins: [
