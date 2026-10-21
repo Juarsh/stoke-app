@@ -150,6 +150,29 @@ export function profileFieldErrors(v: Record<ProfileField, string>): Partial<Rec
   }
   return out;
 }
+/** Settings target limits. kcal: the server's profile check (goals.go: 1,200-6,000 and never more than MAX_DEFICIT below
+ * maintenance), the same guard rails computeTargets uses in onboarding. Protein is phone-only (not in the server payload):
+ * 10-400 g. A refused value shows its reason; nothing is clamped or silently replaced by the old value. */
+export const TARGET_LIMITS = { kcalTarget: [MIN_KCAL, 6000], proteinTarget: [10, 400] } as const;
+export type TargetField = keyof typeof TARGET_LIMITS;
+/** Typed target text -> whole number. Thousands commas and spaces are dropped ("1,800" -> 1800); anything else
+ * (empty, decimals, minus, letters) is null. */
+export const targetNumber = (s: string | null | undefined): number | null => {
+  const x = String(s ?? '').replace(/[,\s]/g, '');
+  return /^\d+$/.test(x) ? Number(x) : null;
+};
+/** Reason a typed target is refused, or null when it can be saved. */
+export function targetError(k: TargetField, text: string | null | undefined, maintenanceKcal?: number | null): string | null {
+  const [lo, hi] = TARGET_LIMITS[k]; const n = targetNumber(text);
+  const fmt = (v: number) => v.toLocaleString('en-IN');
+  if (n === null) return k === 'kcalTarget' ? 'Enter whole calories, digits only.' : 'Enter whole grams, digits only.';
+  if (n < lo || n > hi) return k === 'kcalTarget' ? `Enter a daily target from ${fmt(lo)} to ${fmt(hi)} kcal.` : `Enter a protein target from ${lo} to ${hi} g.`;
+  if (k === 'kcalTarget' && maintenanceKcal && n < Math.round(maintenanceKcal) - MAX_DEFICIT) {
+    const min = Math.max(lo, Math.ceil((Math.round(maintenanceKcal) - MAX_DEFICIT) / 10) * 10);
+    return `That’s more than ${MAX_DEFICIT} kcal below your maintenance (${fmt(Math.round(maintenanceKcal))}). Enter ${fmt(min)} or more.`;
+  }
+  return null;
+}
 /** Mifflin-St Jeor (sex 'x' = average of male/female); lose -400, gain +300 (spec: ±300–500); protein 1.6 g/kg (lose/gain) or 1.2 (maintain). */
 export function computeTargets(p: Pick<Profile, 'goal' | 'sex' | 'age' | 'heightCm' | 'weightKg' | 'activity'>) {
   const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (SEX_CONST[p.sex] ?? SEX_CONST.x);

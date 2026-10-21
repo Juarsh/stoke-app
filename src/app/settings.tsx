@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { Alert, Switch } from 'react-native';
-import { Button, Card, Field, Row, Screen, Segmented, T } from '@/components/ui';
+import { Alert, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { Button, Card, Row, Screen, Segmented, T } from '@/components/ui';
+import { TargetsCard } from '@/features/settings/TargetsCard';
 import { config, flags } from '@/lib/config';
 import { Diet } from '@/lib/domain';
 import { connectSteps, readTodaySteps } from '@/lib/health';
@@ -19,20 +20,17 @@ export default function Settings() {
     </Row>
   );
   return (
+    // iOS: keep the target inputs above the number pad (Screen's ScrollView already has keyboardShouldPersistTaps="handled")
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <Screen title="Settings" right={<Button kind="ghost" title="Done" onPress={() => router.back()} />}>
       <Card>
         <T v="bodyStrong">{st.user?.name}</T>
         <T v="caption" tone="muted">{st.user?.email} · {st.user?.mock ? 'mock sign-in' : 'Google'} · {config.mock ? 'offline/mock server' : 'synced'} · {st.queue.length} changes waiting to sync</T>
       </Card>
-      <Card>
-        <T v="bodyStrong">Targets</T>
-        <Row>
-          <Field label="Daily kcal" keyboardType="numeric" defaultValue={String(p.kcalTarget)} onEndEditing={(e) => set({ kcalTarget: Number(e.nativeEvent.text) || p.kcalTarget })} style={{ minWidth: 120 }} />
-          <Field label="Protein g" keyboardType="numeric" defaultValue={String(p.proteinTarget)} onEndEditing={(e) => set({ proteinTarget: Number(e.nativeEvent.text) || p.proteinTarget })} style={{ minWidth: 120 }} />
-        </Row>
+      <TargetsCard profile={p} onSave={(patch) => set(patch)}>
         <T v="caption" tone="muted">Diet for coach picks</T>
         <Segmented value={p.diet} onChange={(diet: Diet) => set({ diet })} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg + veg' }, { value: 'nonveg', label: 'Non-veg' }]} />
-      </Card>
+      </TargetsCard>
       <Card>
         <T v="bodyStrong">Appearance</T>
         <Segmented value={st.themePref} onChange={st.setThemePref} options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />
@@ -57,5 +55,6 @@ export default function Settings() {
       <Button kind="danger" title="Delete account & all data" onPress={() => Alert.alert('Delete everything?', 'This removes your account and all logs. It can’t be undone.', [
         { text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => st.deleteAll() }])} />
     </Screen>
+    </KeyboardAvoidingView>
   );
 }
