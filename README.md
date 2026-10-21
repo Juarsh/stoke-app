@@ -11,7 +11,7 @@ internal/goals     profile, diet, targets with macros
 internal/summary   daily_summaries (Contributor plug-in per domain) + streaks with auto freeze
 internal/coach     rule-based suggestions; Advisor interface = LLM hook
 internal/body, internal/social   V2 / V3 placeholders
-internal/db        migrations (001 = V1; migrations_v2 only with MIGRATE_V2=1)
+internal/db        Open/Migrate entry points (migration files: internal/store/migrations, migrations_v2 only with MIGRATE_V2=1)
 internal/auth      Google ID token verification middleware
 ```
 
