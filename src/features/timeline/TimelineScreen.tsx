@@ -127,7 +127,7 @@ export function TimelineScreen({ now = () => new Date() }: { now?: () => Date })
   return (
     <View style={{ flex: 1, backgroundColor: t.c.bg }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: t.sizes.nav + 32, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 56 }}>
             <T v="title" accessibilityRole="header" style={{ fontSize: 28 }}>Food</T>
             <Pressable onPress={() => router.push('/log-food')} accessibilityRole="button" accessibilityLabel="Log food"

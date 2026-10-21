@@ -30,6 +30,8 @@ interface Persisted {
   dishUnits?: DishUnits | null;
   /** §6 My foods (soft-deleted ones kept with deleted_at, so Undo restores them); on the phone, offline */
   myFoods: MyFood[];
+  /** §9.2 Exercises: the first-time hint card was dismissed */
+  libraryHintDone?: boolean;
 }
 const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {}, myFoods: [] };
 const KEY = 'app-state-v1';
@@ -438,6 +440,7 @@ function useStoreValue() {
     /** Saved on the phone at once; the server copy goes through the queue, so it is sent after sign-in too. */
     setProfile: (profile: Profile) => upd((p) => ({ ...p, profile, profileError: null, queue: enqueue(p.queue, { kind: 'profile', id: 'profile', payload: profilePayload(profile), tries: 0 }) })),
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
+    dismissLibraryHint: () => upd((p) => ({ ...p, libraryHintDone: true })),
     /** Store guard (entryRefusal): typed kcal outside 1-5000, or a counted row with no real number, is refused. Returns the
      * refused ones with the reason; the caller keeps them open and shows it (never dropped silently). */
     /** My foods: create or replace by id (the caller checked the name clash and limits: foodFromDraft). Never touches
