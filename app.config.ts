@@ -23,6 +23,8 @@ const config: ExpoConfig = {
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     permissions: ['android.permission.health.READ_STEPS'],
+    // RN's dev overlay permission must not ship (Tester P1 O4): removed from the merged release manifest
+    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
   },
   web: { output: 'single', favicon: './assets/images/favicon.png' },
   plugins: [
