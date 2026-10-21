@@ -73,10 +73,10 @@ describe('the app’s own 3-a-day count resets at next_reset_at, not local midni
     for (let i = 0; i < 3; i++) q = countAi(q, t('2026-10-18T06:00:00Z'));
     q = noteReset(q, OCT19, t('2026-10-18T06:58:00Z'));
     expect(q).toEqual({ used: 0, resetAt: OCT19 });
-    expect(noteReset(q, OCT19)).toBe(q);
+    expect(noteReset(q, OCT19, t('2026-10-18T06:59:00Z'))).toBe(q); // fixed clock: the same reset again changes nothing
   });
   test('reset unknown: the app never blocks on its own', () => {
-    expect(localCapHit({ used: 9 }, 3)).toBe(false);
+    expect(localCapHit({ used: 9 }, 3, t('2026-10-18T06:00:00Z'))).toBe(false);
   });
 });
 
