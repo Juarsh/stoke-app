@@ -160,10 +160,11 @@ export function computeTargets(p: Pick<Profile, 'goal' | 'sex' | 'age' | 'height
   return { kcal, protein, maintenance: Math.round(tdee) };
 }
 
-/** Spec: before 11 breakfast, 11–4 lunch, 4–7 snacks, after 7 dinner (IST). */
-export function slotFor(d: Date): Slot {
+/** Spec: before 11 breakfast, 11–4 lunch, 4–7 snacks, after 7 dinner (IST). Before the day start (00:00–03:59) a meal
+ * belongs to the day before, so it is that day's dinner (the server payload still carries slot until P4). */
+export function slotFor(d: Date, dayStartHour = DAY_START_HOUR): Slot {
   const h = istParts(d).hour;
-  return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 19 ? 'snacks' : 'dinner';
+  return h < dayStartHour ? 'dinner' : h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 19 ? 'snacks' : 'dinner';
 }
 const IST_MS = 330 * 60 * 1000;
 export function istParts(d: Date) {
@@ -176,14 +177,11 @@ export function localDate(d: Date = new Date()): string {
 }
 /** Spec §4: the day starts at 4 AM (per-user setting, default 04:00): 00:00–03:59 counts towards the day before. */
 export const DAY_START_HOUR = 4;
-/** The log day (YYYY-MM-DD, IST) a moment belongs to, with the day start. */
-export function dayOf(d: Date, dayStartHour = DAY_START_HOUR): string {
+/** THE day boundary on the phone: the log day (YYYY-MM-DD, IST) a moment belongs to, with the day start. Home, the 7-day
+ * strip, Today, streak, steps, Progress, the coach and every saved local_date use it ("today" = dayOf()). localDate is
+ * only the IST calendar date of a moment (the time wheel's day column); never use it as "today". */
+export function dayOf(d: Date = new Date(), dayStartHour = DAY_START_HOUR): string {
   return localDate(new Date(d.getTime() - dayStartHour * 3600000));
-}
-/** Legacy slot for a moment (the server payload still carries slot until P4): by its IST hour. */
-export function slotOf(d: Date): Slot {
-  const h = istParts(d).hour;
-  return h >= 4 && h < 11 ? 'breakfast' : h >= 11 && h < 16 ? 'lunch' : h >= 16 && h < 19 ? 'snacks' : 'dinner';
 }
 export function addDays(date: string, n: number): string {
   const t = Date.parse(date + 'T00:00:00Z') + n * 86400000;

@@ -23,7 +23,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider, Store, useStore, applyFlush } from '../src/lib/store';
-import { CHECK_AMOUNT_LINE, counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, localDate, TOO_MUCH_REASON, unitReason, UNITS_UNKNOWN } from '../src/lib/domain';
+import { CHECK_AMOUNT_LINE, counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, dayOf, localDate, TOO_MUCH_REASON, unitReason, UNITS_UNKNOWN } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 import { ApiError, headerVersion } from '../src/lib/api';
 import { adoptServer, reviewNote } from '../src/lib/serverRow';
@@ -35,7 +35,7 @@ import Today from '../src/features/today/TodayScreen';
 import Log from '../src/app/(tabs)/log';
 
 jest.setTimeout(30_000);
-const DAY = localDate();
+const DAY = dayOf();
 const texts = (t: ReactTestRenderer) => t.root.findAll((n) => typeof n.type === 'string').flatMap((n) => [n.props.children].flat()).filter((c) => typeof c === 'string') as string[];
 const textOf = (t: ReactTestRenderer) => texts(t).join('').replace(/\s+/g, ' ');
 const tableEntry = (id: string, dish: string, qty: number, unit: string, extra: Partial<FoodEntry> = {}): FoodEntry => {

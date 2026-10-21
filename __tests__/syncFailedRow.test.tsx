@@ -2,9 +2,9 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { DISH_TABLE_VERSION } from '../src/parser';
-import { localDate } from '../src/lib/domain';
+import { dayOf, localDate } from '../src/lib/domain';
 
-const day = localDate();
+const day = dayOf();
 const e = (id: string, name: string, kcal: number, sync_error?: string, sync_retrying?: boolean) => ({ id, local_date: day, slot: 'lunch', raw_text: name, dish_id: null, custom_name: name, qty: 1, unit: 'count', oil_level: '',
   kcal: { low: kcal, best: kcal, high: kcal }, protein_g: { low: 0, best: 0, high: 0 }, source: 'custom', source_note: '', confirmed: true, dish_table_version: DISH_TABLE_VERSION,
   created_at: '', updated_at: '', deleted_at: null, ...(sync_error ? { sync_error } : {}), ...(sync_retrying ? { sync_retrying } : {}) });

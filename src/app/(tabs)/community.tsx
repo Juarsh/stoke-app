@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import { Share } from 'react-native';
 import { Button, Card, Row, Screen, T } from '@/components/ui';
 import { brand, flags } from '@/lib/config';
-import { addDays, localDate } from '@/lib/domain';
+import { addDays, dayOf } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 
@@ -13,7 +13,7 @@ export default function Community() {
   const st = useStore(); const d = useDay(); const router = useRouter();
   if (!flags.community) return <Screen title="Community"><T tone="muted">Coming soon.</T></Screen>;
   const ch = st.challenge;
-  const daysIn = ch ? Math.min(21, Math.max(1, Math.round((Date.parse(localDate()) - Date.parse(ch.startDate)) / 86400000) + 1)) : 0;
+  const daysIn = ch ? Math.min(21, Math.max(1, Math.round((Date.parse(dayOf()) - Date.parse(ch.startDate)) / 86400000) + 1)) : 0;
   const myDays = ch ? [...d.loggedDates].filter((x) => x >= ch.startDate && x <= addDays(ch.startDate, 20)).length : 0;
   const link = ch ? `${brand.inviteBaseUrl}?c=${ch.code}` : '';
   const board = ch ? [...ch.members.filter((m) => m.name !== 'You'), { name: 'You', days: myDays }].sort((a, b) => b.days - a.days) : [];
@@ -23,7 +23,7 @@ export default function Community() {
         <Card>
           <T v="headline">21-day challenge</T>
           <T tone="text2">Log on 21 days with friends. Ranked by days logged only, never calories or weight.</T>
-          <Button title="+ New challenge" onPress={() => st.setChallenge({ code: st.newId().slice(0, 6).toUpperCase(), title: '21-day challenge', startDate: localDate(), members: [] })} />
+          <Button title="+ New challenge" onPress={() => st.setChallenge({ code: st.newId().slice(0, 6).toUpperCase(), title: '21-day challenge', startDate: dayOf(), members: [] })} />
           <Button kind="soft" title="Open an invite link" onPress={() => Linking.openURL(Linking.createURL('/community'))} />
         </Card>
       ) : (

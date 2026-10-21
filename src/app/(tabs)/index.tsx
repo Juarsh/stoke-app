@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { ReviewLink } from '@/components/ReviewLink';
 import { Button, Card, Row, T } from '@/components/ui';
 import { flags } from '@/lib/config';
-import { greeting, localDate } from '@/lib/domain';
+import { greeting, dayOf } from '@/lib/domain';
 import { connectSteps, getHealthConnect, readTodaySteps, StepsStatus, stepsStatus } from '@/lib/health';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -39,7 +39,7 @@ function useSteps() {
     const s = await stepsStatus(); setStatus(s);
     if (s !== 'connected') return;
     const v = await readTodaySteps();
-    if (v !== null) { setSteps(localDate(), v); api.putSteps(localDate(), v).catch(() => {}); }
+    if (v !== null) { setSteps(dayOf(), v); api.putSteps(dayOf(), v).catch(() => {}); }
   }, [setSteps, api]);
   useEffect(() => { void refresh(); }, [refresh]);
   return { status, refresh };

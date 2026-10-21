@@ -1,12 +1,12 @@
 // Rg10 note (CEO, next build): 'count' is the server's unit name, never a word in user copy. It reads "piece" / "pieces"
 // ("Saved as 2 pieces", "dal isn’t measured in pieces", unit chips, "Did you mean … or pieces?"; the piece "sources vary" line: onePieceNote.test.tsx).
 import { adoptServer, reviewNote } from '../src/lib/serverRow';
-import { entryFromItem, FoodEntry, notMeasured, unitPlural, unitReason, localDate } from '../src/lib/domain';
+import { entryFromItem, FoodEntry, notMeasured, unitPlural, unitReason, dayOf, localDate } from '../src/lib/domain';
 import { portionLabel, unitWord } from '../src/lib/labels';
 import { editNotSaved } from '../src/lib/store';
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 
-const DAY = localDate();
+const DAY = dayOf();
 const tableEntry = (id: string, dish: string, qty: number, unit: string): FoodEntry => {
   const it = { ...parser.recompute(dish, qty, unit, ''), needs_confirmation: false } as Item;
   return { ...entryFromItem(it, { id, slot: 'lunch', raw_text: `${qty} ${unit} ${dish}`, local_date: DAY, tableVersion: DISH_TABLE_VERSION }), qty, unit };

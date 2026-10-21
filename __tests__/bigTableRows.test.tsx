@@ -24,7 +24,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider, Store, useStore } from '../src/lib/store';
-import { counted, entryFromItem, entryRefusal, FoodEntry, localDate, NO_KCAL_REASON, reviewEntry, TYPED_KCAL_REASON } from '../src/lib/domain';
+import { counted, entryFromItem, entryRefusal, FoodEntry, dayOf, localDate, NO_KCAL_REASON, reviewEntry, TYPED_KCAL_REASON } from '../src/lib/domain';
 import { DISH_TABLE_VERSION, parser } from '../src/parser';
 import Log from '../src/app/(tabs)/log';
 import Today from '../src/features/today/TodayScreen';
@@ -45,7 +45,7 @@ const press = async (r: ReactTestRenderer, label: RegExp, last = false) => {
   if (!b.length) throw new Error(`no button ${label}: ${texts(r).join(' | ')}`);
   await act(async () => { b[last ? b.length - 1 : 0].props.onPress(); });
 };
-const today = localDate();
+const today = dayOf();
 async function mount(screen: React.ReactElement) {
   mockSaved = JSON.stringify({ user: { id: 'u', name: 'A', email: 'a@x', idToken: null, mock: true }, entries: [], queue: [], aiQuota: { used: 0 },
     profile: { goal: 'maintain', sex: 'm', age: 30, heightCm: 172, weightKg: 68, activity: 'light', diet: 'veg', kcalTarget: 2350, proteinTarget: 82, stepsTarget: 8000, addStepKcal: false, showKcalOnCards: true } });

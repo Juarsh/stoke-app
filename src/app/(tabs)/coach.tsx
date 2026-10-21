@@ -8,7 +8,7 @@ import { Pressable, View } from 'react-native';
 import { FoodTile } from '@/components/FoodTile';
 import { Card, Row, Screen, T } from '@/components/ui';
 import { leftForToday, pickItem, portionOf, type Suggestion } from '@/lib/coach';
-import { entryFromItem, localDate, slotFor } from '@/lib/domain';
+import { entryFromItem, dayOf, slotFor } from '@/lib/domain';
 import { grams as g, kc } from '@/lib/format';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -30,7 +30,7 @@ export default function Coach() {
     // instant save only for a one_tap_ok row; anything else opens Log prefilled so the user sees and confirms it
     if (!it || it.one_tap_ok !== true) { router.push({ pathname: '/log', params: { prefill: p.label } }); return; }
     const id = st.newId();
-    const no = st.addEntries([entryFromItem(it, { id, slot: slotFor(new Date()), raw_text: p.label, local_date: localDate(), tableVersion: DISH_TABLE_VERSION })]) ?? [];
+    const no = st.addEntries([entryFromItem(it, { id, slot: slotFor(new Date()), raw_text: p.label, local_date: dayOf(), tableVersion: DISH_TABLE_VERSION })]) ?? [];
     // refused by the store guard: never dropped silently, the row opens in Log for the user to see and fix
     if (no.length) { router.push({ pathname: '/log', params: { prefill: p.label } }); return; }
     setToast({ id, name: p.dish.name.charAt(0).toUpperCase() + p.dish.name.slice(1), kcal: Math.round(it.kcal.best) });

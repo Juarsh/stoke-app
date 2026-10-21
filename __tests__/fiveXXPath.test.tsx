@@ -10,12 +10,12 @@ let mockN = 0;
 jest.mock('expo-crypto', () => ({ randomUUID: () => `id${++mockN}` }));
 
 import { StoreProvider, Store, useStore, editedState } from '../src/lib/store';
-import { counted, dayTotals, entryFromItem, FoodEntry, localDate } from '../src/lib/domain';
+import { counted, dayTotals, entryFromItem, FoodEntry, dayOf, localDate } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 import Progress from '../src/app/(tabs)/progress';
 import { NOT_DELETED_REASON, Op, SERVER_ERROR } from '../src/lib/syncQueue';
 
-const DAY = localDate();
+const DAY = dayOf();
 const tableEntry = (id: string, dish: string, qty: number, unit: string, extra: Partial<FoodEntry> = {}): FoodEntry => {
   const it = { ...parser.recompute(dish, qty, unit, ''), needs_confirmation: false } as Item;
   return { ...entryFromItem(it, { id, slot: 'lunch', raw_text: `${qty} ${unit} ${dish}`, local_date: DAY, tableVersion: DISH_TABLE_VERSION }), qty, unit, ...extra };

@@ -39,12 +39,12 @@ const sent: { m: string; path: string; body: Record<string, unknown> }[] = [];
 };
 
 import { StoreProvider, useStore, Store, KEPT_COPY, editNotSaved } from '../src/lib/store';
-import { counted, dayTotals, entryFromItem, localDate, FoodEntry } from '../src/lib/domain';
+import { counted, dayTotals, entryFromItem, dayOf, localDate, FoodEntry } from '../src/lib/domain';
 import { parseLocal } from '../src/lib/parseLocal';
 import { DISH_TABLE_VERSION } from '../src/parser';
 import Today from '../src/features/today/TodayScreen';
 
-const DATE = localDate();
+const DATE = dayOf();
 const tab = (id: string, t: string): FoodEntry => entryFromItem(parseLocal(t).items[0] as never, { id, slot: 'breakfast', raw_text: t, local_date: DATE, tableVersion: DISH_TABLE_VERSION });
 let st!: Store; const Probe = () => { st = useStore(); return null; };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

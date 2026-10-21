@@ -8,7 +8,7 @@ import { kc } from '../src/lib/format';
 import { ServerNoteRow } from '../src/components/ServerNoteRow';
 import { SyncFailedRow } from '../src/components/SyncFailedRow';
 import { adoptServer } from '../src/lib/serverRow';
-import { entryFromItem, FoodEntry, localDate } from '../src/lib/domain';
+import { entryFromItem, FoodEntry, dayOf, localDate } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 
 const NUMS = [0, 7, 999, 1180, 1180.4, 99_999, 100_000, 123_456.6, 1_000_000];
@@ -30,7 +30,7 @@ test.each(NUMS)('note row and flagged row print %d kcal exactly like the rest of
 });
 test('"Saved as" uses the same format, rounded (never raw decimals)', () => {
   const it = { ...parser.recompute('roti', 3, 'count', ''), needs_confirmation: false } as Item;
-  const e = { ...entryFromItem(it, { id: 'A', slot: 'lunch', raw_text: '3 roti', local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), qty: 3, unit: 'count' } as FoodEntry;
+  const e = { ...entryFromItem(it, { id: 'A', slot: 'lunch', raw_text: '3 roti', local_date: dayOf(), tableVersion: DISH_TABLE_VERSION }), qty: 3, unit: 'count' } as FoodEntry;
   expect(adoptServer(e, { version: 2, state: 'confirmed', dish_id: 'roti', qty: 2, unit: 'count', kcal_best: 220.4, protein_best: 7 }).server_note).toBe('Saved as 2 pieces · 220 kcal.');
   const custom = { ...e, dish_id: null, custom_name: 'thali', source: 'custom' } as FoodEntry;
   expect(adoptServer(custom, { version: 2, state: 'confirmed', kcal_best: 100_000, protein_best: 0 }).server_note).toBe(`Saved as ${app(100_000)} kcal.`);

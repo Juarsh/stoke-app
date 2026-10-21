@@ -2,7 +2,7 @@
 // Pure functions only: every number comes from the bundled dish table via parser.recompute (no new values), and the
 // entries go through the store's existing hard gate (entryRefusal) before anything is saved.
 import { DISH_TABLE_VERSION, Dish, DISHES, Item, parser } from '@/parser';
-import { dayOf, DAY_START_HOUR, entryFromItem, entryRefusal, FoodEntry, istParts, localDate, slotOf, addDays } from '@/lib/domain';
+import { dayOf, DAY_START_HOUR, entryFromItem, entryRefusal, FoodEntry, istParts, localDate, slotFor, addDays } from '@/lib/domain';
 
 export type UiUnit = 'piece' | 'bowl' | 'g' | 'ml';
 /** Q13: the stepper's step per unit; the minimum is one step (− is disabled there). */
@@ -215,7 +215,7 @@ export const dayStartLine = (dayStartHour = DAY_START_HOUR) =>
 export function buildEntries(tray: TrayItem[], at: Date, o: { now?: Date; newId: () => string; dayStartHour?: number }):
   { entries: FoodEntry[]; refused: { key: string; reason: string }[] } {
   const now = o.now ?? new Date();
-  const local_date = dayOf(at, o.dayStartHour ?? DAY_START_HOUR), slot = slotOf(at);
+  const local_date = dayOf(at, o.dayStartHour ?? DAY_START_HOUR), slot = slotFor(at);
   const entries: FoodEntry[] = [], refused: { key: string; reason: string }[] = [];
   for (const t of tray) {
     const c = compute(t), d = parser.dishById(t.dishId)!;

@@ -21,7 +21,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider, Store, useStore, applyFlush } from '../src/lib/store';
-import { counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, localDate, unitReason, UNITS_UNKNOWN } from '../src/lib/domain';
+import { counted, dayTotals, entryFromItem, entryRefusal, FoodEntry, dayOf, localDate, unitReason, UNITS_UNKNOWN } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item, UNITS } from '../src/parser';
 import { ApiError } from '../src/lib/api';
 import { adoptServer } from '../src/lib/serverRow';
@@ -30,7 +30,7 @@ import Review from '../src/app/review';
 import Today from '../src/features/today/TodayScreen';
 
 jest.setTimeout(30_000);
-const DAY = localDate();
+const DAY = dayOf();
 const QTY = 'Enter an amount above 0.';
 
 // ---- fake server (food.go): table rows recomputed; a unit the dish doesn't come in -> draft needs_review (counts 0);

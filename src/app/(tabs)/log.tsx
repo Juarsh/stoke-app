@@ -11,7 +11,7 @@ import { localCapHit } from '@/lib/aiQuota';
 import { ApiError, ParsePending } from '@/lib/api';
 import { canAddEstimate, kindOf, plan, ServerItem } from '@/lib/confirmBatch';
 import { Badge, Button, Card, Chip, Field, Row, T } from '@/components/ui';
-import { displayLabel, entryFromItem, entryRefusal, FoodEntry, localDate, Slot, slotFor, unitsKnown } from '@/lib/domain';
+import { displayLabel, entryFromItem, entryRefusal, FoodEntry, dayOf, Slot, slotFor, unitsKnown } from '@/lib/domain';
 import { AnyItem, isPlaceholder, itemKind } from '@/lib/itemKind';
 import { PendingRow } from '@/components/PendingRow';
 import { backstopDue, BACKSTOP_REASON, isExpiredId } from '@/lib/aiBackstop';
@@ -189,7 +189,7 @@ export default function Log() {
   // Add stays enabled (Product): anything still open is saved as needs_review, never lost, never counted
   // every row Add would save is one the store guard refuses (e.g. 5001 roti) and there is nothing else to save: Add can't
   // save, so it shows disabled (Designer Oct 17) instead of looking enabled and doing nothing; the row says why
-  const guardWhy = (it: Item) => entryRefusal(entryFromItem({ ...it, needs_confirmation: false }, { id: 'x', slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }));
+  const guardWhy = (it: Item) => entryRefusal(entryFromItem({ ...it, needs_confirmation: false }, { id: 'x', slot, raw_text: text, local_date: dayOf(), tableVersion: DISH_TABLE_VERSION }));
   const guardRefuses = (it: Item) => !!guardWhy(it);
   const addBlocked = bp.add.length > 0 && bp.add.every((r) => guardRefuses(r.it)) && !addedCustoms.length && !pendingUnmatched.length && !nOpen && !openFailed;
   const canAdd = any && !(bp.disabled && bp.later) && !addBlocked; // confirm-none: the main button is not shown at all; 'Save · N to review later' is the way out
@@ -202,7 +202,7 @@ export default function Log() {
 
   const withJob = (e: FoodEntry, d: Draft): FoodEntry => { const j = jobFor(d); return j ? { ...e, job_id: j } : e; };
   function add(leave = false) {
-    const date = localDate();
+    const date = dayOf();
     // uncertain or corrected readings carry their span, so the server remembers them (Remembered foods)
     const learn = (d: Draft) => (!d.ok || d.corrected || d.it.source !== 'table') && !d.it.remembered && !d.it.learned;
     const adding = drafts.filter((d) => bp.add.some((r) => r.key === d.key));
@@ -249,9 +249,9 @@ export default function Log() {
     const failed = customs.filter((c) => !failedCounts(c));
     if (!open.length && !failed.length && !est.length && !held.length) return false;
     // held rows: saved as the confirmed reading; the store holds them for review ('Check amount') until the units come down
-    if (held.length) st.addEntries(held.map((d) => withJob(entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)));
+    if (held.length) st.addEntries(held.map((d) => withJob(entryFromItem({ ...d.it, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: dayOf(), tableVersion: DISH_TABLE_VERSION }), d)));
     for (const d of held) remove(d);
-    const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => { const a = parsed.amounts?.[u]; return { id: idFor(u), span: sent(u), ...(a ? { amount: { qty: a.qty, unit: a.unit } } : {}) }; }), slot, text, date: localDate(), newId: st.newId });
+    const { reviews, pending } = leaveLog({ open: open.map((d) => d.it), failed, estimating: est.map((u) => { const a = parsed.amounts?.[u]; return { id: idFor(u), span: sent(u), ...(a ? { amount: { qty: a.qty, unit: a.unit } } : {}) }; }), slot, text, date: dayOf(), newId: st.newId });
     for (const f of failed) handedOff.current.add(f.id);
     for (const p of pending) handedOff.current.add(p.id);
     if (reviews.length) st.addEntries(reviews);
@@ -276,7 +276,7 @@ export default function Log() {
   /** AI estimate row 'Add · N kcal': saves just this row now, at its shown kcal; the footer never adds it. */
   const addOne = (d: Draft, n: Item) => {
     if (!canAddEstimate(n)) return;
-    const no = st.addEntries([withJob(entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: localDate(), tableVersion: DISH_TABLE_VERSION }), d)]) ?? [];
+    const no = st.addEntries([withJob(entryFromItem({ ...n, needs_confirmation: false }, { id: st.newId(), slot, raw_text: text, local_date: dayOf(), tableVersion: DISH_TABLE_VERSION }), d)]) ?? [];
     if (no.length) { setRefused((r) => ({ ...r, [d.key]: no[0].reason })); return; } // stays open with the reason
     remove(d);
   };

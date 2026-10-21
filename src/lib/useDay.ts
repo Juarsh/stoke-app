@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { coachPicks } from './coach';
-import { computeStreak, counted, toReview, dayTotals, localDate, loggedDays, stepsKcal } from './domain';
+import { computeStreak, counted, toReview, dayTotals, dayOf, loggedDays, stepsKcal } from './domain';
 import { DISHES } from '../parser';
 import { useStore } from './store';
 import { isOffline, isStale, pendingFor, STALE_PENDING_MS } from './syncQueue';
 
-export function useDay(date = localDate()) {
+export function useDay(date = dayOf()) {
   const st = useStore();
   // re-evaluate when the next fresh pending item turns stale (~10 s)
   const [tick, setTick] = useState(0);
@@ -34,7 +34,7 @@ export function useDay(date = localDate()) {
     const kcalLeft = kcalTarget - tot.kcal;
     const proteinLeft = Math.max(0, Math.round((proteinTarget - tot.protein) * 10) / 10);
     const loggedDates = loggedDays(st.entries, pendingFor(st.queue).map((f) => f.local_date));
-    const streak = computeStreak(loggedDates, localDate());
+    const streak = computeStreak(loggedDates, dayOf());
     const picks = coachPicks(DISHES, Math.max(0, kcalLeft), proteinLeft, p?.diet ?? 'veg');
     return { date, entries, reviews, syncFailed, pending, stale, offline, reviewCount: reviews.length + stale.length, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft, streak, picks, loggedDates, profile: p };
   }, [st.entries, st.steps, st.profile, st.queue, date, tick]);

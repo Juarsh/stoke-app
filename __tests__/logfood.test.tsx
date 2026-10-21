@@ -3,7 +3,7 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { TextInput } from 'react-native';
-import { dayOf, dayTotals, entryRefusal, slotOf, TYPED_KCAL_REASON } from '../src/lib/domain';
+import { dayOf, dayTotals, entryRefusal, slotFor, TYPED_KCAL_REASON } from '../src/lib/domain';
 import { parser } from '../src/parser';
 import {
   buildEntries, canStepDown, chipLabel, compute, defaultUnit, editKcal, editProtein, FUTURE_REASON, newTrayItem, quickAdd, resetEdits,
@@ -149,7 +149,7 @@ describe('time and the 4 AM day start', () => {
     expect(dayOf(ist('2026-10-21T23:59:00'))).toBe('2026-10-21');
     const { entries } = buildEntries([newTrayItem(D('roti'), key())], ist('2026-10-21T01:30:00'), { newId });
     expect(entries[0].local_date).toBe('2026-10-20');
-    expect(slotOf(ist('2026-10-21T08:00:00'))).toBe('breakfast');
+    expect(slotFor(ist('2026-10-21T08:00:00'))).toBe('breakfast');
   });
   test('chip label (Q31), future refused, more than 7 days back refused', () => {
     const now = ist('2026-10-21T20:15:00');

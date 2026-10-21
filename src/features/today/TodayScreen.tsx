@@ -16,7 +16,7 @@ import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet'
 import { Card, Row, T } from '@/components/ui';
 import type { Suggestion } from '@/lib/coach';
 import { flags } from '@/lib/config';
-import { countedNums, displayLabel, displayName, entryLabel, FoodEntry, greeting, localDate, plateRows, Slot } from '@/lib/domain';
+import { countedNums, displayLabel, displayName, entryLabel, FoodEntry, greeting, dayOf, plateRows, Slot } from '@/lib/domain';
 import { readTodaySteps } from '@/lib/health';
 import { AMOUNT_UNKNOWN, SLOT_LABEL } from '@/lib/labels';
 import { kc } from '@/lib/format';
@@ -51,7 +51,7 @@ export default function Today() {
   const t = useTheme(); const s = useStyles(); const st = useStore(); const d = useDay(); const router = useRouter();
   const { setSteps, api } = st;
   useEffect(() => {
-    readTodaySteps().then((n) => { if (n !== null) { setSteps(localDate(), n); api.putSteps(localDate(), n).catch(() => {}); } });
+    readTodaySteps().then((n) => { if (n !== null) { setSteps(dayOf(), n); api.putSteps(dayOf(), n).catch(() => {}); } });
   }, [setSteps, api]);
   const first = (st.user?.name ?? '').split(' ')[0];
   const dateLabel = useMemo(() => new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }), []);

@@ -17,7 +17,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider } from '../src/lib/store';
-import { displayLabel, displayName, entryFromItem, entryLabel, localDate, notMeasured, reopenRejected, type FoodEntry } from '../src/lib/domain';
+import { displayLabel, displayName, entryFromItem, entryLabel, dayOf, localDate, notMeasured, reopenRejected, type FoodEntry } from '../src/lib/domain';
 import { adoptServer } from '../src/lib/serverRow';
 import { DISH_TABLE_VERSION, parser, type Item } from '../src/parser';
 import Today from '../src/features/today/TodayScreen';
@@ -27,7 +27,7 @@ import { HeldRow } from '../src/components/LogRows';
 import { VariantPickSheet } from '../src/components/VariantPickSheet';
 
 jest.setTimeout(30_000);
-const DAY = localDate();
+const DAY = dayOf();
 const PULLED = { version: DISH_TABLE_VERSION + 2, units: { zarda_pulao: ['count', 'katori', 'spoon', 'plate', 'gram'] }, names: { zarda_pulao: 'zarda pulao' } };
 // a reading that carries the slug as its name (what an older build stored before the name arrived)
 const zarda = (): Item => ({ ...parser.unknown('zarda'), dish_id: 'zarda_pulao', name: 'zarda_pulao', matched_text: '1 katori zarda', source: 'table', data_source: 'table',

@@ -18,7 +18,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 import { StoreProvider, Store, useStore } from '../src/lib/store';
-import { counted, dayTotals, entryFromItem, FoodEntry, localDate, reviewEntry, serverName, TOO_MUCH_REASON } from '../src/lib/domain';
+import { counted, dayTotals, entryFromItem, FoodEntry, dayOf, localDate, reviewEntry, serverName, TOO_MUCH_REASON } from '../src/lib/domain';
 import { parser, DISH_TABLE_VERSION, Item } from '../src/parser';
 import { parseLocal } from '../src/lib/parseLocal';
 import { draftDishOk } from '../src/lib/api';
@@ -26,7 +26,7 @@ import Review from '../src/app/review';
 import { SYNC_FAILED_COPY } from '../src/components/SyncFailedRow';
 
 jest.setTimeout(30_000);
-const DAY = localDate();
+const DAY = dayOf();
 const bytes = (s: string) => Buffer.byteLength(s, 'utf8');
 
 // ---- fake server: food.go resolve / draft / handlePatch rules ----

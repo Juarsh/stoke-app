@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glows } from '@/components/Gradient';
 import { EditSheet } from '@/components/ItemEditor';
 import { Card, Row, T } from '@/components/ui';
-import { addDays, counted, countedNums, displayName, onServer, entryLabel, toReview, dayTotals, FoodEntry, localDate, Slot } from '@/lib/domain';
+import { addDays, counted, countedNums, displayName, onServer, entryLabel, toReview, dayTotals, FoodEntry, dayOf, Slot } from '@/lib/domain';
 import { isStale, pendingFor, PendingFood, SERVER_ERROR } from '@/lib/syncQueue';
 import { ReviewLink } from '@/components/ReviewLink';
 import { PendingRow } from '@/components/PendingRow';
@@ -99,7 +99,7 @@ export default function Progress() {
   const [editing, setEditing] = useState<FoodEntry | null>(null);
   const [editError, setEditError] = useState('');
   const [slot, setSlot] = useState<Slot>('lunch');
-  const today = localDate();
+  const today = dayOf();
   const days = useMemo<Day[]>(() => {
     const by = new Map<string, FoodEntry[]>();
     for (const e of st.entries) if (onServer(e)) by.set(e.local_date, [...(by.get(e.local_date) ?? []), e]);
