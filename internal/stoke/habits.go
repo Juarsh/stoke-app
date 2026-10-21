@@ -64,8 +64,11 @@ func (s *Service) checkHabit(h habitIn) string {
 		switch {
 		case !in(h.TargetValue, 1, countMax):
 			return fmt.Sprintf("Target must be a whole number from 1 to %d.", countMax)
-		case h.Unit == nil || text("Unit", *h.Unit, unitMax) != "":
+		case h.Unit == nil:
 			return "Pick a unit."
+		case text("Unit", *h.Unit, unitMax) != "":
+			// any short free text ("times", "laps", "big cups"); the phone sends it trimmed, with "times" for an empty field
+			return text("Unit", *h.Unit, unitMax)
 		case stepsRe.MatchString(*h.Unit):
 			return "Steps are on the Food card, so they can’t be a habit."
 		case h.TargetSets != nil || h.TargetReps != nil:

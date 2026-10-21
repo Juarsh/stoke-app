@@ -158,6 +158,10 @@ func TestBadValuesAreRefusedWithAReason(t *testing.T) {
 		{"/v1/workouts/bad%20id", "Bad id.", workout(nil)},
 		{"/v1/habits/h1", "Target must be a whole number from 1 to 999.", map[string]any{"name": "Water", "short_name": "Water", "short_name_auto": true, "icon": "drop", "kind": "count", "target_value": 0, "unit": "glasses", "target_sets": nil, "target_reps": nil, "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01", "position": 0, "archived_at": nil}},
 		{"/v1/habits/h1", "Steps are on the Food card, so they can’t be a habit.", map[string]any{"name": "Walk", "short_name": "Walk", "kind": "count", "target_value": 10, "unit": "steps", "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
+		{"/v1/habits/h1", "Unit can be at most 16 characters.", map[string]any{"name": "Swim", "short_name": "Swim", "kind": "count", "target_value": 10, "unit": "lengths of the pool", "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
+		{"/v1/habits/h1", "Unit can’t start or end with a space.", map[string]any{"name": "Swim", "short_name": "Swim", "kind": "count", "target_value": 10, "unit": " laps", "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
+		{"/v1/habits/h1", "Enter a unit.", map[string]any{"name": "Swim", "short_name": "Swim", "kind": "count", "target_value": 10, "unit": "", "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
+		{"/v1/habits/h1", "Pick a unit.", map[string]any{"name": "Swim", "short_name": "Swim", "kind": "count", "target_value": 10, "unit": nil, "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
 		{"/v1/habits/h1", "Short name can be at most 16 characters.", map[string]any{"name": "Walk", "short_name": "Walk the dog twice", "kind": "done", "schedule": "daily", "weekdays": 127, "starts_on": "2026-10-01"}},
 		{"/v1/habits/h1", "weekdays doesn’t match the schedule.", map[string]any{"name": "Walk", "short_name": "Walk", "kind": "done", "schedule": "weekdays", "weekdays": 127, "starts_on": "2026-10-01"}},
 		{"/v1/plans/p1", "A day names a routine that isn’t in this plan.", map[string]any{"name": "PPL", "days": []string{"r9", "", "", "", "", "", ""}, "active": true, "routines": []any{}}},
@@ -189,6 +193,21 @@ func TestHabitsAndLogs(t *testing.T) {
 	srv := server(t)
 	if code, h := call(t, srv, "PUT", "/v1/habits/h1", "a", habit("Water", nil)); code != 200 || h["version"] != 1.0 || h["weekdays"] != 21.0 {
 		t.Fatalf("%d %v", code, h)
+	}
+	// a count unit is short free text, stored and returned as sent (and a stored "glass" stays "glass")
+	for i, u := range []string{"times", "big cups", "glass", "लैप्स"} {
+		hu := habit(fmt.Sprintf("U%d", i), nil)
+		hu["unit"] = u
+		id := fmt.Sprintf("/v1/habits/u%d", i)
+		if code, h := call(t, srv, "PUT", id, "a", hu); code != 200 || h["unit"] != u {
+			t.Fatalf("unit %q: %d %v", u, code, h)
+		}
+		if _, h := call(t, srv, "GET", "/v1/habits", "a", nil); !strings.Contains(fmt.Sprint(h["habits"]), "unit:"+u) {
+			t.Fatalf("unit %q not round-tripped: %v", u, h)
+		}
+		if code, _ := call(t, srv, "DELETE", id+"?version=1", "a", nil); code != 204 {
+			t.Fatalf("delete %s %d", id, code)
+		}
 	}
 	if code, h := call(t, srv, "PUT", "/v1/habits/h2", "a", habit("wa-ter", nil)); code != 400 || reason(h) != "Already used, pick another" {
 		t.Fatalf("short name %d %v", code, h)
