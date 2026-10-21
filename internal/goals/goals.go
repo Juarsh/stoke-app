@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
+	"github.com/akarsh/calorie-tracker/internal/store"
 )
 
 // Profile is what the server keeps. Sex is never sent or stored: the phone
@@ -122,20 +122,19 @@ func (p ProfileIn) Validate() map[string]string {
 
 type Service struct{ DB *pgxpool.Pool }
 
+// pg: the store on this service's pool.
+func (s *Service) pg() *store.PG { return &store.PG{DB: s.DB} }
+
 // TargetFor returns the target in effect on a day (nil if onboarding not done).
 func (s *Service) TargetFor(ctx context.Context, userID int64, day time.Time) (*Target, error) {
 	var t Target
 	var eff time.Time
-	err := s.DB.QueryRow(ctx, `SELECT effective_from,kcal,protein_g,carbs_g,fat_g,water_ml,steps,custom FROM targets
-		WHERE user_id=$1 AND effective_from<=$2 ORDER BY effective_from DESC LIMIT 1`, userID, day).
-		Scan(&eff, &t.Kcal, &t.ProteinG, &t.CarbsG, &t.FatG, &t.WaterML, &t.Steps, &t.Custom)
-	if err == pgx.ErrNoRows {
+	err := s.pg().Goals().TargetOn(ctx, userID, day, &eff, &t.Kcal, &t.ProteinG, &t.CarbsG, &t.FatG, &t.WaterML, &t.Steps, &t.Custom)
+	if err == store.ErrNoRows {
 		// a target set "today" still applies to earlier days when no older one exists
-		err = s.DB.QueryRow(ctx, `SELECT effective_from,kcal,protein_g,carbs_g,fat_g,water_ml,steps,custom FROM targets
-			WHERE user_id=$1 ORDER BY effective_from LIMIT 1`, userID).
-			Scan(&eff, &t.Kcal, &t.ProteinG, &t.CarbsG, &t.FatG, &t.WaterML, &t.Steps, &t.Custom)
+		err = s.pg().Goals().FirstTarget(ctx, userID, &eff, &t.Kcal, &t.ProteinG, &t.CarbsG, &t.FatG, &t.WaterML, &t.Steps, &t.Custom)
 	}
-	if err == pgx.ErrNoRows {
+	if err == store.ErrNoRows {
 		return nil, nil
 	}
 	t.EffectiveFrom = eff.Format("2006-01-02")
@@ -145,7 +144,7 @@ func (s *Service) TargetFor(ctx context.Context, userID int64, day time.Time) (*
 // WeightKG returns the profile weight (70 if unknown).
 func (s *Service) WeightKG(ctx context.Context, userID int64) float64 {
 	var w float64
-	if s.DB.QueryRow(ctx, `SELECT weight_kg FROM profiles WHERE user_id=$1`, userID).Scan(&w) != nil {
+	if s.pg().Goals().WeightKG(ctx, userID, &w) != nil {
 		return 70
 	}
 	return w
@@ -154,7 +153,7 @@ func (s *Service) WeightKG(ctx context.Context, userID int64) float64 {
 // Diet returns veg / egg / nonveg.
 func (s *Service) Diet(ctx context.Context, userID int64) string {
 	var d string
-	if s.DB.QueryRow(ctx, `SELECT diet FROM users WHERE id=$1`, userID).Scan(&d) != nil {
+	if s.pg().Goals().Diet(ctx, userID, &d) != nil {
 		return "nonveg"
 	}
 	return d
@@ -162,7 +161,7 @@ func (s *Service) Diet(ctx context.Context, userID int64) string {
 
 func (s *Service) StepsInBudget(ctx context.Context, userID int64) bool {
 	var b bool
-	_ = s.DB.QueryRow(ctx, `SELECT steps_in_budget FROM users WHERE id=$1`, userID).Scan(&b)
+	_ = s.pg().Goals().StepsInBudget(ctx, userID, &b)
 	return b
 }
 
@@ -187,15 +186,13 @@ type me struct {
 func (s *Service) getMe(w http.ResponseWriter, r *http.Request) {
 	uid := httpx.UserID(r)
 	var m me
-	if err := s.DB.QueryRow(r.Context(), `SELECT email,name,tz,diet,steps_in_budget FROM users WHERE id=$1`, uid).
-		Scan(&m.Email, &m.Name, &m.TZ, &m.Diet, &m.StepsInBudget); err != nil {
+	if err := s.pg().Goals().Me(r.Context(), uid, &m.Email, &m.Name, &m.TZ, &m.Diet, &m.StepsInBudget); err != nil {
 		httpx.Error(w, 500, "lookup failed")
 		return
 	}
 	var p Profile
 	var mk *int
-	if s.DB.QueryRow(r.Context(), `SELECT birth_year,height_cm,weight_kg,activity_level,goal,maintenance_kcal FROM profiles WHERE user_id=$1`, uid).
-		Scan(&p.BirthYear, &p.HeightCM, &p.WeightKG, &p.ActivityLevel, &p.Goal, &mk) == nil {
+	if s.pg().Goals().Profile(r.Context(), uid, &p.BirthYear, &p.HeightCM, &p.WeightKG, &p.ActivityLevel, &p.Goal, &mk) == nil {
 		if mk != nil {
 			p.MaintenanceKcal = *mk
 		}
@@ -217,8 +214,7 @@ func (s *Service) patchMe(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, 400, "diet must be veg, egg or nonveg")
 		return
 	}
-	_, err := s.DB.Exec(r.Context(), `UPDATE users SET name=COALESCE($2,name), diet=COALESCE($3,diet), steps_in_budget=COALESCE($4,steps_in_budget) WHERE id=$1`,
-		httpx.UserID(r), in.Name, in.Diet, in.StepsInBudget)
+	err := s.pg().Goals().UpdateMe(r.Context(), httpx.UserID(r), in.Name, in.Diet, in.StepsInBudget)
 	if err != nil {
 		httpx.Error(w, 500, "update failed")
 		return
@@ -228,7 +224,7 @@ func (s *Service) patchMe(w http.ResponseWriter, r *http.Request) {
 
 // deleteMe removes the account and all data (Play requirement). Hard delete via ON DELETE CASCADE.
 func (s *Service) deleteMe(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.DB.Exec(r.Context(), `DELETE FROM users WHERE id=$1`, httpx.UserID(r)); err != nil {
+	if err := s.pg().Goals().DeleteUser(r.Context(), httpx.UserID(r)); err != nil {
 		httpx.Error(w, 500, "delete failed")
 		return
 	}
@@ -253,17 +249,15 @@ func (s *Service) putProfile(w http.ResponseWriter, r *http.Request) {
 	p := Profile{BirthYear: today.Year() - in.Age, HeightCM: in.HeightCM, WeightKG: in.WeightKG, ActivityLevel: in.ActivityLevel,
 		Goal: in.Goal, MaintenanceKcal: int(math.Round(in.MaintenanceKcal))}
 	t := Macros(in.TargetKcal, in.WeightKG, in.Goal)
-	tx, err := s.DB.Begin(r.Context())
+	tx, err := s.pg().Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
 	}
 	defer tx.Rollback(r.Context())
-	_, err = tx.Exec(r.Context(), `INSERT INTO profiles(user_id,birth_year,height_cm,weight_kg,activity_level,goal,maintenance_kcal) VALUES ($1,$2,$3,$4,$5,$6,$7)
-		ON CONFLICT (user_id) DO UPDATE SET birth_year=$2,height_cm=$3,weight_kg=$4,activity_level=$5,goal=$6,maintenance_kcal=$7,updated_at=now()`,
-		uid, p.BirthYear, p.HeightCM, p.WeightKG, p.ActivityLevel, p.Goal, p.MaintenanceKcal)
+	err = tx.Goals().PutProfile(r.Context(), uid, p.BirthYear, p.HeightCM, p.WeightKG, p.ActivityLevel, p.Goal, p.MaintenanceKcal)
 	if err == nil && in.Diet != "" {
-		_, err = tx.Exec(r.Context(), `UPDATE users SET diet=$2 WHERE id=$1`, uid, in.Diet)
+		err = tx.Goals().SetDiet(r.Context(), uid, in.Diet)
 	}
 	if err == nil {
 		err = upsertTarget(r.Context(), tx, uid, today, t)
@@ -279,11 +273,8 @@ func (s *Service) putProfile(w http.ResponseWriter, r *http.Request) {
 	httpx.JSON(w, 200, map[string]any{"profile": p, "target": t})
 }
 
-func upsertTarget(ctx context.Context, tx pgx.Tx, uid int64, day time.Time, t Target) error {
-	_, err := tx.Exec(ctx, `INSERT INTO targets(user_id,effective_from,kcal,protein_g,carbs_g,fat_g,water_ml,steps,custom) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-		ON CONFLICT (user_id,effective_from) DO UPDATE SET kcal=$3,protein_g=$4,carbs_g=$5,fat_g=$6,water_ml=$7,steps=$8,custom=$9,updated_at=now()`,
-		uid, day, t.Kcal, t.ProteinG, t.CarbsG, t.FatG, t.WaterML, t.Steps, t.Custom)
-	return err
+func upsertTarget(ctx context.Context, tx *store.Tx, uid int64, day time.Time, t Target) error {
+	return tx.Goals().PutTarget(ctx, uid, day, t.Kcal, t.ProteinG, t.CarbsG, t.FatG, t.WaterML, t.Steps, t.Custom)
 }
 
 func (s *Service) getTarget(w http.ResponseWriter, r *http.Request) {
@@ -336,7 +327,7 @@ func (s *Service) putTarget(w http.ResponseWriter, r *http.Request) {
 		t.Steps = *in.Steps
 	}
 	today := httpx.Today()
-	tx, err := s.DB.Begin(r.Context())
+	tx, err := s.pg().Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return

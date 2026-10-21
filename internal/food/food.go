@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgconn"
 	"log"
 	"math"
 	"net/http"
@@ -19,18 +18,18 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/akarsh/calorie-tracker/internal/summary"
 )
 
 type Rebuilder interface {
 	Rebuild(ctx context.Context, userID int64, day time.Time) (summary.Day, error)
 	// RebuildTx: the same inside the entry write's own transaction (all or nothing, H1)
-	RebuildTx(ctx context.Context, tx pgx.Tx, userID int64, day time.Time) (summary.Day, error)
+	RebuildTx(ctx context.Context, tx *store.Tx, userID int64, day time.Time) (summary.Day, error)
 }
 
 // TooMuchDayReason: a day whose totals no column can hold (defense in depth; the
@@ -41,8 +40,7 @@ const TooMuchDayReason = "That’s too much for one day. Try a smaller amount."
 // (rolled back, so nothing is half-saved): a numeric overflow is the client's
 // input (400 with a reason), anything else a 500.
 func writeErr(w http.ResponseWriter, err error, reason, fallback string) {
-	var pe *pgconn.PgError
-	if errors.As(err, &pe) && (pe.Code == "22003" || pe.Code == "23514") { // numeric_value_out_of_range, check_violation
+	if store.IsValueOutOfRange(err) { // numeric_value_out_of_range, check_violation
 		httpx.Error(w, 400, reason)
 		return
 	}
@@ -654,26 +652,23 @@ func (s *Service) reserveAI(ctx context.Context, userID int64) string {
 	today := s.Quota.Day(httpx.Now())
 	// one transaction: both counters or neither (a meal refused by the
 	// project cap never uses one of the user's own estimates)
-	tx, err := s.DB.Begin(ctx)
+	tx, err := s.pg().Begin(ctx)
 	if err != nil {
 		return "error"
 	}
 	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
 	var calls int
-	err = tx.QueryRow(ctx, `INSERT INTO ai_usage(user_id,local_date,calls) VALUES ($1,$2,1)
-		ON CONFLICT (user_id,local_date) DO UPDATE SET calls=ai_usage.calls+1 WHERE ai_usage.calls < $3
-		RETURNING calls`, userID, today, s.userCap()).Scan(&calls)
-	if errors.Is(err, pgx.ErrNoRows) {
+	err = tx.AI().ChargeUser(ctx, userID, today, s.userCap(), &calls)
+	if errors.Is(err, store.ErrNoRows) {
 		return "cap_reached"
 	}
 	if err != nil {
 		return "error"
 	}
 	gc := s.GlobalCap.Load() // 0 = unlimited, but always counted
-	err = tx.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
-		ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
-		RETURNING calls`, today, gc).Scan(&calls)
-	if errors.Is(err, pgx.ErrNoRows) {
+	var gcalls int64
+	err = tx.AI().ChargeGlobal(ctx, today, gc, &gcalls)
+	if errors.Is(err, store.ErrNoRows) {
 		return "global_cap_reached"
 	}
 	if err != nil || tx.Commit(ctx) != nil {
@@ -732,7 +727,7 @@ func scaleItem(it parser.Item, k float64) parser.Item {
 
 func (s *Service) cacheGet(ctx context.Context, key string) ([]parser.Item, bool) {
 	var raw []byte
-	err := s.DB.QueryRow(ctx, `UPDATE ai_cache SET hits=hits+1, last_hit_at=now() WHERE norm_text=$1 RETURNING items`, key).Scan(&raw)
+	err := s.pg().AI().CacheHit(ctx, key, &raw)
 	if err != nil {
 		return nil, false
 	}
@@ -748,48 +743,13 @@ func (s *Service) cachePut(ctx context.Context, key string, items []parser.Item)
 	if err != nil || len(items) == 0 || s.DB == nil {
 		return
 	}
-	_, _ = s.DB.Exec(ctx, `INSERT INTO ai_cache(norm_text,items) VALUES ($1,$2) ON CONFLICT (norm_text) DO NOTHING`, key, b)
+	_ = s.pg().AI().CachePut(ctx, key, b)
 }
 
 // ---------- entries ----------
 
-type Entry struct {
-	ID          int64   `json:"id"`
-	LocalDate   string  `json:"local_date"`
-	Slot        string  `json:"slot"`
-	RawText     string  `json:"raw_text"`
-	DishID      *string `json:"dish_id"`
-	Name        string  `json:"name"`
-	CustomName  string  `json:"custom_name"`
-	Qty         float64 `json:"qty"`
-	Unit        string  `json:"unit"`
-	OilLevel    string  `json:"oil_level"`
-	KcalBest    float64 `json:"kcal_best"`
-	KcalLow     float64 `json:"kcal_low"`
-	KcalHigh    float64 `json:"kcal_high"`
-	ProteinBest float64 `json:"protein_best"`
-	ProteinLow  float64 `json:"protein_low"`
-	ProteinHigh float64 `json:"protein_high"`
-	Source      string  `json:"source"`
-	Confirmed   bool    `json:"confirmed"`
-	ClientID    *string `json:"client_id"`
-	TableVer    *int    `json:"dish_table_version"`
-	CarbsG      float64 `json:"carbs_g"`
-	FatG        float64 `json:"fat_g"`
-	Span        string  `json:"span"`
-	// State: confirmed (counts in totals) or needs_review (counts for the
-	// streak only, until confirmed with PATCH {"state":"confirmed"}).
-	State        string    `json:"state"`
-	SpanPart     int       `json:"span_part"`
-	ParseJobID   *string   `json:"parse_job_id"`
-	ClientItemID *string   `json:"client_item_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	DeletedAt    *string   `json:"deleted_at"`
-	// Version: the server's row version (1 on insert, +1 on every write). PATCH
-	// sends back the version the client last saw (409 version_conflict if stale).
-	Version int `json:"version"`
-}
+// Entry is one food_entries row (its fields are store.FoodEntry's).
+type Entry = store.FoodEntry
 
 // ItemIn is one chip the client confirms. Either dish_id (values recomputed
 // from our table) or custom_name with the user's/AI's numbers.
@@ -1118,27 +1078,27 @@ func (s *Service) draft(in ItemIn, cid *string) (Entry, int, error) {
 	return e, 0, nil
 }
 
-const cols = `id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,created_at,updated_at,deleted_at,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id,version`
-
-func (s *Service) scan(row pgx.Row) (Entry, error) {
-	var e Entry
-	var d time.Time
-	var del *time.Time
-	err := row.Scan(&e.ID, &d, &e.Slot, &e.RawText, &e.DishID, &e.CustomName, &e.Qty, &e.Unit, &e.OilLevel,
-		&e.KcalBest, &e.KcalLow, &e.KcalHigh, &e.ProteinBest, &e.ProteinLow, &e.ProteinHigh, &e.Source, &e.Confirmed, &e.CreatedAt, &e.UpdatedAt, &del, &e.ClientID, &e.TableVer, &e.CarbsG, &e.FatG, &e.Span, &e.State, &e.SpanPart, &e.ParseJobID, &e.ClientItemID, &e.Version)
-	e.LocalDate = d.Format("2006-01-02")
-	e.Name = e.CustomName
+// named puts the dish table's name on an entry read from the store (as the
+// old row scan did, also when the read failed).
+func (s *Service) named(e Entry, err error) (Entry, error) {
 	if e.DishID != nil {
 		if dd, ok := s.parser().Dish(*e.DishID); ok {
 			e.Name = dd.Name
 		}
 	}
-	if del != nil {
-		x := del.UTC().Format(time.RFC3339)
-		e.DeletedAt = &x
-	}
 	return e, err
 }
+
+// namedAll: named for every entry of a list read.
+func (s *Service) namedAll(es []Entry, err error) ([]Entry, error) {
+	for i := range es {
+		es[i], _ = s.named(es[i], nil)
+	}
+	return es, err
+}
+
+// pg: the store on this service's pool.
+func (s *Service) pg() *store.PG { return &store.PG{DB: s.DB} }
 
 func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handler) {
 	// every food response says which dish table the server is on, so a phone on an
@@ -1244,11 +1204,9 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid := httpx.UserID(r)
-	stored := func(q interface {
-		QueryRow(context.Context, string, ...any) pgx.Row
-	}, cid string) (Entry, bool, error) {
-		ex, err := s.scan(q.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND client_id=$2`, uid, cid))
-		if errors.Is(err, pgx.ErrNoRows) {
+	stored := func(q store.Querier, cid string) (Entry, bool, error) {
+		ex, err := s.named(q.Food().EntryByClientID(r.Context(), uid, cid))
+		if errors.Is(err, store.ErrNoRows) {
 			return ex, false, nil
 		}
 		return ex, err == nil, err
@@ -1260,7 +1218,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	for i, it := range items {
 		if it.ClientID != "" {
 			// idempotent: a repeat client_id returns the stored entry unchanged
-			if _, dup, err := stored(s.DB, it.ClientID); err != nil {
+			if _, dup, err := stored(s.pg(), it.ClientID); err != nil {
 				httpx.Error(w, 500, "db")
 				return
 			} else if dup {
@@ -1289,7 +1247,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	// 2. write: the user's summary lock first, then the rows and the day's summary
 	// in this one transaction, one writer of this user at a time (G4, H1)
-	tx, err := s.DB.Begin(r.Context())
+	tx, err := s.pg().Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
@@ -1326,12 +1284,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			part = spanParts[k]
 			spanParts[k]++
 		}
-		saved, err := s.scan(tx.QueryRow(r.Context(), `INSERT INTO food_entries(user_id,local_date,slot,raw_text,dish_id,custom_name,qty,unit,oil_level,
-			kcal_best,kcal_low,kcal_high,protein_best,protein_low,protein_high,source,confirmed,client_id,dish_table_version,carbs_g,fat_g,span,state,span_part,parse_job_id,client_item_id)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE(NULLIF($23,''),'confirmed'),$24,NULLIF($25,''),NULLIF($26,'')) RETURNING `+cols,
-			uid, day, in.Slot, in.Text, e.DishID, e.CustomName, e.Qty, e.Unit, e.OilLevel,
-			e.KcalBest, e.KcalLow, e.KcalHigh, e.ProteinBest, e.ProteinLow, e.ProteinHigh, e.Source, e.Confirmed,
-			e.ClientID, e.TableVer, e.CarbsG, e.FatG, Normalize(it.Span), e.State, part, it.jobID(), it.ClientItemID))
+		saved, err := s.named(tx.Food().InsertEntry(r.Context(), uid, day, in.Slot, in.Text, e, Normalize(it.Span), part, it.jobID(), it.ClientItemID))
 		if err != nil {
 			writeErr(w, err, "item "+strconv.Itoa(i)+": "+TooMuchReason, "save failed")
 			return
@@ -1345,7 +1298,7 @@ func (s *Service) handleCreate(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	_, _ = tx.Exec(r.Context(), `INSERT INTO events(user_id,name,props) VALUES ($1,'log',jsonb_build_object('items',$2::int))`, uid, len(out))
+	_ = tx.Food().LogEvent(r.Context(), uid, len(out))
 	// the day's summary in the SAME transaction: if it can't be written nothing is saved (H1)
 	sum, err := s.Summary.RebuildTx(r.Context(), tx, uid, day)
 	if err != nil {
@@ -1371,20 +1324,10 @@ func (s *Service) handleList(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	rows, err := s.DB.Query(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND local_date=$2 AND deleted_at IS NULL ORDER BY created_at,id`, httpx.UserID(r), day)
+	out, err := s.namedAll(s.pg().Food().ListDay(r.Context(), httpx.UserID(r), day))
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
-	}
-	defer rows.Close()
-	out := []Entry{}
-	for rows.Next() {
-		e, err := s.scan(rows)
-		if err != nil {
-			httpx.Error(w, 500, "db")
-			return
-		}
-		out = append(out, e)
 	}
 	httpx.JSON(w, 200, map[string]any{"local_date": day.Format("2006-01-02"), "entries": out, "total": entryTotals(out)})
 }
@@ -1414,11 +1357,11 @@ func (s *Service) load(ctx context.Context, uid int64, r *http.Request) (Entry, 
 	var e Entry
 	var err error
 	if id, perr := strconv.ParseInt(raw, 10, 64); perr == nil {
-		e, err = s.scan(s.DB.QueryRow(ctx, `SELECT `+cols+` FROM food_entries WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL`, id, uid))
+		e, err = s.named(s.pg().Food().EntryByID(ctx, uid, id))
 	} else {
-		e, err = s.scan(s.DB.QueryRow(ctx, `SELECT `+cols+` FROM food_entries WHERE client_id=$1 AND user_id=$2 AND deleted_at IS NULL`, raw, uid))
+		e, err = s.named(s.pg().Food().EntryByLiveClientID(ctx, uid, raw))
 	}
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, store.ErrNoRows) {
 		return e, 404, errors.New("entry not found")
 	}
 	if err != nil {
@@ -1622,7 +1565,7 @@ func (s *Service) patchOnce(w http.ResponseWriter, r *http.Request, in *patchIn,
 	}
 	// the row, its job link, the remembered reading and the summaries of both days
 	// in ONE transaction under the user's summary lock: all or nothing (H1)
-	tx, err := s.DB.Begin(r.Context())
+	tx, err := s.pg().Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return true
@@ -1632,8 +1575,8 @@ func (s *Service) patchOnce(w http.ResponseWriter, r *http.Request, in *patchIn,
 		httpx.Error(w, 500, "db")
 		return true
 	}
-	locked, err := s.scan(tx.QueryRow(r.Context(), `SELECT `+cols+` FROM food_entries WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL FOR UPDATE`, e.ID, uid))
-	if errors.Is(err, pgx.ErrNoRows) {
+	locked, err := s.named(tx.Food().LockEntry(r.Context(), uid, e.ID))
+	if errors.Is(err, store.ErrNoRows) {
 		httpx.Error(w, 404, "entry not found") // deleted while this edit was checked: the delete wins
 		return true
 	}
@@ -1652,12 +1595,8 @@ func (s *Service) patchOnce(w http.ResponseWriter, r *http.Request, in *patchIn,
 		httpx.Error(w, 409, "entry changed while saving; retry")
 		return true
 	}
-	saved, err := s.scan(tx.QueryRow(r.Context(), `UPDATE food_entries SET local_date=$3,slot=$4,dish_id=$5,custom_name=$6,qty=$7,unit=$8,oil_level=$9,
-		kcal_best=$10,kcal_low=$11,kcal_high=$12,protein_best=$13,protein_low=$14,protein_high=$15,source=$16,confirmed=($20<>'needs_review'),
-		dish_table_version=COALESCE($17,dish_table_version),carbs_g=$18,fat_g=$19,state=COALESCE(NULLIF($20,''),'confirmed'),updated_at=now()
-		WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL AND version=$21 RETURNING `+cols, e.ID, uid, day, slot, ne.DishID, ne.CustomName, ne.Qty, ne.Unit, ne.OilLevel,
-		ne.KcalBest, ne.KcalLow, ne.KcalHigh, ne.ProteinBest, ne.ProteinLow, ne.ProteinHigh, ne.Source, ne.TableVer, ne.CarbsG, ne.FatG, ne.State, e.Version))
-	if errors.Is(err, pgx.ErrNoRows) {
+	saved, err := s.named(tx.Food().UpdateEntry(r.Context(), uid, e.ID, day, slot, ne, e.Version))
+	if errors.Is(err, store.ErrNoRows) {
 		// Another write landed between the load and this update (the update is atomic on
 		// version and deleted_at): a delete wins (404, the same as a PATCH after the delete);
 		// a newer version is a 409 with the current row. Never a 500.
@@ -1682,8 +1621,7 @@ func (s *Service) patchOnce(w http.ResponseWriter, r *http.Request, in *patchIn,
 		in.ParseJobID = in.JobID
 	}
 	if in.ParseJobID != nil || in.ClientItemID != nil {
-		_ = tx.QueryRow(r.Context(), `UPDATE food_entries SET parse_job_id=COALESCE(NULLIF($3,''),parse_job_id), client_item_id=COALESCE(NULLIF($4,''),client_item_id)
-			WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL RETURNING version`, e.ID, uid, deref(in.ParseJobID), deref(in.ClientItemID)).Scan(&saved.Version)
+		_ = tx.Food().LinkJob(r.Context(), uid, e.ID, deref(in.ParseJobID), deref(in.ClientItemID), &saved.Version)
 		saved.ParseJobID, saved.ClientItemID = orPtr(in.ParseJobID, saved.ParseJobID), orPtr(in.ClientItemID, saved.ClientItemID)
 	}
 	span := e.Span
@@ -1728,7 +1666,7 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, code, err.Error())
 		return
 	}
-	tx, err := s.DB.Begin(r.Context())
+	tx, err := s.pg().Begin(r.Context())
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
@@ -1741,8 +1679,8 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 	// the day comes from the row as it is under the lock (a concurrent day-move may have
 	// changed it since the read above), and only a live row is deleted (rg8 B1)
 	var day time.Time
-	err = tx.QueryRow(r.Context(), `UPDATE food_entries SET deleted_at=now(), updated_at=now() WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL RETURNING local_date`, e.ID, uid).Scan(&day)
-	if errors.Is(err, pgx.ErrNoRows) {
+	err = tx.Food().DeleteEntry(r.Context(), uid, e.ID, &day)
+	if errors.Is(err, store.ErrNoRows) {
 		w.WriteHeader(http.StatusNoContent) // a concurrent delete got there first (and rebuilt its day)
 		return
 	}
@@ -1773,20 +1711,10 @@ func (s *Service) handleSync(w http.ResponseWriter, r *http.Request) {
 		}
 		since = t
 	}
-	rows, err := s.DB.Query(r.Context(), `SELECT `+cols+` FROM food_entries WHERE user_id=$1 AND updated_at>$2 ORDER BY updated_at LIMIT 1000`, httpx.UserID(r), since)
+	out, err := s.namedAll(s.pg().Food().ChangedSince(r.Context(), httpx.UserID(r), since))
 	if err != nil {
 		httpx.Error(w, 500, "db")
 		return
-	}
-	defer rows.Close()
-	out := []Entry{}
-	for rows.Next() {
-		e, err := s.scan(rows)
-		if err != nil {
-			httpx.Error(w, 500, "db")
-			return
-		}
-		out = append(out, e)
 	}
 	httpx.JSON(w, 200, map[string]any{"entries": out, "server_time": time.Now().UTC().Format(time.RFC3339Nano)})
 }
@@ -1799,8 +1727,7 @@ func (Contributor) Name() string { return "food" }
 
 func (Contributor) Contribute(ctx context.Context, q summary.Querier, uid int64, day time.Time, d *summary.Day) error {
 	var n int
-	err := q.QueryRow(ctx, `SELECT COALESCE(SUM(kcal_best) FILTER (WHERE state<>'needs_review'),0), COALESCE(SUM(protein_best) FILTER (WHERE state<>'needs_review'),0), COUNT(*) FROM food_entries
-		WHERE user_id=$1 AND local_date=$2 AND deleted_at IS NULL`, uid, day).Scan(&d.KcalIn, &d.ProteinIn, &n)
+	err := q.Food().DayTotals(ctx, uid, day, &d.KcalIn, &d.ProteinIn, &n)
 	d.Logged = d.Logged || n > 0 // any entry, including needs_review, counts for the streak
 	return err
 }
@@ -1891,7 +1818,7 @@ func (s *Service) startAICall(ctx context.Context, j *Job, later bool) (id int64
 	if m, ok := s.Fallback.(interface{ ModelName() string }); ok {
 		model = m.ModelName()
 	}
-	tx, err := s.DB.Begin(ctx)
+	tx, err := s.pg().Begin(ctx)
 	if err != nil {
 		log.Printf("ai_calls start failed: job=%s err=%v", j.ID, err)
 		return 0, !later // can't charge: a later attempt is not sent uncounted
@@ -1899,10 +1826,8 @@ func (s *Service) startAICall(ctx context.Context, j *Job, later bool) (id int64
 	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
 	if later {
 		var calls int64
-		err = tx.QueryRow(ctx, `INSERT INTO ai_global_usage(local_date,calls) VALUES ($1,1)
-			ON CONFLICT (local_date) DO UPDATE SET calls=ai_global_usage.calls+1 WHERE $2::bigint=0 OR ai_global_usage.calls < $2
-			RETURNING calls`, s.Quota.Day(httpx.Now()), s.GlobalCap.Load()).Scan(&calls)
-		if errors.Is(err, pgx.ErrNoRows) {
+		err = tx.AI().ChargeGlobal(ctx, s.Quota.Day(httpx.Now()), s.GlobalCap.Load(), &calls)
+		if errors.Is(err, store.ErrNoRows) {
 			return 0, false
 		}
 		if err != nil {
@@ -1910,9 +1835,8 @@ func (s *Service) startAICall(ctx context.Context, j *Job, later bool) (id int64
 			return 0, false
 		}
 	}
-	if _, err = tx.Exec(ctx, `UPDATE ai_calls SET outcome='died' WHERE meal_id=$1 AND outcome='in_flight'`, j.ID); err == nil {
-		err = tx.QueryRow(ctx, `INSERT INTO ai_calls(user_id,meal_id,created_at,model,outcome,sends,requeue) VALUES ($1,$2,$3,$4,'in_flight',0,$5) RETURNING id`,
-			j.UserID, j.ID, httpx.Now(), model, j.Requeues).Scan(&id)
+	if err = tx.AI().MarkDied(ctx, j.ID); err == nil {
+		err = tx.AI().StartCall(ctx, j.UserID, j.ID, httpx.Now(), model, j.Requeues, &id)
 	}
 	if err == nil {
 		err = tx.Commit(ctx)
@@ -1935,12 +1859,12 @@ func (s *Service) finishAICall(ctx context.Context, j *Job, id int64, later bool
 	}
 	wctx := context.WithoutCancel(ctx) // a timed-out attempt still records its outcome
 	if later && sends == 0 {
-		_, _ = s.DB.Exec(wctx, `UPDATE ai_global_usage SET calls=calls-1 WHERE local_date=$1 AND calls>0`, s.Quota.Day(httpx.Now()))
+		_ = s.pg().AI().UnchargeGlobal(wctx, s.Quota.Day(httpx.Now()))
 	}
 	if id == 0 {
 		return
 	}
-	if _, err := s.DB.Exec(wctx, `UPDATE ai_calls SET outcome=$2, sends=$3 WHERE id=$1`, id, outcome, sends); err != nil {
+	if err := s.pg().AI().FinishCall(wctx, id, outcome, sends); err != nil {
 		log.Printf("ai_calls update failed: job=%s err=%v", j.ID, err)
 	}
 }
@@ -1948,8 +1872,8 @@ func (s *Service) finishAICall(ctx context.Context, j *Job, id int64, later bool
 // releaseAI gives back a call reserved by reserveAI that was never made.
 func (s *Service) releaseAI(ctx context.Context, userID int64) {
 	today := s.Quota.Day(httpx.Now())
-	_, _ = s.DB.Exec(ctx, `UPDATE ai_usage SET calls=calls-1 WHERE user_id=$1 AND local_date=$2 AND calls>0`, userID, today)
-	_, _ = s.DB.Exec(ctx, `UPDATE ai_global_usage SET calls=calls-1 WHERE local_date=$1 AND calls>0`, today)
+	_ = s.pg().AI().UnchargeUser(ctx, userID, today)
+	_ = s.pg().AI().UnchargeGlobal(ctx, today)
 }
 
 // choiceCheck refuses a save the user never actually chose: a table item

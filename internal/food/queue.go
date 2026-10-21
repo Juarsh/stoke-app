@@ -13,6 +13,7 @@ import (
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 )
 
 // Job is one meal waiting for (or done with) its AI answer.
@@ -519,7 +520,7 @@ func (s *Service) jobAbandoned(ctx context.Context, uid int64, job string) bool 
 		return ok && j.Status == "abandoned"
 	}
 	var n int
-	_ = s.DB.QueryRow(ctx, `SELECT count(*) FROM ai_parse_jobs WHERE id=$1 AND user_id=$2 AND status='abandoned'`, job, uid).Scan(&n)
+	_ = s.pg().Food().AbandonedJobs(ctx, uid, job, &n)
 	return n > 0
 }
 
@@ -531,27 +532,10 @@ func abandonedBody(i int, job string) map[string]any {
 
 // JobEntry is an entry saved with this parse job's id (typically a
 // needs_review entry waiting for the AI answer).
-type JobEntry struct {
-	ID           int64   `json:"id"`
-	ClientID     *string `json:"client_id"`
-	ClientItemID *string `json:"client_item_id"`
-	State        string  `json:"state"`
-}
+type JobEntry = store.FoodJobEntry
 
 func (s *Service) jobEntries(ctx context.Context, uid int64, job string) []JobEntry {
-	out := []JobEntry{}
-	rows, err := s.DB.Query(ctx, `SELECT id, client_id, client_item_id, state FROM food_entries
-		WHERE user_id=$1 AND parse_job_id=$2 AND deleted_at IS NULL ORDER BY id`, uid, job)
-	if err != nil {
-		return out
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var e JobEntry
-		if rows.Scan(&e.ID, &e.ClientID, &e.ClientItemID, &e.State) == nil {
-			out = append(out, e)
-		}
-	}
+	out, _ := s.pg().Food().JobEntries(ctx, uid, job)
 	return out
 }
 

@@ -16,10 +16,7 @@ func (s *Service) TestRoutes(mux *http.ServeMux, stub *Stub) {
 	})
 	mux.HandleFunc("POST /test/ai/calls/reset", func(w http.ResponseWriter, r *http.Request) {
 		stub.Reset()
-		_, _ = s.DB.Exec(r.Context(), `DELETE FROM ai_cache`)
-		_, _ = s.DB.Exec(r.Context(), `DELETE FROM ai_global_usage`)
-		_, _ = s.DB.Exec(r.Context(), `DELETE FROM ai_usage`)
-		_, _ = s.DB.Exec(r.Context(), `DELETE FROM ai_google_exhausted`)
+		s.pg().AI().ResetAI(r.Context())
 		s.Quota.ClearExhausted()
 		httpx.JSON(w, 200, map[string]any{"calls": 0})
 	})

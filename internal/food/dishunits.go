@@ -7,6 +7,7 @@ import (
 
 	"github.com/akarsh/calorie-tracker/internal/dishes"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -34,7 +35,7 @@ func WithUnits(p *parser.Parser) []DishOut {
 // its supported units, for cmd/dishes-pull.
 func PullTable(ctx context.Context, db *pgxpool.Pool) (version int, out []byte, err error) {
 	var raw []byte
-	if err = db.QueryRow(ctx, `SELECT version, snapshot FROM dish_table_versions ORDER BY version DESC LIMIT 1`).Scan(&version, &raw); err != nil {
+	if err = (&store.PG{DB: db}).Dishes().Newest(ctx, &version, &raw); err != nil {
 		return 0, nil, err
 	}
 	var ds []dishes.Dish

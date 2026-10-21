@@ -7,9 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 )
 
 // Durable jobs (ai_parse_jobs, migration 014). The queue keeps working
@@ -33,9 +32,6 @@ type jobPayload struct {
 	Generic     ParseResponse `json:"generic"`
 }
 
-const jobCols = `id, user_id, text, cache_key, slot, payload, status, requeues, last_busy,
-	next_attempt_at, lease_until, first_try_at, created_at, finished_at, result, attempts`
-
 func dbCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), dbTimeout)
 }
@@ -56,19 +52,21 @@ func (q *Queue) insertJob(j *Job) error {
 	}
 	ctx, cancel := dbCtx()
 	defer cancel()
-	_, err = q.db.Exec(ctx, `INSERT INTO ai_parse_jobs(id,user_id,text,cache_key,slot,payload,status,created_at)
-		VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)`, j.ID, j.UserID, j.Text, j.Key, j.Slot, p, j.Created)
-	return err
+	return q.store().InsertJob(ctx, j.ID, j.UserID, j.Text, j.Key, j.Slot, p, j.Created)
 }
 
-// scanJob reads one ai_parse_jobs row (jobCols order). lease is lease_until.
-func scanJob(row pgx.Row) (j Job, lease time.Time, err error) {
-	var payload, result []byte
-	var next, leaseAt, first, fin *time.Time
-	if err = row.Scan(&j.ID, &j.UserID, &j.Text, &j.Key, &j.Slot, &payload, &j.Status, &j.Requeues, &j.LastBusy,
-		&next, &leaseAt, &first, &j.Created, &fin, &result, &j.Attempts); err != nil {
+// store: the job repository on the queue's pool.
+func (q *Queue) store() store.JobRepo { return (&store.PG{DB: q.db}).Jobs() }
+
+// scanJob turns one ai_parse_jobs row read by the store into a job. lease is lease_until.
+func scanJob(row store.JobRow, rerr error) (j Job, lease time.Time, err error) {
+	if err = rerr; err != nil {
 		return
 	}
+	payload, result := row.Payload, row.Result
+	next, leaseAt, first, fin := row.NextAttempt, row.LeaseUntil, row.FirstTry, row.Finished
+	j.ID, j.UserID, j.Text, j.Key, j.Slot, j.Status, j.Requeues, j.LastBusy, j.Created, j.Attempts =
+		row.ID, row.UserID, row.Text, row.Key, row.Slot, row.Status, row.Requeues, row.LastBusy, row.Created, row.Attempts
 	var p jobPayload
 	if err = json.Unmarshal(payload, &p); err != nil {
 		return
@@ -97,8 +95,8 @@ func scanJob(row pgx.Row) (j Job, lease time.Time, err error) {
 func (q *Queue) loadJob(uid int64, id string) (Job, bool, error) {
 	ctx, cancel := dbCtx()
 	defer cancel()
-	j, _, err := scanJob(q.db.QueryRow(ctx, `SELECT `+jobCols+` FROM ai_parse_jobs WHERE id=$1 AND user_id=$2`, id, uid))
-	if errors.Is(err, pgx.ErrNoRows) {
+	j, _, err := scanJob(q.store().Job(ctx, uid, id))
+	if errors.Is(err, store.ErrNoRows) {
 		return Job{}, false, nil
 	}
 	if err != nil {
@@ -118,17 +116,14 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 	defer cancel()
 	var first time.Time
 	var attempts int
-	err := q.db.QueryRow(ctx, `UPDATE ai_parse_jobs SET lease_until=$2, first_try_at=COALESCE(first_try_at,$3), attempts=attempts+1
-		WHERE id=$1 AND status='pending' AND requeues=$4 AND attempts < $5 AND (lease_until IS NULL OR lease_until < $3)
-		AND (next_attempt_at IS NULL OR next_attempt_at <= $3)
-		RETURNING first_try_at, attempts`, j.ID, now.Add(q.callTimeout+leaseSlack), now, j.Requeues, q.maxAttempts).Scan(&first, &attempts)
+	err := q.store().ClaimJob(ctx, j.ID, now.Add(q.callTimeout+leaseSlack), now, j.Requeues, q.maxAttempts, &first, &attempts)
 	if err == nil {
 		q.mu.Lock()
 		j.FirstTry, j.Attempts = first, attempts
 		q.mu.Unlock()
 		return true
 	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	if !errors.Is(err, store.ErrNoRows) {
 		log.Printf("ai job claim failed (running anyway): job=%s err=%v", j.ID, err)
 		q.mu.Lock()
 		if j.FirstTry.IsZero() {
@@ -147,11 +142,11 @@ func (q *Queue) claimJob(j *Job, now time.Time) (ok bool) {
 // finished elsewhere, else back in the queue at its next_attempt_at (after a
 // live lease). A copy with no attempt left is finished as gave_up by Run.
 func (q *Queue) refresh(ctx context.Context, j *Job, now time.Time) {
-	cur, lease, err := scanJob(q.db.QueryRow(ctx, `SELECT `+jobCols+` FROM ai_parse_jobs WHERE id=$1`, j.ID))
+	cur, lease, err := scanJob(q.store().JobByID(ctx, j.ID))
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	switch {
-	case errors.Is(err, pgx.ErrNoRows) || (err == nil && cur.Status != "pending"):
+	case errors.Is(err, store.ErrNoRows) || (err == nil && cur.Status != "pending"):
 		delete(q.jobs, j.ID) // finished, abandoned (or deleted) elsewhere; polls read the row
 	case err != nil:
 		log.Printf("ai job reload failed: job=%s err=%v", j.ID, err)
@@ -174,9 +169,7 @@ func (q *Queue) refresh(ctx context.Context, j *Job, now time.Time) {
 func (q *Queue) saveRequeue(j Job) {
 	ctx, cancel := dbCtx()
 	defer cancel()
-	if _, err := q.db.Exec(ctx, `UPDATE ai_parse_jobs SET requeues=$2, last_busy=$3, next_attempt_at=$4, lease_until=NULL,
-		first_try_at=COALESCE(first_try_at,$5) WHERE id=$1 AND status='pending'`,
-		j.ID, j.Requeues, j.LastBusy, j.NotBefore, tsOrNil(j.FirstTry)); err != nil {
+	if err := q.store().SaveRequeue(ctx, j.ID, j.Requeues, j.LastBusy, j.NotBefore, tsOrNil(j.FirstTry)); err != nil {
 		log.Printf("ai job requeue save failed: job=%s err=%v", j.ID, err)
 	}
 }
@@ -192,15 +185,12 @@ func (q *Queue) saveDone(j Job, requireFree bool) bool {
 	}
 	ctx, cancel := dbCtx()
 	defer cancel()
-	tag, err := q.db.Exec(ctx, `UPDATE ai_parse_jobs SET status='done', result=$2, finished_at=$3, requeues=$4, last_busy=$5,
-		lease_until=NULL, first_try_at=COALESCE(first_try_at,$6)
-		WHERE id=$1 AND status='pending' AND (NOT $7 OR lease_until IS NULL OR lease_until < $3)`,
-		j.ID, res, j.Finished, j.Requeues, j.LastBusy, tsOrNil(j.FirstTry), requireFree)
+	n, err := q.store().SaveDone(ctx, j.ID, res, j.Finished, j.Requeues, j.LastBusy, tsOrNil(j.FirstTry), requireFree)
 	if err != nil {
 		log.Printf("ai job done save failed: job=%s err=%v", j.ID, err)
 		return false
 	}
-	return tag.RowsAffected() == 1
+	return n == 1
 }
 
 // abandonRow marks the user's job abandoned (idempotent). ok=false: no such
@@ -210,11 +200,8 @@ func (q *Queue) abandonRow(uid int64, id string, now time.Time) (ok, wasPending,
 	ctx, cancel := dbCtx()
 	defer cancel()
 	var old string
-	err = q.db.QueryRow(ctx, `WITH old AS (SELECT status, first_try_at IS NULL AS untried, created_at FROM ai_parse_jobs WHERE id=$1 AND user_id=$2 FOR UPDATE)
-		UPDATE ai_parse_jobs j SET status='abandoned', result=NULL, lease_until=NULL, next_attempt_at=NULL,
-			finished_at=CASE WHEN old.status='abandoned' THEN j.finished_at ELSE $3 END
-		FROM old WHERE j.id=$1 AND j.user_id=$2 RETURNING old.status, old.untried, old.created_at`, id, uid, now).Scan(&old, &untried, &created)
-	if errors.Is(err, pgx.ErrNoRows) {
+	err = q.store().AbandonJob(ctx, uid, id, now, &old, &untried, &created)
+	if errors.Is(err, store.ErrNoRows) {
 		return false, false, false, time.Time{}, nil
 	}
 	if err != nil {
@@ -227,8 +214,7 @@ func (q *Queue) abandonRow(uid int64, id string, now time.Time) (ok, wasPending,
 func (q *Queue) sweepDone() {
 	ctx, cancel := dbCtx()
 	defer cancel()
-	if _, err := q.db.Exec(ctx, `DELETE FROM ai_parse_jobs WHERE (status='done' AND finished_at < $1) OR (status='abandoned' AND finished_at < $2)`,
-		time.Now().Add(-q.ttl), time.Now().Add(-AbandonedTTL)); err != nil {
+	if err := q.store().SweepJobs(ctx, time.Now().Add(-q.ttl), time.Now().Add(-AbandonedTTL)); err != nil {
 		log.Printf("ai job sweep failed: %v", err)
 	}
 }
@@ -241,7 +227,7 @@ func (q *Queue) sweepDone() {
 func (q *Queue) resume() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rows, err := q.db.Query(ctx, `SELECT `+jobCols+` FROM ai_parse_jobs WHERE status='pending' ORDER BY created_at, id`)
+	rows, err := q.store().PendingJobs(ctx)
 	if err != nil {
 		return err
 	}
@@ -250,17 +236,13 @@ func (q *Queue) resume() error {
 		lease time.Time
 	}
 	var all []loaded
-	for rows.Next() {
-		j, lease, err := scanJob(rows)
+	for _, row := range rows {
+		j, lease, err := scanJob(row.Row, row.Err)
 		if err != nil {
 			log.Printf("ai job reload skipped: %v", err)
 			continue
 		}
 		all = append(all, loaded{&j, lease})
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return err
 	}
 	now := time.Now()
 	resumed, gaveUp := 0, 0

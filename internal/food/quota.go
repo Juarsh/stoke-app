@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
+	"github.com/akarsh/calorie-tracker/internal/store"
 )
 
 // Gemini's free tier is a per-project, per-model daily request quota
@@ -80,9 +81,9 @@ func (q *Quota) PersistExhausted(ctx context.Context, db *pgxpool.Pool, now time
 	until := q.NextReset(now)
 	q.exhaustedUntil.Store(until.Unix())
 	day := q.Day(now)
-	_, _ = db.Exec(ctx, `INSERT INTO ai_google_exhausted(quota_day, exhausted_until) VALUES ($1,$2)
-		ON CONFLICT (quota_day) DO UPDATE SET exhausted_until=EXCLUDED.exhausted_until`, day, until)
-	_, _ = db.Exec(ctx, `DELETE FROM ai_google_exhausted WHERE quota_day < $1`, day)
+	st := &store.PG{DB: db}
+	_ = st.AI().PutExhausted(ctx, day, until)
+	_ = st.AI().DropExhaustedBefore(ctx, day)
 }
 
 // LoadExhausted restores the mark for today's Pacific quota day from the DB.
@@ -92,9 +93,10 @@ func (q *Quota) LoadExhausted(ctx context.Context, db *pgxpool.Pool, now time.Ti
 		return
 	}
 	day := q.Day(now)
-	_, _ = db.Exec(ctx, `DELETE FROM ai_google_exhausted WHERE quota_day < $1 OR exhausted_until <= $2`, day, now)
+	st := &store.PG{DB: db}
+	_ = st.AI().DropStaleExhausted(ctx, day, now)
 	var until time.Time
-	err := db.QueryRow(ctx, `SELECT exhausted_until FROM ai_google_exhausted WHERE quota_day=$1`, day).Scan(&until)
+	err := st.AI().ExhaustedUntil(ctx, day, &until)
 	if err != nil {
 		return
 	}
@@ -123,7 +125,7 @@ func (s *Service) handleQuota(w http.ResponseWriter, r *http.Request) {
 	now := httpx.Now()
 	day := s.Quota.Day(now)
 	var used int64
-	_ = s.DB.QueryRow(r.Context(), `SELECT COALESCE((SELECT calls FROM ai_global_usage WHERE local_date=$1),0)`, day).Scan(&used)
+	_ = s.pg().AI().GlobalUsed(r.Context(), day, &used)
 	gc := s.GlobalCap.Load()
 	ex, until := s.Quota.Exhausted(now)
 	out := map[string]any{"quota_day": day.Format("2006-01-02"), "reset_zone": s.Quota.loc().String(),

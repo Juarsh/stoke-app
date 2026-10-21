@@ -15,6 +15,7 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/dishes"
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -67,23 +68,17 @@ type TopCached struct {
 
 // TopCache returns the most-hit cached AI answers used in the last N days.
 func TopCache(ctx context.Context, db *pgxpool.Pool, days, limit int) ([]TopCached, error) {
-	rows, err := db.Query(ctx, `SELECT norm_text, hits, items, created_at::date::text, last_hit_at::date::text FROM ai_cache
-		WHERE last_hit_at > now() - make_interval(days => $1) ORDER BY hits DESC, norm_text LIMIT $2`, days, limit)
-	if err != nil {
-		return nil, err
+	rows, err := (&store.PG{DB: db}).AI().TopCache(ctx, days, limit)
+	if rows == nil {
+		return nil, err // the query or a row failed
 	}
-	defer rows.Close()
 	out := []TopCached{}
-	for rows.Next() {
-		var t TopCached
-		var raw []byte
-		if err := rows.Scan(&t.Text, &t.Hits, &raw, &t.FirstSeen, &t.LastHit); err != nil {
-			return nil, err
-		}
-		_ = json.Unmarshal(raw, &t.Items)
+	for _, c := range rows {
+		t := TopCached{Text: c.Text, Hits: c.Hits, FirstSeen: c.FirstSeen, LastHit: c.LastHit}
+		_ = json.Unmarshal(c.Items, &t.Items)
 		out = append(out, t)
 	}
-	return out, rows.Err()
+	return out, err // err: the rows' own error after the last row
 }
 
 // WriteCSV writes one row per cached item.
@@ -194,9 +189,9 @@ func (s *Service) handleImport(w http.ResponseWriter, r *http.Request) {
 		s.Live.Set(p)
 	}
 	if len(drop) > 0 {
-		_, _ = s.DB.Exec(r.Context(), `DELETE FROM ai_cache WHERE norm_text = ANY($1)`, drop)
+		_ = s.pg().AI().DropCache(r.Context(), drop)
 	}
-	_, _ = s.DB.Exec(r.Context(), `INSERT INTO events(user_id,name,props) VALUES (NULL,'dish_import',$1)`,
+	_ = s.pg().AI().ImportEvent(r.Context(),
 		map[string]any{"version": next, "added": added, "replaced": replaced, "note": in.Note})
 	httpx.JSON(w, 201, map[string]any{"dish_table_version": next, "added": added, "replaced": replaced, "dropped_cache": len(drop)})
 }

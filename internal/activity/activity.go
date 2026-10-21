@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/akarsh/calorie-tracker/internal/summary"
 )
 
@@ -86,11 +87,7 @@ func (s *Service) ingest(w http.ResponseWriter, r *http.Request) {
 		if ext == "" {
 			ext = "day:" + d.Date
 		}
-		_, err = s.DB.Exec(r.Context(), `INSERT INTO activity_entries(user_id,local_date,kind,source,steps,kcal_burned,external_id)
-			VALUES ($1,$2,'steps',$3,$4,$5,$6)
-			ON CONFLICT (user_id,source,external_id) WHERE external_id IS NOT NULL
-			DO UPDATE SET steps=EXCLUDED.steps,kcal_burned=EXCLUDED.kcal_burned,local_date=EXCLUDED.local_date,deleted_at=NULL,updated_at=now()`,
-			uid, day, in.Source, d.Steps, StepsKcal(d.Steps, wkg), ext)
+		err = s.pg().Activity().PutSteps(r.Context(), uid, day, in.Source, d.Steps, StepsKcal(d.Steps, wkg), ext)
 		if err != nil {
 			httpx.Error(w, 500, "save failed")
 			return
@@ -116,10 +113,12 @@ func (s *Service) list(w http.ResponseWriter, r *http.Request) {
 	}
 	var steps int
 	var kcal float64
-	_ = s.DB.QueryRow(r.Context(), `SELECT COALESCE(MAX(steps),0), COALESCE(MAX(kcal_burned),0) FROM activity_entries
-		WHERE user_id=$1 AND local_date=$2 AND kind='steps' AND deleted_at IS NULL`, httpx.UserID(r), day).Scan(&steps, &kcal)
+	_ = s.pg().Activity().StepsDay(r.Context(), httpx.UserID(r), day, &steps, &kcal)
 	httpx.JSON(w, 200, map[string]any{"date": day.Format("2006-01-02"), "steps": steps, "kcal_burned": kcal})
 }
+
+// pg: the store on this service's pool.
+func (s *Service) pg() *store.PG { return &store.PG{DB: s.DB} }
 
 // Contributor fills steps and kcal_out. If several sources report a day we
 // take the largest, to avoid double counting the same walk.
@@ -129,8 +128,7 @@ func (Contributor) Name() string { return "activity" }
 
 func (Contributor) Contribute(ctx context.Context, q summary.Querier, uid int64, day time.Time, d *summary.Day) error {
 	var kcal float64
-	err := q.QueryRow(ctx, `SELECT COALESCE(MAX(steps),0), COALESCE(MAX(kcal_burned),0) FROM activity_entries
-		WHERE user_id=$1 AND local_date=$2 AND kind='steps' AND deleted_at IS NULL`, uid, day).Scan(&d.Steps, &kcal)
+	err := q.Activity().StepsDay(ctx, uid, day, &d.Steps, &kcal)
 	d.KcalOut += kcal
 	return err
 }

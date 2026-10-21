@@ -11,7 +11,7 @@ import (
 
 	"github.com/akarsh/calorie-tracker/internal/dishes"
 	"github.com/akarsh/calorie-tracker/internal/parser"
-	"github.com/jackc/pgx/v5"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,8 +38,7 @@ func Publish(ctx context.Context, db *pgxpool.Pool, ds []dishes.Dish, p *parser.
 	h := hex.EncodeToString(sum[:])
 	v := dishes.TableVersion(ds)
 	var stored string
-	err = db.QueryRow(ctx, `INSERT INTO dish_table_versions(version,sha256,snapshot) VALUES ($1,$2,$3)
-		ON CONFLICT (version) DO UPDATE SET version=EXCLUDED.version RETURNING sha256`, v, h, b).Scan(&stored)
+	err = (&store.PG{DB: db}).Dishes().PublishVersion(ctx, v, h, b, &stored)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +56,8 @@ func (vs *Versions) Parser(ctx context.Context, v int) (*parser.Parser, error) {
 		return p, nil
 	}
 	var raw []byte
-	err := vs.DB.QueryRow(ctx, `SELECT snapshot FROM dish_table_versions WHERE version=$1`, v).Scan(&raw)
-	if errors.Is(err, pgx.ErrNoRows) {
+	err := vs.pg().Dishes().Snapshot(ctx, v, &raw)
+	if errors.Is(err, store.ErrNoRows) {
 		return nil, ErrUnknownVersion
 	}
 	if err != nil {
@@ -78,20 +77,12 @@ func (vs *Versions) Parser(ctx context.Context, v int) (*parser.Parser, error) {
 
 // Known lists the published versions.
 func (vs *Versions) Known(ctx context.Context) []int {
-	out := []int{}
-	rows, err := vs.DB.Query(ctx, `SELECT version FROM dish_table_versions ORDER BY version`)
-	if err != nil {
-		return out
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var v int
-		if rows.Scan(&v) == nil {
-			out = append(out, v)
-		}
-	}
+	out, _ := vs.pg().Dishes().Versions(ctx)
 	return out
 }
+
+// pg: the store on the versions' pool.
+func (vs *Versions) pg() *store.PG { return &store.PG{DB: vs.DB} }
 
 // Adopt makes a newly published version current (keeps the old parsers).
 func (vs *Versions) Adopt(n *Versions) {
@@ -108,7 +99,7 @@ func (vs *Versions) Adopt(n *Versions) {
 // Latest loads the newest published snapshot if it's newer than have.
 func (vs *Versions) Latest(ctx context.Context, have int) (*parser.Parser, int, error) {
 	var v int
-	if err := vs.DB.QueryRow(ctx, `SELECT COALESCE(MAX(version),0) FROM dish_table_versions`).Scan(&v); err != nil || v <= have {
+	if err := vs.pg().Dishes().MaxVersion(ctx, &v); err != nil || v <= have {
 		return nil, have, err
 	}
 	p, err := vs.Parser(ctx, v)
