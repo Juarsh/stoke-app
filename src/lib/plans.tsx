@@ -1,6 +1,6 @@
 // Plans on the phone (build-plan item 9): the weekly split and its routines, kept through the LocalStore seam (./data)
 // under their own key, offline first. Every change goes through the save checks in features/plans/model (a refused change
-// returns its reason and nothing is written). Server sync for plans arrives with P4 (item 15) through the API client.
+// returns its reason and nothing is written). Synced with the server by DocSync (M4) when a backend is set.
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { localStore } from './data';
@@ -39,6 +39,8 @@ function usePlansValue(wipeGen: number, repo: ExerciseRepo) {
 
   return useMemo(() => ({
     ready, state: s, planById,
+    /** M4 sync (DocSync): the server's rows land here (a 409, a pull, a delete on another device) */
+    applyServer: (f: (cur: PlansState) => PlansState) => { const n = f(ref.current); if (n !== ref.current) commit(n); },
     /** "Use Push · Pull · Legs": a new plan from the template, made the active one. */
     applyTemplate: (key: string): Plan => { const p = fromTemplate(key, newId, now(), ref.current.plans.map((x) => x.name)); put(p, true); return p; },
     /** "Build my own routine" / "+ New plan": an empty week (all rest); active only when there is no active plan. */

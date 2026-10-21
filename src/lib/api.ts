@@ -21,10 +21,22 @@ export class ApiError extends Error {
   get code(): string { return errorCode(this.message); }
   /** variant_required: the server's options at the sent portion */
   get variantOptions() { return errorDetail(this.message).variant_options; }
+  /** M4 409 version_conflict on a plan / workout / habit / log: the server's row ({"row": ...}) */
+  get row(): DocRow | undefined {
+    try { const j = JSON.parse(this.message) as { row?: DocRow }; return j?.row && typeof j.row === 'object' ? j.row : undefined; } catch { return undefined; }
+  }
   /** 409 version_conflict: the server's current row ({"entry": ...}) */
   get entry(): { version?: number } | undefined {
     try { const j = JSON.parse(this.message) as { entry?: { version?: number } }; return j?.entry && typeof j.entry === 'object' ? j.entry : undefined; } catch { return undefined; }
   }
+}
+/** M4: a plan / workout / habit / habit log as the server stored it (version + the row's own fields). */
+export type DocRow = { version: number } & Record<string, unknown>;
+/** M4 doc keys: "plan:<id>", "workout:<id>", "habit:<id>", "habitLog:<habit id>/<YYYY-MM-DD>" -> the API path */
+export function docPath(key: string): string {
+  const i = key.indexOf(':'), kind = key.slice(0, i), id = key.slice(i + 1);
+  if (kind === 'habitLog') { const [h, d] = id.split('/'); return `/v1/habits/${encodeURIComponent(h)}/logs/${d}`; }
+  return `/v1/${kind}s/${encodeURIComponent(id)}`;
 }
 /** The server's copy of a saved row (POST entries[i] / PATCH body): what it stored and counts (rg6 F1). */
 export type ServerRow = { version?: number; state?: string; dish_id?: string | null; name?: string; qty?: number; unit?: string; oil_level?: string;
@@ -263,6 +275,21 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     },
     async putProfile(body: unknown): Promise<void> { if (!config.mock) await req('PUT', '/v1/profile', stripSex(body)); },
     async deleteMe(): Promise<void> { if (!config.mock) await req('DELETE', '/v1/me'); },
+    /** M4: plans, workouts, habits and habit logs (one row per key, see docPath). PUT returns the row the server stored
+     * (the truth: its version is sent with the next edit); 409 version_conflict carries the server's row (ApiError.row). */
+    async putDoc(key: string, body: Record<string, unknown>, version?: number): Promise<DocRow> {
+      return req<DocRow>('PUT', docPath(key), version ? { ...body, version } : body);
+    },
+    /** DELETE a doc; 404 means it is already gone there (done). */
+    async deleteDoc(key: string, version?: number): Promise<void> {
+      try { await req('DELETE', docPath(key) + (version ? `?version=${version}` : '')); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
+    },
+    /** every plan, workout, habit and habit log the server has for this user (a new phone / reinstall pulls them) */
+    async listDocs(): Promise<{ plans: DocRow[]; workouts: DocRow[]; habits: DocRow[]; logs: DocRow[] }> {
+      const [p, w, h, l] = await Promise.all([req<{ plans: DocRow[] }>('GET', '/v1/plans'), req<{ workouts: DocRow[] }>('GET', '/v1/workouts'),
+        req<{ habits: DocRow[] }>('GET', '/v1/habits'), req<{ logs: DocRow[] }>('GET', '/v1/habit-logs')]);
+      return { plans: p.plans ?? [], workouts: w.workouts ?? [], habits: h.habits ?? [], logs: l.logs ?? [] };
+    },
   };
 }
 export type Api = ReturnType<typeof createApi>;

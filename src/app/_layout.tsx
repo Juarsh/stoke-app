@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NoticeToast } from '@/components/NoticeToast';
 import { HabitToastHost } from '@/features/habits/HabitToastHost';
+import { DocSync } from '@/lib/DocSync';
 import { StoreProvider, useStore } from '@/lib/store';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -39,6 +40,7 @@ function Gate() {
       </Stack>
       <NoticeToast />
       <HabitToastHost />
+      <DocSync />
     </>
   );
 }

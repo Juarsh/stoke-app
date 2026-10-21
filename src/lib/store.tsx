@@ -18,7 +18,8 @@ import { portionLabel } from './labels';
 import { kc } from './format';
 import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
-import { enqueue, flush, FlushResult, hasDue, MAX_FIVES, nextDueAt, Op, opKey, PendingFood, SERVER_ERROR } from './syncQueue';
+import { DocResult, enqueue, flush, FlushResult, hasDue, MAX_FIVES, nextDueAt, Op, opKey, PendingFood, SERVER_ERROR } from './syncQueue';
+import { EMPTY_LEDGER, type Body, type Ledger } from './docRows';
 
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
@@ -35,6 +36,8 @@ interface Persisted {
   myFoods: MyFood[];
   /** §9.2 Exercises: the first-time hint card was dismissed */
   libraryHintDone?: boolean;
+  /** M4: what the phone knows of its plans / workouts / habits / logs on the server (versions, last body queued) */
+  docs?: Ledger;
 }
 const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {}, myFoods: [] };
 const KEY = 'app-state-v1';
@@ -308,7 +311,13 @@ function useStoreValue() {
   }, [expireAi]);
   useEffect(() => { if (ready) localStore.save(KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
 
+  // M4 docs ledger: read and written synchronously (a change is diffed against it at once), persisted with the state
+  const docsRef = useRef<Ledger>(EMPTY_LEDGER);
+  useEffect(() => { if (ready) docsRef.current = s.docs ?? EMPTY_LEDGER; }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setDocs = useCallback((f: (l: Ledger) => Ledger) => { docsRef.current = f(docsRef.current); const l = docsRef.current; setS((p) => ({ ...p, docs: l })); }, []);
+  const docListeners = useRef(new Set<(r: DocResult) => void>());
   const sender = useMemo(() => ({
+    putDoc: api.putDoc, deleteDoc: api.deleteDoc, docVersion: (key: string) => docsRef.current.v[key],
     putProfile: api.putProfile, abandonJob: api.abandonJob,
     // the newest server version known for this entry (an op queued before the last flush carries an older one)
     upsertEntry: (e: FoodEntry) => { const v = entriesRef.current.find((x) => x.id === e.id)?.server_version; return api.upsertEntry(v && v > (e.server_version ?? 0) ? { ...e, server_version: v } : e); }, deleteEntry: api.deleteEntry, getEntry: api.getEntry, deleteRemembered: api.deleteRemembered,
@@ -355,6 +364,20 @@ function useStoreValue() {
       const r = await flush(sent, sender);
       const { rest, profileRejected } = r;
       setS((p) => applyFlush({ ...p, ...(profileRejected ? { profileError: profileRejected } : {}) }, sent, r));
+      const d = r.docs;
+      if (d && (d.saved.length || d.stale.length || d.failed.length || d.gone.length)) {
+        setDocs((l) => {
+          const v = { ...l.v }, sentB = { ...l.sent };
+          for (const x of d.saved) { if (x.row) v[x.key] = x.row.version; else delete v[x.key]; }
+          for (const x of d.stale) v[x.key] = x.row.version;
+          for (const k of d.gone) { delete v[k]; delete sentB[k]; }
+          return { ...l, v, sent: sentB };
+        });
+        // the server's row wins: an edit queued since for that doc was based on the old version, so it is never sent
+        const drop = new Set([...d.stale.map((x) => x.key), ...d.gone]);
+        if (drop.size) setS((p) => ({ ...p, queue: p.queue.filter((o) => !(o.kind === 'doc' && drop.has(o.id))) }));
+        for (const f of docListeners.current) f(d);
+      }
       // rg10 T2: the server answered something: flagged rows retry now (each needs its own success to clear)
       if (anyOk(sent, r)) setS((p) => queueAutoRetry(p));
       // edge (a): a row flagged now (or before) that the server has but whose numbers the phone doesn't know: ask the server
@@ -440,7 +463,22 @@ function useStoreValue() {
     notice, showNotice: setNotice, wipeGen, dismissNotice, undoToast, showUndo, dismissUndo,
     ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
-    signIn: (u: User) => upd((p) => ({ ...p, user: u })),
+    signIn: (u: User) => { if (!api.mock && docsRef.current.uid !== u.id) setDocs(() => ({ ...EMPTY_LEDGER, uid: u.id })); upd((p) => ({ ...p, user: u })); },
+    /** M4: doc sync is on only with a backend (EXPO_PUBLIC_API_URL) and a signed-in user; otherwise nothing changes */
+    docSyncOn: ready && !api.mock && !!s.user,
+    docLedger: () => docsRef.current,
+    /** queue these doc changes (a body to PUT, null to DELETE); the ledger remembers what was queued */
+    queueDocs: (changes: { key: string; body: Body | null }[]) => {
+      if (!changes.length) return;
+      setDocs((l) => { const sent = { ...l.sent }; for (const c of changes) { if (c.body) sent[c.key] = JSON.stringify(c.body); else delete sent[c.key]; } return { ...l, sent }; });
+      upd((p) => ({ ...p, queue: changes.reduce((q, c) => enqueue(q, { kind: 'doc', id: c.key, body: c.body, tries: 0 }), p.queue) }));
+    },
+    /** the phone now has the server's row for these docs (a 409 or a pull): its version and body, nothing to send */
+    adoptDocs: (adopt: { key: string; version: number; body: string }[], forget: string[] = []) => {
+      if (!adopt.length && !forget.length) return;
+      setDocs((l) => { const v = { ...l.v }, sent = { ...l.sent }; for (const a of adopt) { v[a.key] = a.version; sent[a.key] = a.body; } for (const k of forget) { delete v[k]; delete sent[k]; } return { ...l, v, sent }; });
+    },
+    onDocResult: (f: (r: DocResult) => void) => { docListeners.current.add(f); return () => { docListeners.current.delete(f); }; },
     signOut: () => upd((p) => ({ ...p, user: null })),
     /** Saved on the phone at once; the server copy goes through the queue, so it is sent after sign-in too. */
     setProfile: (profile: Profile) => upd((p) => ({ ...p, profile, profileError: null, queue: enqueue(p.queue, { kind: 'profile', id: 'profile', payload: profilePayload(profile), tries: 0 }) })),
@@ -570,7 +608,7 @@ function useStoreValue() {
     }),
     /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
     deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {});
-      await localStore.save(PLANS_KEY, '').catch(() => {}); await localStore.save(WORKOUTS_KEY, '').catch(() => {}); await localStore.save(HABITS_KEY, '').catch(() => {}); setS(EMPTY); setWipeGen((g) => g + 1); },
+      await localStore.save(PLANS_KEY, '').catch(() => {}); await localStore.save(WORKOUTS_KEY, '').catch(() => {}); await localStore.save(HABITS_KEY, '').catch(() => {}); docsRef.current = EMPTY_LEDGER; setS(EMPTY); setWipeGen((g) => g + 1); },
   };
 }
 export type Store = ReturnType<typeof useStoreValue>;

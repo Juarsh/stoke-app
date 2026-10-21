@@ -1,7 +1,7 @@
 // Workouts on the phone (build-plan item 10): the workout in progress and finished workouts, kept through the LocalStore
 // seam (./data) under their own key, offline first. The workout in progress is saved on every change, so a killed app
 // resumes it (states #7). Ticking a set goes through the logger's checks (a refused tick returns its reason and keeps the
-// typed text). Server sync arrives with P4 (item 15) through the API client.
+// typed text). Synced with the server by DocSync (M4) when a backend is set.
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { localStore } from './data';
@@ -35,6 +35,8 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
 
   return useMemo(() => ({
     ready, state: s, active: s.active,
+    /** M4 sync (DocSync): the server's rows land here (a 409, a pull, a delete on another device) */
+    applyServer: (f: (cur: WorkoutsState) => WorkoutsState) => { const n = f(ref.current); if (n !== ref.current) commit(n); },
     /** Start workout from a routine; a workout already in progress is kept and returned instead (never overwritten). */
     start: (r: Routine, planId: string): Session => { const a = ref.current.active; if (a) return a; const n = startFromRoutine(r, planId, newId, now()); commit({ ...ref.current, active: n }); return n; },
     startEmpty: (): Session => { const a = ref.current.active; if (a) return a; const n = startEmpty(newId, now()); commit({ ...ref.current, active: n }); return n; },

@@ -1,5 +1,5 @@
 // Habits on the phone (build-plan items 13–14): habits and their daily logs through the LocalStore seam (./data) under
-// their own key, offline first; server sync arrives with P4. Every change goes through the checks in features/habits/model
+// their own key, offline first; synced with the server by DocSync (M4) when a backend is set. Every change goes through the checks in features/habits/model
 // (a refused change returns its reason and nothing is written). Also holds the habit toast ("Push-ups done · Undo ·
 // Change", Q8 4 s) and the Home settle clock (Q7: the B2 row reorders 4 s after the last toast closes).
 import * as Crypto from 'expo-crypto';
@@ -71,6 +71,8 @@ function useHabitsValue(wipeGen: number, now: () => Date) {
     };
     return {
       ready, state: s, habitById, toast, settleGen,
+      /** M4 sync (DocSync): the server's rows land here (a 409, a pull, a delete on another device) */
+      applyServer: (f: (cur: HabitsState) => HabitsState) => { const n = f(ref.current); if (n !== ref.current) commit(n); },
       /** Save habit (Create): checks first; new habits go last in the user's order and start today. */
       create: (d: Draft, todayDate: string): Habit | string => {
         const err = firstError(draftErrors(d, ref.current.habits)); if (err) return err;
@@ -117,7 +119,7 @@ export function HabitsProvider({ children, wipeGen = 0, now = () => new Date() }
   return <Ctx.Provider value={v}>{children}</Ctx.Provider>;
 }
 const NONE: Habits = {
-  ready: false, state: EMPTY_HABITS, habitById: () => null, toast: null, settleGen: 0,
+  ready: false, state: EMPTY_HABITS, habitById: () => null, toast: null, settleGen: 0, applyServer: () => {},
   create: () => 'Habits aren’t ready yet.', update: () => 'Habits aren’t ready yet.', archive: () => {}, toggle: () => 'Habits aren’t ready yet.',
   setAmount: () => 'Habits aren’t ready yet.', undo: () => {}, closeToast: () => {},
 };

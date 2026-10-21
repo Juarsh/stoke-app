@@ -5,7 +5,7 @@
 // on the server's version, retried once); what still can't be applied (409, other 4xx, or a 409 keep-and-retry
 // after MAX_TRIES) is surfaced on its entry ("Couldn’t sync this. Tap to retry") and later ops keep flowing.
 import type { FoodEntry, Slot } from './domain';
-import type { ServerRow } from './api';
+import type { DocRow, ServerRow } from './api';
 
 /** A food the user added while its numbers were still unknown (network / AI). Never saved with a number. */
 export interface PendingFood { id: string; span: string; slot: Slot; local_date: string; raw_text: string; job_id?: string; /** ms when queued (0 = straight to items to review) */ at?: number;
@@ -25,7 +25,10 @@ export type Op =
   /** the 35-minute backstop gave up on this parse job: POST /v1/parse/jobs/{id}/abandon (queued offline, sent when online) */
   | ({ kind: 'abandon'; id: string } & Retry)
   /** onboarding profile: queued even before sign-in, sent once signed in (ProfilePayload: on-device-only fields excluded) */
-  | ({ kind: 'profile'; id: 'profile'; payload: import('./domain').ProfilePayload } & Retry);
+  | ({ kind: 'profile'; id: 'profile'; payload: import('./domain').ProfilePayload } & Retry)
+  /** M4: a plan / workout / habit / habit log (id = its doc key, e.g. "habit:<id>"): the row to PUT, or null to DELETE.
+   * The version sent is the newest the phone knows when it is sent (Sender.docVersion), never the one at queue time. */
+  | ({ kind: 'doc'; id: string; body: Record<string, unknown> | null } & Retry);
 export interface Sender {
   /** returns the server's row version for the entry, when the server sent one */
   upsertEntry(e: FoodEntry): Promise<void | { version?: number; row?: ServerRow }>; deleteEntry(id: string): Promise<void>;
@@ -38,6 +41,10 @@ export interface Sender {
   putProfile?(p: import('./domain').ProfilePayload): Promise<void>;
   /** POST /v1/parse/jobs/{id}/abandon; 404/410 count as done */
   abandonJob?(jobId: string): Promise<void>;
+  /** M4 docs: PUT the row (the server's stored row back) / DELETE it, sent with the newest version the phone knows */
+  putDoc?(key: string, body: Record<string, unknown>, version?: number): Promise<DocRow>;
+  deleteDoc?(key: string, version?: number): Promise<void>;
+  docVersion?(key: string): number | undefined;
 }
 
 /** Final, non-cap AI endings the server names (fallback_reason, else fallback): the job will never answer (backend 22a6a18). */
@@ -105,7 +112,9 @@ export const nextDueAt = (q: Op[]): number | undefined => { const ts = q.flatMap
 export const NOT_DELETED_REASON = 'Not deleted on the server yet.';
 /** ordering key: ops on one id stay in order; ops on other ids never wait behind a parked one (rg8 B3) */
 export const opKey = (o: Op): string => (o.kind === 'upsert' ? `e:${o.entry.id}` : o.kind === 'delete' ? `e:${o.id}` : o.kind === 'pending' ? `e:${o.food.id}`
-  : o.kind === 'forget' || o.kind === 'forgetAll' ? 'forget' : o.kind === 'profile' ? 'profile' : `${o.kind}:${(o as { id?: unknown }).id ?? ''}`);
+  : o.kind === 'forget' || o.kind === 'forgetAll' ? 'forget' : o.kind === 'profile' ? 'profile'
+  // a habit's logs wait behind the habit itself (a log for a habit the server doesn't have yet would be refused)
+  : o.kind === 'doc' && o.id.startsWith('habitLog:') ? `doc:habit:${o.id.slice(9).split('/')[0]}` : `${o.kind}:${(o as { id?: unknown }).id ?? ''}`);
 export const backoffMs = (tries: number) => Math.min(30 * 60_000, 5_000 * 2 ** Math.max(0, tries - 1));
 
 /** Sends ops in order per id: a parked (5xx / backing-off) op holds back only its own id; no connection stops the flush. Returns the remaining queue and entries resolved from pending foods. */
@@ -124,7 +133,14 @@ export type FlushResult = { rest: Op[]; resolved: FoodEntry[]; rejected: { entry
   kept?: { id: string; code: string; reason?: string; row?: ServerRow; /** the delete replaced an edit the server never got */ edited?: boolean }[];
   /** CEO (next build): edits sent with a version the server's row has moved on from (409 version_conflict with its locked row,
    * or a version-less row whose copy changed): never re-applied; the phone takes `row` and says the edit wasn't saved */
-  stale?: { id: string; row: ServerRow; sent: FoodEntry }[] };
+  stale?: { id: string; row: ServerRow; sent: FoodEntry }[];
+  /** M4 docs (plans, workouts, habits, logs) by key: saved (row = the server's row, null after a delete), stale (409: the
+   * server's row wins, never overwritten), failed (refused with a 4xx: the phone keeps its value, `reason` says why), gone
+   * (deleted on another device: the delete wins) */
+  docs?: DocResult };
+export type DocResult = { saved: { key: string; row: DocRow | null }[]; stale: { key: string; row: DocRow; reason?: string }[];
+  failed: { key: string; code: string; reason?: string }[]; gone: string[] };
+export const emptyDocs = (): DocResult => ({ saved: [], stale: [], failed: [], gone: [] });
 /** a 409 version_conflict carrying the server's row, on an edit */
 export const isStaleEdit = (e: unknown, op: Op) => op.kind === 'upsert' && statusOf(e) === 409 && codeOf(e) === 'version_conflict'
   && !!(e as { entry?: unknown })?.entry && typeof (e as { entry?: unknown }).entry === 'object';
@@ -144,6 +160,9 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
   const stale: NonNullable<FlushResult['stale']> = [];
   /** delete ids already retried once after a 409 (their server copy, when the 409 carried one) */
   const conflicted = new Map<string, { row?: ServerRow; reason?: string }>();
+  const docs = emptyDocs();
+  /** doc key -> version the server answered in this flush */
+  const docVer: Record<string, number> = {};
   let i = 0;
   while (i < rest.length) {
     const op = rest[i];
@@ -162,6 +181,12 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       else if (op.kind === 'forgetAll') await s.deleteRemembered();
       else if (op.kind === 'profile') { if (s.putProfile) await s.putProfile(op.payload); }
       else if (op.kind === 'abandon') { if (s.abandonJob) await s.abandonJob(op.id); }
+      else if (op.kind === 'doc') {
+        if (!s.putDoc || !s.deleteDoc) throw new Error('no doc sender');
+        const v = docVer[op.id] ?? s.docVersion?.(op.id);
+        if (op.body) { const row = await s.putDoc(op.id, op.body, v); if (row && typeof row.version === 'number') docVer[op.id] = row.version; docs.saved.push({ key: op.id, row: row ?? null }); }
+        else { await s.deleteDoc(op.id, v); docs.saved.push({ key: op.id, row: null }); }
+      }
       else {
         const es = await s.resolvePending(op.food);
         if (es && 'job_id' in es) { rest[i] = { ...op, food: { ...op.food, job_id: es.job_id || undefined } }; throw new Error(es.job_id ? 'job running' : 'job lost'); }
@@ -181,6 +206,14 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       // a 400/422 is final for this op: never retried forever (a review entry refused again is dropped from the queue but stays on the phone)
       // 404 on a save: the row was deleted on the server (another device). The delete wins: never re-created, never retried.
       if (op.kind === 'upsert' && statusOf(e) === 404) { gone.push(op.entry.id); rest.splice(i, 1); continue; }
+      // M4 docs, same rules as entries: 404 gone = deleted on another device (the delete wins); 409 version_conflict = the
+      // server's row wins (never re-applied); any other refusal keeps the phone's value with the server's reason
+      if (op.kind === 'doc') {
+        const st = statusOf(e), row = (e as { row?: DocRow })?.row;
+        if (st === 404 && codeOf(e) === 'gone') { docs.gone.push(op.id); rest.splice(i, 1); continue; }
+        if (st === 409 && codeOf(e) === 'version_conflict' && row) { docs.stale.push({ key: op.id, row, reason: reasonOf(e) }); docVer[op.id] = row.version; rest.splice(i, 1); continue; }
+        if (isRefusalStatus(st) || st === 404 || st === 409) { docs.failed.push({ key: op.id, code: codeOf(e) || `http_${st}`, reason: reasonOf(e) }); rest.splice(i, 1); continue; }
+      }
       // CEO: the edit was based on a version the server has moved on from (another device saved since): never re-applied
       if (op.kind === 'upsert' && isStaleEdit(e, op)) { stale.push({ id: op.entry.id, row: (e as { entry: ServerRow }).entry, sent: op.entry }); rest.splice(i, 1); continue; }
       // rg10 (CEO): a DELETE refused with a 4xx other than 404 (404 = already gone: the delete wins, see api.deleteEntry) means
@@ -235,7 +268,7 @@ export async function flush(q: Op[], s: Sender, now = Date.now()): Promise<Flush
       break; // no connection (or a wait the server asked for): everything waits
     }
   }
-  return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows, kept, stale };
+  return { rest, resolved, rejected, profileRejected, versions, failed, gone, rows, kept, stale, docs };
 }
 
 /** Queued pending foods for a day (shown as '— kcal', never counted). */
