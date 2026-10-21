@@ -14,7 +14,9 @@ const UNIT_A11Y: Record<UiUnit, string> = { piece: 'Piece', bowl: 'Bowl', g: 'Gr
 /** Typed protein: 0 to 300 g, at most one decimal (the server's per-item limit for a typed row). */
 export const validTypedProtein = (s: string) => { const n = s.trim() === '' ? NaN : Number(s); return Number.isFinite(n) && n >= 0 && n <= 300; };
 
-export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; editing: boolean; onClose: () => void; onDone: (t: TrayItem) => void }) {
+/** time: the Update mode time chip (timeline, Q12); reason: a refusal from the caller after Update (e.g. the hard gate). */
+export function ItemSheet({ item, editing, onClose, onDone, time, reason }: { item: TrayItem; editing: boolean; onClose: () => void; onDone: (t: TrayItem) => void;
+  time?: { label: string; onPress: () => void }; reason?: string | null }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const { width, fontScale } = useWindowDimensions();
   const [cur, setCur] = useState(item);
   const [amtText, setAmtText] = useState<string | null>(null);
@@ -122,7 +124,14 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
             <Icon name="x" color={t.c.text} size={20} strokeWidth={2.2} />
           </Pressable>
         </View>
-        <View style={{ marginTop: 18, flexDirection: oneRow ? 'row' : 'column', alignItems: oneRow ? 'center' : 'stretch', gap: 10 }}>
+        {time ? (
+          <Pressable onPress={time.onPress} accessibilityRole="button" accessibilityLabel={`When: ${time.label}. Change`} style={{ minHeight: 48, justifyContent: 'center', alignSelf: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: t.c.lineSoft, backgroundColor: t.c.card, borderRadius: 18, paddingHorizontal: 14, height: 36 }}>
+              <T v="bodyStrong" style={{ fontSize: 14 }}>{time.label}</T><Icon name="down" color={t.c.text} size={16} strokeWidth={2.2} />
+            </View>
+          </Pressable>
+        ) : null}
+        <View style={{ marginTop: time ? 8 : 18, flexDirection: oneRow ? 'row' : 'column', alignItems: oneRow ? 'center' : 'stretch', gap: 10 }}>
           {oneRow ? segments : <View style={{ flexDirection: 'row' }}>{segments}</View>}
           {stepper}
         </View>
@@ -139,7 +148,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
             </Pressable>
           ) : null}
         </View>
-        {err ? <T v="caption" style={{ color: t.c.warn, fontSize: 14 }} accessibilityLiveRegion="polite">{err}</T> : null}
+        {err || reason ? <T v="caption" style={{ color: t.c.warn, fontSize: 14 }} accessibilityLiveRegion="polite">{err ?? reason}</T> : null}
         <Pressable onPress={done} accessibilityRole="button" accessibilityLabel={doneLabel}
           style={{ marginTop: 14, height: 56, borderRadius: t.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: t.c.accentFill,
             borderWidth: t.dark ? 0 : 1.5, borderColor: t.c.honeyEdge }}>

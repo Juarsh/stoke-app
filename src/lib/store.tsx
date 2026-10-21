@@ -488,6 +488,19 @@ function useStoreValue() {
         queue: enqueue(p.queue, { kind: 'delete', id, tries: 0, ...(edited ? { edited: true } : {}) }),
       };
     }),
+    /** Timeline Undo after a remove (item 6). A delete not sent yet (queued or flagged) is undone through the edit path
+     * (editedState: the row is live again, its op replaced by an upsert, server version and counts kept). A delete the
+     * server already has: the row comes back as a new row with the same snapshot (never a silent change of numbers). */
+    restoreEntry: (id: string) => upd((p) => {
+      const e = p.entries.find((x) => x.id === id);
+      if (!e || !e.deleted_at) return p;
+      if (!editGone(p, id)) return editedState(p, e);
+      const now = new Date().toISOString();
+      const copy: FoodEntry = { ...e, id: Crypto.randomUUID(), deleted_at: null, delete_failed: undefined, unsynced_edit: undefined, server_version: undefined,
+        server_counts: undefined, server_failed: undefined, sync_error: undefined, sync_reason: undefined, sync_retrying: undefined, server_note: undefined,
+        kept_on_server: undefined, created_at: now, updated_at: now };
+      return { ...p, entries: [...p.entries, copy], queue: enqueue(p.queue, { kind: 'upsert', entry: copy, tries: 0 }) };
+    }),
     setSteps: (date: string, n: number) => upd((p) => ({ ...p, steps: { ...p.steps, [date]: n } })),
     setChallenge: (challenge: Challenge | null) => upd((p) => ({ ...p, challenge })),
     useAi: () => upd((p) => ({ ...p, aiQuota: countAi(p.aiQuota) })),

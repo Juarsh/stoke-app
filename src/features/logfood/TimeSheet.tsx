@@ -10,7 +10,9 @@ import { clock, dateLong, dayStartLine, pickTime, TimePick, timeReason, wheelDay
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MINS = Array.from({ length: 12 }, (_, i) => i * 5);
 
-export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: boolean; value: TimePick; now: () => Date; onClose: () => void; onPick: (p: TimePick) => void }) {
+/** title / note: the timeline's block move (§4) asks "Move this meal" and says "Moves all N items together." */
+export function TimeSheet({ visible, value, now, onClose, onPick, title, note }: { visible: boolean; value: TimePick; now: () => Date; onClose: () => void; onPick: (p: TimePick) => void;
+  title?: string; note?: string }) {
   const t = useTheme(); const ins = useSafeAreaInsets();
   const [wheel, setWheel] = useState<ReturnType<typeof wheelOf> | null>(null);
   if (!visible) return null;
@@ -32,8 +34,8 @@ export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: b
   if (!wheel) {
     body = (
       <>
-        <T v="title" accessibilityRole="header" style={{ fontSize: 22 }}>When did you eat this?</T>
-        <T tone="muted" style={{ marginTop: 2, marginBottom: 8 }}>Saved as Now unless you change it.</T>
+        <T v="title" accessibilityRole="header" style={{ fontSize: 22 }}>{title ?? 'When did you eat this?'}</T>
+        <T tone="muted" style={{ marginTop: 2, marginBottom: 8 }}>{note ?? 'Saved as Now unless you change it.'}</T>
         {rows.map((r) => {
           const on = r.p ? sel(r.p) : value.kind === 'at';
           return (
@@ -89,6 +91,7 @@ export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: b
           </View>
         </View>
         <T tone="text2" style={{ marginTop: 14, fontSize: 14 }}>{dayStartLine()}</T>
+        {note ? <T tone="text2" style={{ marginTop: 4, fontSize: 14 }}>{note}</T> : null}
         {why ? <T style={{ color: t.c.warn, marginTop: 6 }} accessibilityLiveRegion="polite">{why}</T> : null}
         <Pressable onPress={() => pick({ kind: 'at', iso: at.toISOString() })} disabled={!!why} accessibilityRole="button" accessibilityState={{ disabled: !!why }}
           accessibilityLabel={`Set ${clock(at)}`}
