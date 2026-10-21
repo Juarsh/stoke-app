@@ -6,7 +6,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { TextInput } from 'react-native';
 
 jest.mock('../src/lib/config', () => ({ config: { mock: true, apiUrl: '', mockAi: false, mockAiDelay: 0, google: { android: '', web: '', ios: '' } },
-  flags: {}, brand: { name: 'Placeholder Fit' } }));
+  flags: {}, brand: { name: 'Stoke' } }));
 let mockSaved: string | null = null;
 jest.mock('../src/lib/kv', () => ({ kv: { get: async () => mockSaved, set: async (_k: string, v: string) => { mockSaved = v; } } }));
 let mockN = 0;
