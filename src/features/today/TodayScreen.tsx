@@ -1,4 +1,4 @@
-// v3.2 Today (frame 3): greeting + streak chip, review card, ring hero, protein/steps rows, Fill card, Today's plate rows.
+// Old v3.2 Today screen, parked at /today (reached from Food) until the food timeline (item 6) replaces it. v3.2 Today (frame 3): greeting + streak chip, review card, ring hero, protein/steps rows, Fill card, Today's plate rows.
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';

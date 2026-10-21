@@ -20,7 +20,7 @@ import { StoreProvider } from '../src/lib/store';
 import { displayLabel, displayName, entryFromItem, entryLabel, localDate, notMeasured, reopenRejected, type FoodEntry } from '../src/lib/domain';
 import { adoptServer } from '../src/lib/serverRow';
 import { DISH_TABLE_VERSION, parser, type Item } from '../src/parser';
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 import Review from '../src/app/review';
 import { EditSheet } from '../src/components/ItemEditor';
 import { HeldRow } from '../src/components/LogRows';

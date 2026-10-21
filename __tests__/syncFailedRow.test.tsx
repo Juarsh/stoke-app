@@ -15,7 +15,7 @@ jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return { SafeAreaView: View, useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) };
 });
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 
 test('Today: the failed row says so and retries on tap; the synced one does not', async () => {
   let r!: ReactTestRenderer;

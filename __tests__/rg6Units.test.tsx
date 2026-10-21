@@ -27,7 +27,7 @@ import { ApiError } from '../src/lib/api';
 import { adoptServer } from '../src/lib/serverRow';
 import { EditSheet } from '../src/components/ItemEditor';
 import Review from '../src/app/review';
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 
 jest.setTimeout(30_000);
 const DAY = localDate();

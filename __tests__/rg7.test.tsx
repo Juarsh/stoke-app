@@ -31,7 +31,7 @@ import { flush, MAX_FIVES, NOT_DELETED_REASON, Op, SERVER_ERROR } from '../src/l
 import { reviewRowKind } from '../src/lib/confirmBatch';
 import { EditSheet } from '../src/components/ItemEditor';
 import Review from '../src/app/review';
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 import Log from '../src/app/(tabs)/log';
 
 jest.setTimeout(30_000);

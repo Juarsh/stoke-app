@@ -30,7 +30,7 @@ import { flush, NOT_DELETED_REASON, Op, SERVER_ERROR } from '../src/lib/syncQueu
 import { amountDiffers, flagAmount, sentText } from '../src/lib/spanAmount';
 import { resolvePending } from '../src/lib/pending';
 import { kindOf } from '../src/lib/confirmBatch';
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 import Log from '../src/app/(tabs)/log';
 import rules from '../src/data/rules.json';
 

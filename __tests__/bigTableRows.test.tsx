@@ -27,7 +27,7 @@ import { StoreProvider, Store, useStore } from '../src/lib/store';
 import { counted, entryFromItem, entryRefusal, FoodEntry, localDate, NO_KCAL_REASON, reviewEntry, TYPED_KCAL_REASON } from '../src/lib/domain';
 import { DISH_TABLE_VERSION, parser } from '../src/parser';
 import Log from '../src/app/(tabs)/log';
-import Today from '../src/app/(tabs)/index';
+import Today from '../src/features/today/TodayScreen';
 import Review from '../src/app/review';
 import { EditSheet } from '../src/components/ItemEditor';
 
