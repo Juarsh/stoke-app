@@ -66,6 +66,37 @@ describe('Create habit', () => {
     expect(mockBack).toHaveBeenCalled();
     await act(async () => { r.unmount(); });
   });
+  test('a Count target defaults to "times" (not glass); Water suggests glasses; a typed unit wins and saves trimmed', async () => {
+    seed([]);
+    const r = await mount(<HabitForm />);
+    await type(r, 'Name', 'Pray');
+    await press(r, 'Count');
+    expect(texts(r)).toContain('8 times');
+    expect(texts(r)).not.toMatch(/glass/);
+    await type(r, 'Name', 'Drink water');
+    expect(texts(r)).toContain('8 glasses');
+    await type(r, 'Unit, optional', ' big cups ');
+    await type(r, 'Name', 'Drink water daily');
+    expect(texts(r)).toContain('8 big cups');
+    await type(r, 'Unit, optional', '');
+    expect(texts(r)).toContain('8 times');
+    await type(r, 'Unit, optional', 'laps ');
+    await press(r, 'Save habit');
+    expect(hb.state.habits.find((x) => x.name === 'Drink water daily')!.unit).toBe('laps');
+    await act(async () => { r.unmount(); });
+  });
+  test('editing a habit saved with "glass" keeps it as stored (no silent rewrite); renaming it doesn\u2019t change the unit', async () => {
+    const g = H({ short_name: 'Pray', kind: 'count', target_value: 5, unit: 'glass' });
+    seed([g]);
+    function Later() { return useHabits().habitById(g.id) ? <HabitForm id={g.id} /> : null; } // as in the app: Edit opens once habits have loaded
+    const r = await mount(<Later />);
+    expect(texts(r)).toContain('5 glass');
+    expect(byLabel(r, 'Unit, optional')[0].props.value).toBe('glass');
+    await type(r, 'Name', 'Pray water');
+    await press(r, 'Save habit');
+    expect(hb.state.habits.find((x) => x.id === g.id)!.unit).toBe('glass');
+    await act(async () => { r.unmount(); });
+  });
   test('too long for Home and clashes are flagged live, and Save refuses with the reason', async () => {
     seed([H({ short_name: 'Push-ups' })]);
     const r = await mount(<HabitForm />);

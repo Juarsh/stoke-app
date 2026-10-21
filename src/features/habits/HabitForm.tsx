@@ -14,7 +14,7 @@ import { useLogDay } from '@/lib/useLogDay';
 import { useTheme } from '@/theme';
 import { Header, Stepper } from '../plans/parts';
 import { HabitItem } from './HabitIcon';
-import { blankDraft, DAY_NAMES, deriveShort, Draft, draftErrors, draftOf, HabitKind, LIMITS, Schedule, UNITS } from './model';
+import { blankDraft, DAY_NAMES, DEFAULT_UNIT, defaultUnit, deriveShort, Draft, draftErrors, draftOf, HabitKind, LIMITS, Schedule, UNITS, unitOf } from './model';
 
 export function HabitForm({ id: idProp }: { id?: string }) {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -26,12 +26,15 @@ export function HabitForm({ id: idProp }: { id?: string }) {
   const [tried, setTried] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [units, setUnits] = useState(false);
+  // a new habit's unit follows the name (Water → glasses, else times) until the user picks or types one; an edit keeps its stored unit
+  const [unitAuto, setUnitAuto] = useState(!editing);
   const others = hb.state.habits.filter((h) => h.id !== id);
   const errs = draftErrors(d, others);
   const set = (p: Partial<Draft>) => { setSaveErr(null); setD((x) => ({ ...x, ...p })); };
   const onName = (name: string) => {
     const g = deriveShort(name);
-    if (d.short_name_auto) { setWeak(g.weak); set({ name, short_name: g.short, icon: g.icon }); } else set({ name, icon: g.icon ?? d.icon });
+    const unit = unitAuto ? { unit: defaultUnit(name) } : {};
+    if (d.short_name_auto) { setWeak(g.weak); set({ name, short_name: g.short, icon: g.icon, ...unit }); } else set({ name, icon: g.icon ?? d.icon, ...unit });
   };
   const onShort = (short_name: string) => { setWeak(false); set({ short_name, short_name_auto: false }); };
   const save = () => {
@@ -89,10 +92,10 @@ export function HabitForm({ id: idProp }: { id?: string }) {
             {label('Target')}
             {d.kind === 'count' ? (
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                <Stepper label={`Target (${d.unit})`} value={d.target_value} text={`${d.target_value} ${d.unit}`} min={LIMITS.count[0]} max={LIMITS.count[1]} onStep={(x) => set({ target_value: d.target_value + x })} />
-                <Pressable onPress={() => setUnits(true)} accessibilityRole="button" accessibilityLabel={`Unit, ${d.unit}. Change unit`} style={{ minHeight: 48, justifyContent: 'center', alignItems: 'flex-end' }}>
+                <Stepper label={`Target (${unitOf(d.unit)})`} value={d.target_value} text={`${d.target_value} ${unitOf(d.unit)}`} min={LIMITS.count[0]} max={LIMITS.count[1]} onStep={(x) => set({ target_value: d.target_value + x })} />
+                <Pressable onPress={() => setUnits(true)} accessibilityRole="button" accessibilityLabel={`Unit, ${unitOf(d.unit)}. Change unit`} style={{ minHeight: 48, justifyContent: 'center', alignItems: 'flex-end' }}>
                   <T tone="text2" style={{ fontSize: 14 }}>Unit</T>
-                  <T v="bodyStrong" style={{ fontSize: 15 }}>{`${d.unit} ›`}</T>
+                  <T v="bodyStrong" style={{ fontSize: 15 }}>{`${unitOf(d.unit)} ›`}</T>
                 </Pressable>
               </View>
             ) : (
@@ -101,6 +104,14 @@ export function HabitForm({ id: idProp }: { id?: string }) {
                 <Stepper label="Reps" value={d.target_reps} min={LIMITS.reps[0]} max={LIMITS.reps[1]} onStep={(x) => set({ target_reps: d.target_reps + x })} />
               </View>
             )}
+            {d.kind === 'count' ? (
+              <>
+                {label('Unit (optional)')}
+                <TextInput value={d.unit} onChangeText={(unit) => { setUnitAuto(false); set({ unit }); }} accessibilityLabel="Unit, optional" testID="unit-input"
+                  placeholder={DEFAULT_UNIT} placeholderTextColor={t.c.muted} maxLength={LIMITS.unit + 4} autoCapitalize="none" autoCorrect={false} style={field(!!(tried && errs.target))} />
+                <T tone="text2" style={{ fontSize: 14, marginTop: 6 }}>Like laps or cups. Left empty, it’s “times”.</T>
+              </>
+            ) : null}
             {errLine(errs.target)}
           </>
         ) : null}
@@ -135,10 +146,10 @@ export function HabitForm({ id: idProp }: { id?: string }) {
         <View style={{ backgroundColor: t.c.sheet, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: 20, paddingBottom: 24 + ins.bottom }}>
           <T v="title" accessibilityRole="header" style={{ fontSize: 22, marginBottom: 8 }}>Unit</T>
           {UNITS.map((u) => (
-            <Pressable key={u} onPress={() => { set({ unit: u }); setUnits(false); }} accessibilityRole="radio" accessibilityState={{ selected: d.unit === u }} accessibilityLabel={u}
+            <Pressable key={u} onPress={() => { setUnitAuto(false); set({ unit: u }); setUnits(false); }} accessibilityRole="radio" accessibilityState={{ selected: unitOf(d.unit) === u }} accessibilityLabel={u}
               style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: t.c.sheetLine }}>
-              <T v={d.unit === u ? 'bodyStrong' : 'body'} style={{ fontSize: 17, flex: 1 }}>{u}</T>
-              {d.unit === u ? <T style={{ color: t.c.accentText, fontSize: 17 }}>✓</T> : null}
+              <T v={unitOf(d.unit) === u ? 'bodyStrong' : 'body'} style={{ fontSize: 17, flex: 1 }}>{u}</T>
+              {unitOf(d.unit) === u ? <T style={{ color: t.c.accentText, fontSize: 17 }}>✓</T> : null}
             </Pressable>
           ))}
         </View>

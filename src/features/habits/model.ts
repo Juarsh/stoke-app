@@ -28,7 +28,13 @@ export interface HabitsState { v: 1; habits: Habit[]; logs: HabitLog[] }
 export const EMPTY_HABITS: HabitsState = { v: 1, habits: [], logs: [] };
 
 export const LIMITS = { name: 40, short: 16, count: [1, 999], sets: [1, 20], reps: [1, 200], unit: 16, lateDays: 7 } as const;
-export const UNITS = ['glasses', 'pages', 'minutes', 'times', 'km', 'litres', 'servings'] as const;
+export const UNITS = ['times', 'glasses', 'pages', 'minutes', 'km', 'litres', 'servings'] as const;
+/** A Count target's unit: neutral "times" by default; only a Water habit suggests glasses (bug: every count showed "glass"). */
+export const DEFAULT_UNIT = 'times', WATER_UNIT = 'glasses';
+export const isWater = (name: string) => /\bwater\b/i.test(name);
+export const defaultUnit = (name: string) => (isWater(name) ? WATER_UNIT : DEFAULT_UNIT);
+/** the unit as saved: trimmed, inner spaces collapsed, empty falls back to "times" (length is checked, never cut) */
+export const unitOf = (raw: string) => raw.trim().replace(/\s+/g, ' ') || DEFAULT_UNIT;
 export const ALL_DAYS = 0b1111111, WEEKDAYS_MASK = 0b0011111;
 export const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 
@@ -203,9 +209,9 @@ export interface Draft {
   name: string; short_name: string; short_name_auto: boolean; icon: string | null; kind: HabitKind;
   target_value: number; unit: string; target_sets: number; target_reps: number; schedule: Schedule; weekdays: number;
 }
-export const blankDraft = (): Draft => ({ name: '', short_name: '', short_name_auto: true, icon: null, kind: 'done', target_value: 8, unit: 'glasses', target_sets: 3, target_reps: 12, schedule: 'daily', weekdays: ALL_DAYS });
+export const blankDraft = (): Draft => ({ name: '', short_name: '', short_name_auto: true, icon: null, kind: 'done', target_value: 8, unit: DEFAULT_UNIT, target_sets: 3, target_reps: 12, schedule: 'daily', weekdays: ALL_DAYS });
 export const draftOf = (h: Habit): Draft => ({ name: h.name, short_name: h.short_name, short_name_auto: h.short_name_auto, icon: h.icon, kind: h.kind,
-  target_value: h.target_value ?? 8, unit: h.unit ?? 'glasses', target_sets: h.target_sets ?? 3, target_reps: h.target_reps ?? 12, schedule: h.schedule, weekdays: h.weekdays });
+  target_value: h.target_value ?? 8, unit: h.unit ?? DEFAULT_UNIT, target_sets: h.target_sets ?? 3, target_reps: h.target_reps ?? 12, schedule: h.schedule, weekdays: h.weekdays });
 const intIn = (v: number, [lo, hi]: readonly [number, number]) => Number.isInteger(v) && v >= lo && v <= hi;
 export type DraftErrors = Partial<Record<'name' | 'short' | 'target' | 'days', string>>;
 export function draftErrors(d: Draft, others: Habit[]): DraftErrors {
@@ -219,8 +225,8 @@ export function draftErrors(d: Draft, others: Habit[]): DraftErrors {
   else if (others.some((h) => !h.archived_at && shortKey(h.short_name) === shortKey(short))) e.short = 'Already used, pick another';
   if (d.kind === 'count') {
     if (!intIn(d.target_value, LIMITS.count)) e.target = `Target must be a whole number from 1 to ${LIMITS.count[1]}.`;
-    else if (!d.unit.trim() || d.unit.trim().length > LIMITS.unit) e.target = 'Pick a unit.';
-    else if (/^steps?$/i.test(d.unit.trim())) e.target = 'Steps are on the Food card, so they can’t be a habit.';
+    else if ([...unitOf(d.unit)].length > LIMITS.unit) e.target = `Unit can be at most ${LIMITS.unit} characters.`;
+    else if (/^steps?$/i.test(unitOf(d.unit))) e.target = 'Steps are on the Food card, so they can’t be a habit.';
   }
   if (d.kind === 'sets' && (!intIn(d.target_sets, LIMITS.sets) || !intIn(d.target_reps, LIMITS.reps))) e.target = `Sets must be 1 to ${LIMITS.sets[1]} and reps 1 to ${LIMITS.reps[1]}.`;
   if (d.schedule === 'days' && !(d.weekdays & ALL_DAYS)) e.days = 'Pick at least one day.';
@@ -231,7 +237,7 @@ export const firstError = (e: DraftErrors) => e.name ?? e.short ?? e.target ?? e
 export function fromDraft(d: Draft): Pick<Habit, 'name' | 'short_name' | 'short_name_auto' | 'icon' | 'kind' | 'target_value' | 'unit' | 'target_sets' | 'target_reps' | 'schedule' | 'weekdays'> {
   return {
     name: d.name.trim(), short_name: d.short_name.trim(), short_name_auto: d.short_name_auto, icon: d.icon, kind: d.kind,
-    target_value: d.kind === 'count' ? d.target_value : null, unit: d.kind === 'count' ? d.unit.trim() : null,
+    target_value: d.kind === 'count' ? d.target_value : null, unit: d.kind === 'count' ? unitOf(d.unit) : null,
     target_sets: d.kind === 'sets' ? d.target_sets : null, target_reps: d.kind === 'sets' ? d.target_reps : null,
     schedule: d.schedule, weekdays: d.schedule === 'days' ? d.weekdays & ALL_DAYS : maskOf(d),
   };
