@@ -72,9 +72,9 @@ export function Stepper({ label, value, text, onStep, min, max }: { label: strin
   return (
     <View style={{ gap: 4 }}>
       <T v="caption" tone="muted" style={{ fontSize: 13 }}>{label}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessible={false}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} accessible={false}>
         {btn(-1)}
-        <T v="bodyStrong" style={{ fontSize: 17, minWidth: 44, textAlign: 'center' }} accessibilityLabel={`${label}: ${text ?? value}`}>{text ?? value}</T>
+        <T v="bodyStrong" style={{ fontSize: 17, minWidth: 38, textAlign: 'center' }} accessibilityLabel={`${label}: ${text ?? value}`}>{text ?? value}</T>
         {btn(1)}
       </View>
     </View>
