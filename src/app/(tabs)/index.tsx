@@ -3,7 +3,7 @@
 // Everything is read from the phone's store (offline).
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Glows } from '@/components/Gradient';
 import { Icon } from '@/components/Icon';
@@ -11,7 +11,7 @@ import { ReviewLink } from '@/components/ReviewLink';
 import { Button, Card, Row, T } from '@/components/ui';
 import { flags } from '@/lib/config';
 import { greeting, dayOf } from '@/lib/domain';
-import { connectSteps, getHealthConnect, readTodaySteps, StepsStatus, stepsStatus } from '@/lib/health';
+import { connectSteps, getHealthApp, healthName, readTodaySteps, StepsStatus, stepsStatus } from '@/lib/health';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
 import { useLogDay } from '@/lib/useLogDay';
@@ -36,7 +36,7 @@ function Bar({ pct, color, outline }: { pct: number; color: string; outline?: bo
   );
 }
 
-/** Steps: never prompts by itself; reads only when Health Connect already allows it. */
+/** Steps: never prompts by itself; reads only when Apple Health / Health Connect already allows it. */
 function useSteps() {
   const st = useStore(); const { setSteps, api } = st;
   const [status, setStatus] = useState<StepsStatus | null>(null);
@@ -59,11 +59,11 @@ function ConnectStepsSheet({ visible, status, onClose, onConnected }: { visible:
       <View style={s.sheet}>
         <View style={s.handle} />
         <T v="title" style={{ fontSize: 22 }} accessibilityRole="header">Connect steps</T>
-        <T style={{ fontSize: 15, lineHeight: 22 }}>See your daily steps here. We only read steps from Health Connect.</T>
-        <T tone="text2" style={{ fontSize: 15, lineHeight: 22 }}>Next, Android will ask you to allow steps.</T>
+        <T style={{ fontSize: 15, lineHeight: 22 }}>See your daily steps here. We only read steps from {healthName()}.</T>
+        <T tone="text2" style={{ fontSize: 15, lineHeight: 22 }}>Next, {Platform.OS === 'ios' ? 'your iPhone' : 'Android'} will ask you to allow steps.</T>
         <T tone="muted" style={{ fontSize: 14 }}>You can turn this off any time in Settings.</T>
-        <Button title={missing ? 'Get Health Connect' : 'Connect'} style={{ marginTop: 8 }}
-          onPress={async () => { if (missing) { void getHealthConnect(); onClose(); return; } const ok = await connectSteps(); onClose(); if (ok) onConnected(); }} />
+        <Button title={missing ? (Platform.OS === 'ios' ? 'Not available on this device' : 'Get Health Connect') : 'Connect'} style={{ marginTop: 8 }} disabled={missing && Platform.OS === 'ios'}
+          onPress={async () => { if (missing) { void getHealthApp(); onClose(); return; } const ok = await connectSteps(); onClose(); if (ok) onConnected(); }} />
         <Button title="Not now" kind="ghost" onPress={onClose} />
       </View>
     </Modal>

@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 type Extra = {
   brand: { name: string; slug: string; scheme: string; androidPackage: string; iosBundleId: string; inviteBaseUrl: string };
   apiUrl: string; googleAndroidClientId: string; googleWebClientId: string; googleIosClientId: string;
-  flags: { steps: boolean; healthConnect: boolean; community: boolean; googleSignIn: boolean };
+  flags: { steps: boolean; healthConnect: boolean; healthKit: boolean; community: boolean; googleSignIn: boolean };
 };
 const extra = (Constants.expoConfig?.extra ?? {}) as Partial<Extra>;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -22,6 +22,8 @@ export const config = {
 export const flags = {
   steps: extra.flags?.steps ?? true,
   healthConnect: extra.flags?.healthConnect ?? false,
+  /** Apple Health steps (iOS dev/release build only; EXPO_PUBLIC_FLAG_HEALTHKIT=1). Off by default. */
+  healthKit: extra.flags?.healthKit ?? false,
   community: extra.flags?.community ?? true,
   googleSignIn: (extra.flags?.googleSignIn ?? false) && !!(extra.googleAndroidClientId || extra.googleWebClientId),
 };

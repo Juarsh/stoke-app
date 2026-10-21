@@ -4,7 +4,7 @@ import { Button, Card, Row, Screen, Segmented, T } from '@/components/ui';
 import { TargetsCard } from '@/features/settings/TargetsCard';
 import { config, flags } from '@/lib/config';
 import { Diet } from '@/lib/domain';
-import { connectSteps, readTodaySteps } from '@/lib/health';
+import { connectSteps, healthEnabled, healthName, readTodaySteps } from '@/lib/health';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -39,9 +39,9 @@ export default function Settings() {
         {flags.steps ? (
           <>
             <Row style={{ justifyContent: 'space-between', minHeight: 48 }}>
-              <T style={{ flex: 1 }}>Health Connect steps</T>
-              <Button kind="soft" title={flags.healthConnect ? 'Connect' : 'Off in this build'} disabled={!flags.healthConnect}
-                onPress={async () => { const n = (await connectSteps()) ? await readTodaySteps() : null; Alert.alert('Health Connect', n === null ? 'Not available or permission denied.' : `Today: ${n} steps`); }} />
+              <T style={{ flex: 1 }}>{`${healthName()} steps`}</T>
+              <Button kind="soft" title={healthEnabled() ? 'Connect' : 'Off in this build'} disabled={!healthEnabled()}
+                onPress={async () => { const n = (await connectSteps()) ? await readTodaySteps() : null; Alert.alert(healthName(), n === null ? 'Not available or permission denied.' : `Today: ${n} steps`); }} />
             </Row>
             {sw(p.addStepKcal, (v) => set({ addStepKcal: v }), 'Add step kcal to food budget')}
           </>

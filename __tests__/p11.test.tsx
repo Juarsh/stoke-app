@@ -27,11 +27,15 @@ describe('B1: Health Connect in the release build', () => {
     expect(src('app.config.ts')).toMatch(/healthConnect: env\.EXPO_PUBLIC_FLAG_HEALTH_CONNECT === '1'/);
   });
   test('nothing asks for permission by itself: only connectSteps() requests it, and only the sheet’s Connect calls that', () => {
+    // since the HealthKit change the prompt lives in each adapter's connect(); health.ts only routes connectSteps() to it
     const health = src('src/lib/health.ts');
     const status = health.slice(health.indexOf('export async function stepsStatus'), health.indexOf('export async function connectSteps'));
-    expect(status).not.toMatch(/requestPermission/);
-    expect(health.match(/requestPermission\(/g)).toHaveLength(1);
-    expect(health.slice(health.indexOf('export async function connectSteps'))).toMatch(/requestPermission\(/);
+    expect(status).not.toMatch(/connect\(\)/);
+    expect(health.match(/\.connect\(\)/g)).toHaveLength(1);
+    expect(health.slice(health.indexOf('export async function connectSteps'), health.indexOf('export const getHealthApp'))).toMatch(/\.connect\(\)/);
+    const hc = src('src/lib/healthConnect.ts');
+    expect(hc.match(/requestPermission\(/g)).toHaveLength(1);
+    expect(hc.slice(hc.indexOf('async connect()'), hc.indexOf('async steps('))).toMatch(/requestPermission\(/);
     const home = src('src/app/(tabs)/index.tsx');
     // connectSteps is only reached from the sheet's button
     expect(home.match(/connectSteps\(\)/g)).toHaveLength(1);

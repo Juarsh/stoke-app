@@ -3,6 +3,9 @@ import type { ExpoConfig } from 'expo/config';
 const brand = require('./brand.config.js');
 
 const env = process.env;
+// Apple Health (iOS): off unless EXPO_PUBLIC_FLAG_HEALTHKIT=1. The config plugin is only added then, so the default
+// build has no HealthKit entitlement. Read-only (steps): no update/write description, no background delivery.
+const healthKit = env.EXPO_PUBLIC_FLAG_HEALTHKIT === '1';
 const config: ExpoConfig = {
   name: brand.name,
   slug: brand.slug,
@@ -34,6 +37,11 @@ const config: ExpoConfig = {
     ['expo-splash-screen', { backgroundColor: '#FFFFFF', image: './assets/images/splash-icon.png', imageWidth: 76 }],
     ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 36, targetSdkVersion: 35 } }],
     'expo-health-connect',
+    ...(healthKit ? [['@kingstinct/react-native-healthkit', {
+      NSHealthShareUsageDescription: 'Stoke reads your step count from Apple Health to show your daily steps. It never writes to Apple Health.',
+      NSHealthUpdateUsageDescription: false,
+      background: false,
+    }] as [string, object]] : []),
   ],
   experiments: { typedRoutes: true },
   extra: {
@@ -47,6 +55,7 @@ const config: ExpoConfig = {
     flags: {
       steps: env.EXPO_PUBLIC_FLAG_STEPS !== '0',
       healthConnect: env.EXPO_PUBLIC_FLAG_HEALTH_CONNECT === '1',
+      healthKit,
       community: env.EXPO_PUBLIC_FLAG_COMMUNITY !== '0',
       googleSignIn: env.EXPO_PUBLIC_FLAG_GOOGLE_SIGNIN === '1',
     },
