@@ -38,6 +38,13 @@ export interface FoodEntry {
   reject_code?: string;
   /** the variant the user picked for an ambiguous base dish (sent as variant_dish_id = dish_id) */
   variant_dish_id?: string;
+  /** S2.1 search-first log (spec §5.2 / §12.3; phone-side until the P4 backend change): when it was eaten (ISO). local_date is
+   * derived from it with the day start (dayOf); slot is derived from its hour so the current server payload still fits. */
+  eaten_at?: string;
+  /** S2.1: the user typed this kcal / protein (saved exactly as typed, shown with an "edited" pill). Independent flags. */
+  kcal_edited?: boolean; protein_edited?: boolean;
+  /** S2.1 snapshot: the amount as the user picked it (piece / bowl / g / ml) and its grams; qty / unit stay the table's */
+  display_amount?: number; display_unit?: string; grams?: number;
   /** local only: the variant choices the user picked from, so a variant_required rejection can reopen the chips */
   variant_options?: { dish_id: string; name: string; kcal: number; protein_g: number }[];
   /** local only: the 35-minute backstop turned this pending AI row into a failed row (typed kcal only; late answers ignored) */
@@ -166,6 +173,17 @@ export function istParts(d: Date) {
 export function localDate(d: Date = new Date()): string {
   const p = istParts(d);
   return `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
+/** Spec §4: the day starts at 4 AM (per-user setting, default 04:00): 00:00–03:59 counts towards the day before. */
+export const DAY_START_HOUR = 4;
+/** The log day (YYYY-MM-DD, IST) a moment belongs to, with the day start. */
+export function dayOf(d: Date, dayStartHour = DAY_START_HOUR): string {
+  return localDate(new Date(d.getTime() - dayStartHour * 3600000));
+}
+/** Legacy slot for a moment (the server payload still carries slot until P4): by its IST hour. */
+export function slotOf(d: Date): Slot {
+  const h = istParts(d).hour;
+  return h >= 4 && h < 11 ? 'breakfast' : h >= 11 && h < 16 ? 'lunch' : h >= 16 && h < 19 ? 'snacks' : 'dinner';
 }
 export function addDays(date: string, n: number): string {
   const t = Date.parse(date + 'T00:00:00Z') + n * 86400000;
