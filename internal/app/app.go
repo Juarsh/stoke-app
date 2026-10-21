@@ -17,6 +17,8 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/goals"
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/stoke"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/akarsh/calorie-tracker/internal/summary"
 )
 
@@ -138,6 +140,7 @@ func New(c Config) (http.Handler, error) {
 		qctx = context.Background()
 	}
 	fs.Start(qctx, q)
+	st := &store.PG{DB: c.DB}
 	mods := []interface {
 		Routes(*http.ServeMux, func(http.Handler) http.Handler)
 	}{
@@ -145,6 +148,7 @@ func New(c Config) (http.Handler, error) {
 		&activity.Service{DB: c.DB, Summary: sum, Goals: gl},
 		gl, sum,
 		&coach.Service{Parser: p, Table: live.Get, Goals: gl, Summary: sum, Advisor: c.Advisor},
+		&stoke.Service{Plans: st, Workouts: st, Habits: st},
 	}
 	mux := http.NewServeMux()
 	wrap := auth.Middleware(c.Verifier, auth.PGUsers{DB: c.DB})

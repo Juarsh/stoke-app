@@ -2,7 +2,7 @@
 //
 //	DATABASE_URL       postgres://calorie:calorie@localhost:5432/calorie
 //	PORT               8080
-//	AUTH_MODE          google (default) | dev (accepts "Bearer dev:<name>", local only)
+//	AUTH_MODE          google (default) | dev (accepts "Bearer dev:<name>"; local / CI only, refused when APP_ENV=production)
 //	GOOGLE_CLIENT_IDS  comma-separated OAuth client IDs (token audiences)
 //	MIGRATE_V2         1 to also create the V2 tables
 package main
@@ -41,17 +41,12 @@ func main() {
 	if err := db.Migrate(ctx, pool, os.Getenv("MIGRATE_V2") == "1"); err != nil {
 		log.Fatal(err)
 	}
-	var v auth.Verifier
-	switch env("AUTH_MODE", "google") {
-	case "dev":
-		log.Println("WARNING: AUTH_MODE=dev accepts unsigned dev tokens; never use in production")
-		v = auth.DevVerifier{}
-	default:
-		ids := strings.Split(os.Getenv("GOOGLE_CLIENT_IDS"), ",")
-		if ids[0] == "" {
-			log.Fatal("GOOGLE_CLIENT_IDS is required unless AUTH_MODE=dev")
-		}
-		v = auth.NewGoogleVerifier(ids)
+	v, err := auth.FromConfig(os.Getenv("AUTH_MODE"), os.Getenv("APP_ENV"), os.Getenv("GOOGLE_CLIENT_IDS"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, dev := v.(auth.DevVerifier); dev {
+		log.Println("WARNING: AUTH_MODE=dev accepts unsigned dev tokens; local and CI only")
 	}
 	thinking := os.Getenv("GEMINI_THINKING_BUDGET")
 	if !foodValidThinking(thinking) {

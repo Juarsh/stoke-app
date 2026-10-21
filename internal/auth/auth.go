@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/akarsh/calorie-tracker/internal/httpx"
+	"github.com/akarsh/calorie-tracker/internal/store"
 )
 
 // Identity is all we keep from a verified token.
@@ -144,13 +145,46 @@ type Users interface {
 	Upsert(ctx context.Context, id Identity) (int64, error)
 }
 
+// PGUsers maps a verified identity to our own user id through the store (user_identities: provider + subject).
 type PGUsers struct{ DB *pgxpool.Pool }
 
 func (u PGUsers) Upsert(ctx context.Context, id Identity) (int64, error) {
-	var uid int64
-	err := u.DB.QueryRow(ctx, `INSERT INTO users(google_sub,email,name) VALUES ($1,$2,$3)
-		ON CONFLICT (google_sub) DO UPDATE SET email=EXCLUDED.email RETURNING id`, id.Sub, id.Email, id.Name).Scan(&uid)
-	return uid, err
+	return (&store.PG{DB: u.DB}).Resolve(ctx, id.Provider(), id.Sub, id.Email, id.Name)
+}
+
+// Provider: "dev" for a dev token's identity, else "google".
+func (id Identity) Provider() string {
+	if strings.HasPrefix(id.Sub, "dev:") {
+		return "dev"
+	}
+	return "google"
+}
+
+// FromConfig picks the token verifier (AUTH_MODE): "google" (default) checks Google ID tokens against clientIDs
+// (GOOGLE_CLIENT_IDS, comma separated); "dev" accepts "dev:<name>" test tokens and is refused when appEnv is
+// production, so a misconfigured deploy fails at start instead of letting anyone in.
+func FromConfig(mode, appEnv, clientIDs string) (Verifier, error) {
+	switch mode {
+	case "dev":
+		switch strings.ToLower(strings.TrimSpace(appEnv)) {
+		case "production", "prod":
+			return nil, fmt.Errorf("AUTH_MODE=dev is refused when APP_ENV=%s", appEnv)
+		}
+		return DevVerifier{}, nil
+	case "", "google":
+		var ids []string
+		for _, s := range strings.Split(clientIDs, ",") {
+			if s = strings.TrimSpace(s); s != "" {
+				ids = append(ids, s)
+			}
+		}
+		if len(ids) == 0 {
+			return nil, errors.New("GOOGLE_CLIENT_IDS is required when AUTH_MODE=google")
+		}
+		return NewGoogleVerifier(ids), nil
+	default:
+		return nil, fmt.Errorf("AUTH_MODE must be google or dev (got %q)", mode)
+	}
 }
 
 // Middleware requires "Authorization: Bearer <Google ID token>".
