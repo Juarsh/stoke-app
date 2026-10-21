@@ -14,7 +14,7 @@ type Row = { key: string; title: string; sub?: string; icon: string; tint?: 'foo
  * Log weight is hidden in v1 (Q1). Rows without a route are stubs until their build-plan item lands. */
 const ROWS: Row[] = [
   { key: 'food', title: 'Log food', icon: 'food', tint: 'food', to: '/log-food' },
-  { key: 'habit', title: 'Add habit', sub: 'Yes / no, a count, or sets', icon: 'habit', tint: 'train' },
+  { key: 'habit', title: 'Add habit', sub: 'Yes / no, a count, or sets', icon: 'habit', tint: 'train', to: '/habit-form' },
   { key: 'workout', title: 'Start workout', icon: 'train', tint: 'train', to: '/workout' },
   { key: 'coach', title: 'Ask Coach', sub: 'Food and training questions', icon: 'spark', tint: 'honey', to: '/coach' },
   { key: 'empty', title: 'Start an empty workout', icon: 'plus', to: '/workout' },
