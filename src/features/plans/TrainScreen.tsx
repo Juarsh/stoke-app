@@ -27,7 +27,7 @@ export function TrainScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 12, flexWrap: 'wrap' }}>
               <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 16, flex: 1, minWidth: 140 }}>This week’s split</T>
               <TextLink title="Empty workout" onPress={() => st.showNotice(LOGGER_SOON)} a11y="Start an empty workout" />
-              <TextLink title="Edit" onPress={() => go('/train/plan/[id]', { id: plan.id })} a11y={`Edit ${plan.name}`} />
+              <TextLink title="Edit" onPress={() => go('/plan/[id]', { id: plan.id })} a11y={`Edit ${plan.name}`} />
             </View>
             {splitRows(plan, date).map((row) => {
               const r = row.routine;
@@ -44,7 +44,7 @@ export function TrainScreen() {
               );
               const style = { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: r ? 56 : 48, paddingHorizontal: 18, ...divider } as const;
               return r ? (
-                <Pressable key={row.weekday} onPress={() => go('/train/routine/[id]', { id: r.id, plan: plan.id })} accessibilityRole="button" accessibilityLabel={`${label}. Edit routine`}
+                <Pressable key={row.weekday} onPress={() => go('/routine/[id]', { id: r.id, plan: plan.id })} accessibilityRole="button" accessibilityLabel={`${label}. Edit routine`}
                   style={({ pressed }) => [style, { opacity: pressed ? 0.85 : 1 }]}>{body}</Pressable>
               ) : <View key={row.weekday} style={style} accessible accessibilityLabel={label}>{body}</View>;
             })}
@@ -54,12 +54,12 @@ export function TrainScreen() {
           <Box testID="plans-card">
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 12 }}>
               <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 16, flex: 1 }}>Plans</T>
-              <TextLink title="+ New plan" onPress={() => go('/train/choose-plan')} a11y="New plan" />
+              <TextLink title="+ New plan" onPress={() => go('/choose-plan')} a11y="New plan" />
             </View>
             {plans.state.plans.map((p) => {
               const on = p.id === plans.state.activeId;
               return (
-                <Pressable key={p.id} onPress={() => go('/train/plan/[id]', { id: p.id })} accessibilityRole="button" accessibilityLabel={`${p.name}, ${daysCount(p)}${on ? ', active' : ''}. Open`}
+                <Pressable key={p.id} onPress={() => go('/plan/[id]', { id: p.id })} accessibilityRole="button" accessibilityLabel={`${p.name}, ${daysCount(p)}${on ? ', active' : ''}. Open`}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingHorizontal: 18, ...divider, opacity: pressed ? 0.85 : 1 })}>
                   <T style={{ flex: 1, fontSize: 16 }}><T v="bodyStrong" style={{ fontSize: 16 }}>{p.name}</T><T tone="muted" style={{ fontSize: 14 }}> · {daysCount(p)}</T></T>
                   {on ? <View style={{ backgroundColor: t.c.accentTint, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}><T v="eyebrow" style={{ color: t.c.accentText, fontSize: 12 }}>Active</T></View> : null}

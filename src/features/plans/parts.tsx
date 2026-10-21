@@ -70,7 +70,7 @@ export function Stepper({ label, value, text, onStep, min, max }: { label: strin
     );
   };
   return (
-    <View style={{ gap: 4, minWidth: 150 }}>
+    <View style={{ gap: 4 }}>
       <T v="caption" tone="muted" style={{ fontSize: 13 }}>{label}</T>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessible={false}>
         {btn(-1)}

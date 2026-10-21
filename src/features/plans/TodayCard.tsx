@@ -40,7 +40,7 @@ export function TodayCard({ date, names = 2, repo = exercises }: { date: string;
         </View>
         <T v="display" accessibilityRole="header" style={{ color: t.c.inkText, fontSize: 32, lineHeight: 38 }}>No plan yet</T>
         <T style={{ color: t.c.inkMuted, fontSize: 14, lineHeight: 20 }}>Pick a split like Push · Pull · Legs. You can change it later.</T>
-        {honey('Choose a plan', () => router.push('/train/choose-plan' as never))}
+        {honey('Choose a plan', () => router.push('/choose-plan' as never))}
         {link('or start an empty workout', soon)}
       </View>
     );

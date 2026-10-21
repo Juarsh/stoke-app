@@ -24,7 +24,7 @@ export function PlanScreen({ id }: { id: string }) {
   if (!plan) return <View style={{ flex: 1, backgroundColor: t.c.bg }}><Header title="Plan" /><T tone="text2" style={{ padding: 20 }}>This plan was deleted.</T></View>;
   const active = plans.state.activeId === plan.id;
   const rename = () => { if (name.trim() === plan.name) return; const e = plans.renamePlan(plan.id, name.trim()); setErr(e); if (e) setName(plan.name); };
-  const newRoutine = (weekday?: number) => router.push({ pathname: '/train/routine/[id]', params: { id: 'new', plan: plan.id, ...(weekday !== undefined ? { day: String(weekday) } : {}) } } as never);
+  const newRoutine = (weekday?: number) => router.push({ pathname: '/routine/[id]', params: { id: 'new', plan: plan.id, ...(weekday !== undefined ? { day: String(weekday) } : {}) } } as never);
   const pickDay = (routineId: string | null) => { if (day === null) return; setErr(plans.setDay(plan.id, day, routineId)); setDay(null); };
   const divider = { borderTopWidth: 1, borderTopColor: t.c.lineSoft } as const;
   return (
@@ -62,7 +62,7 @@ export function PlanScreen({ id }: { id: string }) {
             <TextLink title="+ New routine" onPress={() => newRoutine()} a11y="New routine" />
           </View>
           {plan.routines.length ? plan.routines.map((r) => (
-            <Pressable key={r.id} onPress={() => router.push({ pathname: '/train/routine/[id]', params: { id: r.id, plan: plan.id } } as never)}
+            <Pressable key={r.id} onPress={() => router.push({ pathname: '/routine/[id]', params: { id: r.id, plan: plan.id } } as never)}
               accessibilityRole="button" accessibilityLabel={`${r.name}, ${countLabel(r.exercises.length)}, ${daysLabel(plan, r.id)}. Edit routine`}
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 60, paddingHorizontal: 18, paddingVertical: 8, ...divider, opacity: pressed ? 0.85 : 1 })}>
               <View style={{ flex: 1 }}>

@@ -223,7 +223,7 @@ describe('Today’s workout card (Home / Train)', () => {
     expect(texts(r)).toContain('No plan yet');
     expect(texts(r)).toContain('Setup · about 2 min');
     await press(r, 'Choose a plan');
-    expect(mockPush).toHaveBeenCalledWith('/train/choose-plan');
+    expect(mockPush).toHaveBeenCalledWith('/choose-plan');
     await act(async () => { r.unmount(); });
   });
   test('with Push · Pull · Legs on a Tuesday: Pull A, 6 exercises, ~min, two names +4; Start workout says the logger is next', async () => {
@@ -257,7 +257,7 @@ describe('Train screen', () => {
     expect(byLabel(r, /^(Thu|Sun)(, today)?: Rest/)).toHaveLength(0);
     expect(byLabel(r, /^Push · Pull · Legs, 5 days, active\. Open$/)).toHaveLength(1);
     await press(r, /^Mon(, today)?: Push A/);
-    expect(mockPush).toHaveBeenLastCalledWith({ pathname: '/train/routine/[id]', params: { id: plans.state.plans[0].days[0], plan: plans.state.plans[0].id } });
+    expect(mockPush).toHaveBeenLastCalledWith({ pathname: '/routine/[id]', params: { id: plans.state.plans[0].days[0], plan: plans.state.plans[0].id } });
     await act(async () => { r.unmount(); });
   });
 });

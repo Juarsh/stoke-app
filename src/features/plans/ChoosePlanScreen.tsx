@@ -15,7 +15,7 @@ export function ChoosePlanScreen() {
   const [pick, setPick] = useState(TEMPLATES[0].key);
   const tpl = TEMPLATES.find((x) => x.key === pick)!;
   const use = () => { plans.applyTemplate(pick); router.back(); };
-  const own = () => { const p = plans.newPlan(); router.replace({ pathname: '/train/plan/[id]', params: { id: p.id } } as never); };
+  const own = () => { const p = plans.newPlan(); router.replace({ pathname: '/plan/[id]', params: { id: p.id } } as never); };
   return (
     <View style={{ flex: 1, backgroundColor: t.c.bg }}>
       <Header title="Choose a plan" />

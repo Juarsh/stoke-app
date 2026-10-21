@@ -55,7 +55,7 @@ function RoutineEditor({ id, planId, day, repo = exercises }: Props) {
         <T v="caption" tone="muted" style={{ fontSize: 14 }}>Routine name</T>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1.5, borderBottomColor: t.c.text2, marginTop: -8 }}>
           <TextInput value={draft.name} onChangeText={(v) => edit((r) => ({ ...r, name: v }))} maxLength={LIMITS.name} accessibilityLabel="Routine name"
-            style={{ flex: 1, fontSize: 30, fontFamily: t.type.title.fontFamily, color: t.c.text, paddingVertical: 6, minHeight: 52 }} selectionColor={t.c.em} />
+            style={{ flex: 1, minWidth: 0, fontSize: 30, fontFamily: t.type.title.fontFamily, color: t.c.text, paddingVertical: 6, minHeight: 52 }} selectionColor={t.c.em} />
           <View style={{ backgroundColor: t.c.card2, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }} accessible accessibilityLabel={`On ${chip}`}>
             <T v="bodyStrong" tone="text2" style={{ fontSize: 14 }}>{chip}</T>
           </View>
@@ -84,15 +84,17 @@ function RoutineEditor({ id, planId, day, repo = exercises }: Props) {
                   </Pressable>
                   {isOpen ? (
                     <View style={{ paddingHorizontal: 18, paddingBottom: 14, gap: 12 }}>
-                      {x.target ? (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
-                          <Stepper label="Sets" value={x.target.sets} min={LIMITS.sets[0]} max={LIMITS.sets[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: { ...y.target!, sets: step(y.target!.sets, d, LIMITS.sets) } }))} />
-                          <Stepper label="Reps" value={x.target.repsLow} min={LIMITS.reps[0]} max={LIMITS.reps[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: stepReps(y.target!, 'low', d) }))} />
-                          <Stepper label="Up to" value={x.target.repsHigh} min={LIMITS.reps[0]} max={LIMITS.reps[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: stepReps(y.target!, 'high', d) }))} />
-                        </View>
-                      ) : null}
-                      <Stepper label="Rest" value={x.rest_s} text={x.rest_s ? restLabel(x.rest_s).replace('rest ', '') : 'None'} min={LIMITS.rest[0]} max={LIMITS.rest[1]}
-                        onStep={(d) => editEx(i, (y) => ({ ...y, rest_s: step(y.rest_s, d * LIMITS.restStep, LIMITS.rest) }))} />
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 10 }}>
+                        {x.target ? (
+                          <>
+                            <Stepper label="Sets" value={x.target.sets} min={LIMITS.sets[0]} max={LIMITS.sets[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: { ...y.target!, sets: step(y.target!.sets, d, LIMITS.sets) } }))} />
+                            <Stepper label="Reps" value={x.target.repsLow} min={LIMITS.reps[0]} max={LIMITS.reps[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: stepReps(y.target!, 'low', d) }))} />
+                            <Stepper label="Up to" value={x.target.repsHigh} min={LIMITS.reps[0]} max={LIMITS.reps[1]} onStep={(d) => editEx(i, (y) => ({ ...y, target: stepReps(y.target!, 'high', d) }))} />
+                          </>
+                        ) : null}
+                        <Stepper label="Rest" value={x.rest_s} text={x.rest_s ? restLabel(x.rest_s).replace('rest ', '') : 'None'} min={LIMITS.rest[0]} max={LIMITS.rest[1]}
+                          onStep={(d) => editEx(i, (y) => ({ ...y, rest_s: step(y.rest_s, d * LIMITS.restStep, LIMITS.rest) }))} />
+                      </View>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 }}>
                         {x.target ? <TextLink title="Remove target" onPress={() => editEx(i, (y) => ({ ...y, target: null }))} />
                           : <TextLink title="Add target" onPress={() => editEx(i, (y) => ({ ...y, target: { ...DEFAULT_TARGET } }))} a11y={`Add target for ${name}`} />}
