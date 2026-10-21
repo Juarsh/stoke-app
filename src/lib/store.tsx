@@ -10,6 +10,7 @@ import { entryFromItem, entryRefusal, hasKcal, FoodEntry, mergeEntries, needsSer
 import { DISH_TABLE_VERSION, Item, parser } from '../parser';
 import { adoptServer, holdForUnits, needsUnits, UNITS_HELD } from './serverRow';
 import { localStore } from './data';
+import { PLANS_KEY, PlansProvider } from './plans';
 import type { MyFood } from '@/features/myfoods/model';
 import { portionLabel } from './labels';
 import { kc } from './format';
@@ -313,6 +314,8 @@ function useStoreValue() {
   }), [api]);
   /** One-time notice (not persisted), e.g. "This entry was deleted on another device." */
   const [notice, setNotice] = useState<string | null>(null);
+  /** bumped by Delete account so the plans store (./plans) empties too; not persisted */
+  const [wipeGen, setWipeGen] = useState(0);
   const dismissNotice = useCallback(() => setNotice(null), []);
   /** S2.1 undo toast ("Logged 3 items · 610 kcal · Undo"): 4 s (Q8), not persisted. */
   const [undoToast, setUndoToast] = useState<{ text: string; undo: () => void } | null>(null);
@@ -432,7 +435,7 @@ function useStoreValue() {
     const reason = entryRefusal(e); if (reason) return reason; upd((p) => editedState(p, e)); return null;
   };
   return {
-    notice, dismissNotice, undoToast, showUndo, dismissUndo,
+    notice, showNotice: setNotice, wipeGen, dismissNotice, undoToast, showUndo, dismissUndo,
     ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),
@@ -564,14 +567,15 @@ function useStoreValue() {
       return { ...p, entries: [...p.entries, ...ph], queue: q };
     }),
     /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
-    deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {}); setS(EMPTY); },
+    deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {});
+      await localStore.save(PLANS_KEY, '').catch(() => {}); setS(EMPTY); setWipeGen((g) => g + 1); },
   };
 }
 export type Store = ReturnType<typeof useStoreValue>;
 const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const v = useStoreValue();
-  return <Ctx.Provider value={v}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={v}><PlansProvider wipeGen={v.wipeGen}>{children}</PlansProvider></Ctx.Provider>;
 }
 export function useStore(): Store {
   const v = useContext(Ctx);
