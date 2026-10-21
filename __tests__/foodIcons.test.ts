@@ -5,7 +5,7 @@ const { light, dark } = palette;
 
 test('26 icons: 22 foods + 4 slots', () => expect(Object.keys(FOOD_ICONS)).toHaveLength(26));
 test('icon colours are tokens, never accentFill', () => {
-  expect([light.iconStroke, light.iconTint, dark.iconStroke, dark.iconTint]).toEqual(['#A8361F', '#FFCCC0', '#FF8A70', '#3A1C15']);
+  expect([light.iconStroke, light.iconTint, dark.iconStroke, dark.iconTint]).toEqual(['#A3462F', '#F3DED6', '#E89A84', '#3A2A2A'] /* full-b2 food terracotta */);
 });
 test('dish -> icon', () => {
   expect(foodIconFor('roti', 'bread')).toBe('roti');

@@ -90,7 +90,7 @@ test('item kinds come from the parser source field', () => {
   expect(u.items.some((i) => i.kcal.best === 0)).toBe(false);
   expect(u.custom_items.length).toBe(1);
 });
-test('light over-grey keeps its contrast floor value', () => { expect(palette.light.over).toBe('#626664'); });
+test('light over-grey is the full-b2 warm grey', () => { expect(palette.light.over).toBe('#6E655C'); });
 import { applyLearned, learnKey, readingOf, reasonWord } from '../src/lib/learned';
 test('remembered readings skip confirmation next time', () => {
   const [it] = parseLocal('2 chapatii').items;

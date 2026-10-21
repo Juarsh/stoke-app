@@ -33,10 +33,10 @@ for (const theme of ['light', 'dark'] as const) {
     expect({ fg, bg, r: Math.round(r * 100) / 100, ok: r >= 4.5 }).toMatchObject({ ok: true });
   });
 }
-test('goldOnGrad is dark-only (#F8DA9C); light uses accentText #A8361F on #FFE3DC', () => {
-  expect('goldOnGrad' in palette.light).toBe(false); expect(palette.dark.goldOnGrad).toBe('#F8DA9C');
-  expect(palette.light.accentText).toBe('#A8361F'); expect(palette.light.coach1).toBe('#FFE3DC');
-  expect(Math.round(ratio(parse('#A8361F'), parse('#FFE3DC')) * 100) / 100).toBeGreaterThanOrEqual(5.3);
+test('goldOnGrad is dark-only; light honey text is #8A5410 (full-b2), on the honey tint >= 4.5:1', () => {
+  expect('goldOnGrad' in palette.light).toBe(false); expect(palette.dark.goldOnGrad).toBe('#EDBB78');
+  expect(palette.light.accentText).toBe('#8A5410'); expect(palette.light.coach1).toBe('#F6EAD6');
+  expect(ratio(parse('#8A5410'), parse('#F6EAD6'))).toBeGreaterThanOrEqual(4.5);
 });
 
 // Non-text UI (WCAG 1.4.11): tappable card borders and the kcal input border need 3:1 against the card.
@@ -54,7 +54,7 @@ test.each(['light', 'dark'] as const)('%s: muted (kcal input border) on card >= 
   const r = ratio(over(parse(p.muted as string), card), card);
   expect({ theme, muted: p.muted, r: Math.round(r * 100) / 100, ok: r >= 3 }).toMatchObject({ ok: true });
 });
-test('card border is the muted token (same as kcal input); hairlines stay soft', () => {
-  for (const th of ['light', 'dark'] as const) expect(palette[th].cardLine).toBe(palette[th].muted);
-  expect([palette.light.lineSoft, palette.dark.lineSoft]).toEqual(['#E4E0D6', '#252B28']);
+test('full-b2 lines: card-line for tappable borders, soft line for card borders and dividers', () => {
+  expect([palette.light.cardLine, palette.dark.cardLine]).toEqual(['#7A7064', '#9C9286']);
+  expect([palette.light.lineSoft, palette.dark.lineSoft]).toEqual(['#E6DDD0', '#322B37']);
 });

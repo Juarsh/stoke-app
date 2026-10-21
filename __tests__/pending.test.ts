@@ -111,7 +111,7 @@ import * as path from 'path';
 import { BRAND, palette } from '../src/theme/tokens';
 test('hard rule: the light accent fill is never text or icon colour', () => {
   expect(palette.light.em).toBe(BRAND.light.accentText); expect(palette.light.em).not.toBe(BRAND.light.accentFill);
-  expect(palette.light.onGrad).toBe('#2A0B04');
+  expect(palette.light.onGrad).toBe('#241A0C'); // full-b2 on-accent
   const walk = (d: string): string[] => fs.readdirSync(d).flatMap((f) => { const p = path.join(d, f); return fs.statSync(p).isDirectory() ? walk(p) : p.endsWith('.tsx') ? [p] : []; });
   for (const f of walk(path.join(__dirname, '../src'))) {
     const src = fs.readFileSync(f, 'utf8');

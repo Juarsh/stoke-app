@@ -73,7 +73,7 @@ export function Button({ title, kind = 'primary', disabled, style, ...p }: Press
   const fg: Tone = dimmed ? 'onGrad' : disabled ? 'text2' : grad ? 'onGrad' : kind === 'danger' ? 'delete' : kind === 'onCoach' ? 'onCoach' : kind === 'outline' ? 'text' : 'emChip';
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
-      style={(st) => [s.btn, { backgroundColor: bg }, dimmed && { opacity: 0.4 }, grad && { overflow: 'hidden', ...t.elev.glow }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, kind === 'outline' && !disabled && { borderWidth: 1.5, borderColor: t.c.muted }, st.pressed && { opacity: 0.85 }, style as object]}>
+      style={(st) => [s.btn, { backgroundColor: bg }, dimmed && { opacity: 0.4 }, grad && { overflow: 'hidden', ...t.elev.glow }, grad && !t.dark && { borderWidth: 1.5, borderColor: t.c.honeyEdge }, kind === 'danger' && { borderWidth: 1, borderColor: t.c.delete }, kind === 'outline' && !disabled && { borderWidth: 1.5, borderColor: t.c.muted }, st.pressed && { opacity: 0.85 }, style as object]}>
       {kind === 'danger' ? (
         // delete: always the trash icon + the word "Delete" (never colour alone)
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -91,7 +91,7 @@ export function AddButton({ disabled, style, ...p }: PressableProps & { accessib
   const t = useTheme(); const s = useStyles();
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} {...p}
-      style={(st) => [s.btn, s.addBtn, { backgroundColor: t.c.accentFill }, disabled ? { opacity: 0.4 } : t.elev.glow, st.pressed && { opacity: 0.85 }, style as object]}>
+      style={(st) => [s.btn, s.addBtn, { backgroundColor: t.c.accentFill }, !t.dark && { borderWidth: 1.5, borderColor: t.c.honeyEdge }, disabled ? { opacity: 0.4 } : t.elev.glow, st.pressed && { opacity: 0.85 }, style as object]}>
       <T v="button" tone="onGrad">Add</T>
     </Pressable>
   );
@@ -180,7 +180,7 @@ const useStyles = makeStyles((t) => ({
   pad: { padding: t.space.screen, gap: t.space.gap, paddingBottom: t.sizes.nav + t.space.xxl * 2 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: t.space.xs },
   card: { borderRadius: t.radius.card, paddingVertical: t.space.cardV, paddingHorizontal: t.space.cardH, gap: t.space.xs,
-    borderWidth: 1, borderColor: t.c.cardLine, ...t.elev.e1 },
+    borderWidth: 1, borderColor: t.c.lineSoft, ...t.elev.e1 }, // full-b2: 1px line border, 22 radius, flat
   highlight: { position: 'absolute', top: 0, left: t.radius.card / 2, right: t.radius.card / 2, height: 1, backgroundColor: t.c.cardHighlight },
   btn: { minHeight: t.sizes.touch, borderRadius: t.radius.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: t.space.md },
   addBtn: { minHeight: 44, height: 44, minWidth: 72 },
@@ -192,7 +192,8 @@ const useStyles = makeStyles((t) => ({
   seg: { flexDirection: 'row', backgroundColor: t.c.track, borderRadius: t.radius.full, padding: 3 },
   segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: t.radius.full },
   scrim: { flex: 1 },
-  sheet: { backgroundColor: t.c.navSolid, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: t.space.lg, gap: t.space.sm },
+  sheet: { backgroundColor: t.c.sheet, borderTopLeftRadius: t.radius.sheet, borderTopRightRadius: t.radius.sheet, padding: t.space.lg, gap: t.space.sm,
+    ...(t.dark ? { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' } : {}) }, // dark sheets: #2A2430 + 1px top highlight
   popWrap: { flex: 1, justifyContent: 'center', padding: t.space.lg },
   pop: { borderRadius: t.radius.popover, padding: t.space.sm, gap: 2 },
 }));

@@ -6,7 +6,8 @@ type Extra = {
   flags: { steps: boolean; healthConnect: boolean; community: boolean; googleSignIn: boolean };
 };
 const extra = (Constants.expoConfig?.extra ?? {}) as Partial<Extra>;
-export const brand = extra.brand ?? { name: 'App', slug: 'app', scheme: 'app', androidPackage: '', iosBundleId: '', inviteBaseUrl: '' };
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+export const brand: Extra['brand'] = extra.brand ?? require('../../brand.config.js');
 export const config = {
   apiUrl: extra.apiUrl ?? '',
   /** No backend URL -> the API client runs in mock mode (all local). */
