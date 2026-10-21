@@ -8,6 +8,8 @@ import { makeStyles, useTheme } from '../theme';
 import { T } from './ui';
 
 export const NOTICE_MS = 5000;
+/** Q8: undo toasts stay 4 s. */
+export const UNDO_MS = 4000;
 export function NoticeToast() {
   const st = useStore(); const t = useTheme(); const s = useStyles(); const ins = useSafeAreaInsets();
   const { notice, dismissNotice } = st;
@@ -16,6 +18,20 @@ export function NoticeToast() {
     const id = setTimeout(dismissNotice, NOTICE_MS);
     return () => clearTimeout(id);
   }, [notice, dismissNotice]);
+  const { undoToast, dismissUndo } = st;
+  useEffect(() => {
+    if (!undoToast) return;
+    const id = setTimeout(dismissUndo, UNDO_MS);
+    return () => clearTimeout(id);
+  }, [undoToast, dismissUndo]);
+  if (!notice && undoToast) {
+    return (
+      <View style={[s.toast, { bottom: ins.bottom + t.sizes.nav + 28 }]} accessibilityLiveRegion="polite" accessibilityRole="alert">
+        <T tone="text" style={{ flex: 1, paddingVertical: 12 }}>{undoToast.text}</T>
+        <Pressable onPress={() => { undoToast.undo(); dismissUndo(); }} accessibilityRole="button" accessibilityLabel="Undo" style={s.ok}><T v="bodyStrong" tone="em">Undo</T></Pressable>
+      </View>
+    );
+  }
   if (!notice) return null;
   return (
     <View style={[s.toast, { bottom: ins.bottom + t.sizes.nav + 28 }]} accessibilityLiveRegion="polite" accessibilityRole="alert">

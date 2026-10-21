@@ -81,7 +81,7 @@ export default function Home() {
   const newUser = st.entries.length === 0;
   const stepsTarget = d.profile?.stepsTarget ?? 8000;
   const showSteps = flags.steps && (steps.status === 'connected' || d.steps > 0);
-  const log = (prefill?: string) => router.push(prefill ? { pathname: '/log', params: { prefill } } : '/log');
+  const log = (prefill?: string) => router.push(prefill ? { pathname: '/log', params: { prefill } } : '/log-food');
   return (
     <View style={{ flex: 1 }}>
       <Glows />

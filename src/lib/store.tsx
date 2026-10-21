@@ -309,6 +309,10 @@ function useStoreValue() {
   /** One-time notice (not persisted), e.g. "This entry was deleted on another device." */
   const [notice, setNotice] = useState<string | null>(null);
   const dismissNotice = useCallback(() => setNotice(null), []);
+  /** S2.1 undo toast ("Logged 3 items · 610 kcal · Undo"): 4 s (Q8), not persisted. */
+  const [undoToast, setUndoToast] = useState<{ text: string; undo: () => void } | null>(null);
+  const showUndo = useCallback((text: string, undo: () => void) => setUndoToast({ text, undo }), []);
+  const dismissUndo = useCallback(() => setUndoToast(null), []);
   const syncing = useRef(false);
   const entriesRef = useRef(s.entries);
   useEffect(() => { entriesRef.current = s.entries; }, [s.entries]);
@@ -423,7 +427,7 @@ function useStoreValue() {
     const reason = entryRefusal(e); if (reason) return reason; upd((p) => editedState(p, e)); return null;
   };
   return {
-    notice, dismissNotice,
+    notice, dismissNotice, undoToast, showUndo, dismissUndo,
     ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
     signIn: (u: User) => upd((p) => ({ ...p, user: u })),

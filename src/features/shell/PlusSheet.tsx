@@ -9,7 +9,7 @@ type Row = { key: string; title: string; sub?: string; icon: string; tint?: 'foo
 /** + sheet rows in spec order (§2 + CEO Q1/Q26): Log food, Add habit, Start workout, Ask Coach, Start an empty workout.
  * Log weight is hidden in v1 (Q1). Rows without a route are stubs until their build-plan item lands. */
 const ROWS: Row[] = [
-  { key: 'food', title: 'Log food', icon: 'food', tint: 'food', to: '/log' },
+  { key: 'food', title: 'Log food', icon: 'food', tint: 'food', to: '/log-food' },
   { key: 'habit', title: 'Add habit', sub: 'Yes / no, a count, or sets', icon: 'habit', tint: 'train' },
   { key: 'workout', title: 'Start workout', icon: 'train', tint: 'train' },
   { key: 'coach', title: 'Ask Coach', sub: 'Food and training questions', icon: 'spark', tint: 'honey', to: '/coach' },
