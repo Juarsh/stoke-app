@@ -3,7 +3,7 @@ import { Alert, Switch } from 'react-native';
 import { Button, Card, Field, Row, Screen, Segmented, T } from '@/components/ui';
 import { config, flags } from '@/lib/config';
 import { Diet } from '@/lib/domain';
-import { readTodaySteps } from '@/lib/health';
+import { connectSteps, readTodaySteps } from '@/lib/health';
 import { useStore } from '@/lib/store';
 import { useTheme } from '@/theme';
 
@@ -43,7 +43,7 @@ export default function Settings() {
             <Row style={{ justifyContent: 'space-between', minHeight: 48 }}>
               <T style={{ flex: 1 }}>Health Connect steps</T>
               <Button kind="soft" title={flags.healthConnect ? 'Connect' : 'Off in this build'} disabled={!flags.healthConnect}
-                onPress={async () => { const n = await readTodaySteps(); Alert.alert('Health Connect', n === null ? 'Not available or permission denied.' : `Today: ${n} steps`); }} />
+                onPress={async () => { const n = (await connectSteps()) ? await readTodaySteps() : null; Alert.alert('Health Connect', n === null ? 'Not available or permission denied.' : `Today: ${n} steps`); }} />
             </Row>
             {sw(p.addStepKcal, (v) => set({ addStepKcal: v }), 'Add step kcal to food budget')}
           </>
