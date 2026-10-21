@@ -1,5 +1,5 @@
-// How-to page (build-plan item 8, spec §9.3 rework order, placeholder state lib-detail-nodemo): demo slot reserved at its
-// drawn size with the calm dashed "Demo coming soon" panel (no clips, no third-party art), the muscles card (text legend;
+// How-to page (build-plan item 8, spec §9.3 rework order, placeholder state lib-detail-nodemo): the compact
+// dashed "Demo coming soon" panel where the demo will go (no clips, no third-party art), the muscles card (text legend;
 // the drawn map waits for approved artwork, Q23), "How to do it" steps from the source, the credit line under the steps
 // (no demo yet), and the video row only when the row has a video. "Add to routine" arrives with plans (item 9).
 import { useRouter } from 'expo-router';
@@ -12,7 +12,6 @@ import { useTheme } from '@/theme';
 import { creditLine, DEMO_LINE, DEMO_TITLE, legend, metaLine, muscleLabel } from './model';
 
 /** Demo area as drawn in ht-playing / ht-stopped (424 × 393 at 390dp wide). */
-export const DEMO_ASPECT = 424 / 393;
 
 export function ExerciseScreen({ id, repo = exercises }: { id: string; repo?: ExerciseRepo }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter();
@@ -33,7 +32,7 @@ export function ExerciseScreen({ id, repo = exercises }: { id: string; repo?: Ex
   const l = legend(e);
   const credit = creditLine(e);
   const swatch = (primary: boolean) => (
-    <View style={{ width: 16, height: 16, borderRadius: 4, marginTop: 3, backgroundColor: primary ? t.c.mapPrimary : t.c.mapSecondary, borderWidth: primary ? 0 : 1.6, borderColor: t.c.mapOutline }} />
+    <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: primary ? t.c.mapPrimary : t.c.mapSecondary, borderWidth: primary ? 0 : 1.6, borderColor: t.c.mapOutline }} />
   );
   return (
     <View style={{ flex: 1, backgroundColor: t.c.bg }}>
@@ -44,17 +43,26 @@ export function ExerciseScreen({ id, repo = exercises }: { id: string; repo?: Ex
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: t.sizes.nav + 40, gap: 18 }}>
         <View testID="demo-slot" accessible accessibilityLabel={`${DEMO_TITLE}. ${DEMO_LINE}`}
-          style={{ aspectRatio: DEMO_ASPECT, borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.stateLine, backgroundColor: t.c.sheetTile,
-            alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, gap: 6 }}>
-          <Icon name="today" color={t.c.text2} size={26} strokeWidth={1.8} />
-          <T v="bodyStrong" style={{ fontSize: 18, marginTop: 6 }}>{DEMO_TITLE}</T>
-          <T tone="text2" style={{ fontSize: 15, textAlign: 'center' }}>{DEMO_LINE}</T>
+          style={{ borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.stateLine, backgroundColor: t.c.sheetTile,
+            flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 16, gap: 14 }}>
+          <Icon name="log" color={t.c.text2} size={22} strokeWidth={1.8} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <T v="bodyStrong" style={{ fontSize: 17 }}>{DEMO_TITLE}</T>
+            <T tone="text2" style={{ fontSize: 14 }}>{DEMO_LINE}</T>
+          </View>
         </View>
         <View accessible accessibilityRole="image" accessibilityLabel={muscleLabel(e)}
-          style={{ backgroundColor: t.c.card, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.lineSoft, padding: 20, gap: 10 }}>
-          <T v="bodyStrong" style={{ fontSize: 17 }}>Muscles worked</T>
-          <View style={{ flexDirection: 'row', gap: 10 }}>{swatch(true)}<T style={{ flex: 1, fontSize: 16 }}><T v="bodyStrong" style={{ fontSize: 16 }}>Primary: </T>{l.primary}</T></View>
-          {l.secondary ? <View style={{ flexDirection: 'row', gap: 10 }}>{swatch(false)}<T style={{ flex: 1, fontSize: 16 }}><T v="bodyStrong" style={{ fontSize: 16 }}>Secondary: </T>{l.secondary}</T></View> : null}
+          style={{ backgroundColor: t.c.card, borderRadius: t.radius.card, borderWidth: 1, borderColor: t.c.lineSoft, padding: 20, gap: 14 }}>
+          <View style={{ gap: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{swatch(true)}<T tone="text2" style={{ fontSize: 14 }}>Main muscle</T></View>
+            <T v="bodyStrong" style={{ fontSize: 18 }}>{l.primary}</T>
+          </View>
+          {l.secondary ? (
+            <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{swatch(false)}<T tone="text2" style={{ fontSize: 14 }}>Also works</T></View>
+              <T v="bodyStrong" style={{ fontSize: 18 }}>{l.secondary}</T>
+            </View>
+          ) : null}
         </View>
         <View style={{ gap: 14 }}>
           <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 17 }}>How to do it</T>

@@ -60,8 +60,8 @@ export function creditLine(e: Exercise): string | null {
   return `Steps ${e.adapted ? 'adapted from' : 'from'} wger.de (author: ${authorsLabel(e.licence_authors)}), ${l}`;
 }
 export const legend = (e: Exercise) => ({ primary: e.primary_muscles.join(', '), secondary: e.secondary_muscles.join(', ') });
-/** TalkBack label for the muscle card ("Muscles worked. Primary: Lats. Secondary: Biceps, Rear delts."). */
-export const muscleLabel = (e: Exercise) => { const l = legend(e); return `Muscles worked. Primary: ${l.primary}.${l.secondary ? ` Secondary: ${l.secondary}.` : ''}`; };
+/** TalkBack label for the muscle card ("Muscles worked. Main muscle: Lats. Also works: Triceps, Rear delts."). */
+export const muscleLabel = (e: Exercise) => { const l = legend(e); return `Muscles worked. Main muscle: ${l.primary}.${l.secondary ? ` Also works: ${l.secondary}.` : ''}`; };
 export const HINT = 'Tap any exercise for a how-to. Your best set shows here once you log it.';
 export const DEMO_TITLE = 'Demo coming soon';
 export const DEMO_LINE = 'We’re drawing this one. Steps and muscles are below.';

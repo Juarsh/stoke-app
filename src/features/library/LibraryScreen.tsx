@@ -2,7 +2,7 @@
 // Equipment ▾ pinned left then scrolling muscle chips (active = dark fill), results line with Clear filters, A–Z list,
 // first-time hint card. Recent, Yours and custom exercises / requests come with the logger and later items.
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -18,6 +18,8 @@ export function LibraryScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [f, setF] = useState<Filters>(NO_FILTERS);
+  const chips = useRef<ScrollView>(null);
+  const clear = () => { setF(NO_FILTERS); chips.current?.scrollTo({ x: 0, animated: true }); };
   const [eqOpen, setEqOpen] = useState(false);
   const rows = useMemo(() => search(repo, query, f), [repo, query, f]);
   const equipment = useMemo(() => equipmentOf(repo), [repo]);
@@ -48,7 +50,7 @@ export function LibraryScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
         </View>
       </Pressable>
       <View style={{ width: 1, height: 28, backgroundColor: t.c.line, marginHorizontal: 10 }} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Muscle" contentContainerStyle={{ gap: 8, paddingRight: 20 }}>
+      <ScrollView ref={chips} horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Muscle" contentContainerStyle={{ gap: 8, paddingRight: 20 }}>
         {GROUPS.map(chip)}
       </ScrollView>
     </View>
@@ -62,7 +64,7 @@ export function LibraryScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
           <T style={{ fontSize: 15, flex: 1 }} accessibilityLiveRegion="polite">
             <T v="bodyStrong" style={{ fontSize: 15 }}>{resultsLine(rows.length, NO_FILTERS)}</T>{resultsLine(rows.length, f).slice(resultsLine(rows.length, NO_FILTERS).length)}
           </T>
-          <Pressable onPress={() => setF(NO_FILTERS)} accessibilityRole="button" accessibilityLabel="Clear filters" style={{ minHeight: 48, justifyContent: 'center', paddingLeft: 12 }}>
+          <Pressable onPress={clear} accessibilityRole="button" accessibilityLabel="Clear filters" style={{ minHeight: 48, justifyContent: 'center', paddingLeft: 12 }}>
             <T v="bodyStrong" style={{ fontSize: 15, color: t.c.accentText }}>Clear filters</T>
           </Pressable>
         </View>
@@ -88,7 +90,7 @@ export function LibraryScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
       <T v="title" style={{ fontSize: 22, textAlign: 'center' }} accessibilityLiveRegion="polite">No match for “{query.trim()}”</T>
       <T tone="text2" style={{ textAlign: 'center' }}>Check the spelling.</T>
       {filtered(f) ? (
-        <Pressable onPress={() => setF(NO_FILTERS)} accessibilityRole="button" accessibilityLabel="Clear filters" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={clear} accessibilityRole="button" accessibilityLabel="Clear filters" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
           <T v="bodyStrong" style={{ color: t.c.accentText }}>Clear filters</T>
         </Pressable>
       ) : null}

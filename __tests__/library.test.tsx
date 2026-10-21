@@ -167,7 +167,8 @@ test('how-to page: placeholder demo slot (no media), muscles, the source’s ste
   const t = texts(r);
   expect(t).toContain('Demo coming soon');
   expect(t).toContain('We’re drawing this one. Steps and muscles are below.');
-  expect(r.root.findAll((x) => x.props.testID === 'demo-slot' && typeof x.type === 'string')[0].props.style.aspectRatio).toBeCloseTo(424 / 393);
+  expect(r.root.findAll((x) => x.props.testID === 'demo-slot' && typeof x.type === 'string')).toHaveLength(1);
+  expect(t).toContain('Main muscle');
   expect(r.root.findAll((x) => ['Image', 'RCTImageView'].includes(String(x.type)))).toHaveLength(0);
   for (const s of e.steps) expect(t).toContain(s);
   expect(t).toContain(e.primary_muscles[0]);
