@@ -6,12 +6,12 @@ import { Icon } from '@/components/Icon';
 import { T } from '@/components/ui';
 import { useTheme } from '@/theme';
 
-export function Header({ title, right }: { title: string; right?: React.ReactNode }) {
+export function Header({ title, right, close, onClose }: { title: string; right?: React.ReactNode; close?: boolean; onClose?: () => void }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter();
   return (
     <View style={{ paddingTop: ins.top + 6, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', minHeight: 56 + ins.top, gap: 8 }}>
-      <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" style={{ width: 48, height: 48, marginLeft: -14, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="back" color={t.c.text} size={22} strokeWidth={2.2} />
+      <Pressable onPress={onClose ?? (() => router.back())} accessibilityRole="button" accessibilityLabel={close ? 'Close' : 'Back'} style={{ width: 48, height: 48, marginLeft: -14, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name={close ? 'x' : 'back'} color={t.c.text} size={22} strokeWidth={2.2} />
       </Pressable>
       <T v="headline" accessibilityRole="header" style={{ fontSize: 20, flex: 1 }} numberOfLines={2}>{title}</T>
       {right}

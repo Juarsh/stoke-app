@@ -21,7 +21,6 @@ import { RestTimer } from './RestTimer';
 import { clock, restLeft, doneLine, elapsed, finishAsk, ghost, kindOf, minutes, prevLabel, Session, SessionExercise, stats } from './model';
 
 const n = (x: number) => Math.round(x).toLocaleString('en-IN');
-export const savedLine = (s: Session, volume: number) => `${s.title} saved · ${minutes(s.started_at, Date.parse(s.ended_at!))} min · ${n(volume)} kg`;
 
 export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter(); const w = useWorkouts(); const st = useStore();
@@ -45,8 +44,8 @@ export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
     setAsk(null);
     const r = w.finish();
     if (typeof r === 'string') { st.showNotice(r); return; }
-    st.showNotice(savedLine(r, stats(r, repo).volume));
-    router.back();
+    // item 12: the summary replaces the logger, so Back / Done return to where the workout was started
+    router.replace({ pathname: '/summary/[id]', params: { id: r.id } } as never);
   };
   const onFinish = () => { if (fa.kind === 'save') save(); else setAsk(fa.kind); };
   const stat = (label: string, value: string) => (

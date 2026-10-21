@@ -12,6 +12,7 @@ import { clock, minutes, stats } from '../workout/model';
 import { Confirm } from './parts';
 import { useState } from 'react';
 import { useTheme } from '@/theme';
+import { lastOf, lastTimeLine } from '../workout/history';
 import { countLabel, estMinutes, namesLine, nextLine, todayWorkout } from './model';
 
 export function TodayCard({ date, names = 2, repo = exercises }: { date: string; names?: number; repo?: ExerciseRepo }) {
@@ -85,6 +86,7 @@ export function TodayCard({ date, names = 2, repo = exercises }: { date: string;
   }
   const r = today.routine;
   const meta = `${countLabel(r.exercises.length)} · ~${estMinutes(r)} min`;
+  const last = lastOf(w.state.sessions, r.id);
   return (
     <View style={card} testID="today-card-routine">
       {eyebrow('Today’s workout')}
@@ -93,6 +95,7 @@ export function TodayCard({ date, names = 2, repo = exercises }: { date: string;
         <T style={{ color: t.c.inkMuted, fontSize: 15 }}>{meta}</T>
       </View>
       <T style={{ color: t.c.inkMuted, fontSize: 14 }}>{namesLine(r, repo, names)}</T>
+      {last ? <T style={{ color: t.c.inkMuted, fontSize: 14 }}>{lastTimeLine(last, stats(last, repo).volume)}</T> : null}
       {honey('Start workout', () => { w.start(r, today.plan.id); open(); }, true)}
     </View>
   );

@@ -1,6 +1,6 @@
 // Train tab (build-plan item 9 on top of item 8; full-b2 train): Today's workout ink card, This week's split (Edit), Plans
-// (+ New plan, ACTIVE tag), then Exercises. Done ticks, "Last 14 Oct", History and the "4 in last 7 days" chip need logged
-// workouts and come with items 10–12; the split shows what is planned only.
+// (+ New plan, ACTIVE tag), then Exercises. Item 12: History in the header; a split day whose routine was saved on that
+// day this week gets a filled sage tick and "Done", other routine days say "Last 14 Oct" once it has been done before.
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { activePlan, daysCount, splitRows } from './model';
 import { Box, TextLink } from './parts';
 import { TodayCard } from './TodayCard';
 import { useWorkouts } from '@/lib/workouts';
+import { dayMonth, doneOn, lastOf, weekDate } from '../workout/history';
 
 export function TrainScreen() {
   const t = useTheme(); const router = useRouter(); const plans = usePlans(); const w = useWorkouts(); const date = useLogDay();
@@ -19,7 +20,7 @@ export function TrainScreen() {
   const go = (path: string, params?: Record<string, string>) => router.push((params ? { pathname: path, params } : path) as never);
   const divider = { borderTopWidth: 1, borderTopColor: t.c.lineSoft } as const;
   return (
-    <Screen title="Train">
+    <Screen title="Train" right={<TextLink title="History" onPress={() => go('/train/history')} a11y="Workout history" />}>
       <View style={{ gap: 12, paddingBottom: t.sizes.nav + 24 }}>
         <TodayCard date={date} names={3} />
         {plan ? (
@@ -31,14 +32,18 @@ export function TrainScreen() {
             </View>
             {splitRows(plan, date).map((row) => {
               const r = row.routine;
-              const label = `${row.label}${row.today ? ', today' : ''}: ${r ? r.name : 'Rest'}`;
+              const did = !!r && doneOn(w.state.sessions, r.id, weekDate(date, row.weekday));
+              const last = r && !did ? lastOf(w.state.sessions, r.id) : null;
+              const note = did ? 'Done' : row.today && r ? 'Today' : last ? `Last ${dayMonth(last.local_date)}` : null;
+              const label = `${row.label}${row.today ? ', today' : ''}: ${r ? r.name : 'Rest'}${note && note !== 'Today' ? `, ${note}` : ''}`;
               const body = (
                 <>
                   <T v="bodyStrong" tone={r ? 'text2' : 'muted'} style={{ width: 44, fontSize: 14 }}>{row.label}</T>
-                  {r ? <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: row.today ? t.c.train : t.c.stateLine }} />
+                  {did ? <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: t.c.sageFill, alignItems: 'center', justifyContent: 'center' }}><T style={{ color: t.c.card, fontSize: 14 }}>✓</T></View>
+                    : r ? <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: row.today ? t.c.train : t.c.stateLine }} />
                     : <View style={{ width: 26, alignItems: 'center' }}><Icon name="moon" color={t.c.muted} size={16} /></View>}
                   <T v={r ? 'bodyStrong' : 'body'} tone={r ? 'text' : 'muted'} style={{ flex: 1, fontSize: r ? 17 : 15 }}>{r ? r.name : 'Rest'}</T>
-                  {row.today && r ? <T tone="muted" style={{ fontSize: 14 }}>Today</T> : null}
+                  {note ? <T tone="muted" style={{ fontSize: 14 }}>{note}</T> : null}
                   {r ? <Icon name="chev" color={t.c.text2} size={18} strokeWidth={2.2} /> : null}
                 </>
               );

@@ -71,6 +71,8 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
       return f;
     },
     discard: () => commit({ ...ref.current, active: null }),
+    /** Session detail ⋯ → Delete workout (after a confirm). */
+    deleteSession: (id: string) => commit({ ...ref.current, sessions: ref.current.sessions.filter((s) => s.id !== id) }),
     /** Skip / Skip rest / the done pill fading: the rest timer goes away. */
     endRest: () => edit((a) => ({ ...a, rest: null })),
     /** −15s / +15s */

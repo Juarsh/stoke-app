@@ -26,7 +26,7 @@ import {
   checkSet, doneLine, kindOf, elapsed, EMPTY_WORKOUTS, finishAsk, finished, ghost, newExercise, parseWorkouts, prevLabel, previousSets, Session, startEmpty,
   startFromRoutine, stats, WSet,
 } from '../src/features/workout/model';
-import { LoggerScreen, savedLine } from '../src/features/workout/LoggerScreen';
+import { LoggerScreen } from '../src/features/workout/LoggerScreen';
 import { TodayCard } from '../src/features/plans/TodayCard';
 
 let k = 0; const id = () => `m${++k}`;
@@ -219,7 +219,7 @@ describe('logger screen', () => {
     expect([y.done, y.kg, y.kg_in, y.reps_in]).toEqual([false, null, '60', '10']);
     await act(async () => { r.unmount(); });
   });
-  test('Finish with open sets: "N of M sets not done"; Finish anyway saves only ticked sets and returns with a notice', async () => {
+  test('Finish with open sets: "N of M sets not done"; Finish anyway saves only ticked sets and opens the summary', async () => {
     const r = await bench();
     await press(r, 'Set 1 done');
     await press(r, 'Finish workout');
@@ -229,8 +229,8 @@ describe('logger screen', () => {
     const last = w.state.sessions[w.state.sessions.length - 1];
     expect(last.exercises[0].sets.map((y) => [y.kg, y.reps])).toEqual([[60, 10]]);
     expect(savedW().sessions).toHaveLength(2);
-    expect(st.notice).toBe(savedLine(last, 600));
-    expect(mockBack).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/summary/[id]', params: { id: last.id } }); // replace() (item 12)
+    expect(mockBack).not.toHaveBeenCalled();
     await act(async () => { r.unmount(); });
   });
   test('Finish with nothing ticked asks "Discard workout?"', async () => {

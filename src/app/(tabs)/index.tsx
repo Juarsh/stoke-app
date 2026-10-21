@@ -17,6 +17,8 @@ import { useDay } from '@/lib/useDay';
 import { useLogDay } from '@/lib/useLogDay';
 import { DISHES } from '@/parser';
 import { coachTip, foodCard, homeDate, lastLine, weekStrip } from '@/features/home/model';
+import { weekCount } from '@/features/workout/history';
+import { useWorkouts } from '@/lib/workouts';
 import { TodayCard } from '@/features/plans/TodayCard';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -68,10 +70,11 @@ function ConnectStepsSheet({ visible, status, onClose, onConnected }: { visible:
 }
 
 export default function Home() {
-  const t = useTheme(); const s = useStyles(); const st = useStore(); const today = useLogDay(); const d = useDay(today); const router = useRouter();
+  const t = useTheme(); const s = useStyles(); const st = useStore(); const today = useLogDay(); const d = useDay(today); const router = useRouter(); const w = useWorkouts();
   const steps = useSteps();
   const [sheet, setSheet] = useState(false);
   const food = foodCard(d.entries, d.kcalTarget, d.proteinTarget);
+  const wk = weekCount(w.state.sessions, d.date); // item 12: rolling 7 log days
   const last = lastLine(d.entries);
   const strip = useMemo(() => weekStrip(st.entries, d.date, d.kcalTarget), [st.entries, d.date, d.kcalTarget]);
   const tip = coachTip({ eaten: food.eaten, kcalLeft: food.left, over: food.over, proteinLeft: Math.max(0, food.proteinTarget - food.protein),
@@ -103,6 +106,12 @@ export default function Home() {
               <Icon name="flame" color={t.c.accentText} size={13} />
               <T v="label" tone="accentText" style={{ fontSize: 13 }}>{d.streak.current > 0 ? `${d.streak.current}-day streak` : 'Start your streak today'}</T>
             </View>
+            {wk ? (
+              <View style={[s.streak, { backgroundColor: t.c.card2 }]} testID="workouts-chip">
+                <Icon name="train" color={t.c.text2} size={13} />
+                <T v="label" tone="text2" style={{ fontSize: 13 }}>{`${wk} ${wk === 1 ? 'workout' : 'workouts'} in 7 days`}</T>
+              </View>
+            ) : null}
           </Row>
           {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} /> : null}
 
