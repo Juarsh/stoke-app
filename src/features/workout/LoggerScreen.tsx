@@ -6,7 +6,7 @@
 // when it reaches 0:00 the next set's row gets a 2px sage outline.
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { AppState, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/ui';
@@ -26,6 +26,8 @@ export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter(); const w = useWorkouts(); const st = useStore();
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  // Tester B1: back from the background the clock jumps to the real time at once (the rest end is the stored ends_at)
+  useEffect(() => { const sub = AppState.addEventListener('change', (st) => { if (st === 'active') setNow(Date.now()); }); return () => sub.remove(); }, []);
   const [ask, setAsk] = useState<null | 'discard' | 'confirm'>(null);
   const [picker, setPicker] = useState(false);
   const a = w.active;

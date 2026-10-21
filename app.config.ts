@@ -37,6 +37,9 @@ const config: ExpoConfig = {
     ['expo-splash-screen', { backgroundColor: '#FFFFFF', image: './assets/images/splash-icon.png', imageWidth: 76 }],
     ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 36, targetSdkVersion: 35 } }],
     'expo-health-connect',
+    // rest-done alert (Tester B1): expo-notifications' Android half only (icon + colour); local notifications, no push,
+    // so no iOS aps-environment entitlement. The library adds POST_NOTIFICATIONS and RECEIVE_BOOT_COMPLETED.
+    './plugins/withRestAlert.js',
     ...(healthKit ? [['@kingstinct/react-native-healthkit', {
       NSHealthShareUsageDescription: 'Stoke reads your step count from Apple Health to show your daily steps. It never writes to Apple Health.',
       NSHealthUpdateUsageDescription: false,

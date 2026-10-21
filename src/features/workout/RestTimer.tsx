@@ -4,8 +4,12 @@
 // collapses after 8 s with no touch (every touch restarts the 8 s). At 0:00 the phone vibrates once (when on) and the pill
 // reads "Rest done · Set 2 · …" with the ring full; Skip becomes +15s; it fades after 8 s with no touch or when the next set
 // is ticked (which starts the next rest). Card surface, honey only for the ring and Skip.
+// Tester B1: the end is the stored ends_at (never a tick count). Outside the app a local notification fires at that time
+// (src/lib/restAlert). Coming back to the app (AppState) or to the logger after the end shows "Rest done" and the next
+// set's outline as if it had just ended; the 8 s fade counts from that moment, and there is no late vibration (> LATE_MS).
+// Tester O2: no live region on the ticking text; TalkBack hears the start, "10 seconds left" and "Rest done" once each.
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Vibration, View } from 'react-native';
+import { AccessibilityInfo, AppState, Pressable, Vibration, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -13,9 +17,15 @@ import { T } from '@/components/ui';
 import type { ExerciseRepo } from '@/lib/exercises';
 import { useWorkouts } from '@/lib/workouts';
 import { useTheme } from '@/theme';
-import { mmss, restLeft, restNextLabel } from './model';
+import { setRestTimerVisible } from '@/lib/restAlert';
+import { mmss, restLeft, restNextLabel, spoken } from './model';
 
 export const IDLE_MS = 8000;
+/** a rest that ended longer ago than this (app in the background, logger off screen) shows "Rest done" without vibrating */
+export const LATE_MS = 5000;
+export const WARN_S = 10;
+const isActive = (st: string | null | undefined) => st !== 'background' && st !== 'inactive';
+const announce = (msg: string) => { try { AccessibilityInfo.announceForAccessibility(msg); } catch { /* no screen reader API */ } };
 /** the alert line: only vibration exists in this build (a chime needs a native audio module; see the item 11 notes) */
 export const alertLine = (vibrate: boolean) => (vibrate ? 'Vibrate on' : 'Vibrate off');
 
@@ -37,22 +47,46 @@ export function RestTimer({ now, repo }: { now: number; repo: ExerciseRepo }) {
   const [touched, setTouched] = useState(now);
   const nowRef = useRef(now); nowRef.current = now;
   const alerted = useRef<number | null>(null);
+  const [appOn, setAppOn] = useState(isActive(AppState.currentState));
+  // when the rest end was first seen with the app open (the 8 s "Rest done" fade counts from here, not from ends_at)
+  const [seen, setSeen] = useState<{ end: number; at: number } | null>(null);
+  const resumed = useRef(0); // the moment the app came back (the `now` prop can still be the frozen pre-background tick)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => { const on = isActive(st); setAppOn(on); if (on) { resumed.current = Date.now(); setSeen(null); } });
+    return () => sub.remove();
+  }, []);
   const left = rest ? restLeft(rest, now) : 0;
   const done = !!rest && left === 0;
+  const visible = !!rest && appOn;
+  useEffect(() => { setRestTimerVisible(visible); return () => setRestTimerVisible(false); }, [visible]);
+  const label = rest && a ? restNextLabel(a, rest, w.previous, repo) : null;
   useEffect(() => {
-    if (!rest || !done || alerted.current === rest.ends_at) return;
+    if (!rest || !done || !appOn || seen?.end === rest.ends_at) return;
+    const t = Math.max(nowRef.current, resumed.current);
+    setSeen({ end: rest.ends_at, at: t });
+    if (alerted.current === rest.ends_at) return;
     alerted.current = rest.ends_at;
-    if (w.state.prefs.vibrate) Vibration.vibrate([0, 300, 150, 300]);
-  }, [done, rest, w.state.prefs.vibrate]);
-  // the 8 s idle clock starts at the last touch, the rest's start, or the moment it reached 0:00, whichever is latest
-  const since = rest ? Math.max(touched, done ? rest.ends_at : rest.ends_at - rest.total_s * 1000) : touched;
+    if (w.state.prefs.vibrate && t - rest.ends_at <= LATE_MS) Vibration.vibrate([0, 300, 150, 300]);
+    announce(`Rest done${label ? `. Next: ${label}` : ''}`);
+  }, [done, rest, appOn, seen, label, w.state.prefs.vibrate]);
+  // TalkBack: once when a rest starts (within 2 s of its start, so a remount mid-rest stays quiet) and once at 10 s left
+  const started = useRef<string | null>(null), warned = useRef<number | null>(null);
   useEffect(() => {
-    if (!rest || now - since < IDLE_MS) return;
+    if (!rest || done || !appOn) return;
+    const key = `${rest.ex_id}|${rest.set_id}`;
+    if (started.current !== key) { started.current = key; if (rest.total_s - left <= 2) announce(`Rest started, ${spoken(Math.min(left, rest.total_s))}${label ? `. Next: ${label}` : ''}`); }
+    if (rest.total_s > WARN_S && left <= WARN_S && warned.current !== rest.ends_at) { warned.current = rest.ends_at; announce(`${spoken(left)} left`); }
+  }, [rest, done, appOn, left, label]);
+  // the 8 s idle clock starts at the last touch, the rest's start, or the moment "Rest done" was first seen, whichever is latest
+  const doneAt = rest && seen?.end === rest.ends_at ? seen.at : null;
+  const since = rest ? Math.max(touched, done ? (doneAt ?? Infinity) : rest.ends_at - rest.total_s * 1000) : touched;
+  useEffect(() => {
+    if (!rest || !appOn || now - since < IDLE_MS) return;
     if (done) w.endRest(); else if (open) setOpen(false);
-  }, [now, since, rest, done, open, w]);
+  }, [now, since, rest, done, open, appOn, w]);
   if (!a || !rest) return null;
   const touch = () => setTouched(nowRef.current);
-  const next = restNextLabel(a, rest, w.previous, repo);
+  const next = label;
   const ringColor = t.dark ? t.c.accentFill : t.c.honeyEdge;
   const frac = done ? 1 : rest.total_s ? left / rest.total_s : 0;
   const line = alertLine(w.state.prefs.vibrate);
@@ -69,7 +103,7 @@ export function RestTimer({ now, repo }: { now: number; repo: ExerciseRepo }) {
       <View style={[shell, { padding: 16, gap: 10 }]} testID="rest-expanded" onTouchStart={touch}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <Ring frac={frac} size={64} color={ringColor} track={t.c.track} />
-          <View style={{ flex: 1 }} accessible accessibilityLiveRegion="polite" accessibilityLabel={done ? `Rest done. ${next ?? ''}` : `Rest ${mmss(left)} of ${mmss(rest.total_s)}. Next: ${next ?? 'none'}`}>
+          <View style={{ flex: 1 }} accessible accessibilityRole="timer" accessibilityLabel={done ? `Rest done. ${next ?? ''}` : `Rest, ${spoken(left)} left of ${spoken(rest.total_s)}. Next: ${next ?? 'none'}`}>
             <T style={{ fontSize: 15 }}><T v="display" style={{ fontSize: 34, lineHeight: 40 }}>{done ? 'Rest done' : mmss(left)}</T>{done ? '' : `  of ${mmss(rest.total_s)}`}</T>
             {next ? <T tone="text2" style={{ fontSize: 14 }}>{`Next: ${next}`}</T> : null}
           </View>
@@ -92,8 +126,8 @@ export function RestTimer({ now, repo }: { now: number; repo: ExerciseRepo }) {
   }
   return (
     <View style={[shell, { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 12, paddingRight: 10, paddingVertical: 10 }]} testID="rest-pill">
-      <Pressable onPress={() => { touch(); setOpen(true); }} accessibilityRole="button" accessibilityLiveRegion="polite"
-        accessibilityLabel={`${done ? 'Rest done' : `Rest ${mmss(left)}`}${next ? `, ${next}` : ''}. ${line}. Open rest timer`}
+      <Pressable onPress={() => { touch(); setOpen(true); }} accessibilityRole="button"
+        accessibilityLabel={`${done ? 'Rest done' : `Rest, ${spoken(left)} left`}${next ? `, ${next}` : ''}. ${line}. Open rest timer`}
         style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
         <Ring frac={frac} size={48} color={ringColor} track={t.c.track} />
         <View style={{ flex: 1 }}>

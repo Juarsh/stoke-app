@@ -185,6 +185,12 @@ export function shiftRest(r: Rest, ds: number, nowMs: number): Rest {
   return { ...r, ends_at, total_s: Math.max(r.total_s, Math.ceil((ends_at - nowMs) / 1000)) };
 }
 export const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+/** what a screen reader says for a time (Tester O2): "1 minute 20 seconds", "45 seconds", "2 minutes" */
+export function spoken(sec: number): string {
+  const m = Math.floor(sec / 60), x = sec % 60;
+  const p = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  return m && x ? `${p(m, 'minute')} ${p(x, 'second')}` : m ? p(m, 'minute') : p(x, 'second');
+}
 /** "Set 2 · 60 kg × 10" for the set the rest counts down to (typed values, else last time's grey ones). */
 export function restNextLabel(s: Session, r: Rest, prev: (exerciseId: string) => Prev[], repo: ExerciseRepo): string | null {
   const x = s.exercises.find((e) => e.id === r.ex_id); const i = x?.sets.findIndex((y) => y.id === r.set_id) ?? -1;

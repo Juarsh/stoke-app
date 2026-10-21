@@ -5,17 +5,18 @@
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { localStore } from './data';
+import { restAlert, type RestAlert } from './restAlert';
 import { exercises, type ExerciseRepo } from './exercises';
 import type { Routine } from '../features/plans/model';
 import {
   checkSet, EMPTY_WORKOUTS, finished, fmtKg, ghost, kindOf, newExercise, parseWorkouts, previousSets, Session, SessionExercise, sessionError,
-  restAfter, shiftRest, startEmpty, startFromRoutine, WorkoutsState, WSet,
+  restAfter, restNextLabel, shiftRest, startEmpty, startFromRoutine, WorkoutsState, WSet,
 } from '../features/workout/model';
 
 export const WORKOUTS_KEY = 'workouts-v1';
 export const NO_WORKOUT = 'This workout was already finished or discarded.';
 
-function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) {
+function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date, alert: RestAlert) {
   const [s, setS] = useState<WorkoutsState>(EMPTY_WORKOUTS);
   const [ready, setReady] = useState(false);
   const ref = useRef(s); ref.current = s;
@@ -24,6 +25,17 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
   useEffect(() => { if (ready && dirty.current) localStore.save(WORKOUTS_KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
   const firstGen = useRef(wipeGen);
   useEffect(() => { if (wipeGen !== firstGen.current) { dirty.current = true; setS(EMPTY_WORKOUTS); } }, [wipeGen]);
+  // Tester B1: the rest-done alert outside the app follows the stored end time. Any change to it (tick, ±15s, a pull from
+  // the server) reschedules; no rest (skip, dismiss, finish, discard, wipe) cancels. Only after the saved state loaded.
+  const restEnd = s.active?.rest?.ends_at ?? null;
+  const alerted = useRef<number | null | undefined>(undefined);
+  useEffect(() => {
+    if (!ready || alerted.current === restEnd) return;
+    const first = alerted.current === undefined; alerted.current = restEnd;
+    const a = ref.current.active;
+    if (restEnd === null || !a?.rest) { if (!first) alert.cancel().catch(() => {}); return; }
+    alert.schedule(restEnd, restNextLabel(a, a.rest, (id) => previousSets(ref.current.sessions, id), repo)).catch(() => {});
+  }, [ready, restEnd, alert, repo]);
   const commit = useCallback((next: WorkoutsState) => { dirty.current = true; ref.current = next; setS(next); }, []);
   const newId = () => Crypto.randomUUID();
   /** change the workout in progress; false when there is none */
@@ -85,8 +97,8 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
 export type Workouts = ReturnType<typeof useWorkoutsValue>;
 const Ctx = createContext<Workouts | null>(null);
 const realNow = () => new Date();
-export function WorkoutsProvider({ children, wipeGen = 0, repo = exercises, now = realNow }: { children: ReactNode; wipeGen?: number; repo?: ExerciseRepo; now?: () => Date }) {
-  const v = useWorkoutsValue(wipeGen, repo, now);
+export function WorkoutsProvider({ children, wipeGen = 0, repo = exercises, now = realNow, alert = restAlert }: { children: ReactNode; wipeGen?: number; repo?: ExerciseRepo; now?: () => Date; alert?: RestAlert }) {
+  const v = useWorkoutsValue(wipeGen, repo, now, alert);
   return <Ctx.Provider value={v}>{children}</Ctx.Provider>;
 }
 export function useWorkouts(): Workouts {
