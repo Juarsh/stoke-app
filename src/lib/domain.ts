@@ -121,6 +121,26 @@ export function profilePayload(p: Profile): ProfilePayload {
     age: p.age, height_cm: p.heightCm, weight_kg: p.weightKg, activity_level: p.activity };
 }
 export function serverProfile(p: Profile): Omit<Profile, 'sex'> { const { sex: _sex, ...rest } = p; return rest; }
+/** Onboarding field limits: the server's profile check (goals.go: age 13-100, height 100-250 cm, weight 25-300 kg).
+ * The phone checks the same ranges first so a profile it saves offline is never refused later. */
+export const PROFILE_LIMITS = { age: [13, 100], heightCm: [100, 250], weightKg: [25, 300] } as const;
+export type ProfileField = keyof typeof PROFILE_LIMITS;
+const FIELD_COPY: Record<ProfileField, (lo: number, hi: number) => string> = {
+  age: (lo, hi) => `Enter an age from ${lo} to ${hi}.`,
+  heightCm: (lo, hi) => `Enter a height from ${lo} to ${hi} cm.`,
+  weightKg: (lo, hi) => `Enter a weight from ${lo} to ${hi} kg.`,
+};
+/** Typed text -> whole number, or null when empty / not a number. */
+export const fieldNumber = (s: string): number | null => (/^\d+$/.test(s.trim()) ? Number(s.trim()) : null);
+/** Per-field error copy for the typed onboarding values; {} when all are in range. Empty counts as an error (no silent default). */
+export function profileFieldErrors(v: Record<ProfileField, string>): Partial<Record<ProfileField, string>> {
+  const out: Partial<Record<ProfileField, string>> = {};
+  for (const k of Object.keys(PROFILE_LIMITS) as ProfileField[]) {
+    const [lo, hi] = PROFILE_LIMITS[k]; const n = fieldNumber(v[k]);
+    if (n === null || n < lo || n > hi) out[k] = FIELD_COPY[k](lo, hi);
+  }
+  return out;
+}
 /** Mifflin-St Jeor (sex 'x' = average of male/female); lose -400, gain +300 (spec: ±300–500); protein 1.6 g/kg (lose/gain) or 1.2 (maintain). */
 export function computeTargets(p: Pick<Profile, 'goal' | 'sex' | 'age' | 'heightCm' | 'weightKg' | 'activity'>) {
   const bmr = 10 * p.weightKg + 6.25 * p.heightCm - 5 * p.age + (SEX_CONST[p.sex] ?? SEX_CONST.x);
