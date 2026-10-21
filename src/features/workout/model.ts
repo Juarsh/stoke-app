@@ -13,9 +13,14 @@ export interface SessionExercise { id: string; exercise_id: string; rest_s: numb
 export interface Session {
   id: string; title: string; plan_id: string | null; routine_id: string | null;
   local_date: string; started_at: string; ended_at: string | null; exercises: SessionExercise[];
+  /** the rest timer running in this workout (phone only; never part of a finished workout) */
+  rest?: Rest | null;
 }
-export interface WorkoutsState { v: 1; active: Session | null; sessions: Session[] }
-export const EMPTY_WORKOUTS: WorkoutsState = { v: 1, active: null, sessions: [] };
+/** Rest timer C (item 11): ends_at in ms; total_s for the ring; the set it is counting down to (null: none left). */
+export interface Rest { ends_at: number; total_s: number; ex_id: string; set_id: string | null }
+export interface Prefs { vibrate: boolean }
+export interface WorkoutsState { v: 1; active: Session | null; sessions: Session[]; prefs: Prefs }
+export const EMPTY_WORKOUTS: WorkoutsState = { v: 1, active: null, sessions: [], prefs: { vibrate: true } };
 
 export const KG_MAX = 1000;
 export const REPS_MAX = 200;
@@ -128,7 +133,8 @@ export function finishAsk(s: Session): FinishAsk {
 /** What Finish saves: only ticked sets; exercises with none are dropped; ended_at stamped. Done sets are re-checked. */
 export function finished(s: Session, now: Date): Session {
   const exercises = s.exercises.map((x) => ({ ...x, sets: x.sets.filter((y) => y.done && y.reps !== null) })).filter((x) => x.sets.length);
-  return { ...s, ended_at: now.toISOString(), exercises };
+  const { rest: _rest, ...rest } = s; void _rest;
+  return { ...rest, ended_at: now.toISOString(), exercises };
 }
 export function sessionError(s: Session): string | null {
   for (const x of s.exercises) for (const y of x.sets) if (y.done) {
@@ -143,6 +149,49 @@ export function parseWorkouts(raw: string | null): WorkoutsState {
     const s = JSON.parse(raw);
     if (!s || s.v !== 1 || !Array.isArray(s.sessions)) return EMPTY_WORKOUTS;
     const ok = (x: Session) => x && typeof x.id === 'string' && typeof x.started_at === 'string' && Array.isArray(x.exercises);
-    return { v: 1, sessions: (s.sessions as Session[]).filter(ok), active: s.active && ok(s.active) ? s.active : null };
+    return { v: 1, sessions: (s.sessions as Session[]).filter(ok), active: s.active && ok(s.active) ? s.active : null,
+      prefs: { vibrate: s.prefs?.vibrate !== false } };
   } catch { return EMPTY_WORKOUTS; }
+}
+
+// ---- rest timer C (item 11) ------------------------------------------------------------------------------------------
+/** The set after this one: the next open set of the same exercise, else the first open set of a later exercise, else any. */
+export function nextOpenSet(s: Session, exId: string, setId: string): { ex: SessionExercise; i: number } | null {
+  const xi = s.exercises.findIndex((x) => x.id === exId);
+  if (xi < 0) return null;
+  const si = s.exercises[xi].sets.findIndex((y) => y.id === setId);
+  const order = [...s.exercises.slice(xi), ...s.exercises.slice(0, xi)];
+  for (let k = 0; k < order.length; k++) {
+    const x = order[k];
+    const from = k === 0 ? si + 1 : 0;
+    const i = x.sets.findIndex((y, j) => j >= from && !y.done);
+    if (i >= 0) return { ex: x, i };
+  }
+  const own = s.exercises[xi].sets.findIndex((y) => !y.done);
+  return own >= 0 ? { ex: s.exercises[xi], i: own } : null;
+}
+/** Ticking a set starts its exercise's rest (none when rest is 0) towards the next open set. */
+export function restAfter(s: Session, exId: string, setId: string, nowMs: number): Rest | null {
+  const x = s.exercises.find((e) => e.id === exId);
+  if (!x || x.rest_s <= 0) return null;
+  const n = nextOpenSet(s, exId, setId);
+  return { ends_at: nowMs + x.rest_s * 1000, total_s: x.rest_s, ex_id: n?.ex.id ?? exId, set_id: n ? n.ex.sets[n.i].id : null };
+}
+export const restLeft = (r: Rest, nowMs: number) => Math.max(0, Math.ceil((r.ends_at - nowMs) / 1000));
+/** −15s / +15s: moves the end; never below now (that is "rest done"); the ring's total grows if needed. */
+export function shiftRest(r: Rest, ds: number, nowMs: number): Rest {
+  const base = ds > 0 ? Math.max(r.ends_at, nowMs) : r.ends_at; // +15s after rest done counts from now
+  const ends_at = Math.max(nowMs, base + ds * 1000);
+  return { ...r, ends_at, total_s: Math.max(r.total_s, Math.ceil((ends_at - nowMs) / 1000)) };
+}
+export const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+/** "Set 2 · 60 kg × 10" for the set the rest counts down to (typed values, else last time's grey ones). */
+export function restNextLabel(s: Session, r: Rest, prev: (exerciseId: string) => Prev[], repo: ExerciseRepo): string | null {
+  const x = s.exercises.find((e) => e.id === r.ex_id); const i = x?.sets.findIndex((y) => y.id === r.set_id) ?? -1;
+  if (!x || i < 0) return null;
+  const kind = kindOf(repo.byId(x.exercise_id));
+  const g = ghost(prev(x.exercise_id), i, x.target);
+  const kg = x.sets[i].kg_in || g.kg, reps = x.sets[i].reps_in || g.reps;
+  if (!reps) return `Set ${i + 1}`;
+  return `Set ${i + 1} · ${kind === 'weight' ? `${kg || '—'} kg × ${reps}` : prevLabel({ kg: kg ? Number(kg) : null, reps: Number(reps) }, kind)}`;
 }

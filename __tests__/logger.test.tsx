@@ -129,7 +129,7 @@ describe('finish', () => {
   test('parse: junk → empty; a saved state comes back as is', () => {
     expect(parseWorkouts('nope')).toEqual(EMPTY_WORKOUTS);
     expect(parseWorkouts(JSON.stringify({ entries: [] }))).toEqual(EMPTY_WORKOUTS);
-    const st = { v: 1, active: null, sessions: [sess({ exercises: [ex(BENCH, [set(60, 10)])] })] };
+    const st = { v: 1, active: null, sessions: [sess({ exercises: [ex(BENCH, [set(60, 10)])] })], prefs: { vibrate: false } };
     expect(parseWorkouts(JSON.stringify(st))).toEqual(st);
   });
 });

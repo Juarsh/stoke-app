@@ -9,7 +9,7 @@ import { exercises, type ExerciseRepo } from './exercises';
 import type { Routine } from '../features/plans/model';
 import {
   checkSet, EMPTY_WORKOUTS, finished, fmtKg, ghost, kindOf, newExercise, parseWorkouts, previousSets, Session, SessionExercise, sessionError,
-  startEmpty, startFromRoutine, WorkoutsState, WSet,
+  restAfter, shiftRest, startEmpty, startFromRoutine, WorkoutsState, WSet,
 } from '../features/workout/model';
 
 export const WORKOUTS_KEY = 'workouts-v1';
@@ -49,7 +49,10 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
       const y = x.sets[i];
       const r = checkSet(y.kg_in, y.reps_in, ghost(previousSets(ref.current.sessions, x.exercise_id), i, x.target), kind);
       if (!r.ok) return r.reason;
-      editSet(exId, setId, (z) => ({ ...z, done: true, kg: r.kg, reps: r.reps, kg_in: r.kg === null ? '' : fmtKg(r.kg), reps_in: String(r.reps), done_at: now().toISOString() }));
+      const t = now();
+      editSet(exId, setId, (z) => ({ ...z, done: true, kg: r.kg, reps: r.reps, kg_in: r.kg === null ? '' : fmtKg(r.kg), reps_in: String(r.reps), done_at: t.toISOString() }));
+      // rest timer C (item 11): ticking starts this exercise's rest towards the next open set
+      edit((b) => ({ ...b, rest: restAfter(b, exId, setId, t.getTime()) }));
       return null;
     },
     /** Tap a filled ✓ again: the set is open again with its numbers in the boxes. */
@@ -68,6 +71,11 @@ function useWorkoutsValue(wipeGen: number, repo: ExerciseRepo, now: () => Date) 
       return f;
     },
     discard: () => commit({ ...ref.current, active: null }),
+    /** Skip / Skip rest / the done pill fading: the rest timer goes away. */
+    endRest: () => edit((a) => ({ ...a, rest: null })),
+    /** −15s / +15s */
+    shiftRest: (ds: number) => edit((a) => (a.rest ? { ...a, rest: shiftRest(a.rest, ds, now().getTime()) } : a)),
+    setVibrate: (on: boolean) => commit({ ...ref.current, prefs: { ...ref.current.prefs, vibrate: on } }),
   }), [ready, s, commit, edit, editEx, editSet, repo, now]);
 }
 export type Workouts = ReturnType<typeof useWorkoutsValue>;

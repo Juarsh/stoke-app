@@ -2,8 +2,8 @@
 // workout). Header: "<title> · started 6:10 PM", the running time and Finish (soft, top right); Volume / Sets / Exercises.
 // Each exercise: SET · PREVIOUS · KG · REPS · DONE; empty boxes show last time in grey and one tap on ✓ logs them; a done row
 // is tinted with a filled tick; a finished exercise collapses to one line. ⋯ has Remove set / Remove exercise (the swipe
-// to remove comes later; the menu is the accessible path the design asks for). The rest timer is item 11; the summary
-// screen is item 12 (until then Finish returns to Train with a one-line notice).
+// to remove comes later; the menu is the accessible path the design asks for). Ticking a set starts rest timer C (item 11);
+// when it reaches 0:00 the next set's row gets a 2px sage outline.
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -17,7 +17,8 @@ import { useTheme } from '@/theme';
 import { ExercisePicker } from '../plans/ExercisePicker';
 import { restLabel } from '../plans/model';
 import { Confirm, HoneyButton, TextLink } from '../plans/parts';
-import { clock, doneLine, elapsed, finishAsk, ghost, kindOf, minutes, prevLabel, Session, SessionExercise, stats } from './model';
+import { RestTimer } from './RestTimer';
+import { clock, restLeft, doneLine, elapsed, finishAsk, ghost, kindOf, minutes, prevLabel, Session, SessionExercise, stats } from './model';
 
 const n = (x: number) => Math.round(x).toLocaleString('en-IN');
 export const savedLine = (s: Session, volume: number) => `${s.title} saved · ${minutes(s.started_at, Date.parse(s.ended_at!))} min · ${n(volume)} kg`;
@@ -71,8 +72,8 @@ export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
           {stat('Volume', `${n(s.volume)} kg`)}{stat('Sets', `${s.done} of ${s.total}`)}{stat('Exercises', `${s.started} of ${s.exercises}`)}
         </View>
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 + ins.bottom }} keyboardShouldPersistTaps="handled">
-        {a.exercises.length ? a.exercises.map((x) => <ExerciseCard key={x.id} x={x} repo={repo} />) : (
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: (a.rest ? 200 : 40) + ins.bottom }} keyboardShouldPersistTaps="handled">
+        {a.exercises.length ? a.exercises.map((x) => <ExerciseCard key={x.id} x={x} repo={repo} outline={a.rest && restLeft(a.rest, now) === 0 ? a.rest.set_id : null} />) : (
           <View testID="logger-empty" style={{ borderRadius: t.radius.card, borderWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.stateLine, padding: 20, gap: 8, alignItems: 'center' }}>
             <T v="bodyStrong" style={{ fontSize: 17 }}>No exercises yet</T>
             <T tone="text2" style={{ fontSize: 14 }}>Add one to start logging sets.</T>
@@ -86,6 +87,7 @@ export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
           </Pressable>
         ) : null}
       </ScrollView>
+      <RestTimer now={now} repo={repo} />
       <ExercisePicker visible={picker} repo={repo} onClose={() => setPicker(false)} onPick={(e) => { w.addExercise(e.id); setPicker(false); }} />
       <Confirm visible={ask === 'discard'} title="Discard workout?" body="No sets are ticked, so there is nothing to save." keep="Keep going" drop="Discard workout"
         onKeep={() => setAsk(null)} onDrop={() => { setAsk(null); w.discard(); router.back(); }} />
@@ -95,7 +97,7 @@ export function LoggerScreen({ repo = exercises }: { repo?: ExerciseRepo }) {
   );
 }
 
-function ExerciseCard({ x, repo }: { x: SessionExercise; repo: ExerciseRepo }) {
+function ExerciseCard({ x, repo, outline }: { x: SessionExercise; repo: ExerciseRepo; outline: string | null }) {
   const t = useTheme(); const w = useWorkouts();
   const e = repo.byId(x.exercise_id);
   const kind = kindOf(e);
@@ -152,7 +154,8 @@ function ExerciseCard({ x, repo }: { x: SessionExercise; repo: ExerciseRepo }) {
         const err = errs[y.id];
         const ph = kind === 'weight' ? g.kg : g.kg ? `BW +${g.kg}` : 'BW';
         return (
-          <View key={y.id} style={{ backgroundColor: y.done ? t.c.accentTint : 'transparent', borderTopWidth: 1, borderTopColor: t.c.lineSoft }}>
+          <View key={y.id} testID={outline === y.id ? 'next-set' : undefined}
+            style={[{ backgroundColor: y.done ? t.c.accentTint : 'transparent', borderTopWidth: 1, borderTopColor: t.c.lineSoft }, outline === y.id && { borderWidth: 2, borderColor: t.c.train, borderRadius: 10 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, gap: 6, minHeight: 60 }}>
               <T v="bodyStrong" style={{ width: col.set, textAlign: 'center', fontSize: 16 }}>{String(i + 1)}</T>
               <T tone="text2" style={{ flex: 1.5, flexBasis: 0, minWidth: 0, fontSize: 14 }}>{prevLabel(prev[i], kind)}</T>
