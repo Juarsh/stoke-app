@@ -6,15 +6,15 @@ import { Pressable, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { Screen, T } from '@/components/ui';
 import { usePlans } from '@/lib/plans';
-import { useStore } from '@/lib/store';
 import { useLogDay } from '@/lib/useLogDay';
 import { useTheme } from '@/theme';
 import { activePlan, daysCount, splitRows } from './model';
 import { Box, TextLink } from './parts';
-import { LOGGER_SOON, TodayCard } from './TodayCard';
+import { TodayCard } from './TodayCard';
+import { useWorkouts } from '@/lib/workouts';
 
 export function TrainScreen() {
-  const t = useTheme(); const router = useRouter(); const plans = usePlans(); const st = useStore(); const date = useLogDay();
+  const t = useTheme(); const router = useRouter(); const plans = usePlans(); const w = useWorkouts(); const date = useLogDay();
   const plan = activePlan(plans.state);
   const go = (path: string, params?: Record<string, string>) => router.push((params ? { pathname: path, params } : path) as never);
   const divider = { borderTopWidth: 1, borderTopColor: t.c.lineSoft } as const;
@@ -26,7 +26,7 @@ export function TrainScreen() {
           <Box testID="split-card">
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 12, flexWrap: 'wrap' }}>
               <T v="bodyStrong" accessibilityRole="header" style={{ fontSize: 16, flex: 1, minWidth: 140 }}>This week’s split</T>
-              <TextLink title="Empty workout" onPress={() => st.showNotice(LOGGER_SOON)} a11y="Start an empty workout" />
+              <TextLink title="Empty workout" onPress={() => { w.startEmpty(); go('/workout'); }} a11y="Start an empty workout" />
               <TextLink title="Edit" onPress={() => go('/plan/[id]', { id: plan.id })} a11y={`Edit ${plan.name}`} />
             </View>
             {splitRows(plan, date).map((row) => {

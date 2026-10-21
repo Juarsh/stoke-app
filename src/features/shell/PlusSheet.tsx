@@ -3,6 +3,10 @@ import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { T } from '@/components/ui';
+import { usePlans } from '@/lib/plans';
+import { useLogDay } from '@/lib/useLogDay';
+import { useWorkouts } from '@/lib/workouts';
+import { activePlan, estMinutes, todayWorkout } from '@/features/plans/model';
 import { useTheme } from '@/theme';
 
 type Row = { key: string; title: string; sub?: string; icon: string; tint?: 'food' | 'train' | 'honey'; to?: string };
@@ -11,13 +15,28 @@ type Row = { key: string; title: string; sub?: string; icon: string; tint?: 'foo
 const ROWS: Row[] = [
   { key: 'food', title: 'Log food', icon: 'food', tint: 'food', to: '/log-food' },
   { key: 'habit', title: 'Add habit', sub: 'Yes / no, a count, or sets', icon: 'habit', tint: 'train' },
-  { key: 'workout', title: 'Start workout', icon: 'train', tint: 'train' },
+  { key: 'workout', title: 'Start workout', icon: 'train', tint: 'train', to: '/workout' },
   { key: 'coach', title: 'Ask Coach', sub: 'Food and training questions', icon: 'spark', tint: 'honey', to: '/coach' },
-  { key: 'empty', title: 'Start an empty workout', icon: 'plus' },
+  { key: 'empty', title: 'Start an empty workout', icon: 'plus', to: '/workout' },
 ];
 
 export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useTheme(); const ins = useSafeAreaInsets(); const router = useRouter();
+  const plans = usePlans(); const w = useWorkouts(); const date = useLogDay();
+  // Start workout (item 10): the workout in progress if any, else today's routine, else Train (rest day / no plan)
+  const today = todayWorkout(plans.state, date);
+  const workoutSub = w.active ? `${w.active.title} · in progress` : today.kind === 'routine' ? `${today.routine.name} · ~${estMinutes(today.routine)} min`
+    : activePlan(plans.state) ? 'Rest day · pick from Train' : 'Choose a plan first';
+  const go = (r: Row) => {
+    if (r.key === 'workout') {
+      if (w.active) router.push('/workout' as never);
+      else if (today.kind === 'routine') { w.start(today.routine, today.plan.id); router.push('/workout' as never); }
+      else router.push((activePlan(plans.state) ? '/train' : '/choose-plan') as never);
+      return;
+    }
+    if (r.key === 'empty') { w.startEmpty(); router.push('/workout' as never); return; }
+    if (r.to) router.push(r.to as never);
+  };
   const tint = (k?: Row['tint']) => k === 'food' ? t.c.foodText : k === 'train' ? t.c.trainText : k === 'honey' ? t.c.accentText : t.c.text2;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -34,10 +53,10 @@ export function PlusSheet({ visible, onClose }: { visible: boolean; onClose: () 
         <View style={{ marginTop: 10, borderWidth: 1, borderColor: t.c.sheetLine, borderRadius: t.radius.card, overflow: 'hidden' }}>
           {ROWS.map((r, i) => {
             const stub = !r.to;
-            const sub = stub ? 'Coming in a later build' : r.sub;
+            const sub = stub ? 'Coming in a later build' : r.key === 'workout' ? workoutSub : r.key === 'empty' && w.active ? 'Opens the workout in progress' : r.sub;
             return (
               <Pressable key={r.key} disabled={stub} accessibilityRole="button" accessibilityState={{ disabled: stub }} accessibilityLabel={sub ? `${r.title}, ${sub}` : r.title}
-                onPress={() => { onClose(); if (r.to) router.push(r.to as never); }}
+                onPress={() => { onClose(); go(r); }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, minHeight: sub ? 64 : 52,
                   borderTopWidth: i ? 1 : 0, borderTopColor: t.c.sheetLine, opacity: stub ? 0.6 : 1 }}>
                 <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: t.c.sheetTile, alignItems: 'center', justifyContent: 'center' }}>

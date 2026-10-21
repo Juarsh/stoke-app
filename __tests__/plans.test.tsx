@@ -26,7 +26,7 @@ import {
   blankPlan, daysLabel, EMPTY_PLANS, estMinutes, fromTemplate, move, namesLine, nextLine, Plan, planError, parsePlans, removeRoutine, restLabel, Routine,
   routineError, setDay, splitRows, step, stepReps, targetLabel, TEMPLATES, todayWorkout, uniqueName, weekdayOf, LIMITS,
 } from '../src/features/plans/model';
-import { TodayCard, LOGGER_SOON } from '../src/features/plans/TodayCard';
+import { TodayCard } from '../src/features/plans/TodayCard';
 import { TrainScreen } from '../src/features/plans/TrainScreen';
 import { RoutineScreen } from '../src/features/plans/RoutineScreen';
 
@@ -226,15 +226,16 @@ describe('Today’s workout card (Home / Train)', () => {
     expect(mockPush).toHaveBeenCalledWith('/choose-plan');
     await act(async () => { r.unmount(); });
   });
-  test('with Push · Pull · Legs on a Tuesday: Pull A, 6 exercises, ~min, two names +4; Start workout says the logger is next', async () => {
+  test('with Push · Pull · Legs on a Tuesday: Pull A, 6 exercises, ~min, two names +4; Start workout opens the logger', async () => {
     const r = await mount(<TodayCard date={TUE} />);
     await act(async () => { plans.applyTemplate('ppl'); });
     const s = texts(r);
     expect(s).toContain('Pull A');
     expect(s).toMatch(/6 exercises · ~\d+ min/);
     expect(s).toContain('Deadlifts, Close-grip Lat Pull Down +4');
-    await press(r, 'Start workout');
     expect(r.root.findAll((x) => x.props.testID === 'today-card-routine' && typeof x.type === 'string')).toHaveLength(1);
+    await press(r, 'Start workout');
+    expect(mockPush).toHaveBeenLastCalledWith('/workout');
     await act(async () => { r.unmount(); });
   });
   test('rest day (Thursday): "Rest day" and the next routine', async () => {
@@ -244,7 +245,6 @@ describe('Today’s workout card (Home / Train)', () => {
     expect(texts(r)).toContain('Next: Push B tomorrow');
     await act(async () => { r.unmount(); });
   });
-  test('the notice text for the logger stub', () => expect(LOGGER_SOON).toMatch(/next build/));
 });
 
 describe('Train screen', () => {
