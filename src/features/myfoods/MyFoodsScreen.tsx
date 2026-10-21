@@ -1,7 +1,7 @@
 // §6.2 / §6.6 My foods: rows "name · unit · kcal ›" open the edit sheet; Save; quiet "Delete food" = immediate soft
 // delete, back on the list with "<name> deleted · Undo". Empty: "Foods you add show up here." + outlined New food.
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -13,6 +13,7 @@ import { FoodForm } from './FoodForm';
 import { activeFoods, draftOf, MyFood } from './model';
 import { SaveButton } from './SaveButton';
 import { useFoodDraft } from './useFoodDraft';
+import { Toast } from '@/components/Toast';
 
 const kc = (n: number) => Math.round(n).toLocaleString('en-IN');
 
@@ -21,12 +22,9 @@ export function MyFoodsScreen() {
   const foods = activeFoods(st.myFoods).slice().sort((a, b) => a.name.localeCompare(b.name));
   const [editing, setEditing] = useState<MyFood | null>(null);
   const [toast, setToast] = useState<{ id: string; name: string } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const del = (f: MyFood) => {
     st.deleteMyFood(f.id); setEditing(null);
-    if (timer.current) clearTimeout(timer.current);
     setToast({ id: f.id, name: f.name });
-    timer.current = setTimeout(() => setToast(null), 4000);
   };
   const newFood = () => router.push('/my-food-new');
   return (
@@ -64,14 +62,9 @@ export function MyFoodsScreen() {
           </Pressable>
         </View>
       )}
-      {toast ? (
-        <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={{ position: 'absolute', left: 20, right: 20, bottom: 20 + ins.bottom, flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: t.c.popBg, paddingLeft: 16 }}>
-          <T style={{ flex: 1, color: t.c.popText, paddingVertical: 12 }}>{toast.name} deleted</T>
-          <Pressable onPress={() => { st.restoreMyFood(toast.id); setToast(null); }} accessibilityRole="button" accessibilityLabel="Undo delete" style={{ minWidth: 64, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-            <T v="bodyStrong" style={{ color: t.dark ? t.c.accentText : t.c.onNavPlus }}>Undo</T>
-          </Pressable>
-        </View>
-      ) : null}
+      <Toast current={toast} text={toast ? `${toast.name} deleted` : ''} action={toast ? { label: 'Undo', a11y: 'Undo delete', onPress: () => st.restoreMyFood(toast.id) } : undefined}
+        onClose={() => setToast(null)} style={{ position: 'absolute', left: 20, right: 20, bottom: 20 + ins.bottom, borderRadius: 14, backgroundColor: t.c.popBg, paddingLeft: 16 }}
+        textColor={t.c.popText} actionColor={t.dark ? t.c.accentText : t.c.onNavPlus} />
       {editing ? <EditFoodSheet food={editing} all={st.myFoods} onClose={() => setEditing(null)} onSave={(f) => { st.saveMyFood(f); setEditing(null); }} onDelete={() => del(editing)} /> : null}
     </View>
   );

@@ -16,6 +16,7 @@ import { SaveButton } from '@/features/myfoods/SaveButton';
 import { useFoodDraft } from '@/features/myfoods/useFoodDraft';
 import { ItemSheet } from './ItemSheet';
 import { TimeSheet } from './TimeSheet';
+import { Toast } from '@/components/Toast';
 
 const kc = (n: number) => Math.round(n).toLocaleString('en-IN');
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
@@ -29,11 +30,10 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
   const [time, setTime] = useState<TimePick>({ kind: 'now' });
   const [sheet, setSheet] = useState<{ item: TrayItem; editing: boolean } | null>(null);
   const [timeOpen, setTimeOpen] = useState(false);
-  const [toast, setToast] = useState<{ text: string; undo: () => void } | null>(null);
+  const [toast, setToast] = useState<{ text: string; label: string; undo: () => void } | null>(null);
   const [refused, setRefused] = useState<Record<string, string>>({});
   const keyN = useRef(0);
   const nextKey = () => `t${++keyN.current}`;
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const results = useMemo(() => searchAll(query, st.myFoods), [query, st.myFoods]);
   const recent = useMemo(() => recentFoods(st.entries, st.myFoods), [st.entries, st.myFoods]);
@@ -52,11 +52,8 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
     setQuery('');
   };
 
-  const showToast = (text: string, undo: () => void) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ text, undo });
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
-  };
+  // a new object each time, so the shared Toast restarts its 4 s
+  const showToast = (text: string, undo: () => void, label = 'Undo') => setToast({ text, label, undo });
   const add = (d: Food) => { setTray((x) => quickAdd(x, d, nextKey())); setRefused({}); };
   const open = (d: Food) => setSheet({ item: newTrayItem(d, nextKey()), editing: false });
   const remove = (k: string) => {
@@ -73,7 +70,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
     if (!tray.length) return;
     const n = now(); const at = pickTime(time, n);
     const tr = timeReason(at, n);
-    if (tr) { showToast(tr, () => setTimeOpen(true)); return; }
+    if (tr) { showToast(tr, () => setTimeOpen(true), 'Change'); return; }
     const built = buildEntries(tray, at, { now: n, newId: st.newId });
     if (built.refused.length) { setRefused(Object.fromEntries(built.refused.map((r) => [r.key, r.reason]))); return; }
     const bad = st.addEntries(built.entries);
@@ -176,7 +173,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
               style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center' }}>
               <T v="bodyStrong" style={{ fontSize: 15 }}>{c.name}</T><T tone="muted" style={{ fontSize: 15 }}> · {kc(c.kcal)}</T>
             </Pressable>
-            <Pressable onPress={() => remove(it.key)} accessibilityRole="button" accessibilityLabel={`Remove ${c.name}`} style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => remove(it.key)} accessibilityRole="button" accessibilityLabel={`Remove ${c.name}`} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="x" color={t.c.text2} size={16} strokeWidth={2.2} />
             </Pressable>
           </View>
@@ -251,14 +248,8 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
           </>
         )}
       </ScrollView>
-      {toast ? (
-        <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={{ marginHorizontal: 20, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: t.c.popBg, paddingLeft: 16 }}>
-          <T style={{ flex: 1, color: t.c.popText, paddingVertical: 12 }}>{toast.text}</T>
-          <Pressable onPress={() => { toast.undo(); setToast(null); }} accessibilityRole="button" accessibilityLabel="Undo" style={{ minWidth: 64, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-            <T v="bodyStrong" style={{ color: t.dark ? t.c.accentText : t.c.onNavPlus }}>Undo</T>
-          </Pressable>
-        </View>
-      ) : null}
+      <Toast current={toast} text={toast?.text ?? ''} action={toast ? { label: toast.label, onPress: toast.undo } : undefined} onClose={() => setToast(null)}
+        style={{ marginHorizontal: 20, marginBottom: 8, borderRadius: 14, backgroundColor: t.c.popBg, paddingLeft: 16 }} textColor={t.c.popText} actionColor={t.dark ? t.c.accentText : t.c.onNavPlus} />
       {noMatch ? (
         <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 10 + ins.bottom }}>
           <SaveButton title="Save and add" disabled={own.clash} onPress={saveAndAdd}
