@@ -68,6 +68,11 @@ test('one helper: no screen or lib computes "today" any other way', () => {
   const offenders = walk(src).filter((p) => !p.endsWith(join('lib', 'domain.ts')))
     .flatMap((p) => readFileSync(p, 'utf8').split('\n').map((l, i) => ({ p, i, l })))
     // localDate(x) is only the calendar date for the time wheel's day column
-    .filter(({ l, p }) => /localDate\(\s*\)|toISOString\(\)\.slice\(0, ?10\)/.test(l) || (/\blocalDate\(/.test(l) && !p.endsWith(join('logfood', 'model.ts'))));
+    .filter(({ l, p }) => /localDate\(\s*\)|toISOString\(\)\.slice\(0, ?10\)|setHours\(0/.test(l) || (/\blocalDate\(/.test(l) && !p.endsWith(join('logfood', 'model.ts'))));
   expect(offenders.map((o) => `${o.p}:${o.i + 1}`)).toEqual([]);
+});
+
+test('steps are read from the log day’s 4 AM start (the day Home saves them under)', () => {
+  const { dayStartAt } = jest.requireActual('../src/lib/domain');
+  expect(dayStartAt('2026-10-21').toISOString()).toBe('2026-10-20T22:30:00.000Z'); // 04:00 IST
 });

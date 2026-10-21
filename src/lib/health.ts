@@ -3,6 +3,7 @@
 // Every call fails soft (returns 'unavailable' / false / null), so Home never crashes or waits on Health Connect.
 import { Linking, Platform } from 'react-native';
 import { flags } from './config';
+import { dayOf, dayStartAt } from './domain';
 
 export type StepsStatus = 'connected' | 'not_connected' | 'unavailable';
 const STEPS = [{ accessType: 'read' as const, recordType: 'Steps' as const }];
@@ -37,7 +38,7 @@ export async function readTodaySteps(): Promise<number | null> {
   if ((await stepsStatus()) !== 'connected') return null;
   try {
     const hc = await import('react-native-health-connect');
-    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const start = dayStartAt(dayOf()); // the log day (4 AM), the same day Home saves the count under
     const r = await hc.readRecords('Steps', { timeRangeFilter: { operator: 'between', startTime: start.toISOString(), endTime: new Date().toISOString() } });
     return r.records.reduce((s, x) => s + x.count, 0);
   } catch { return null; }

@@ -185,6 +185,8 @@ export const DAY_START_HOUR = 4;
 export function dayOf(d: Date = new Date(), dayStartHour = DAY_START_HOUR): string {
   return localDate(new Date(d.getTime() - dayStartHour * 3600000));
 }
+/** The moment a log day starts (4 AM IST on that date): steps and anything else read "since the day began" use this. */
+export const dayStartAt = (date: string, dayStartHour = DAY_START_HOUR) => new Date(Date.parse(`${date}T00:00:00+05:30`) + dayStartHour * 3600000);
 export function addDays(date: string, n: number): string {
   const t = Date.parse(date + 'T00:00:00Z') + n * 86400000;
   return new Date(t).toISOString().slice(0, 10);
