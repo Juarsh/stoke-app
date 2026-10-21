@@ -49,7 +49,7 @@ export function SummaryScreen({ id, repo = exercises }: { id: string; repo?: Exe
             const e = repo.byId(x.exercise_id); const line = bestLine(x, kindOf(e));
             return (
               <View key={x.id} accessible accessibilityLabel={`${e?.name ?? 'Exercise'}: ${line}`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 18, paddingVertical: 8, borderTopWidth: i ? 1 : 0, borderTopColor: t.c.lineSoft, flexWrap: 'wrap' }}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 18, paddingVertical: 8, borderTopWidth: i ? 1 : 0, borderTopColor: t.c.lineSoft, flexWrap: 'wrap', alignContent: 'center' }}>
                 <T v="bodyStrong" style={{ fontSize: 16, flex: 1, minWidth: 120 }}>{e?.name ?? 'Exercise'}</T>
                 <T tone="text2" style={{ fontSize: 14 }}>{line}</T>
               </View>
