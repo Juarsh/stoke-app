@@ -2,7 +2,7 @@
 // from 4 AM (dayOf), entries within 45 minutes in one display-only block with its kcal. Tap a block to open its items;
 // tap an item to update it in the v4 item sheet (time chip); ✕ removes it with Undo; the block's time moves all its items.
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { ServerNoteRow } from '@/components/ServerNoteRow';
 import { SyncFailedRow } from '@/components/SyncFailedRow';
 import { PICK_TYPE_COPY, VariantPickSheet } from '@/components/VariantPickSheet';
 import { T } from '@/components/ui';
+import { useLogDay } from '@/lib/useLogDay';
 import { addDays, countedNums, dayOf, entryLabel, entryRefusal, FoodEntry } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
@@ -27,8 +28,11 @@ const AMOUNT_UNKNOWN = 'amount unknown';
 
 export function TimelineScreen({ now = () => new Date() }: { now?: () => Date }) {
   const t = useTheme(); const st = useStore(); const router = useRouter();
-  const today = dayOf(now());
+  const today = useLogDay(now);
   const [date, setDate] = useState(today);
+  // left open over 4 AM: a view of the old today follows to the new day
+  const prevToday = useRef(today);
+  useEffect(() => { if (prevToday.current !== today) { setDate((d) => (d === prevToday.current ? today : d)); prevToday.current = today; } }, [today]);
   const d = useDay(date);
   const food = foodCard(d.entries, d.kcalTarget, d.proteinTarget);
   const list = useMemo(() => blocks(d.entries), [d.entries]);

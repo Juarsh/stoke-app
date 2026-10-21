@@ -14,8 +14,9 @@ import { greeting, dayOf } from '@/lib/domain';
 import { connectSteps, getHealthConnect, readTodaySteps, StepsStatus, stepsStatus } from '@/lib/health';
 import { useStore } from '@/lib/store';
 import { useDay } from '@/lib/useDay';
+import { useLogDay } from '@/lib/useLogDay';
 import { DISHES } from '@/parser';
-import { coachTip, foodCard, lastLine, weekStrip } from '@/features/home/model';
+import { coachTip, foodCard, homeDate, lastLine, weekStrip } from '@/features/home/model';
 import { makeStyles, useTheme } from '@/theme';
 
 const n = (x: number) => Math.round(x).toLocaleString('en-IN');
@@ -66,7 +67,7 @@ function ConnectStepsSheet({ visible, status, onClose, onConnected }: { visible:
 }
 
 export default function Home() {
-  const t = useTheme(); const s = useStyles(); const st = useStore(); const d = useDay(); const router = useRouter();
+  const t = useTheme(); const s = useStyles(); const st = useStore(); const today = useLogDay(); const d = useDay(today); const router = useRouter();
   const steps = useSteps();
   const [sheet, setSheet] = useState(false);
   const food = foodCard(d.entries, d.kcalTarget, d.proteinTarget);
@@ -77,7 +78,7 @@ export default function Home() {
   const name = st.user?.name ?? '';
   const first = name.split(' ')[0];
   const initials = name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
-  const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }).replace(',', '');
+  const dateLabel = homeDate(d.date);
   const newUser = st.entries.length === 0;
   const stepsTarget = d.profile?.stepsTarget ?? 8000;
   const showSteps = flags.steps && (steps.status === 'connected' || d.steps > 0);
