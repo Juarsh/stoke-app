@@ -50,6 +50,7 @@ const light = {
   ink: '#221C2B', inkText: '#F6F1EA', inkMuted: '#BDB3A9', inkLine: '#3A3144', // dark "feat" workout card (honey button)
   sheet: '#FFFCF7', sheetLine: '#E6DDD0', sheetTile: '#F0E9DE', handle: '#E6DDD0',
   navPlus: '#221C2B', onNavPlus: '#E3A44A', // light: ink fill + honey icon
+  mapPrimary: '#356F63', mapSecondary: '#7DBBA8', mapOutline: '#356F63', // §9.3 muscle map, final
 };
 type Palette = typeof light & { goldOnGrad?: string };
 /** goldOnGrad is dark-only (light uses accentText for those texts). */
@@ -77,6 +78,7 @@ const dark: Palette & { goldOnGrad: string } = {
   ink: '#2A2238', inkText: '#F6F1EA', inkMuted: '#C1B7C6', inkLine: '#3D3350',
   sheet: '#2A2430', sheetLine: '#3A3340', sheetTile: '#352E3B', handle: '#4A4250', // dark sheets: surface #2A2430 + 1px top highlight
   navPlus: '#E8B26A', onNavPlus: '#241A0C', // dark: honey fill
+  mapPrimary: '#B5E3D6', mapSecondary: '#5A9787', mapOutline: '#B5E3D6',
 };
 const alias = (p: Palette): Palette & ReturnType<typeof aliasOf> => aliasOf(p);
 const aliasOf = (p: Palette) => ({
