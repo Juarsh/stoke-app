@@ -43,9 +43,9 @@ export function HabitForm({ id: idProp }: { id?: string }) {
   // the short-name problems show live (the fit check is the point of the preview); others after the first Save
   const shortErr = d.short_name.trim() ? errs.short : tried ? errs.short : undefined;
   const label = (s: string) => <T v="bodyStrong" style={{ fontSize: 15, marginTop: 14, marginBottom: 6 }}>{s}</T>;
-  const field = (bad: boolean, hi = false) => ({ minHeight: 56, borderRadius: 14, borderWidth: hi ? 2 : 1.5, borderColor: bad ? t.c.over : hi ? t.c.honeyEdge : t.c.cardLine,
+  const field = (bad: boolean, hi = false) => ({ minHeight: 56, borderRadius: 14, borderWidth: hi ? 2 : 1.5, borderColor: bad ? t.c.warn : hi ? t.c.honeyEdge : t.c.cardLine,
     backgroundColor: t.c.card, paddingHorizontal: 16, fontSize: 18, color: t.c.text } as const);
-  const errLine = (e?: string) => (e ? <T style={{ color: t.c.over, fontSize: 14, marginTop: 6 }} accessibilityLiveRegion="polite">{e}</T> : null);
+  const errLine = (e?: string) => (e ? <T style={{ color: t.c.warn, fontSize: 14, marginTop: 6 }} accessibilityLiveRegion="polite">{e}</T> : null);
   function Seg<V extends string>({ value, options, onPick, a11y }: { value: V; options: [V, string][]; onPick: (v: V) => void; a11y: string }) {
     return (
       <View style={{ flexDirection: 'row', backgroundColor: t.c.card2, borderRadius: 16, padding: 4, gap: 4 }} accessibilityRole="radiogroup" accessibilityLabel={a11y}>
@@ -124,7 +124,7 @@ export function HabitForm({ id: idProp }: { id?: string }) {
         {errLine(errs.days)}
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 16 + ins.bottom, borderTopWidth: 1, borderTopColor: t.c.lineSoft, gap: 8 }}>
-        {saveErr ? <T style={{ color: t.c.over, fontSize: 14 }} accessibilityLiveRegion="polite">{saveErr}</T> : null}
+        {saveErr ? <T style={{ color: t.c.warn, fontSize: 14 }} accessibilityLiveRegion="polite">{saveErr}</T> : null}
         <Pressable onPress={save} accessibilityRole="button" accessibilityLabel="Save habit"
           style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, backgroundColor: t.c.accentFill, borderWidth: 1.5, borderColor: t.c.honeyEdge, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
           <T v="button" style={{ color: t.c.onAccent, fontSize: 17 }}>Save habit</T>

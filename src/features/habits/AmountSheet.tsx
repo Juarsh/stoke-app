@@ -30,7 +30,7 @@ export function AmountSheet({ habitId, date, today, onClose }: { habitId: string
         <T tone="text2" style={{ fontSize: 15 }}>{h.name}</T>
         <Stepper label={snap.kind === 'count' ? `Amount (${unit})` : 'Sets done'} value={v} text={`${v} of ${full} ${unit}`.trim()} min={0} max={full}
           onStep={(d) => { setErr(null); setV((x) => x + d); }} />
-        {err ? <T style={{ color: t.c.over, fontSize: 14 }}>{err}</T> : null}
+        {err ? <T style={{ color: t.c.warn, fontSize: 14 }}>{err}</T> : null}
         <Pressable onPress={save} accessibilityRole="button" accessibilityLabel="Save amount"
           style={({ pressed }) => ({ minHeight: 56, borderRadius: 16, backgroundColor: t.c.accentFill, borderWidth: 1.5, borderColor: t.c.honeyEdge, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
           <T v="button" style={{ color: t.c.onAccent, fontSize: 17 }}>Save</T>
