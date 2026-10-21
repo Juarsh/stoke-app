@@ -89,7 +89,7 @@ export function TimelineScreen({ now = () => new Date() }: { now?: () => Date })
       <View key={b.key} style={[card, { paddingVertical: 14, paddingHorizontal: 18 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           <Pressable onPress={() => { setMoveReason(null); setTimeFor(b); }} accessibilityRole="button" accessibilityLabel={`${time}. Change time for ${b.entries.length} ${b.entries.length === 1 ? 'item' : 'items'}`}
-            style={{ width: 96, minHeight: 48, marginTop: -12, justifyContent: 'center' }}>
+            hitSlop={12} style={{ width: 96, minHeight: 24 }}>
             <T v="bodyStrong" style={{ fontSize: 16 }}>{time}</T>
           </Pressable>
           <Pressable onPress={() => setOpen({ ...open, [b.key]: !isOpen })} accessibilityRole="button" accessibilityState={{ expanded: isOpen }}
@@ -128,7 +128,7 @@ export function TimelineScreen({ now = () => new Date() }: { now?: () => Date })
     <View style={{ flex: 1, backgroundColor: t.c.bg }}>
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, gap: 14 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 56 }}>
             <T v="title" accessibilityRole="header" style={{ fontSize: 28 }}>Food</T>
             <Pressable onPress={() => router.push('/log-food')} accessibilityRole="button" accessibilityLabel="Log food"
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 4 }}>
