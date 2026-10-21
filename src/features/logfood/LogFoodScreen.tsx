@@ -80,7 +80,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
         <Pressable onPress={() => open(d)} accessibilityRole="button" accessibilityLabel={`${name}, ${amountLabel(u, a)}, ${kc(k)} kcal. Open details`}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 6 }}>
           <T v="bodyStrong" style={{ fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{name}</T>
-          <T tone="muted" style={{ fontSize: 15 }}>· {amountLabel(u, a)}</T>
+          <T tone="muted" style={{ fontSize: 15, flexShrink: 0 }} numberOfLines={1}>· {amountLabel(u, a)}</T>
           <View style={{ flex: 1 }} />
           <T v="number" style={{ fontSize: 18, marginRight: 8 }}>{kc(k)}</T>
         </Pressable>
@@ -112,7 +112,7 @@ export function LogFoodScreen({ now: nowProp }: { now?: () => Date }) {
                 accessibilityLabel={`${c.name}, ${amountLabel(it.unit, it.amount)}, ${kc(c.kcal)} kcal${a11yEdit}. Edit`}
                 style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: 6 }}>
                 <T v="bodyStrong" style={{ fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{c.name}</T>
-                <T tone="muted" style={{ fontSize: 15 }}>{amountLabel(it.unit, it.amount)}</T>
+                <T tone="muted" style={{ fontSize: 15, flexShrink: 0 }} numberOfLines={1}>{amountLabel(it.unit, it.amount)}</T>
                 <View style={{ flex: 1 }} />
                 {edited ? (
                   <View importantForAccessibility="no-hide-descendants" style={{ borderWidth: 1, borderColor: t.c.stateLine, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 1, marginRight: 4 }}>

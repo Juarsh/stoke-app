@@ -53,12 +53,14 @@ export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: b
     const at = wheelTime(wheel.date, wheel.h12, wheel.minute, wheel.pm);
     const why = timeReason(at, n);
     const di = days.findIndex((d) => d.date === wheel.date);
-    const col = <V,>(label: string, list: V[], idx: number, show: (v: V) => string, set: (v: V) => void, flex = 1) => (
+    const col = <V,>(label: string, list: V[], idx: number, show: (v: V) => string, set: (v: V) => void, flex = 1, cyclic = false) => {
+      const at = (j: number) => (cyclic ? list[(j + list.length) % list.length] : list[j]);
+      return (
       <View accessibilityRole="adjustable" accessibilityLabel={`${label}, ${show(list[idx])}`} style={{ flex, alignItems: 'center' }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-        onAccessibilityAction={(e) => { const j = idx + (e.nativeEvent.actionName === 'increment' ? 1 : -1); if (list[j] !== undefined) set(list[j]); }}>
+        onAccessibilityAction={(e) => { const v = at(idx + (e.nativeEvent.actionName === 'increment' ? 1 : -1)); if (v !== undefined) set(v); }}>
         {[-1, 0, 1].map((o) => {
-          const v = list[idx + o];
+          const v = at(idx + o);
           return (
             <Pressable key={o} disabled={v === undefined || o === 0} onPress={() => v !== undefined && set(v)} importantForAccessibility="no"
               style={{ height: 52, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' }}>
@@ -69,7 +71,8 @@ export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: b
           );
         })}
       </View>
-    );
+      );
+    };
     body = (
       <>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -80,8 +83,8 @@ export function TimeSheet({ visible, value, now, onClose, onPick }: { visible: b
           <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 52, height: 52, borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.c.text2 }} />
           <View style={{ flexDirection: 'row' }}>
             {col('Day', days, di, (d) => d.label, (d) => setWheel({ ...wheel, date: d.date }), 1.6)}
-            {col('Hour', HOURS, HOURS.indexOf(wheel.h12), String, (h) => setWheel({ ...wheel, h12: h }))}
-            {col('Minute', MINS, MINS.indexOf(wheel.minute), (m) => String(m).padStart(2, '0'), (m) => setWheel({ ...wheel, minute: m }))}
+            {col('Hour', HOURS, HOURS.indexOf(wheel.h12), String, (h) => setWheel({ ...wheel, h12: h }), 1, true)}
+            {col('Minute', MINS, MINS.indexOf(wheel.minute), (m) => String(m).padStart(2, '0'), (m) => setWheel({ ...wheel, minute: m }), 1, true)}
             {col('AM or PM', [false, true], wheel.pm ? 1 : 0, (p) => (p ? 'PM' : 'AM'), (p) => setWheel({ ...wheel, pm: p }))}
           </View>
         </View>

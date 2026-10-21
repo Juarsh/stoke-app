@@ -85,7 +85,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
     <TextInput autoFocus value={field!.text} onChangeText={(x) => { setField({ which, text: x }); setErr(null); }} onSubmitEditing={() => commitField()}
       keyboardType={which === 'kcal' ? 'number-pad' : 'decimal-pad'} selectTextOnFocus selectionColor={t.c.accentText}
       accessibilityLabel={which === 'kcal' ? `Calories, ${field!.text}${c.kcalEdited ? ', edited' : ''}` : `Protein, ${field!.text} grams${c.proteinEdited ? ', edited' : ''}`}
-      style={{ borderWidth: 2, borderColor: t.c.honeyEdge, borderRadius: 12, paddingHorizontal: 10, minWidth: big ? 110 : 64, height: big ? 56 : 44,
+      style={{ borderWidth: 2, borderColor: t.c.honeyEdge, borderRadius: 12, paddingHorizontal: 10, width: big ? 132 : 76, height: big ? 56 : 44,
         color: t.c.text, fontFamily: t.type.display.fontFamily, fontSize: big ? 34 : 18, outlineStyle: 'none' } as never} />
   );
   const number = (which: 'kcal' | 'protein') => {
@@ -93,7 +93,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
     const val = big ? kcal.toLocaleString('en-IN') : `${protein} g`;
     const a11y = big ? `Calories, ${kcal}${edited ? ', edited' : ''}. Edit` : `Protein, ${protein} grams${edited ? ', edited' : ''}. Edit`;
     return (
-      <View style={{ flexDirection: 'row', alignItems: big ? 'baseline' : 'center', gap: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
         {field?.which === which ? editBox(which, big) : (
           <Pressable onPress={() => { if (commitField()) setField({ which, text: big ? String(kcal) : String(protein) }); }} accessibilityRole="button" accessibilityLabel={a11y}
             accessibilityLiveRegion={big ? 'polite' : undefined} style={{ minHeight: 48, justifyContent: 'flex-end' }}>
@@ -104,7 +104,7 @@ export function ItemSheet({ item, editing, onClose, onDone }: { item: TrayItem; 
             <View style={{ borderBottomWidth: 1.5, borderStyle: 'dashed', borderColor: t.c.stateLine, marginTop: 2, marginRight: edited ? 11 : 0 }} />
           </Pressable>
         )}
-        <T v="bodyStrong" tone="text2" style={{ fontSize: big ? 18 : 16 }}>{big ? 'kcal' : 'protein'}</T>
+        <T v="bodyStrong" tone="text2" style={{ fontSize: big ? 18 : 16, lineHeight: big ? 24 : 22, marginBottom: field?.which === which ? (big ? 10 : 8) : (big ? 9 : 5) }}>{big ? 'kcal' : 'protein'}</T>
       </View>
     );
   };
