@@ -104,13 +104,14 @@ export default function Home() {
           </Row>
           {d.reviewCount ? <ReviewLink date={d.date} n={d.reviewCount} /> : null}
 
-          <Card style={{ padding: 18, gap: 10 }}>
+          <Card style={{ padding: 16, gap: 10 }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <Row style={{ gap: 6 }}><View style={{ width: 9, height: 9, borderRadius: 2, backgroundColor: t.c.food }} /><T v="eyebrow" style={{ color: t.c.foodText, fontSize: 12 }}>Food</T></Row>
               <T v="caption" tone="muted" style={{ fontSize: 13 }}>Goal {n(food.kcalTarget)} kcal</T>
             </Row>
-            <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-              <Row style={{ alignItems: 'baseline', gap: 8, flexWrap: 'wrap', flexShrink: 1 }} accessible
+            <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              {/* "kcal left" drops under the number when it doesn't fit (full-b2 notes, 1.3x) */}
+              <Row style={{ alignItems: 'baseline', columnGap: 8, flexWrap: 'wrap', flex: 1, minWidth: 0 }} accessible
                 accessibilityLabel={food.isOver ? `${n(food.over)} calories over` : `${n(food.left)} calories left`}>
                 <T v="display" style={{ fontSize: 48, lineHeight: 54, color: food.isOver ? t.c.over : t.c.text }}>{n(food.isOver ? food.over : food.left)}</T>
                 <T v="bodyStrong" tone={food.isOver ? 'over' : 'text'} style={{ fontSize: 16 }}>{food.isOver ? 'kcal over' : 'kcal left'}</T>
@@ -133,7 +134,7 @@ export default function Home() {
                 </Pressable>
               </Row>
             )}
-            <Row style={{ gap: 20, alignItems: 'flex-start', marginTop: 4 }}>
+            <Row style={{ gap: 16, alignItems: 'flex-start', marginTop: 4 }}>
               <View style={{ flex: 1, gap: 6 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <T v="bodyStrong" style={{ fontSize: 14 }}>Protein</T>
@@ -152,7 +153,7 @@ export default function Home() {
                       <Bar pct={stepsTarget > 0 ? d.steps / stepsTarget : 0} color={t.c.text2} />
                     </>
                   ) : (
-                    <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                    <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', columnGap: 6, marginTop: -13, marginBottom: -13 }}>
                       <T v="bodyStrong" style={{ fontSize: 14 }}>Steps</T>
                       <Pressable onPress={() => setSheet(true)} accessibilityRole="button" accessibilityLabel="Connect steps" style={{ minHeight: 48, justifyContent: 'center' }} hitSlop={4}>
                         <T tone="text2" style={{ fontSize: 14, textDecorationLine: 'underline' }}>Connect steps ›</T>
