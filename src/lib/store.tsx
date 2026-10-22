@@ -20,8 +20,15 @@ import { fillPending, resolvePending } from './pending';
 import { canConfirm } from './confirmBatch';
 import { DocResult, enqueue, flush, FlushResult, hasDue, MAX_FIVES, nextDueAt, Op, opKey, PendingFood, SERVER_ERROR } from './syncQueue';
 import { EMPTY_LEDGER, type Body, type Ledger } from './docRows';
+import { session } from './session';
+import { signOutGoogle, type SignedIn } from './googleSignIn';
 
+/** mock: a local-only user (no account: nothing is sent, every change waits in the queue for the first sign-in).
+ * A Google user's session token is in the keystore (./session), not here; idToken is only a dev / test bearer. */
 export interface User { id: string; name: string; email: string; idToken: string | null; mock: boolean }
+/** Item 16: the local-only user of a build with Google sign-in ("Use on this phone only", or Expo Go). */
+export const LOCAL_USER: User = { id: 'local', name: 'On this phone', email: '', idToken: null, mock: true };
+export const sessionEndedNotice = (why: string) => `You were signed out${why ? ` (${why.replace(/\.$/, '')})` : ''}. Everything is still on this phone; sign in again to sync it.`;
 export interface Challenge { code: string; title: string; startDate: string; members: { name: string; days: number }[] }
 interface Persisted {
   /** server refused the profile (error.code): onboarding reopens with the values kept */
@@ -275,12 +282,17 @@ function useStoreValue() {
   const [s, setS] = useState<Persisted>(EMPTY);
   const [ready, setReady] = useState(false);
   const tokenRef = useRef<string | null>(null);
-  tokenRef.current = s.user?.idToken ?? null;
+  // item 16: the server session (keystore), else a dev / test bearer on the user
+  const sessionRef = useRef<string | null>(null);
+  tokenRef.current = sessionRef.current ?? s.user?.idToken ?? null;
+  const userRef = useRef<User | null>(s.user); userRef.current = s.user;
+  /** a 401 to a request that carried our session: it ended (no refresh yet). Signed out once; local data and queue kept. */
+  const onUnauthorized = useRef<(why: string) => void>(() => {});
   // every server response with next_reset_at keeps the app's own AI count on the server's reset instant
   // rg7 B4: a response says the server's dish table is newer than the phone's -> pull it (units, names, version)
   const onTableVersion = useRef<(v: number) => void>(() => {});
   const api = useMemo(() => createApi(() => tokenRef.current, (iso) => setS((p) => { const q = noteReset(p.aiQuota, iso); return q === p.aiQuota ? p : { ...p, aiQuota: q }; }),
-    (v) => onTableVersion.current(v)), []);
+    (v) => onTableVersion.current(v), { local: () => !!userRef.current?.mock, onUnauthorized: (why) => onUnauthorized.current(why) }), []);
   const pulling = useRef(false);
   const unitsVersion = useRef(0);
   unitsVersion.current = Math.max(unitsVersion.current, s.dishUnits?.version ?? 0);
@@ -295,9 +307,14 @@ function useStoreValue() {
   onTableVersion.current = (v) => { if (v > Math.max(unitsVersion.current, DISH_TABLE_VERSION)) void pullUnits(); };
 
   useEffect(() => {
-    localStore.load(KEY).then((raw) => {
+    Promise.all([localStore.load(KEY), session.load()]).then(([raw, tok]) => {
+      sessionRef.current = tok;
       if (!raw) return;
-      const p: Persisted = { ...EMPTY, ...JSON.parse(raw) };
+      const p0: Persisted = { ...EMPTY, ...JSON.parse(raw) };
+      // a Google user whose session is gone from the keystore: signed out, data kept (they sign in again)
+      const lost = !!p0.user && !p0.user.mock && !p0.user.idToken && !tok;
+      const p: Persisted = lost ? { ...p0, user: null } : p0;
+      if (lost) setNotice(sessionEndedNotice(''));
       // rows an older build synced and nothing is queued for: the server has them as they are (rg8 F-1)
       const entries = p.entries.map((e) => (p.queue.some((o) => opId(o) === e.id) ? e : seedServerCounts(e)));
       setS(expireState({ ...p, entries, queue: stampPending(p.queue, entries) })); // older queues get a start time; app start runs the backstop
@@ -328,6 +345,11 @@ function useStoreValue() {
   /** bumped by Delete account so the plans store (./plans) empties too; not persisted */
   const [wipeGen, setWipeGen] = useState(0);
   const dismissNotice = useCallback(() => setNotice(null), []);
+  onUnauthorized.current = (why) => {
+    if (!sessionRef.current) return; // already handled (several requests in flight), or a dev bearer
+    sessionRef.current = null; tokenRef.current = null; void session.clear(); void signOutGoogle();
+    userRef.current = null; setS((p) => ({ ...p, user: null })); setNotice(sessionEndedNotice(why));
+  };
   /** S2.1 undo toast ("Logged 3 items · 610 kcal · Undo"): 4 s (Q8), not persisted. */
   const [undoToast, setUndoToast] = useState<{ text: string; undo: () => void } | null>(null);
   const showUndo = useCallback((text: string, undo: () => void) => setUndoToast({ text, undo }), []);
@@ -463,7 +485,18 @@ function useStoreValue() {
     notice, showNotice: setNotice, wipeGen, dismissNotice, undoToast, showUndo, dismissUndo,
     ready, ...s, api, sync, expireAi,
     newId: () => Crypto.randomUUID(),
-    signIn: (u: User) => { if (!api.mock && docsRef.current.uid !== u.id) setDocs(() => ({ ...EMPTY_LEDGER, uid: u.id })); upd((p) => ({ ...p, user: u })); },
+    signIn: (u: User) => { if (!u.mock && docsRef.current.uid !== u.id) setDocs(() => ({ ...EMPTY_LEDGER, uid: u.id })); userRef.current = u; upd((p) => ({ ...p, user: u })); },
+    /** Item 16: signed in with Google; the session is already in the keystore (googleSignIn). What the phone has (a local-only
+     * user's entries, profile, plans, workouts, habits) is in the queue / doc diff and goes up now; nothing local is dropped. */
+    signInSession: (u: SignedIn) => {
+      sessionRef.current = u.token;
+      const user: User = { id: u.id, name: u.name, email: u.email, idToken: null, mock: false };
+      if (docsRef.current.uid !== user.id) setDocs(() => ({ ...EMPTY_LEDGER, uid: user.id }));
+      userRef.current = user; tokenRef.current = u.token;
+      upd((p) => ({ ...p, user }));
+    },
+    /** signed in with Google (a server session), not local-only or a dev bearer */
+    signedInGoogle: !!s.user && !s.user.mock && !!sessionRef.current,
     /** M4: doc sync is on only with a backend (EXPO_PUBLIC_API_URL) and a signed-in user; otherwise nothing changes */
     docSyncOn: ready && !api.mock && !!s.user,
     docLedger: () => docsRef.current,
@@ -479,7 +512,12 @@ function useStoreValue() {
       setDocs((l) => { const v = { ...l.v }, sent = { ...l.sent }; for (const a of adopt) { v[a.key] = a.version; sent[a.key] = a.body; } for (const k of forget) { delete v[k]; delete sent[k]; } return { ...l, v, sent }; });
     },
     onDocResult: (f: (r: DocResult) => void) => { docListeners.current.add(f); return () => { docListeners.current.delete(f); }; },
-    signOut: () => upd((p) => ({ ...p, user: null })),
+    /** Sign out: the server session is revoked (best effort), the keystore forgets it; everything on the phone stays. */
+    signOut: () => {
+      const tok = sessionRef.current; sessionRef.current = null; tokenRef.current = null;
+      if (tok) { void api.signOutServer(tok); void session.clear(); void signOutGoogle(); }
+      userRef.current = null; upd((p) => ({ ...p, user: null }));
+    },
     /** Saved on the phone at once; the server copy goes through the queue, so it is sent after sign-in too. */
     setProfile: (profile: Profile) => upd((p) => ({ ...p, profile, profileError: null, queue: enqueue(p.queue, { kind: 'profile', id: 'profile', payload: profilePayload(profile), tries: 0 }) })),
     setThemePref: (themePref: ThemePref) => upd((p) => ({ ...p, themePref })),
@@ -608,6 +646,7 @@ function useStoreValue() {
     }),
     /** Delete account: server erase, then the whole on-device store (profile incl. sex, entries, queue) is overwritten now. */
     deleteAll: async () => { await api.deleteMe().catch(() => {}); await localStore.save(KEY, JSON.stringify(EMPTY)).catch(() => {});
+      sessionRef.current = null; await session.clear(); void signOutGoogle(); // the account is gone: so is its session
       await localStore.save(PLANS_KEY, '').catch(() => {}); await localStore.save(WORKOUTS_KEY, '').catch(() => {}); await localStore.save(HABITS_KEY, '').catch(() => {}); docsRef.current = EMPTY_LEDGER; setS(EMPTY); setWipeGen((g) => g + 1); },
   };
 }

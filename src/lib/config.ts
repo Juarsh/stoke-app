@@ -25,5 +25,6 @@ export const flags = {
   /** Apple Health steps (iOS dev/release build only; EXPO_PUBLIC_FLAG_HEALTHKIT=1). Off by default. */
   healthKit: extra.flags?.healthKit ?? false,
   community: extra.flags?.community ?? true,
-  googleSignIn: (extra.flags?.googleSignIn ?? false) && !!(extra.googleAndroidClientId || extra.googleWebClientId),
+  /** item 16: needs the web client id (the ID token's audience) and a server to trade it with */
+  googleSignIn: (extra.flags?.googleSignIn ?? false) && !!extra.googleWebClientId && !!extra.apiUrl,
 };

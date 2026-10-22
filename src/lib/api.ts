@@ -98,7 +98,14 @@ export function parseJobBody(b: JobBody, jobId?: string): ParseResponse {
 /** onReset: called with next_reset_at whenever a server response carries it. */
 /** onTableVersion: called with the server's dish table version (X-Dish-Table-Version) on every response that carries it,
  * so a phone on an older table pulls the new one (rg7 B4). */
-export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void, onTableVersion?: (v: number) => void) {
+/** opts.local: true while the user is local-only (no account: Expo Go, or "Use on this phone only"): the client answers
+ * as in mock mode, so nothing is sent and the queue keeps every change for the first sign-in.
+ * opts.onUnauthorized: a 401 to a request that carried a token (the session ended or was revoked; no refresh yet). */
+export type ApiOpts = { local?: () => boolean; onUnauthorized?: (reason: string) => void };
+/** POST /v1/auth/google answer (stoke-m4 API.md): our own user id and session token. */
+export type SignInAnswer = { user: { id: number | string; email?: string; name?: string }; session_token: string; expires_at?: string };
+export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void, onTableVersion?: (v: number) => void, opts: ApiOpts = {}) {
+  const isLocal = () => config.mock || !!opts.local?.();
   async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
     const r = await req0<T>(method, path, body);
     return r.body;
@@ -112,17 +119,36 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     const version = headerVersion(res as unknown as Parameters<typeof headerVersion>[0]);
     if (version && path !== '/v1/dishes') onTableVersion?.(version);
     const out = (b: unknown) => ({ body: b as T, version });
-    if (!res.ok) throw new ApiError(res.status, await res.text());
+    if (!res.ok) {
+      const err = new ApiError(res.status, await res.text());
+      if (res.status === 401 && tok) opts.onUnauthorized?.(err.reason || err.message);
+      throw err;
+    }
     if (res.status === 204) return out(undefined);
     const json = await res.json();
     if (onReset && json && typeof json.next_reset_at === 'string') onReset(json.next_reset_at);
     return out(res.status === 202 ? { status: 'pending', ...json } : json);
   }
   return {
-    mock: config.mock,
+    /** no server: no EXPO_PUBLIC_API_URL in this build, or a local-only user (not signed in with Google) */
+    get mock() { return isLocal(); },
+    /** Sign in: trade a Google ID token for our session (POST /v1/auth/google, no bearer). A refusal is an ApiError whose
+     * reason is the server's (google_not_configured, invalid_token: why). */
+    async signInGoogle(idToken: string): Promise<SignInAnswer> {
+      const res = await fetch(config.apiUrl + '/v1/auth/google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_token: idToken }) });
+      if (!res.ok) throw new ApiError(res.status, await res.text());
+      const j = (await res.json()) as SignInAnswer;
+      if (!j?.session_token || j.user?.id === undefined) throw new ApiError(500, JSON.stringify({ error: { code: 'bad_answer', message: 'The server’s sign-in answer had no session.' } }));
+      return j;
+    },
+    /** POST /v1/auth/signout with the session: best effort (offline or already gone is fine; the phone forgets it anyway). */
+    async signOutServer(token: string): Promise<void> {
+      if (config.mock || !token) return;
+      await fetch(config.apiUrl + '/v1/auth/signout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
+    },
     /** Online: table + Gemini fallback (AI items come back with ai_estimate=true). */
     async parse(text: string, useAI = true): Promise<ParseResponse> {
-      if (config.mock) {
+      if (isLocal()) {
         const r = parseLocal(text);
         if (config.mockAi && r.unmatched.length) {
           if (config.mockAiDelay) await new Promise((res) => setTimeout(res, config.mockAiDelay));
@@ -157,7 +183,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
     /** PE: the server's supported units per dish, from its dish table (GET /v1/dishes supported_units) and that table's
      * version. null when the server doesn't send them (older build): the phone keeps what it has. */
     async getDishUnits(): Promise<DishUnits | null> {
-      if (config.mock) return null;
+      if (isLocal()) return null;
       const got = await req0<{ id?: string; name?: string; version?: number; supported_units?: unknown }[]>('GET', '/v1/dishes');
       const rows = got.body;
       if (!Array.isArray(rows)) return null;
@@ -174,7 +200,7 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       return Object.keys(units).length ? { version: got.version || maxDish, units, names } : null;
     },
     async upsertEntry(e: FoodEntry): Promise<{ version?: number; row?: ServerRow }> {
-      if (config.mock) return {};
+      if (isLocal()) return {};
       type Saved = ServerRow;
       const patch = (body: Record<string, unknown>, known?: number) => patch0(body, known).catch((err) => { if (err instanceof ApiError) err.patch = true; throw err; });
       const saved = (row?: Saved) => ({ version: row?.version, ...(row && typeof row === 'object' ? { row } : {}) });
@@ -248,33 +274,33 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       }, e.server_version);
     },
     /** Remembered foods (per user). */
-    async getRemembered(): Promise<RememberedRow[]> { if (config.mock) return []; return (await req<{ remembered: RememberedRow[] }>('GET', '/v1/remembered')).remembered ?? []; },
+    async getRemembered(): Promise<RememberedRow[]> { if (isLocal()) return []; return (await req<{ remembered: RememberedRow[] }>('GET', '/v1/remembered')).remembered ?? []; },
     /** 404 (already gone) counts as done. */
     async deleteRemembered(id?: number): Promise<void> {
-      if (config.mock) return;
+      if (isLocal()) return;
       try { await req('DELETE', id === undefined ? '/v1/remembered' : `/v1/remembered/${id}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
     },
     /** The 35-minute backstop gave up on this job: the server stops trying and ignores a late result. 404/410 = done. */
     async abandonJob(jobId: string): Promise<void> {
-      if (config.mock || !jobId) return;
+      if (isLocal() || !jobId) return;
       try { await req('POST', `/v1/parse/jobs/${encodeURIComponent(jobId)}/abandon`); } catch (e) { if (!(e instanceof ApiError && (e.status === 404 || e.status === 410))) throw e; }
     },
     /** 404 (never reached the server / already gone) counts as done. */
     /** edge (a): GET /v1/entries/{id} (server id or the app's client_id): the server's current copy of a row; null when it
      * has none (404: deleted, or never stored). Read-only: used to count a flagged row exactly as the server has it. */
     async getEntry(id: string): Promise<ServerRow | null> {
-      if (config.mock) return null;
+      if (isLocal()) return null;
       try { return await req<ServerRow>('GET', `/v1/entries/${encodeURIComponent(id)}`); } catch (e) { if (e instanceof ApiError && e.status === 404) return null; throw e; }
     },
     async deleteEntry(id: string): Promise<void> {
-      if (config.mock) return;
+      if (isLocal()) return;
       try { await req('DELETE', `/v1/entries/${encodeURIComponent(id)}`); } catch (e) { if (!(e instanceof ApiError && e.status === 404)) throw e; }
     },
     async putSteps(local_date: string, steps: number): Promise<void> {
-      if (!config.mock) await req('POST', '/v1/activity/steps', { local_date, steps, source: 'health_connect' });
+      if (!isLocal()) await req('POST', '/v1/activity/steps', { local_date, steps, source: 'health_connect' });
     },
-    async putProfile(body: unknown): Promise<void> { if (!config.mock) await req('PUT', '/v1/profile', stripSex(body)); },
-    async deleteMe(): Promise<void> { if (!config.mock) await req('DELETE', '/v1/me'); },
+    async putProfile(body: unknown): Promise<void> { if (!isLocal()) await req('PUT', '/v1/profile', stripSex(body)); },
+    async deleteMe(): Promise<void> { if (!isLocal()) await req('DELETE', '/v1/me'); },
     /** M4: plans, workouts, habits and habit logs (one row per key, see docPath). PUT returns the row the server stored
      * (the truth: its version is sent with the next edit); 409 version_conflict carries the server's row (ApiError.row). */
     async putDoc(key: string, body: Record<string, unknown>, version?: number): Promise<DocRow> {
