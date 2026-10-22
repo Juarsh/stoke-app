@@ -91,7 +91,7 @@ func (g *GoogleVerifier) key(ctx context.Context, kid string) (*rsa.PublicKey, e
 func (g *GoogleVerifier) Verify(ctx context.Context, tok string) (Identity, error) {
 	parts := strings.Split(tok, ".")
 	if len(parts) != 3 {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: not a JWT", ErrInvalid)
 	}
 	var hdr struct{ Alg, Kid string }
 	var cl struct {
@@ -100,35 +100,53 @@ func (g *GoogleVerifier) Verify(ctx context.Context, tok string) (Identity, erro
 	}
 	hb, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil || json.Unmarshal(hb, &hdr) != nil || hdr.Alg != "RS256" {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: bad header", ErrInvalid)
 	}
 	cb, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil || json.Unmarshal(cb, &cl) != nil {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: bad claims", ErrInvalid)
 	}
 	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: bad signature encoding", ErrInvalid)
 	}
 	k, err := g.key(ctx, hdr.Kid)
 	if err != nil {
-		return Identity{}, fmt.Errorf("%w: %v", ErrInvalid, err)
+		return Identity{}, fmt.Errorf("%w: unknown signing key (%v)", ErrInvalid, err)
 	}
 	h := sha256.Sum256([]byte(parts[0] + "." + parts[1]))
 	if rsa.VerifyPKCS1v15(k, crypto.SHA256, h[:], sig) != nil {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: bad signature", ErrInvalid)
 	}
 	if cl.Iss != "accounts.google.com" && cl.Iss != "https://accounts.google.com" {
-		return Identity{}, ErrInvalid
+		return Identity{}, fmt.Errorf("%w: wrong issuer", ErrInvalid)
 	}
 	okAud := false
 	for _, a := range g.Audiences {
 		okAud = okAud || (a != "" && a == cl.Aud)
 	}
-	if !okAud || cl.Sub == "" || g.Now().Unix() >= cl.Exp {
-		return Identity{}, ErrInvalid
+	switch {
+	case !okAud:
+		// Android: Google Sign-In's ID token has aud = the WEB client id (azp = the Android one), so the web id must be
+		// in GOOGLE_CLIENT_IDS
+		return Identity{}, fmt.Errorf("%w: audience is not one of this server's client ids", ErrInvalid)
+	case cl.Sub == "":
+		return Identity{}, fmt.Errorf("%w: no subject", ErrInvalid)
+	case g.Now().Unix() >= cl.Exp:
+		return Identity{}, fmt.Errorf("%w: expired", ErrInvalid)
 	}
 	return Identity{Sub: cl.Sub, Email: cl.Email, Name: cl.Name}, nil
+}
+
+// Configured: at least one audience is a real OAuth client id (GOOGLE_CLIENT_IDS=pending, a placeholder, is not), so the
+// sign-in endpoint can say "not set up" rather than "invalid token".
+func (g *GoogleVerifier) Configured() bool {
+	for _, a := range g.Audiences {
+		if strings.HasSuffix(a, ".apps.googleusercontent.com") {
+			return true
+		}
+	}
+	return false
 }
 
 // DevVerifier accepts "dev:<name>" tokens. Local runs only (AUTH_MODE=dev).
@@ -187,16 +205,36 @@ func FromConfig(mode, appEnv, clientIDs string) (Verifier, error) {
 	}
 }
 
-// Middleware requires "Authorization: Bearer <Google ID token>".
+// Middleware requires "Authorization: Bearer <token>": a Google ID token, or no session store.
 func Middleware(v Verifier, users Users) func(http.Handler) http.Handler {
+	return WithSessions(v, users, nil)
+}
+
+// WithSessions requires "Authorization: Bearer <token>": our session token (stk_..., from POST /v1/auth/google) when
+// sessions is set, else a Google ID token verified on every request (as before sessions).
+func WithSessions(v Verifier, users Users, sessions Sessions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tok, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-			if !ok || strings.TrimSpace(tok) == "" {
+			tok = strings.TrimSpace(tok)
+			if !ok || tok == "" {
 				httpx.Error(w, http.StatusUnauthorized, "missing bearer token")
 				return
 			}
-			id, err := v.Verify(r.Context(), strings.TrimSpace(tok))
+			if sessions != nil && strings.HasPrefix(tok, SessionPrefix) {
+				uid, err := sessions.User(r.Context(), tokenHash(tok), time.Now())
+				switch {
+				case errors.Is(err, ErrNoSession):
+					httpx.Error(w, http.StatusUnauthorized, "session expired or signed out")
+					return
+				case err != nil:
+					httpx.Error(w, http.StatusInternalServerError, "session lookup failed")
+					return
+				}
+				next.ServeHTTP(w, r.WithContext(httpx.WithUser(r.Context(), uid)))
+				return
+			}
+			id, err := v.Verify(r.Context(), tok)
 			if err != nil {
 				httpx.Error(w, http.StatusUnauthorized, "invalid token")
 				return

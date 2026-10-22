@@ -151,7 +151,9 @@ func New(c Config) (http.Handler, error) {
 		&stoke.Service{Plans: st, Workouts: st, Habits: st},
 	}
 	mux := http.NewServeMux()
-	wrap := auth.Middleware(c.Verifier, auth.PGUsers{DB: c.DB})
+	sessions := auth.PGSessions{DB: c.DB}
+	wrap := auth.WithSessions(c.Verifier, auth.PGUsers{DB: c.DB}, sessions)
+	(&auth.SignIn{Verifier: c.Verifier, Users: auth.PGUsers{DB: c.DB}, Sessions: sessions}).Routes(mux)
 	for _, m := range mods {
 		m.Routes(mux, wrap)
 	}

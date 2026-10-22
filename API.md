@@ -1,9 +1,30 @@
 # API (v1)
 
-JSON only, no cookies. Every `/v1` route except `GET /v1/dishes` needs
-`Authorization: Bearer <Google ID token>` (the app gets it from Google sign-in;
-the server checks signature, issuer, audience = our OAuth client IDs, expiry).
+JSON only, no cookies. Every `/v1` route except `GET /v1/dishes` and the two
+sign-in routes below needs `Authorization: Bearer <token>`: our session token
+(`stk_...`, from `POST /v1/auth/google`; what the app sends) or a Google ID
+token (checked on every request: signature, issuer, audience = our OAuth client
+IDs in `GOOGLE_CLIENT_IDS`, expiry). On Android the ID token's audience is the
+**Web** client id, so `GOOGLE_CLIENT_IDS` must list it (next to the Android one).
 Local dev: run with `AUTH_MODE=dev` and send `Bearer dev:<any-name>`.
+
+## POST /v1/auth/google
+
+Request `{"id_token": "<Google ID token>"}` (with `AUTH_MODE=dev`, `dev:<name>`).
+Response 200:
+```json
+{ "user": { "id": 42, "email": "a@x.in", "name": "A" }, "session_token": "stk_...", "expires_at": "2027-01-21T19:00:00Z" }
+```
+The session lasts 90 days (no refresh yet: after that, or after sign-out, the
+bearer gets 401 `session expired or signed out`). Only its SHA-256 is stored;
+`DELETE /v1/me` drops every session. Refused: 400 `id_token_required`; 401
+`google_not_configured` (`GOOGLE_CLIENT_IDS` has no real `*.apps.googleusercontent.com`
+id yet) or `invalid_token` with why (`not a JWT`, `expired`, `audience is not one
+of this server's client ids`, ...), as `{"error":{"code","message"}}`.
+
+## POST /v1/auth/signout
+
+`Bearer <session token>` -> 204; the session is revoked (an unknown one counts as done).
 Errors: `{"error": "..."}` with 400 / 401 / 404 / 409 / 500.
 Dates are `YYYY-MM-DD` local dates (IST); omitted = today in IST.
 
