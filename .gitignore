@@ -43,3 +43,8 @@ example
 /android
 dist/
 .env
+
+# build outputs
+builds/
+*.apk
+*.aab
