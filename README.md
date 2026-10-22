@@ -1,7 +1,9 @@
-# Stoke — calorie and workout tracker app, Expo / React Native, v1
+# Stoke app (Expo / React Native)
 
-Android-first Expo (SDK 57, TypeScript, Expo Router) app for the Hinglish calorie tracker.
-Spec: `/workspace/calorie/spec.md` · Design: `/workspace/calorie/design/` (v4 bold redesign) · Backend: `/workspace/calorie-tracker`.
+Stoke is a fitness app with three parts: **Food** (log meals in plain Hinglish, calories and macros),
+**Train** (plans, routines and workout logging with a rest timer) and **Habits** (daily and weekly habits
+with streaks). This is the Android-first Expo app (SDK 57, TypeScript, Expo Router). It works fully on the
+phone; the optional Go + Postgres backend (sign-in, sync, AI food estimates) is on the `main` branch of this repo.
 
 ## Identity (name on hold)
 All identity comes from `brand.config.js` (env-overridable), read by `app.config.ts` and exposed to the UI via `expo-constants`:
