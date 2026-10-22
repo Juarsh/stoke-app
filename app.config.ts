@@ -56,6 +56,8 @@ const config: ExpoConfig = {
       'com.huawei.android.launcher.permission.WRITE_SETTINGS', 'com.oppo.launcher.permission.READ_SETTINGS',
       'com.oppo.launcher.permission.WRITE_SETTINGS', 'me.everything.badger.permission.BADGE_COUNT_READ',
       'me.everything.badger.permission.BADGE_COUNT_WRITE',
+      // expo-secure-store (item 16: the session token) declares biometric unlock; the session is stored without it
+      'android.permission.USE_BIOMETRIC', 'android.permission.USE_FINGERPRINT',
     ],
   },
   web: { output: 'single', favicon: './assets/images/favicon.png' },
