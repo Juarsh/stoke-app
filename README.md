@@ -1,6 +1,12 @@
-# Khaana Count backend (working name)
+# Stoke backend
 
-Go 1.24 + Postgres 17. V1 = food, coach, steps, streaks. Spec: /workspace/calorie/spec.md. API: API.md.
+Stoke is a fitness app with three parts: **Food** (log meals in plain Hinglish, calories and macros),
+**Train** (plans, routines and workout logging) and **Habits** (daily and weekly habits with streaks).
+This repo is the backend: a Go 1.24 JSON API on plain Postgres (no vendor-specific extensions, so the
+database can move to any Postgres host), shipped as one Docker image. API reference: [API.md](API.md).
+
+The app (Expo / React Native) lives on the `app` branch. The phone works fully offline; this server adds
+sign-in, sync and AI food estimates.
 
 ```
 internal/dishes    dishes.json — the ONE canonical dish table (also shipped in the app)
@@ -20,7 +26,7 @@ Prod: `GOOGLE_CLIENT_IDS=<android client id>,... go run ./cmd/api`.
 Test: `go test ./...` (API tests use the calorie_test DB and reset its schema).
 
 Dish table: values are our own estimates or generic public data (USDA FDC, Open Food Facts labels). No IFCT data.
-`internal/parser/testdata/dev-meals.json` holds Coder's DEV samples only; the accuracy set is Tester's (/workspace/calorie-tests).
+`internal/parser/testdata/dev-meals.json` holds Coder's DEV samples only; the accuracy set is kept separately.
 
 ## AI modes
 
@@ -91,15 +97,50 @@ Move data (plain Postgres, any host):
   (JSON, every table or one user's rows; import migrates first, runs in one transaction, refuses rows that already exist).
 - `FROM_URL=... TO_URL=... scripts/db-move.sh` (pg_dump / pg_restore of the whole database, schema included).
 
-### What Akarsh's accounts plug in
+## Configuration (environment variables)
+
+Names only; never commit values. Set secrets in the host's dashboard.
+
+| Variable | Needed | Notes |
+|---|---|---|
+| `DATABASE_URL` | yes (secret) | Postgres connection string, e.g. Neon's pooled string with `?sslmode=require` |
+| `APP_ENV` | yes | `prod` in production; `dev` / `test` locally |
+| `AUTH_MODE` | yes | `google` (default) or `dev` (refused when `APP_ENV=prod`) |
+| `GOOGLE_CLIENT_IDS` | with `AUTH_MODE=google` (secret) | comma-separated OAuth client ids (Android, Web, iOS) |
+| `AI_MODE` | no | `off` (default), `gemini`, or `stub` (dev/test only) |
+| `GEMINI_API_KEY` | with `AI_MODE=gemini` (secret) | Google AI Studio key |
+| `GEMINI_MODEL`, `GEMINI_RPM`, `GEMINI_THINKING_BUDGET` | no | see "AI modes" |
+| `AI_DAILY_CAP`, `AI_USER_DAILY_CAP`, `AI_GLOBAL_DAILY_CAP`, `AI_PER_MINUTE`, `AI_QUOTA_RESET_TZ`, `AI_REQUEUE_MAX_MINUTES`, `AI_MAX_ATTEMPTS` | no | AI limits, see "AI modes" |
+| `ADMIN_TOKEN` | no (secret) | enables `/admin/*` (API.md); at least 24 characters, unset = no admin routes |
+| `PORT` | no | set by the host (Render sets it); defaults to 8080 in the image |
+
+## Docker
+
+`docker build -t stoke-api . && docker run -p 8080:8080 -e DATABASE_URL=... -e APP_ENV=prod ... stoke-api`
+
+Multi-stage build: a static `CGO_ENABLED=0` binary on distroless. All config comes from the environment and the
+server runs the migrations on start.
+
+## Deploy on Render
+
+`render.yaml` describes the service as a Blueprint; to create it by hand:
+
+1. Render dashboard → **New** → **Web Service** → connect GitHub and pick `Juarsh/stoke-app`.
+2. Name `stoke-api`, Language **Docker** (uses the `Dockerfile`), Branch `main`, Region **Singapore**,
+   Root Directory empty.
+3. Instance type **Free**.
+4. Environment variables: `APP_ENV=prod`, `AUTH_MODE=google`, `AI_MODE=gemini`, plus the secrets `DATABASE_URL`,
+   `GEMINI_API_KEY`, `GOOGLE_CLIENT_IDS` (and optionally `ADMIN_TOKEN`). Don't set `PORT`.
+5. Advanced → Health Check Path `/healthz`.
+6. **Deploy Web Service**. The free instance sleeps when idle, so the first request after a pause is slow.
+
+### Accounts to plug in
 
 Nothing here needs them to build or test. To go live:
 
-1. **Neon**: create a project + database, copy its connection string (with `?sslmode=require`) as `DATABASE_URL`.
+1. **Neon**: create a project + database, copy its pooled connection string (with `?sslmode=require`) as `DATABASE_URL`.
    The server runs the migrations on start. To bring local data across: `scripts/db-move.sh` or `stoke-export`.
-2. **Render** (service `katoricount-api` in `render.yaml`, or any host running the Dockerfile), env vars:
-   `DATABASE_URL` (Neon), `APP_ENV=prod`, `AUTH_MODE=google`, `GOOGLE_CLIENT_IDS`, `AI_MODE=gemini`, `GEMINI_API_KEY`,
-   `ADMIN_TOKEN`. `PORT` is set by Render.
+2. **Render**: service `stoke-api` (see "Deploy on Render" above, or any host running the Dockerfile).
 3. **Google Cloud** (OAuth consent screen + credentials):
    - an **Android** OAuth client: package `app.stokefit`, SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`
      (the current debug/upload key); add the **release key's SHA-1 later** (Play signing) as a second fingerprint;

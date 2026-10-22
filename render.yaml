@@ -1,11 +1,12 @@
 services:
   - type: web
-    name: katoricount-api
-    runtime: go
+    name: stoke-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
     region: singapore
-    buildCommand: go build -o api ./cmd/api
-    startCommand: ./api
+    branch: main
     healthCheckPath: /healthz
     envVars:
       - key: APP_ENV

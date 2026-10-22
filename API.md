@@ -110,7 +110,7 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 - Modifiers pick a variant row: "paratha with aloo filling", "aloo bhara paratha", "veg momos", "chicken steamed momos".
 - Egg counts go to the egg dish: "teen ande ka omelette" = omelette for 3 eggs, not boiled eggs.
 
-## App contract for POST /v1/entries items (katoricount-app)
+## App contract for POST /v1/entries items (Stoke app)
 - `client_id` (string, max 100): idempotent per user. Sending a client_id that already exists returns the stored entry unchanged (in `entries`, listed in `duplicates`); the response is 200 if every item was a repeat, else 201. To change an entry use `PATCH /v1/entries/{id}`; `{id}` may be the server id or the client_id (GET and DELETE too).
 - `dish_table_version` (int): the table version the client's numbers came from (current: max `version` in dishes.json, now 1).
 - `kcal`, `kcal_low`, `kcal_high`, `protein_g`, `protein_low`, `protein_high`, `carbs_g`, `fat_g`: what the user confirmed. For table items (dish_id + source table/did_you_mean/generic) the server checks them against that table version and **rejects mismatches, never silently recalculating**:
