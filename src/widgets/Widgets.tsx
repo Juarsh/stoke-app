@@ -13,10 +13,10 @@ const BOLD = 'DMSans_700Bold', MED = 'DMSans_500Medium';
 export interface Ctx { c: C; scheme: string; tall: boolean; note?: string | null }
 const open = (x: Ctx, route: string) => ({ clickAction: 'OPEN_URI', clickActionData: { uri: linkOf(x.scheme, route) } });
 
-function Card({ x, children, route, bg, line }: { x: Ctx; children: unknown; route?: string; bg?: string; line?: string }) {
+function Card({ x, children, route, bg, line, top }: { x: Ctx; children: unknown; route?: string; bg?: string; line?: string; top?: boolean }) {
   return (
     <FlexWidget {...(route ? open(x, route) : {})}
-      style={{ height: 'match_parent', width: 'match_parent', flexDirection: 'column', justifyContent: 'space-between', padding: 12,
+      style={{ height: 'match_parent', width: 'match_parent', flexDirection: 'column', justifyContent: top ? 'flex-start' : 'space-between', flexGap: top ? 6 : 0, padding: 12,
         backgroundColor: hex(bg ?? x.c.card), borderRadius: radius.card, borderWidth: 1, borderColor: hex(line ?? x.c.lineSoft) }}>
       {children as never}
     </FlexWidget>
@@ -34,12 +34,14 @@ function Honey({ x, text, click }: { x: Ctx; text: string; click: Record<string,
     </FlexWidget>
   );
 }
-const Note = ({ x }: { x: Ctx }) => (x.note ? <Txt text={`⚠ ${x.note}`} size={11} color={x.c.warn} lines={2} /> : null);
+// A plain function, not a component: react-native-android-widget's tree builder calls components and reads `.type`
+// on what they return, so a component that returns null crashes the whole widget render.
+const note = (x: Ctx) => (x.note ? <Txt text={`⚠ ${x.note}`} size={11} color={x.c.warn} lines={2} /> : null);
 
 export function TodayWidget({ x, v }: { x: Ctx; v: TodayView }) {
   const log = open(x, ROUTES.logFood);
   if (v.kind === 'setup') {
-    return <Card x={x} route={ROUTES.home}><Eyebrow x={x} text="Today" /><Txt text="Set up Stoke to see your day" size={14} color={x.c.text} bold lines={2} /></Card>;
+    return <Card x={x} route={ROUTES.home} top><Eyebrow x={x} text="Today" /><Txt text="Set up Stoke to see your day" size={14} color={x.c.text} bold lines={2} /></Card>;
   }
   const kcalLine = `${kc(v.kcal)} / ${kc(v.kcalTarget)} kcal`;
   const protLine = `${grams(v.protein)} / ${grams(v.proteinTarget)} protein`;
@@ -48,10 +50,10 @@ export function TodayWidget({ x, v }: { x: Ctx; v: TodayView }) {
       <Card x={x} route={ROUTES.home}>
         <FlexWidget style={{ flexDirection: 'row', width: 'match_parent', alignItems: 'center', justifyContent: 'space-between' }}>
           <FlexWidget style={{ flexDirection: 'column', flex: 1 }}>
-            <Txt text={kcalLine} size={15} color={x.c.text} bold />
-            <Txt text={protLine} size={12} color={x.c.muted} />
+            <Txt text={leftText(v.kcalLeft)} size={15} color={v.kcalLeft < 0 ? x.c.over : x.c.text} bold />
+            <Txt text={kcalLine} size={11} color={x.c.muted} />
           </FlexWidget>
-          <FlexWidget {...log} style={{ height: 40, width: 56, marginLeft: 8, borderRadius: radius.button, backgroundColor: hex(x.c.accentFill), justifyContent: 'center', alignItems: 'center' }}>
+          <FlexWidget {...log} style={{ height: 40, width: 52, marginLeft: 6, borderRadius: radius.button, backgroundColor: hex(x.c.accentFill), justifyContent: 'center', alignItems: 'center' }}>
             <Txt text="+ Log" size={13} color={x.c.onAccent} bold />
           </FlexWidget>
         </FlexWidget>
@@ -72,7 +74,7 @@ export function TodayWidget({ x, v }: { x: Ctx; v: TodayView }) {
 }
 
 export function HabitsWidget({ x, v }: { x: Ctx; v: HabitsView }) {
-  if (!v.total) return <Card x={x} route={ROUTES.habits}><Eyebrow x={x} text="Habits" /><Txt text="No habits today. Tap to add one." size={13} color={x.c.text} lines={2} /></Card>;
+  if (!v.total) return <Card x={x} route={ROUTES.habits} top><Eyebrow x={x} text="Habits" /><Txt text="No habits today. Tap to add one." size={13} color={x.c.text} lines={2} /></Card>;
   return (
     <Card x={x} route={ROUTES.habits}>
       <Eyebrow x={x} text={`Habits · ${v.done} of ${v.total}`} />
@@ -87,14 +89,14 @@ export function HabitsWidget({ x, v }: { x: Ctx; v: HabitsView }) {
           </FlexWidget>
         ))}
       </FlexWidget>
-      <Note x={x} />
+      {note(x)}
     </Card>
   );
 }
 
 export function WaterWidget({ x, v }: { x: Ctx; v: WaterView }) {
   if (v.kind === 'none') {
-    return <Card x={x} route={ROUTES.settings}><Eyebrow x={x} text="Water" /><Txt text="Track water: tap to set it up in Settings" size={13} color={x.c.text} lines={2} /></Card>;
+    return <Card x={x} route={ROUTES.settings} top><Eyebrow x={x} text="Water" /><Txt text="Track water: tap to set it up in Settings" size={13} color={x.c.text} lines={2} /></Card>;
   }
   const add = { clickAction: ACTIONS.addWater, clickActionData: {} };
   const count = `${v.count} / ${v.target}`;
@@ -113,7 +115,7 @@ export function WaterWidget({ x, v }: { x: Ctx; v: WaterView }) {
         )}
       </FlexWidget>
       {x.tall ? <Honey x={x} text="+ Add a glass" click={add} /> : null}
-      <Note x={x} />
+      {note(x)}
     </Card>
   );
 }

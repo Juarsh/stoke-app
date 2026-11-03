@@ -301,6 +301,16 @@ describe('provider config (app.config.ts) and drawing', () => {
     for (const c of d) expect(darkSet).toContain(c);
     expect(l).not.toEqual(d);
   });
+  test.each(WIDGET_NAMES.flatMap((n) => [[n, 40, null], [n, 160, null], [n, 40, 'Refused.'], [n, 160, 'Refused.']] as [string, number, string | null][]))(
+    '%s at %idp (note %s) builds with the library tree builder (no null components)', (name, height, note) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildWidgetTree } = require('react-native-android-widget/lib/commonjs/api/build-widget-tree');
+      for (const d of [data, { ...data, habits: S([]) }]) {
+        const r = widgetFor(name, d, { height }, note) as { light: unknown; dark: unknown };
+        expect(() => buildWidgetTree(r.light)).not.toThrow();
+        expect(() => buildWidgetTree(r.dark)).not.toThrow();
+      }
+    });
   test('a theme picked in Settings is used for the widgets too', () => {
     const one = widgetFor(WIDGETS.today, { ...data, app: { ...data.app, themePref: 'dark' } }, { height: 160 }) as { props?: unknown };
     expect('light' in (one as object)).toBe(false);
