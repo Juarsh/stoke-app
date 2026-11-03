@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Alert, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { Button, Card, Row, Screen, Segmented, T } from '@/components/ui';
 import { TargetsCard } from '@/features/settings/TargetsCard';
+import { WaterCard } from '@/features/settings/WaterCard';
 import { GoogleSignIn } from '@/features/account/GoogleSignIn';
 import { config, flags } from '@/lib/config';
 import { Diet } from '@/lib/domain';
@@ -52,6 +53,7 @@ export default function Settings() {
         <T v="caption" tone="muted">Diet for coach picks</T>
         <Segmented value={p.diet} onChange={(diet: Diet) => set({ diet })} options={[{ value: 'veg', label: 'Veg' }, { value: 'egg', label: 'Egg + veg' }, { value: 'nonveg', label: 'Non-veg' }]} />
       </TargetsCard>
+      <WaterCard />
       <Card>
         <T v="bodyStrong">Appearance</T>
         <Segmented value={st.themePref} onChange={st.setThemePref} options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />

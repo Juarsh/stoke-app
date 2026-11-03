@@ -273,3 +273,58 @@ export function parseHabits(raw: string | null): HabitsState {
     return { v: 1, habits, logs: o.logs.filter((l: HabitLog) => l && ids.has(l.habit_id) && typeof l.local_date === 'string' && l.target_snapshot) };
   } catch { return EMPTY_HABITS; }
 }
+
+// ---- changes to a day's log (shared by the app and the home-screen widgets) ------------------------------------
+/** Pure versions of the app's tick and amount changes, so a widget write goes through exactly the same checks: a refused
+ *  change returns its reason (a string) and nothing is written; a bad amount is never clamped. */
+export interface LogChange { state: HabitsState; prev: HabitLog | null; done: boolean }
+export interface LogCtx { today: string; nowIso: string; newId: () => string }
+const withLog = (s: HabitsState, habitId: string, date: string, log: HabitLog | null): HabitsState => {
+  const logs = s.logs.filter((l) => !(l.habit_id === habitId && l.local_date === date));
+  return { ...s, logs: log ? [...logs, log] : logs };
+};
+/** set the amount for a day: full target (null) → done; 0 → no log; partial → undone with the amount (§10.4) */
+export function setAmountIn(s: HabitsState, habitId: string, date: string, value: number | null, c: LogCtx): LogChange | string {
+  const h = s.habits.find((x) => x.id === habitId); if (!h) return 'This habit was deleted.';
+  const derr = logDateError(date, c.today); if (derr) return derr;
+  const prev = logOf(s, habitId, date);
+  const snap = prev?.target_snapshot ?? snapOf(h);
+  const full = fullValue(snap);
+  if (value !== null) {
+    if (snap.kind === 'done') return 'This habit is yes / no.';
+    if (!Number.isInteger(value) || value < 0 || value > (full ?? 0)) return `Enter a whole number from 0 to ${full}.`;
+  }
+  if (value === 0) return { state: withLog(s, habitId, date, null), prev, done: false };
+  const done = value === null || value === full;
+  return { state: withLog(s, habitId, date, { id: prev?.id ?? c.newId(), habit_id: habitId, local_date: date, value: snap.kind === 'done' ? null : (value ?? full),
+    done, target_snapshot: snap, logged_at: c.nowIso }), prev, done };
+}
+/** One tap: done at the full target, or un-tick a done day. */
+export function toggleIn(s: HabitsState, habitId: string, date: string, c: LogCtx): LogChange | string {
+  if (!s.habits.some((x) => x.id === habitId)) return 'This habit was deleted.';
+  const prev = logOf(s, habitId, date);
+  if (prev?.done) {
+    const err = logDateError(date, c.today); if (err) return err;
+    return { state: withLog(s, habitId, date, null), prev, done: false };
+  }
+  return setAmountIn(s, habitId, date, null, c);
+}
+
+// ---- water (a Count habit named "Water"; its unit and target are the habit's) ----------------------------------
+/** Today's water habit: the first due Count habit whose name says water. */
+export const isWaterHabit = (h: Habit) => h.kind === 'count' && (isWater(h.name) || isWater(h.short_name));
+export const waterHabit = (s: HabitsState, date: string) => dueToday(s, date).find(isWaterHabit) ?? null;
+/** what one day's water log says: the count so far (a done day is the full target) and the target it was logged against */
+export function waterOn(s: HabitsState, h: Habit, date: string): { count: number; target: number; unit: string; done: boolean } {
+  const l = logOf(s, h.id, date); const snap = l?.target_snapshot ?? snapOf(h); const target = fullValue(snap) ?? 0;
+  return { count: l ? (l.done ? target : l.value ?? 0) : 0, target, unit: snap.unit ?? WATER_UNIT, done: !!l?.done };
+}
+/** +1 glass. At the target it is refused with the reason (the habit's target is the most a day can log; never clamped). */
+export function addGlassIn(s: HabitsState, date: string, c: LogCtx): LogChange | string {
+  const h = waterHabit(s, date); if (!h) return 'Add a Water habit first (Settings → Water).';
+  const w = waterOn(s, h, date);
+  if (w.count >= w.target) return `${h.short_name} is at ${w.target} of ${w.target} ${w.unit} today. Raise the target to log more.`;
+  return setAmountIn(s, h.id, date, w.count + 1, c);
+}
+/** the Water habit Settings creates: 8 glasses a day, every day */
+export const waterDraft = (): Draft => ({ ...blankDraft(), name: 'Water', short_name: 'Water', short_name_auto: true, icon: 'drop', kind: 'count', target_value: 8, unit: WATER_UNIT });

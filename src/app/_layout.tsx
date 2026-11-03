@@ -11,7 +11,11 @@ import { NoticeToast } from '@/components/NoticeToast';
 import { HabitToastHost } from '@/features/habits/HabitToastHost';
 import { DocSync } from '@/lib/DocSync';
 import { StoreProvider, useStore } from '@/lib/store';
+import { WidgetSync } from '@/widgets/WidgetSync';
 import { ThemeProvider, useTheme } from '@/theme';
+
+// a screen opened by a deep link (a home-screen widget) has Home under it, so Back goes Home instead of leaving the app
+export const unstable_settings = { initialRouteName: '(tabs)' };
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -41,6 +45,7 @@ function Gate() {
       <NoticeToast />
       <HabitToastHost />
       <DocSync />
+      <WidgetSync />
     </>
   );
 }

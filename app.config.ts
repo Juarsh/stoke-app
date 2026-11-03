@@ -21,6 +21,23 @@ const iosUrlScheme = 'com.googleusercontent.apps.' + GOOGLE.ios.replace(/\.apps\
 const googleSignIn = env.EXPO_PUBLIC_FLAG_GOOGLE_SIGNIN === '1' || (env.EXPO_PUBLIC_FLAG_GOOGLE_SIGNIN !== '0' && healthKit);
 // with sign-in on, the live server unless EXPO_PUBLIC_API_URL says otherwise; without it, no server (local / mock mode)
 const apiUrl = env.EXPO_PUBLIC_API_URL || (googleSignIn ? 'https://stoke-api.onrender.com' : '');
+// Android home-screen widgets (src/widgets): 2 cells wide, resizable between 1 and 2 cells high (2x1 and 2x2 only:
+// minWidth/minHeight = 2x1 at 70n-30 dp; width fixed (vertical resize only); max 150dp, between the 2-cell 110dp and the
+// 3-cell 180dp, so no launcher offers a 3rd row). Redrawn by the app on every change and every
+// 30 min (the 4 AM day rollover). DM Sans is the B2 font. No permission is needed (BIND_APPWIDGET is the launcher's).
+const widget = (name: string, label: string, description: string, rows: 1 | 2) => ({
+  name, label, description, minWidth: '110dp', minHeight: '40dp', targetCellWidth: 2, targetCellHeight: rows,
+  maxResizeWidth: '150dp', maxResizeHeight: '150dp', resizeMode: 'vertical', updatePeriodMillis: 1800000, widgetCategory: 'home_screen',
+}) as const;
+export const WIDGET_CONFIG = {
+  fonts: ['./node_modules/@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf', './node_modules/@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf'],
+  widgets: [
+    widget('StokeToday', 'Stoke · Today', 'Calories and protein vs target, and + Log food', 2),
+    widget('StokeHabits', 'Stoke · Habits', 'Tick today’s habits', 2),
+    widget('StokeWater', 'Stoke · Water', 'Tap to add a glass', 1),
+    widget('StokeWorkout', 'Stoke · Workout', 'Start today’s workout in one tap', 1),
+  ],
+} as const;
 const config: ExpoConfig = {
   name: brand.name,
   slug: brand.slug,
@@ -74,6 +91,7 @@ const config: ExpoConfig = {
     // Google sign-in without Firebase: the plugin only adds the iOS URL scheme; Android needs no config file. No push
     // (aps-environment) entitlement is added by it or by anything else here.
     ['@react-native-google-signin/google-signin', { iosUrlScheme }],
+    ['react-native-android-widget', WIDGET_CONFIG],
     ...(healthKit ? [['@kingstinct/react-native-healthkit', {
       NSHealthShareUsageDescription: 'Stoke reads your step count from Apple Health to show your daily steps. It never writes to Apple Health.',
       NSHealthUpdateUsageDescription: false,

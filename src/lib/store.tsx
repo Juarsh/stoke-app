@@ -47,7 +47,8 @@ interface Persisted {
   docs?: Ledger;
 }
 const EMPTY: Persisted = { profileError: null, user: null, profile: null, entries: [], steps: {}, queue: [], themePref: 'system', challenge: null, aiQuota: EMPTY_QUOTA, learned: {}, myFoods: [] };
-const KEY = 'app-state-v1';
+export const APP_STATE_KEY = 'app-state-v1';
+const KEY = APP_STATE_KEY;
 /** 35-minute AI backstop on the whole state (same object back when nothing is due, so no re-render loop). */
 /** The phone's entry is still the one that op sent (the user has not changed it since). */
 export const DELETED_ELSEWHERE = 'This entry was deleted on another device.';

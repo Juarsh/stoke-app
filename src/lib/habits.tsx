@@ -4,9 +4,10 @@
 // Change", Q8 4 s) and the Home settle clock (Q7: the B2 row reorders 4 s after the last toast closes).
 import * as Crypto from 'expo-crypto';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { localStore } from './data';
 import {
-  Draft, draftErrors, EMPTY_HABITS, firstError, fromDraft, fullValue, Habit, HabitLog, HabitsState, logDateError, logOf, parseHabits, snapOf,
+  Draft, draftErrors, EMPTY_HABITS, firstError, fromDraft, Habit, HabitLog, HabitsState, LogChange, LogCtx, parseHabits, setAmountIn, toggleIn,
 } from '../features/habits/model';
 
 export const HABITS_KEY = 'habits-v1';
@@ -19,8 +20,28 @@ function useHabitsValue(wipeGen: number, now: () => Date) {
   const [ready, setReady] = useState(false);
   const ref = useRef(s); ref.current = s;
   const dirty = useRef(false);
-  useEffect(() => { localStore.load(HABITS_KEY).then((raw) => setS(parseHabits(raw))).catch(() => {}).finally(() => setReady(true)); }, []);
-  useEffect(() => { if (ready && dirty.current) localStore.save(HABITS_KEY, JSON.stringify(s)).catch(() => {}); }, [s, ready]);
+  // lastRaw: what this provider last loaded or saved. Saves run one after another (a reload waits for them), so a stored
+  // value that differs from it was written by someone else: a home-screen widget while the app was in the background.
+  const lastRaw = useRef<string | null>(null);
+  const saving = useRef<Promise<unknown>>(Promise.resolve());
+  useEffect(() => { localStore.load(HABITS_KEY).then((raw) => { lastRaw.current = raw; setS(parseHabits(raw)); }).catch(() => {}).finally(() => setReady(true)); }, []);
+  useEffect(() => {
+    if (!ready || !dirty.current) return;
+    const raw = JSON.stringify(s); lastRaw.current = raw;
+    saving.current = saving.current.then(() => localStore.save(HABITS_KEY, raw)).catch(() => {});
+  }, [s, ready]);
+  const reload = useCallback(async () => {
+    await saving.current;
+    const raw = await localStore.load(HABITS_KEY).catch(() => lastRaw.current);
+    if (raw === lastRaw.current) return;
+    lastRaw.current = raw; const next = parseHabits(raw); ref.current = next; setS(next);
+  }, []);
+  // the app reflects widget writes when it comes back to the foreground
+  useEffect(() => {
+    if (!ready) return;
+    const sub = AppState.addEventListener?.('change', (a) => { if (a === 'active') void reload(); });
+    return () => sub?.remove?.();
+  }, [ready, reload]);
   const firstGen = useRef(wipeGen);
   useEffect(() => { if (wipeGen !== firstGen.current) { dirty.current = true; setS(EMPTY_HABITS); } }, [wipeGen]);
   const commit = useCallback((next: HabitsState) => { dirty.current = true; ref.current = next; setS(next); }, []);
@@ -52,22 +73,12 @@ function useHabitsValue(wipeGen: number, now: () => Date) {
 
   return useMemo(() => {
     const nowIso = () => today().toISOString();
+    const ctx = (todayDate: string): LogCtx => ({ today: todayDate, nowIso: nowIso(), newId: () => Crypto.randomUUID() });
     /** set the amount for a day: full target → done; 0 → no log; partial → undone with the amount (§10.4) */
     const setAmount = (habitId: string, date: string, value: number | null, todayDate: string): string | null => {
-      const h = habitById(habitId); if (!h) return 'This habit was deleted.';
-      const derr = logDateError(date, todayDate); if (derr) return derr;
-      const prev = logOf(ref.current, habitId, date);
-      const snap = prev?.target_snapshot ?? snapOf(h);
-      const full = fullValue(snap);
-      if (value !== null) {
-        if (snap.kind === 'done') return 'This habit is yes / no.';
-        if (!Number.isInteger(value) || value < 0 || value > (full ?? 0)) return `Enter a whole number from 0 to ${full}.`;
-      }
-      if (value === 0) { putLog(habitId, date, null); return null; }
-      const done = value === null || value === full;
-      putLog(habitId, date, { id: prev?.id ?? Crypto.randomUUID(), habit_id: habitId, local_date: date, value: snap.kind === 'done' ? null : (value ?? full),
-        done, target_snapshot: snap, logged_at: nowIso() });
-      return null;
+      const r = setAmountIn(ref.current, habitId, date, value, ctx(todayDate));
+      if (typeof r === 'string') return r;
+      commit(r.state); return null;
     };
     return {
       ready, state: s, habitById, toast, settleGen,
@@ -95,32 +106,40 @@ function useHabitsValue(wipeGen: number, now: () => Date) {
       /** One tap: done at the full target, or un-tick a done day. Opens the toast. Returns a reason when refused. */
       toggle: (habitId: string, date: string, todayDate: string): string | null => {
         const h = habitById(habitId); if (!h) return 'This habit was deleted.';
-        const prev = logOf(ref.current, habitId, date);
-        if (prev?.done) {
-          const err = logDateError(date, todayDate); if (err) return err;
-          putLog(habitId, date, null);
-        } else {
-          const err = setAmount(habitId, date, null, todayDate); if (err) return err;
-        }
-        openToast({ habitId, date, prev, text: `${h.short_name} ${prev?.done ? 'undone' : 'done'}`, change: !prev?.done && h.kind !== 'done' });
+        const r = toggleIn(ref.current, habitId, date, ctx(todayDate));
+        if (typeof r === 'string') return r;
+        commit(r.state);
+        openToast({ habitId, date, prev: r.prev, text: `${h.short_name} ${r.prev?.done ? 'undone' : 'done'}`, change: !r.prev?.done && h.kind !== 'done' });
         return null;
       },
+      /** Home-screen widget writes (src/widgets) while the app is running: the same pure change, no toast. */
+      applyChange: (f: (cur: HabitsState) => LogChange | string): LogChange | string => {
+        const r = f(ref.current); if (typeof r !== 'string') commit(r.state); return r;
+      },
+      /** re-read the stored habits (a widget wrote them while the app was in the background) */
+      reload,
+      /** the latest state, committed changes included (the render's `state` may lag a widget write by one render) */
+      snapshot: () => ref.current,
       setAmount: (habitId: string, date: string, value: number, todayDate: string) => setAmount(habitId, date, value, todayDate),
       /** Undo in the toast: the day goes back exactly as it was (no reorder: the row is frozen while a toast is up). */
       undo: (t: HabitToast) => { putLog(t.habitId, t.date, t.prev); },
       closeToast,
     };
-  }, [ready, s, habitById, toast, settleGen, commit, putLog, openToast, closeToast]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, s, habitById, toast, settleGen, commit, putLog, openToast, closeToast, reload]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 export type Habits = ReturnType<typeof useHabitsValue>;
 const Ctx = createContext<Habits | null>(null);
+/** the mounted provider, for home-screen widget writes made while the app is running (src/widgets/actions) */
+export const liveHabits: { current: Habits | null } = { current: null };
 export function HabitsProvider({ children, wipeGen = 0, now = () => new Date() }: { children: ReactNode; wipeGen?: number; now?: () => Date }) {
   const v = useHabitsValue(wipeGen, now);
+  useEffect(() => { liveHabits.current = v.ready ? v : null; }, [v]);
+  useEffect(() => () => { liveHabits.current = null; }, []);
   return <Ctx.Provider value={v}>{children}</Ctx.Provider>;
 }
 const NONE: Habits = {
   ready: false, state: EMPTY_HABITS, habitById: () => null, toast: null, settleGen: 0, applyServer: () => {},
   create: () => 'Habits aren’t ready yet.', update: () => 'Habits aren’t ready yet.', archive: () => {}, toggle: () => 'Habits aren’t ready yet.',
-  setAmount: () => 'Habits aren’t ready yet.', undo: () => {}, closeToast: () => {},
+  setAmount: () => 'Habits aren’t ready yet.', undo: () => {}, closeToast: () => {}, applyChange: () => 'Habits aren’t ready yet.', reload: async () => {}, snapshot: () => EMPTY_HABITS,
 };
 export const useHabits = () => useContext(Ctx) ?? NONE;

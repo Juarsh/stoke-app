@@ -455,3 +455,17 @@ export function reopenRejected(e: FoodEntry, code = '', now = new Date(), server
   // a note from an earlier state (e.g. 'Check amount' while its units were unknown) never hides this refusal's own line
   return { ...e, kcal: z, protein_g: z, carbs_g: 0, fat_g: 0, confirmed: false, needs_review: true, review_item: it, reject_code: code || 'unknown', server_note: undefined, updated_at: now.toISOString() };
 }
+
+/** One day's food numbers vs target: Home (useDay) and the Today home-screen widget both use this, so they always agree
+ *  (phone == widget). Only counted entries (on the server, nothing to review) add up, exactly as on Home. */
+export function dayNumbers(all: FoodEntry[], stepsByDay: Record<string, number>, p: Profile | null | undefined, date: string) {
+  const entries = all.filter((e) => e.local_date === date && counted(e));
+  const tot = dayTotals(entries);
+  const steps = stepsByDay[date] ?? 0;
+  const burn = stepsKcal(steps);
+  const kcalTarget = (p?.kcalTarget ?? 2000) + (p?.addStepKcal ? burn : 0);
+  const proteinTarget = p?.proteinTarget ?? 60;
+  const kcalLeft = kcalTarget - tot.kcal;
+  const proteinLeft = Math.max(0, Math.round((proteinTarget - tot.protein) * 10) / 10);
+  return { entries, tot, steps, burn, kcalTarget, proteinTarget, kcalLeft, proteinLeft };
+}
