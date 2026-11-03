@@ -87,8 +87,8 @@ const config: ExpoConfig = {
     'expo-sqlite',
     'expo-sharing',
     ['expo-splash-screen', { backgroundColor: '#FFFFFF', image: './assets/images/splash-icon.png', imageWidth: 76 }],
-    // SDK 58 turns R8 on for release builds by default; kept off (as on SDK 57) until R8 keep rules are checked for the widget / nitro / health native code.
-    ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 36, targetSdkVersion: 35, enableMinifyInReleaseBuilds: false } }],
+    // SDK 58: its Android libraries need compileSdk 37 (targetSdk stays 35, so runtime behaviour is unchanged). SDK 58 also turns R8 on for release builds by default; kept off (as on SDK 57) until R8 keep rules are checked for the widget / nitro / health native code.
+    ['expo-build-properties', { android: { minSdkVersion: 26, compileSdkVersion: 37, targetSdkVersion: 35, enableMinifyInReleaseBuilds: false } }],
     'expo-health-connect',
     // rest-done alert (Tester B1): expo-notifications' Android half only (icon + colour); local notifications, no push,
     // so no iOS aps-environment entitlement. The library adds POST_NOTIFICATIONS and RECEIVE_BOOT_COMPLETED.
