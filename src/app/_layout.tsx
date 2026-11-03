@@ -15,7 +15,7 @@ import { WidgetSync } from '@/widgets/WidgetSync';
 import { ThemeProvider, useTheme } from '@/theme';
 
 // a screen opened by a deep link (a home-screen widget) has Home under it, so Back goes Home instead of leaving the app
-export const unstable_settings = { initialRouteName: '(tabs)' };
+export const unstable_settings = { anchor: '(tabs)' }; // SDK 58 name (initialRouteName is deprecated)
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

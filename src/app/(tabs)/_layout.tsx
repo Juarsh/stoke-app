@@ -19,9 +19,11 @@ export default function TabsLayout() {
         <Tabs.Screen name="food" />
         <Tabs.Screen name="train" />
         <Tabs.Screen name="progress" />
-        <Tabs.Screen name="log" options={{ href: null }} />
-        <Tabs.Screen name="coach" options={{ href: null }} />
-        <Tabs.Screen name="community" options={{ href: null }} />
+        {/* Reached from the + sheet / Home, never shown in the bar: TabBar draws only its own TABS. No href: null here,
+            since expo-router 58 makes an href: null tab unreachable (router.push('/coach') did nothing). */}
+        <Tabs.Screen name="log" />
+        <Tabs.Screen name="coach" />
+        <Tabs.Screen name="community" />
       </Tabs>
       <PlusSheet visible={plus} onClose={() => setPlus(false)} />
     </>
