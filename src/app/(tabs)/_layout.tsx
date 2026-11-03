@@ -10,7 +10,11 @@ export default function TabsLayout() {
   return (
     <>
       <Tabs screenOptions={{ headerShown: false }}
-        tabBar={(p) => <TabBar state={p.state} navigation={p.navigation as unknown as { navigate: (n: string) => void }} onPlus={() => setPlus(true)} />}>
+        tabBar={(p) => (
+          // SDK 58 (expo-router 58): tab bar props no longer carry `navigation`; switch tabs by route key with navigateToTab.
+          <TabBar state={p.state} onPlus={() => setPlus(true)}
+            navigation={{ navigate: (n: string) => { const r = p.state.routes.find((x) => x.name === n); if (r) p.navigateToTab(r.key); } }} />
+        )}>
         <Tabs.Screen name="index" />
         <Tabs.Screen name="food" />
         <Tabs.Screen name="train" />
