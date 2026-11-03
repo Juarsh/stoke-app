@@ -269,6 +269,9 @@ describe('provider config (app.config.ts) and drawing', () => {
     const plugin = cfg.plugins.find((p: unknown) => Array.isArray(p) && p[0] === 'react-native-android-widget');
     expect(plugin[1]).toBe(WIDGET_CONFIG);
     expect(WIDGET_CONFIG.widgets.map((w: { name: string }) => w.name)).toEqual(WIDGET_NAMES);
+    // no new permission: WorkManager's FOREGROUND_SERVICE is removed (the widget work is never a foreground worker)
+    expect(cfg.android.blockedPermissions).toContain('android.permission.FOREGROUND_SERVICE');
+    expect(cfg.android.permissions).toEqual(['android.permission.health.READ_STEPS']);
   });
   test('2 cells wide, resizable between 2x1 and 2x2 only', () => {
     for (const w of WIDGET_CONFIG.widgets) {

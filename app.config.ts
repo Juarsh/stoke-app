@@ -75,6 +75,10 @@ const config: ExpoConfig = {
       'me.everything.badger.permission.BADGE_COUNT_WRITE',
       // expo-secure-store (item 16: the session token) declares biometric unlock; the session is stored without it
       'android.permission.USE_BIOMETRIC', 'android.permission.USE_FINGERPRINT',
+      // react-native-android-widget runs the widget task handler through WorkManager, whose manifest declares
+      // FOREGROUND_SERVICE (for its foreground workers). The widget work is never foreground (plain work, expedited on
+      // Android 12+, which is a JobScheduler job), so it doesn't ship; the APK allowlist stays as it was.
+      'android.permission.FOREGROUND_SERVICE',
     ],
   },
   web: { output: 'single', favicon: './assets/images/favicon.png' },
