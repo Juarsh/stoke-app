@@ -182,7 +182,7 @@ type Service struct {
 	Hist  history
 	// Cap is the per-user daily question cap (default 20).
 	Cap int
-	// Timeout is how long the model may take (default 8s).
+	// Timeout is how long the model may take (default 15s).
 	Timeout time.Duration
 }
 

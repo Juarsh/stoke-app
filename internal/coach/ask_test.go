@@ -192,3 +192,9 @@ func containsAll(s string, parts ...string) bool {
 }
 
 func itoa(i int) string { return string(rune('0' + i)) }
+
+func TestDefaultAskTimeout(t *testing.T) {
+	if DefaultAskTimeout != 15*time.Second {
+		t.Fatalf("DefaultAskTimeout: %s", DefaultAskTimeout)
+	}
+}

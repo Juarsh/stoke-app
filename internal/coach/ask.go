@@ -16,7 +16,7 @@ import (
 const DefaultAskCap = 20
 
 // DefaultAskTimeout is how long the model may take before we fall back to rules.
-const DefaultAskTimeout = 8 * time.Second
+const DefaultAskTimeout = 15 * time.Second
 
 const maxRecent = 6
 const maxQuestionRunes = 4000
