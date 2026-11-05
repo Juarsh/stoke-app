@@ -16,7 +16,7 @@ const ROWS: Row[] = [
   { key: 'food', title: 'Log food', icon: 'food', tint: 'food', to: '/log-food' },
   { key: 'habit', title: 'Add habit', sub: 'Yes / no, a count, or sets', icon: 'habit', tint: 'train', to: '/habit-form' },
   { key: 'workout', title: 'Start workout', icon: 'train', tint: 'train', to: '/workout' },
-  { key: 'coach', title: 'Ask Coach', sub: 'Picks that fit what’s left today', icon: 'spark', tint: 'honey', to: '/coach' },
+  { key: 'coach', title: 'Ask Coach', sub: 'Ask a question, or see picks that fit today', icon: 'spark', tint: 'honey', to: '/coach' },
   { key: 'empty', title: 'Start an empty workout', icon: 'plus', to: '/workout' },
 ];
 

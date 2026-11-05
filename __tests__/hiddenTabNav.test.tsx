@@ -50,8 +50,8 @@ it('a prefilled /log push opens Log with the text', async () => {
 it('+ sheet -> Ask Coach opens Coach', async () => {
   await renderRouter(routes);
   await press(screen.getByLabelText('Quick add'));
-  // the row says what Coach does (rules-based picks), not "questions": there is no way to ask one yet
-  await press(screen.getByLabelText('Ask Coach, Picks that fit what’s left today'));
+  // the row says what Coach does now: ask a question (when signed in) or see today's picks
+  await press(screen.getByLabelText('Ask Coach, Ask a question, or see picks that fit today'));
   expect(screen).toHavePathname('/coach');
 });
 it('the tab bar still switches tabs (also one not visited yet), and hidden routes stay out of it', async () => {

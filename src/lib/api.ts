@@ -104,6 +104,12 @@ export function parseJobBody(b: JobBody, jobId?: string): ParseResponse {
 export type ApiOpts = { local?: () => boolean; onUnauthorized?: (reason: string) => void };
 /** POST /v1/auth/google answer (stoke-m4 API.md): our own user id and session token. */
 export type SignInAnswer = { user: { id: number | string; email?: string; name?: string }; session_token: string; expires_at?: string };
+/** POST /v1/coach: one prior chat turn (the server keeps at most the last 6). */
+export type CoachChatTurn = { role: 'user' | 'assistant'; text: string };
+/** One rules-based pick from POST /v1/coach when source is "rules". */
+export type CoachPickRow = { dish_id: string; name: string; qty: number; unit: string; kcal: number; protein: number; label: string };
+/** POST /v1/coach answer. */
+export type CoachAskResponse = { answer: string; source: 'ai' | 'rules'; reason?: string; picks?: CoachPickRow[] };
 export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void, onTableVersion?: (v: number) => void, opts: ApiOpts = {}) {
   const isLocal = () => config.mock || !!opts.local?.();
   async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -315,6 +321,20 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       const [p, w, h, l] = await Promise.all([req<{ plans: DocRow[] }>('GET', '/v1/plans'), req<{ workouts: DocRow[] }>('GET', '/v1/workouts'),
         req<{ habits: DocRow[] }>('GET', '/v1/habits'), req<{ logs: DocRow[] }>('GET', '/v1/habit-logs')]);
       return { plans: p.plans ?? [], workouts: w.workouts ?? [], habits: h.habits ?? [], logs: l.logs ?? [] };
+    },
+    /** POST /v1/coach (signed-in). The screen must not call this when signed out, offline, or in mock/local mode. */
+    async askCoach(question: string, messages: CoachChatTurn[] = []): Promise<CoachAskResponse> {
+      if (isLocal()) throw new ApiError(0, JSON.stringify({ error: { code: 'unavailable', message: 'Sign in to ask Coach a question.' } }));
+      const recent = messages.filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string' && m.text.trim())
+        .slice(-6).map((m) => ({ role: m.role, text: m.text }));
+      const body = await req<CoachAskResponse>('POST', '/v1/coach', { question, ...(recent.length ? { messages: recent } : {}) });
+      const source = body?.source === 'rules' ? 'rules' : 'ai';
+      return {
+        answer: typeof body?.answer === 'string' ? body.answer : '',
+        source,
+        reason: typeof body?.reason === 'string' ? body.reason : undefined,
+        picks: Array.isArray(body?.picks) ? body.picks : undefined,
+      };
     },
   };
 }
