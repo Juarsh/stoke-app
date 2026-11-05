@@ -4,7 +4,7 @@ jest.mock('../src/lib/config', () => ({
   flags: {},
 }));
 
-import { createApi } from '../src/lib/api';
+import { ASK_COACH_FETCH_MS, createApi } from '../src/lib/api';
 
 const json = (status: number, body: unknown) => ({
   ok: status >= 200 && status < 300, status,
@@ -26,6 +26,7 @@ test('askCoach POSTs /v1/coach with question and last 6 messages', async () => {
   const [url, init] = fetch.mock.calls[0];
   expect(url).toBe('https://stoke.test/v1/coach');
   expect(init.method).toBe('POST');
+  expect(init.signal).toBeDefined();
   expect(init.headers.Authorization).toBe('Bearer tok');
   const body = JSON.parse(init.body as string);
   expect(body.question).toBe('What can I eat?');
@@ -42,4 +43,8 @@ test('askCoach returns a rules answer with picks', async () => {
   expect(got.source).toBe('rules');
   expect(got.reason).toBe('over_cap');
   expect(got.picks).toEqual(picks);
+});
+
+test('ASK_COACH_FETCH_MS is longer than the server 15s budget', () => {
+  expect(ASK_COACH_FETCH_MS).toBeGreaterThan(15_000);
 });

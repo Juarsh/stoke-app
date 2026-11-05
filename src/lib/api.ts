@@ -110,17 +110,20 @@ export type CoachChatTurn = { role: 'user' | 'assistant'; text: string };
 export type CoachPickRow = { dish_id: string; name: string; qty: number; unit: string; kcal: number; protein: number; label: string };
 /** POST /v1/coach answer. */
 export type CoachAskResponse = { answer: string; source: 'ai' | 'rules'; reason?: string; picks?: CoachPickRow[] };
+/** Client wait for POST /v1/coach: longer than the server's 15s handler budget so a rules fallback can land. */
+export const ASK_COACH_FETCH_MS = 20_000;
 export function createApi(getToken: () => string | null, onReset?: (nextResetAt: string) => void, onTableVersion?: (v: number) => void, opts: ApiOpts = {}) {
   const isLocal = () => config.mock || !!opts.local?.();
-  async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const r = await req0<T>(method, path, body);
+  async function req<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+    const r = await req0<T>(method, path, body, signal);
     return r.body;
   }
-  async function req0<T>(method: string, path: string, body?: unknown): Promise<{ body: T; version: number }> {
+  async function req0<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<{ body: T; version: number }> {
     const tok = getToken();
     const res = await fetch(config.apiUrl + path, {
       method, headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
       body: body === undefined ? undefined : JSON.stringify(stripSex(body)),
+      signal,
     });
     const version = headerVersion(res as unknown as Parameters<typeof headerVersion>[0]);
     if (version && path !== '/v1/dishes') onTableVersion?.(version);
@@ -327,7 +330,14 @@ export function createApi(getToken: () => string | null, onReset?: (nextResetAt:
       if (isLocal()) throw new ApiError(0, JSON.stringify({ error: { code: 'unavailable', message: 'Sign in to ask Coach a question.' } }));
       const recent = messages.filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string' && m.text.trim())
         .slice(-6).map((m) => ({ role: m.role, text: m.text }));
-      const body = await req<CoachAskResponse>('POST', '/v1/coach', { question, ...(recent.length ? { messages: recent } : {}) });
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ASK_COACH_FETCH_MS);
+      let body: CoachAskResponse;
+      try {
+        body = await req<CoachAskResponse>('POST', '/v1/coach', { question, ...(recent.length ? { messages: recent } : {}) }, ctrl.signal);
+      } finally {
+        clearTimeout(timer);
+      }
       const source = body?.source === 'rules' ? 'rules' : 'ai';
       return {
         answer: typeof body?.answer === 'string' ? body.answer : '',
