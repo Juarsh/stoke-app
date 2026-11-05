@@ -27,6 +27,11 @@ type Config struct {
 	Verifier auth.Verifier
 	Fallback food.Fallback
 	Advisor  coach.Advisor
+	// CoachAI, when set, is used by POST /v1/coach (tests inject a fake).
+	// When nil, AIMode chooses it the same way as Fallback: gemini or off.
+	CoachAI coach.CoachAI
+	// CoachDailyCap is the per-user daily Ask Coach question cap (default 20).
+	CoachDailyCap int
 	// AIMode: "off" (default), "gemini", or "stub" (deterministic fake;
 	// also enables the /test/ai/* hooks, which 404 in every other mode).
 	AIMode    string
@@ -97,6 +102,14 @@ func New(c Config) (http.Handler, error) {
 	if c.Advisor == nil {
 		c.Advisor = coach.NoAdvisor{}
 	}
+	if c.CoachAI == nil {
+		switch c.AIMode {
+		case "gemini":
+			c.CoachAI = coach.GeminiAI{APIKey: c.GeminiKey, Model: c.GeminiModel, Thinking: c.GeminiThinking}
+		default:
+			c.CoachAI = coach.NoCoachAI{}
+		}
+	}
 	sum := &summary.Service{DB: c.DB, Contributors: []summary.Contributor{food.Contributor{}, activity.Contributor{}}}
 	gl := &goals.Service{DB: c.DB}
 	live := &food.Live{}
@@ -147,7 +160,8 @@ func New(c Config) (http.Handler, error) {
 		fs,
 		&activity.Service{DB: c.DB, Summary: sum, Goals: gl},
 		gl, sum,
-		&coach.Service{Parser: p, Table: live.Get, Goals: gl, Summary: sum, Advisor: c.Advisor},
+		&coach.Service{Parser: p, Table: live.Get, Goals: gl, Summary: sum, Advisor: c.Advisor,
+			AI: c.CoachAI, Usage: st, Foods: st.Food(), Hist: st, Cap: c.CoachDailyCap},
 		&stoke.Service{Plans: st, Workouts: st, Habits: st},
 	}
 	mux := http.NewServeMux()

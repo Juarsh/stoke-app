@@ -70,6 +70,14 @@ type Porter interface {
 	Import(ctx context.Context, d Dump) error
 }
 
+// CoachUsage is the per-user daily Ask Coach question cap (migration 022).
+type CoachUsage interface {
+	// TryCoachAsk increments the user's count for day when it is below cap.
+	// ok is false (count unchanged) when the cap has already been reached.
+	TryCoachAsk(ctx context.Context, uid int64, day time.Time, cap int) (used int, ok bool, err error)
+	CoachAskCount(ctx context.Context, uid int64, day time.Time) (int, error)
+}
+
 type Target struct {
 	Sets     int `json:"sets"`
 	RepsLow  int `json:"repsLow"`
@@ -174,9 +182,10 @@ type Dump struct {
 type PG struct{ DB *pgxpool.Pool }
 
 var (
-	_ Users    = (*PG)(nil)
-	_ Plans    = (*PG)(nil)
-	_ Workouts = (*PG)(nil)
-	_ Habits   = (*PG)(nil)
-	_ Porter   = (*PG)(nil)
+	_ Users      = (*PG)(nil)
+	_ Plans      = (*PG)(nil)
+	_ Workouts   = (*PG)(nil)
+	_ Habits     = (*PG)(nil)
+	_ Porter     = (*PG)(nil)
+	_ CoachUsage = (*PG)(nil)
 )

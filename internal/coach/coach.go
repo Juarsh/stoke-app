@@ -18,6 +18,7 @@ import (
 	"github.com/akarsh/calorie-tracker/internal/goals"
 	"github.com/akarsh/calorie-tracker/internal/httpx"
 	"github.com/akarsh/calorie-tracker/internal/parser"
+	"github.com/akarsh/calorie-tracker/internal/store"
 	"github.com/akarsh/calorie-tracker/internal/summary"
 )
 
@@ -173,10 +174,21 @@ type Service struct {
 	Goals   *goals.Service
 	Summary *summary.Service
 	Advisor Advisor
+	// AI is the config-chosen CoachAI adapter (nil / NoCoachAI = rules only).
+	AI CoachAI
+	// Usage stores the per-user daily ask cap (nil skips the cap, tests only).
+	Usage store.CoachUsage
+	Foods foodLister
+	Hist  history
+	// Cap is the per-user daily question cap (default 20).
+	Cap int
+	// Timeout is how long the model may take (default 8s).
+	Timeout time.Duration
 }
 
 func (s *Service) Routes(mux *http.ServeMux, wrap func(http.Handler) http.Handler) {
 	mux.Handle("GET /v1/coach/suggestions", wrap(http.HandlerFunc(s.handle)))
+	mux.Handle("POST /v1/coach", wrap(http.HandlerFunc(s.handleAsk)))
 }
 
 // Remaining is what's left for a day. Steps calories are added only when the

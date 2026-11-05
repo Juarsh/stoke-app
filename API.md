@@ -118,7 +118,35 @@ For Tester's runner the defaults already match: `ITEMS_PATH=items`,
 | `GET /v1/summary?date=` | Shared daily summary: kcal_in, protein_in, kcal_out, steps, water_ml, logged, streak_day. Rebuilt after every committed entry write, in one transaction under a per-user lock, so concurrent writes (two devices) always leave it equal to the entry list's total |
 | `GET /v1/streak` | current, best, freezes_left (this Mon-Sun week), logged_today, freeze_saved_on |
 | `GET /v1/coach/suggestions?date=` | `{remaining, message, options[3]}`; each option has `items` ready to POST to /v1/entries |
+| `POST /v1/coach` | Ask Coach (signed-in). Body `{question, messages?}` (up to 6 prior `{role, text}` turns). Answer `{answer, source: "ai"\|"rules", reason?, picks?}`. Gemini Flash when `AI_MODE=gemini`; rules-based picks (the app's "Picks that fit what's left today") if the model errors, times out (8s), or the user is over the 20-question daily cap. 401 without a bearer token |
 | `GET /healthz` | Liveness |
+
+
+## POST /v1/coach
+
+Signed-in only (`Authorization: Bearer <session or Google ID token>`). Unauthenticated requests return 401.
+
+Request:
+
+```
+{ "question": "What can I eat tonight?", "messages": [ {"role":"user","text":"..."}, {"role":"assistant","text":"..."} ] }
+```
+
+`messages` is optional; at most the last 6 turns are sent. The model also receives a compact context of today's targets, totals and what's left, today's foods, and the last 7 days of workouts and habits. Output is capped at about 250 tokens. The prompt refuses medical diagnosis.
+
+Response:
+
+```
+{ "answer": "...", "source": "ai" }
+```
+
+or, when the model errors, times out (8s), is not configured, or the user has asked 20 questions today (IST):
+
+```
+{ "answer": "...", "source": "rules", "reason": "over_cap|timeout|ai_error|unavailable", "picks": [ {"dish_id","name","qty","unit","kcal","protein","label"} ] }
+```
+
+`picks` match the app's rules-based "Picks that fit what's left today". The daily cap is stored in `coach_daily_asks` (migration 022). The adapter is chosen like the food-parse AI: `AI_MODE=gemini` uses the existing `GEMINI_API_KEY` and a free-tier Flash model (`GEMINI_MODEL`, default `gemini-flash-latest`); otherwise the endpoint returns the rules fallback with `source: "rules"`.
 
 ## Parser notes
 - Hindi script: known Devanagari words and digits are transliterated (`devanagari_words` in rules.json); unknown ones land in `unmatched`.

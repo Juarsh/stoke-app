@@ -38,6 +38,10 @@ Stub mode only starts when `APP_ENV` is `dev` or `test`; the server refuses
 to start otherwise. `AI_MODE=gemini` requires `GEMINI_API_KEY`, and
 `GEMINI_MODEL` is optional. `AI_PER_MINUTE` sets the AI queue drain rate,
 AI calls per minute (default 8). Tests never call the real Gemini API.
+`POST /v1/coach` uses the same `AI_MODE` / `GEMINI_API_KEY` to pick a CoachAI adapter
+(Gemini Flash, 8s timeout, ~250 output tokens). Each signed-in user may ask 20
+questions per IST day (migration 022); a model error, timeout, or a hit cap returns
+the app's rules-based picks with `source: "rules"`.
 `AI_DAILY_CAP` sets the project-wide daily limit on AI meals (default 20, the
 Gemini free tier), `AI_USER_DAILY_CAP` the per-user limit (default 3),
 `AI_QUOTA_RESET_TZ` when they reset (default America/Los_Angeles midnight,
